@@ -5,12 +5,11 @@
   "scripts": {
     "dev": "expo start -c",
     "dev:web": "expo start -c --web",
-    "dev:android": "expo start -c --android",
-    "android": "expo start -c --android",
-    "ios": "expo start -c --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start -c --web",
     "clean": "rm -rf .expo node_modules",
-    "postinstall": "npx tailwindcss -i ./global.css -o ./node_modules/.cache/nativewind/global.css"
+    "postinstall": "bun scripts/download_ark_binaries.js && npx tailwindcss -i ./global.css -o ./node_modules/.cache/nativewind/global.css"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.0",
@@ -33,6 +32,8 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.4",
+    "react-native-nitro-ark": "^0.0.12",
+    "react-native-nitro-modules": "^0.26.2",
     "react-native-reanimated": "~3.17.5",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "^4.10.0",

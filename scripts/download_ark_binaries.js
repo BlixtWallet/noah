@@ -1,0 +1,151 @@
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
+const { execSync } = require("child_process");
+
+const ARK_VERSION = "v0.0.12";
+
+// --- Configuration ---
+const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/Ark.xcframework.zip`;
+const LIBA_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/libbark_cpp.a`;
+
+const projectRoot = process.cwd();
+const nitroArkPath = path.resolve(
+  projectRoot,
+  "node_modules",
+  "react-native-nitro-ark",
+);
+const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
+
+// iOS paths
+const xcFrameworkZipPath = path.join(tempDir, "Ark.xcframework.zip");
+const xcFrameworkDestPath = path.join(nitroArkPath, "Ark.xcframework");
+const unzippedFrameworkContainer = path.join(tempDir, "target");
+const unzippedFrameworkPath = path.join(
+  unzippedFrameworkContainer,
+  "Ark.xcframework",
+);
+
+// Android paths
+const jniLibsPath = path.resolve(
+  nitroArkPath,
+  "android",
+  "src",
+  "main",
+  "jniLibs",
+  "arm64-v8a",
+);
+const libaDestPath = path.join(jniLibsPath, "libbark_cpp.a");
+
+/**
+ * Downloads a file from a URL to a destination path.
+ * @param {string} url The URL to download from.
+ * @param {string} dest The destination file path.
+ * @returns {Promise<void>}
+ */
+function download(url, dest) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    https
+      .get(url, (response) => {
+        // Handle redirects
+        if (
+          response.statusCode >= 300 &&
+          response.statusCode < 400 &&
+          response.headers.location
+        ) {
+          console.log(`Redirected to ${response.headers.location}`);
+          return download(response.headers.location, dest)
+            .then(resolve)
+            .catch(reject);
+        }
+        if (response.statusCode !== 200) {
+          return reject(
+            new Error(
+              `Failed to download '${url}' (status: ${response.statusCode})`,
+            ),
+          );
+        }
+        response.pipe(file);
+        file.on("finish", () => {
+          file.close((err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        });
+      })
+      .on("error", (err) => {
+        fs.unlink(dest, () => {}); // Clean up the file
+        reject(err);
+      });
+  });
+}
+
+/**
+ * Main function to run the postinstall steps.
+ */
+async function main() {
+  console.log("Running postinstall script for react-native-nitro-ark...");
+
+  // Ensure node_modules/react-native-nitro-ark exists
+  if (!fs.existsSync(nitroArkPath)) {
+    console.log(
+      "react-native-nitro-ark not found in node_modules, skipping script.",
+    );
+    return;
+  }
+
+  // Create a temporary directory for downloads
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  try {
+    // --- iOS Setup ---
+    console.log("\n--- Starting iOS Setup ---");
+    if (fs.existsSync(xcFrameworkDestPath)) {
+      console.log(`Removing existing framework at ${xcFrameworkDestPath}`);
+      fs.rmSync(xcFrameworkDestPath, { recursive: true, force: true });
+    }
+    console.log(`Downloading iOS framework from ${XC_FRAMEWORK_URL}...`);
+    await download(XC_FRAMEWORK_URL, xcFrameworkZipPath);
+    console.log("Download complete.");
+    console.log(`Unzipping ${path.basename(xcFrameworkZipPath)}...`);
+    execSync(`unzip -o "${xcFrameworkZipPath}" -d "${tempDir}"`);
+    console.log("Unzip complete.");
+    if (!fs.existsSync(unzippedFrameworkPath)) {
+      throw new Error(
+        `Expected framework not found at ${unzippedFrameworkPath}`,
+      );
+    }
+    console.log(`Moving Ark.xcframework to ${nitroArkPath}`);
+    fs.renameSync(unzippedFrameworkPath, xcFrameworkDestPath);
+    console.log("--- iOS Setup Complete ---\n");
+
+    // --- Android Setup ---
+    console.log("--- Starting Android Setup ---");
+    console.log(`Creating directory (if not exists): ${jniLibsPath}`);
+    fs.mkdirSync(jniLibsPath, { recursive: true });
+    console.log(`Downloading Android library from ${LIBA_URL}...`);
+    await download(LIBA_URL, libaDestPath);
+    console.log(`Library placed at ${libaDestPath}`);
+    console.log("--- Android Setup Complete ---\n");
+
+    console.log(
+      "Postinstall script for react-native-nitro-ark finished successfully!",
+    );
+  } catch (error) {
+    console.error("An error occurred during the postinstall script:");
+    console.error(error);
+    process.exit(1);
+  } finally {
+    // Cleanup
+    if (fs.existsSync(tempDir)) {
+      console.log(`Cleaning up temporary directory: ${tempDir}`);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  }
+}
+
+main();
