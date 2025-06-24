@@ -7,29 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		012D4DB9FA80A1C161E649C8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5A4C5F9E48FEC00EE48FBB2 /* PrivacyInfo.xcprivacy */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		8BF8827D166E53B4639A2A28 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0197FCF45394F54D19D619E6 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C17FEB864E48F1124F157624 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 417E077B976E08636A5E6554 /* ExpoModulesProvider.swift */; };
-		DA8E5994C04B97C7E3810B89 /* libPods-noah.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5727112BAB290A6881CA6098 /* libPods-noah.a */; };
+		CD9EE5539A9EB1889E580332 /* libPods-noah.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DF96E715D8666392912FCD97 /* libPods-noah.a */; };
+		E13A567C85C20F32C64DA8FE /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0720F2E3A409EE319F2F82D6 /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0197FCF45394F54D19D619E6 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = noah/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		0720F2E3A409EE319F2F82D6 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* noah.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = noah.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = noah/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = noah/Info.plist; sourceTree = "<group>"; };
-		417E077B976E08636A5E6554 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		5727112BAB290A6881CA6098 /* libPods-noah.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		187FD2BBEE65E2D814FFBFD1 /* Pods-noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah.release.xcconfig"; path = "Target Support Files/Pods-noah/Pods-noah.release.xcconfig"; sourceTree = "<group>"; };
+		81DF9441E8AAE2117E39DDFA /* Pods-noah.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah.debug.xcconfig"; path = "Target Support Files/Pods-noah/Pods-noah.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = noah/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D039F43C18B567AE7CADC66A /* Pods-noah.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah.debug.xcconfig"; path = "Target Support Files/Pods-noah/Pods-noah.debug.xcconfig"; sourceTree = "<group>"; };
+		D5A4C5F9E48FEC00EE48FBB2 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = noah/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DF96E715D8666392912FCD97 /* libPods-noah.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = noah/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* noah-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "noah-Bridging-Header.h"; path = "noah/noah-Bridging-Header.h"; sourceTree = "<group>"; };
-		F8F24718B8F0AB381E063142 /* Pods-noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah.release.xcconfig"; path = "Target Support Files/Pods-noah/Pods-noah.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,13 +37,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DA8E5994C04B97C7E3810B89 /* libPods-noah.a in Frameworks */,
+				CD9EE5539A9EB1889E580332 /* libPods-noah.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1362DB31783EA9267D3C4693 /* noah */ = {
+			isa = PBXGroup;
+			children = (
+				0720F2E3A409EE319F2F82D6 /* ExpoModulesProvider.swift */,
+			);
+			name = noah;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* noah */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,15 +61,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				0197FCF45394F54D19D619E6 /* PrivacyInfo.xcprivacy */,
-			);
-			name = noah;
-			sourceTree = "<group>";
-		};
-		1C2477DCC4BA54C16813108F /* noah */ = {
-			isa = PBXGroup;
-			children = (
-				417E077B976E08636A5E6554 /* ExpoModulesProvider.swift */,
+				D5A4C5F9E48FEC00EE48FBB2 /* PrivacyInfo.xcprivacy */,
 			);
 			name = noah;
 			sourceTree = "<group>";
@@ -70,27 +70,27 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5727112BAB290A6881CA6098 /* libPods-noah.a */,
+				DF96E715D8666392912FCD97 /* libPods-noah.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		2F002A131B8D70D4A30279A5 /* Pods */ = {
+		70F565FC5D93F620C9D1AFB0 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				D039F43C18B567AE7CADC66A /* Pods-noah.debug.xcconfig */,
-				F8F24718B8F0AB381E063142 /* Pods-noah.release.xcconfig */,
+				1362DB31783EA9267D3C4693 /* noah */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		725C43AE334E3E83710CA2E6 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				81DF9441E8AAE2117E39DDFA /* Pods-noah.debug.xcconfig */,
+				187FD2BBEE65E2D814FFBFD1 /* Pods-noah.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
-			sourceTree = "<group>";
-		};
-		6709D6DECD47B77D6E244F2E /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				1C2477DCC4BA54C16813108F /* noah */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -107,8 +107,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				2F002A131B8D70D4A30279A5 /* Pods */,
-				6709D6DECD47B77D6E244F2E /* ExpoModulesProviders */,
+				725C43AE334E3E83710CA2E6 /* Pods */,
+				70F565FC5D93F620C9D1AFB0 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "noah" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				6384D3DFA0B25D80CA7E4530 /* [Expo] Configure project */,
+				497E2D7996571E072FD9C7DB /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				0B555AF0976444B80BE70055 /* [CP] Embed Pods Frameworks */,
+				A151E5599B5ADB20F78DDCFA /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				8BF8827D166E53B4639A2A28 /* PrivacyInfo.xcprivacy in Resources */,
+				012D4DB9FA80A1C161E649C8 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,25 +240,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		0B555AF0976444B80BE70055 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		6384D3DFA0B25D80CA7E4530 /* [Expo] Configure project */ = {
+		497E2D7996571E072FD9C7DB /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -290,6 +272,7 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
 			);
@@ -301,12 +284,31 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A151E5599B5ADB20F78DDCFA /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -317,7 +319,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				C17FEB864E48F1124F157624 /* ExpoModulesProvider.swift in Sources */,
+				E13A567C85C20F32C64DA8FE /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -326,7 +328,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D039F43C18B567AE7CADC66A /* Pods-noah.debug.xcconfig */;
+			baseConfigurationReference = 81DF9441E8AAE2117E39DDFA /* Pods-noah.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -362,7 +364,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F8F24718B8F0AB381E063142 /* Pods-noah.release.xcconfig */;
+			baseConfigurationReference = 187FD2BBEE65E2D814FFBFD1 /* Pods-noah.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
