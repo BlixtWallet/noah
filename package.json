@@ -19,6 +19,7 @@
     "react": "19.0.0",
     "react-native": "0.79.4",
     "react-native-bottom-tabs": "^0.9.2",
+    "react-native-edge-to-edge": "^1.6.1",
     "react-native-nitro-ark": "^0.0.12",
     "react-native-nitro-modules": "^0.26.2",
     "react-native-reanimated": "~3.17.4",
