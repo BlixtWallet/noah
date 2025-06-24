@@ -10,16 +10,25 @@
     "postinstall": "bun scripts/download_ark_binaries.js"
   },
   "dependencies": {
+    "@react-navigation/bottom-tabs": "^7.4.1",
+    "@react-navigation/native": "^7.1.14",
     "expo": "~53.0.12",
+    "expo-build-properties": "~0.14.6",
     "expo-status-bar": "~2.2.3",
+    "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-native": "0.79.4",
     "react-native-nitro-ark": "^0.0.12",
-    "react-native-nitro-modules": "^0.26.2"
+    "react-native-nitro-modules": "^0.26.2",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
   },
   "private": true
