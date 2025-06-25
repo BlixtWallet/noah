@@ -3,11 +3,11 @@ const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
 
-const ARK_VERSION = "v0.0.12";
+const ARK_VERSION = "v0.0.14";
 
 // --- Configuration ---
 const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/Ark.xcframework.zip`;
-const LIBA_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/libbark_cpp.a`;
+const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/jniLibs.zip`;
 
 const projectRoot = process.cwd();
 const nitroArkPath = path.resolve(
@@ -27,15 +27,15 @@ const unzippedFrameworkPath = path.join(
 );
 
 // Android paths
-const jniLibsPath = path.resolve(
+const jniLibsZipPath = path.join(tempDir, "jniLibs.zip");
+const jniLibsDestPath = path.resolve(
   nitroArkPath,
   "android",
   "src",
   "main",
   "jniLibs",
-  "arm64-v8a",
 );
-const libaDestPath = path.join(jniLibsPath, "libbark_cpp.a");
+const unzippedJniLibsPath = path.join(tempDir, "jniLibs");
 
 /**
  * Downloads a file from a URL to a destination path.
@@ -125,11 +125,21 @@ async function main() {
 
     // --- Android Setup ---
     console.log("--- Starting Android Setup ---");
-    console.log(`Creating directory (if not exists): ${jniLibsPath}`);
-    fs.mkdirSync(jniLibsPath, { recursive: true });
-    console.log(`Downloading Android library from ${LIBA_URL}...`);
-    await download(LIBA_URL, libaDestPath);
-    console.log(`Library placed at ${libaDestPath}`);
+    if (fs.existsSync(jniLibsDestPath)) {
+      console.log(`Removing existing jniLibs at ${jniLibsDestPath}`);
+      fs.rmSync(jniLibsDestPath, { recursive: true, force: true });
+    }
+    console.log(`Downloading Android binaries from ${JNI_LIBS_ZIP_URL}...`);
+    await download(JNI_LIBS_ZIP_URL, jniLibsZipPath);
+    console.log("Download complete.");
+    console.log(`Unzipping ${path.basename(jniLibsZipPath)}...`);
+    execSync(`unzip -o "${jniLibsZipPath}" -d "${tempDir}"`);
+    console.log("Unzip complete.");
+    if (!fs.existsSync(unzippedJniLibsPath)) {
+      throw new Error(`Expected jniLibs not found at ${unzippedJniLibsPath}`);
+    }
+    console.log(`Moving jniLibs to ${path.dirname(jniLibsDestPath)}`);
+    fs.renameSync(unzippedJniLibsPath, jniLibsDestPath);
     console.log("--- Android Setup Complete ---\n");
 
     console.log(
