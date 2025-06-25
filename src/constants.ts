@@ -57,7 +57,7 @@ const getActiveWalletConfig = (): WalletCreationOptions => {
     case "signet":
       console.log("Using signet configuration");
       return SIGNET_CONFIG;
-    case "production":
+    case "mainnet":
       console.log("Using production configuration");
       return PRODUCTION_CONFIG;
     default:

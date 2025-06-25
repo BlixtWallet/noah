@@ -1,0 +1,14 @@
+// Configuration settings for the mainnet flavor
+
+// App Scheme for deep linking
+APP_SCHEME = com.anonymous.noah
+
+// Bundle Identifier
+PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah
+PRODUCT_NAME = Noah
+
+// Display Name
+PRODUCT_NAME = Noah
+
+// App Icon
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon

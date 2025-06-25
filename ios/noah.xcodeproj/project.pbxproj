@@ -7,29 +7,79 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		120648AC16585910F95E25EE /* libPods-noah-common-Noah-Signet.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B2CF17E77D223D7EC1A61FF9 /* libPods-noah-common-Noah-Signet.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		3C20EFDB78CD34050ACD952C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFADB458794328DDA64B078 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		8FCFC37C4DEF200EFB5CFD84 /* libPods-noah.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F0AF7445A6602CA6F62A4DDB /* libPods-noah.a */; };
+		601942D0AB763A941862EDE2 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B5FFA8A288023BD8CCB7C91 /* ExpoModulesProvider.swift */; };
+		7DF2E503400EE172682AF07B /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 194A6B6E30A419C337CB1BC7 /* ExpoModulesProvider.swift */; };
+		90A46AE18A163BF183119CB6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */; };
+		B9EBC327DB966506782A2DA8 /* libPods-noah-common-Noah.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F063A0268003AC078FBB106F /* libPods-noah-common-Noah.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C39DD7062E0C95AF000CB6A9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		C39DD70B2E0C95AF000CB6A9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C39DD70C2E0C95AF000CB6A9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		C39DD70D2E0C95AF000CB6A9 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		C39DD70E2E0C95AF000CB6A9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
+		C39DD71B2E0C973E000CB6A9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		C39DD7202E0C973E000CB6A9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C39DD7212E0C973E000CB6A9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		C39DD7222E0C973E000CB6A9 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		C39DD7232E0C973E000CB6A9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
+		C39DD7452E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */; };
+		C39DD7462E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */; };
+		C39DD7472E0C9DF1000CB6A9 /* signet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */; };
+		C39DD7482E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */; };
+		C39DD7492E0C9DF1000CB6A9 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */; };
+		C39DD74A2E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */; };
+		C39DD74B2E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */; };
+		C39DD74C2E0C9DF1000CB6A9 /* signet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */; };
+		C39DD74D2E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */; };
+		C39DD74E2E0C9DF1000CB6A9 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */; };
+		C39DD74F2E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */; };
+		C39DD7502E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */; };
+		C39DD7512E0C9DF1000CB6A9 /* signet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */; };
+		C39DD7522E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */; };
+		C39DD7532E0C9DF1000CB6A9 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */; };
+		CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* NoahSignet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NoahSignet.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* Noah.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Noah.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = noah/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = noah/Info.plist; sourceTree = "<group>"; };
-		7AF62020CF674CF74DC93477 /* Pods-noah.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah.debug.xcconfig"; path = "Target Support Files/Pods-noah/Pods-noah.debug.xcconfig"; sourceTree = "<group>"; };
+		15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah-common-Noah-Regtest.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		194A6B6E30A419C337CB1BC7 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah-common-Noah-Signet/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		4D0B0F63003860B7A3AD0D58 /* Pods-noah-common-Noah.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah.debug.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah.debug.xcconfig"; sourceTree = "<group>"; };
+		4E07CF47789E44CB2CEDF091 /* Pods-noah-common-Noah-Signet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Signet.debug.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet.debug.xcconfig"; sourceTree = "<group>"; };
+		5A19E1FDC8F55D6E7F708175 /* Pods-noah-common-noah.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah.debug.xcconfig"; path = "Target Support Files/Pods-noah-common-noah/Pods-noah-common-noah.debug.xcconfig"; sourceTree = "<group>"; };
+		64D19819C1ACCADE9D4115DF /* Pods-noah-common-noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah.release.xcconfig"; path = "Target Support Files/Pods-noah-common-noah/Pods-noah-common-noah.release.xcconfig"; sourceTree = "<group>"; };
+		66256E736CA87755C5B2C102 /* Pods-noah-common-noah-signet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah-signet.release.xcconfig"; path = "Target Support Files/Pods-noah-common-noah-signet/Pods-noah-common-noah-signet.release.xcconfig"; sourceTree = "<group>"; };
+		6DAA180F69B20FC803C783EF /* Pods-noah-common-noah-signet.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah-signet.debug.xcconfig"; path = "Target Support Files/Pods-noah-common-noah-signet/Pods-noah-common-noah-signet.debug.xcconfig"; sourceTree = "<group>"; };
+		75115EA1F17F1C43B2D907F1 /* Pods-noah-common-Noah-Regtest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Regtest.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest.release.xcconfig"; sourceTree = "<group>"; };
+		7DAEE051C3AD5A25753EEB04 /* Pods-noah-common-noah-regtest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah-regtest.debug.xcconfig"; path = "Target Support Files/Pods-noah-common-noah-regtest/Pods-noah-common-noah-regtest.debug.xcconfig"; sourceTree = "<group>"; };
 		85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = noah/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8B5FFA8A288023BD8CCB7C91 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah-common-Noah-Regtest/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = noah/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B2CF17E77D223D7EC1A61FF9 /* libPods-noah-common-Noah-Signet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah-common-Noah-Signet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BC940F95E5472E27B4779391 /* Pods-noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah.release.xcconfig"; path = "Target Support Files/Pods-noah/Pods-noah.release.xcconfig"; sourceTree = "<group>"; };
+		BCDAA6B157059A8D05E8F8C5 /* Pods-noah-common-noah-regtest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah-regtest.release.xcconfig"; path = "Target Support Files/Pods-noah-common-noah-regtest/Pods-noah-common-noah-regtest.release.xcconfig"; sourceTree = "<group>"; };
+		C39DD7152E0C95AF000CB6A9 /* Noah-Signet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noah-Signet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noah-Regtest.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Config/Debug.xcconfig; sourceTree = "<group>"; };
+		C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = mainnet.xcconfig; path = Config/mainnet.xcconfig; sourceTree = "<group>"; };
+		C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = regtest.xcconfig; path = Config/regtest.xcconfig; sourceTree = "<group>"; };
+		C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Config/Release.xcconfig; sourceTree = "<group>"; };
+		C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = signet.xcconfig; path = Config/signet.xcconfig; sourceTree = "<group>"; };
+		D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah.release.xcconfig"; sourceTree = "<group>"; };
+		D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Signet.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet.release.xcconfig"; sourceTree = "<group>"; };
+		DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah-common-Noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		E9866157C0A7235063C7E870 /* Pods-noah-common-Noah-Regtest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Regtest.debug.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F0AF7445A6602CA6F62A4DDB /* libPods-noah.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F063A0268003AC078FBB106F /* libPods-noah-common-Noah.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah-common-Noah.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = noah/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* noah-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "noah-Bridging-Header.h"; path = "noah/noah-Bridging-Header.h"; sourceTree = "<group>"; };
-		FCFADB458794328DDA64B078 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,13 +87,37 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8FCFC37C4DEF200EFB5CFD84 /* libPods-noah.a in Frameworks */,
+				B9EBC327DB966506782A2DA8 /* libPods-noah-common-Noah.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C39DD7082E0C95AF000CB6A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				120648AC16585910F95E25EE /* libPods-noah-common-Noah-Signet.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C39DD71D2E0C973E000CB6A9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0A3745770681AD9943346F93 /* Noah-Regtest */ = {
+			isa = PBXGroup;
+			children = (
+				8B5FFA8A288023BD8CCB7C91 /* ExpoModulesProvider.swift */,
+			);
+			name = "Noah-Regtest";
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* noah */ = {
 			isa = PBXGroup;
 			children = (
@@ -62,7 +136,9 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				F0AF7445A6602CA6F62A4DDB /* libPods-noah.a */,
+				F063A0268003AC078FBB106F /* libPods-noah-common-Noah.a */,
+				15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */,
+				B2CF17E77D223D7EC1A61FF9 /* libPods-noah-common-Noah-Signet.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -70,7 +146,9 @@
 		5276B0E7D8228B54CDF1A5BE /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				DD9DCCF658E47D8C87920B89 /* noah */,
+				D904AA8E51C51D3019C8988A /* Noah */,
+				0A3745770681AD9943346F93 /* Noah-Regtest */,
+				A5BEF2FC17A7D1D04C567D1E /* Noah-Signet */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -78,8 +156,18 @@
 		7A5841958A4C7C1392179C75 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				7AF62020CF674CF74DC93477 /* Pods-noah.debug.xcconfig */,
-				BC940F95E5472E27B4779391 /* Pods-noah.release.xcconfig */,
+				5A19E1FDC8F55D6E7F708175 /* Pods-noah-common-noah.debug.xcconfig */,
+				64D19819C1ACCADE9D4115DF /* Pods-noah-common-noah.release.xcconfig */,
+				7DAEE051C3AD5A25753EEB04 /* Pods-noah-common-noah-regtest.debug.xcconfig */,
+				BCDAA6B157059A8D05E8F8C5 /* Pods-noah-common-noah-regtest.release.xcconfig */,
+				6DAA180F69B20FC803C783EF /* Pods-noah-common-noah-signet.debug.xcconfig */,
+				66256E736CA87755C5B2C102 /* Pods-noah-common-noah-signet.release.xcconfig */,
+				4D0B0F63003860B7A3AD0D58 /* Pods-noah-common-Noah.debug.xcconfig */,
+				D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */,
+				E9866157C0A7235063C7E870 /* Pods-noah-common-Noah-Regtest.debug.xcconfig */,
+				75115EA1F17F1C43B2D907F1 /* Pods-noah-common-Noah-Regtest.release.xcconfig */,
+				4E07CF47789E44CB2CEDF091 /* Pods-noah-common-Noah-Signet.debug.xcconfig */,
+				D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -94,6 +182,11 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */,
+				C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */,
+				C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */,
+				C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */,
+				C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */,
 				13B07FAE1A68108700A75B9A /* noah */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -109,9 +202,19 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* NoahSignet.app */,
+				13B07F961A680F5B00A75B9A /* Noah.app */,
+				C39DD7152E0C95AF000CB6A9 /* Noah-Signet.app */,
+				C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A5BEF2FC17A7D1D04C567D1E /* Noah-Signet */ = {
+			isa = PBXGroup;
+			children = (
+				194A6B6E30A419C337CB1BC7 /* ExpoModulesProvider.swift */,
+			);
+			name = "Noah-Signet";
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -123,37 +226,81 @@
 			path = noah/Supporting;
 			sourceTree = "<group>";
 		};
-		DD9DCCF658E47D8C87920B89 /* noah */ = {
+		D904AA8E51C51D3019C8988A /* Noah */ = {
 			isa = PBXGroup;
 			children = (
-				FCFADB458794328DDA64B078 /* ExpoModulesProvider.swift */,
+				DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */,
 			);
-			name = noah;
+			name = Noah;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* noah */ = {
+		13B07F861A680F5B00A75B9A /* Noah */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "noah" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Noah" */;
 			buildPhases = (
-				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
+				ACBE09FE6E0ABD5213B64E0D /* [CP] Check Pods Manifest.lock */,
 				BECAABBDA6D84D68F2C64E7C /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				A03B14819EA6CE14AC2E3934 /* [CP] Embed Pods Frameworks */,
+				B7177045A6D1684CA40D7A03 /* [CP] Embed Pods Frameworks */,
+				328273F845D3C4E5D17CEB69 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = noah;
+			name = Noah;
 			productName = noah;
-			productReference = 13B07F961A680F5B00A75B9A /* NoahSignet.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* Noah.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C39DD7022E0C95AF000CB6A9 /* Noah-Signet */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C39DD7122E0C95AF000CB6A9 /* Build configuration list for PBXNativeTarget "Noah-Signet" */;
+			buildPhases = (
+				35909CCF15DCD874624AEEFE /* [CP] Check Pods Manifest.lock */,
+				C39DD7042E0C95AF000CB6A9 /* [Expo] Configure project */,
+				C39DD7052E0C95AF000CB6A9 /* Sources */,
+				C39DD7082E0C95AF000CB6A9 /* Frameworks */,
+				C39DD70A2E0C95AF000CB6A9 /* Resources */,
+				C39DD70F2E0C95AF000CB6A9 /* Bundle React Native code and images */,
+				A0770F88AF30F9691ED52884 /* [CP] Embed Pods Frameworks */,
+				709A54DFD0B4643D10D4D068 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Noah-Signet";
+			productName = noah;
+			productReference = C39DD7152E0C95AF000CB6A9 /* Noah-Signet.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C39DD7172E0C973E000CB6A9 /* Noah-Regtest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C39DD7272E0C973E000CB6A9 /* Build configuration list for PBXNativeTarget "Noah-Regtest" */;
+			buildPhases = (
+				8996DC0F1F781811F38D901E /* [CP] Check Pods Manifest.lock */,
+				C39DD7192E0C973E000CB6A9 /* [Expo] Configure project */,
+				C39DD71A2E0C973E000CB6A9 /* Sources */,
+				C39DD71D2E0C973E000CB6A9 /* Frameworks */,
+				C39DD71F2E0C973E000CB6A9 /* Resources */,
+				C39DD7242E0C973E000CB6A9 /* Bundle React Native code and images */,
+				90E9ABE5A803C38981045B5E /* [CP] Embed Pods Frameworks */,
+				78895DDB33EA826439BB242B /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Noah-Regtest";
+			productName = noah;
+			productReference = C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -182,7 +329,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* noah */,
+				13B07F861A680F5B00A75B9A /* Noah */,
+				C39DD7022E0C95AF000CB6A9 /* Noah-Signet */,
+				C39DD7172E0C973E000CB6A9 /* Noah-Regtest */,
 			);
 		};
 /* End PBXProject section */
@@ -194,8 +343,45 @@
 			files = (
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				C39DD7452E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */,
+				C39DD7462E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */,
+				C39DD7472E0C9DF1000CB6A9 /* signet.xcconfig in Resources */,
+				C39DD7482E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */,
+				C39DD7492E0C9DF1000CB6A9 /* Release.xcconfig in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C39DD70A2E0C95AF000CB6A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C39DD70B2E0C95AF000CB6A9 /* Expo.plist in Resources */,
+				C39DD70C2E0C95AF000CB6A9 /* Images.xcassets in Resources */,
+				C39DD74A2E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */,
+				C39DD74B2E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */,
+				C39DD74C2E0C9DF1000CB6A9 /* signet.xcconfig in Resources */,
+				C39DD74D2E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */,
+				C39DD74E2E0C9DF1000CB6A9 /* Release.xcconfig in Resources */,
+				C39DD70D2E0C95AF000CB6A9 /* SplashScreen.storyboard in Resources */,
+				C39DD70E2E0C95AF000CB6A9 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C39DD71F2E0C973E000CB6A9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C39DD7202E0C973E000CB6A9 /* Expo.plist in Resources */,
+				C39DD7212E0C973E000CB6A9 /* Images.xcassets in Resources */,
+				C39DD74F2E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */,
+				C39DD7502E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */,
+				C39DD7512E0C9DF1000CB6A9 /* signet.xcconfig in Resources */,
+				C39DD7522E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */,
+				C39DD7532E0C9DF1000CB6A9 /* Release.xcconfig in Resources */,
+				C39DD7222E0C973E000CB6A9 /* SplashScreen.storyboard in Resources */,
+				C39DD7232E0C973E000CB6A9 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -217,35 +403,13 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
-		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-noah-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
+		328273F845D3C4E5D17CEB69 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
@@ -274,16 +438,136 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A03B14819EA6CE14AC2E3934 /* [CP] Embed Pods Frameworks */ = {
+		35909CCF15DCD874624AEEFE /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-noah-common-Noah-Signet-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		709A54DFD0B4643D10D4D068 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeFs/RNFS_PrivacyInfo.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
+				"${PODS_ROOT}/../../node_modules/@react-native-vector-icons/ionicons/fonts/Ionicons.ttf",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNFS_PrivacyInfo.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Ionicons.ttf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		78895DDB33EA826439BB242B /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RCT-Folly/RCT-Folly_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ReactNativeFs/RNFS_PrivacyInfo.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle",
+				"${PODS_ROOT}/../../node_modules/@react-native-vector-icons/ionicons/fonts/Ionicons.ttf",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RCT-Folly_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNFS_PrivacyInfo.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/glog_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Ionicons.ttf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8996DC0F1F781811F38D901E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-noah-common-Noah-Regtest-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		90E9ABE5A803C38981045B5E /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -292,7 +576,65 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah/Pods-noah-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A0770F88AF30F9691ED52884 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		ACBE09FE6E0ABD5213B64E0D /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-noah-common-Noah-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		B7177045A6D1684CA40D7A03 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		BECAABBDA6D84D68F2C64E7C /* [Expo] Configure project */ = {
@@ -312,7 +654,75 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-noah/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-noah-common-Noah/expo-configure-project.sh\"\n";
+		};
+		C39DD7042E0C95AF000CB6A9 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-noah-common-Noah-Signet/expo-configure-project.sh\"\n";
+		};
+		C39DD70F2E0C95AF000CB6A9 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
+		};
+		C39DD7192E0C973E000CB6A9 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-noah-common-Noah-Regtest/expo-configure-project.sh\"\n";
+		};
+		C39DD7242E0C973E000CB6A9 /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -322,7 +732,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				3C20EFDB78CD34050ACD952C /* ExpoModulesProvider.swift in Sources */,
+				90A46AE18A163BF183119CB6 /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C39DD7052E0C95AF000CB6A9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C39DD7062E0C95AF000CB6A9 /* AppDelegate.swift in Sources */,
+				7DF2E503400EE172682AF07B /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C39DD71A2E0C973E000CB6A9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C39DD71B2E0C973E000CB6A9 /* AppDelegate.swift in Sources */,
+				601942D0AB763A941862EDE2 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -331,8 +759,9 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7AF62020CF674CF74DC93477 /* Pods-noah.debug.xcconfig */;
+			baseConfigurationReference = 4D0B0F63003860B7A3AD0D58 /* Pods-noah-common-Noah.debug.xcconfig */;
 			buildSettings = {
+				APP_VARIANT = mainnet;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
@@ -356,8 +785,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.anonymous.noah.signet";
-				PRODUCT_NAME = "NoahSignet";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -368,8 +797,9 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BC940F95E5472E27B4779391 /* Pods-noah.release.xcconfig */;
+			baseConfigurationReference = D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */;
 			buildSettings = {
+				APP_VARIANT = mainnet;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
@@ -388,8 +818,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.anonymous.noah.signet";
-				PRODUCT_NAME = "NoahSignet";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -452,7 +882,10 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -507,7 +940,10 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -515,10 +951,150 @@
 			};
 			name = Release;
 		};
+		C39DD7132E0C95AF000CB6A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E07CF47789E44CB2CEDF091 /* Pods-noah-common-Noah-Signet.debug.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = signet;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.signet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		C39DD7142E0C95AF000CB6A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = signet;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.signet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		C39DD7282E0C973E000CB6A9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E9866157C0A7235063C7E870 /* Pods-noah-common-Noah-Regtest.debug.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = regtest;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.regtest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		C39DD7292E0C973E000CB6A9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 75115EA1F17F1C43B2D907F1 /* Pods-noah-common-Noah-Regtest.release.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = regtest;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.regtest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "noah" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Noah" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -532,6 +1108,24 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C39DD7122E0C95AF000CB6A9 /* Build configuration list for PBXNativeTarget "Noah-Signet" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C39DD7132E0C95AF000CB6A9 /* Debug */,
+				C39DD7142E0C95AF000CB6A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C39DD7272E0C973E000CB6A9 /* Build configuration list for PBXNativeTarget "Noah-Regtest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C39DD7282E0C973E000CB6A9 /* Debug */,
+				C39DD7292E0C973E000CB6A9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

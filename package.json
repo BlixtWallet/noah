@@ -10,11 +10,12 @@
     "android:signet": "APP_VARIANT=signet expo run:android --variant signetDebug",
     "android:regtest": "APP_VARIANT=regtest expo run:android --variant regtestDebug",
     "android:mainnet": "APP_VARIANT=mainnet expo run:android --variant mainnetDebug",
-    "ios": "APP_VARIANT=mainnet expo run:ios --scheme mainnet",
-    "ios:signet": "APP_VARIANT=signet expo run:ios --scheme signet",
-    "ios:regtest": "APP_VARIANT=regtest expo run:ios --scheme regtest",
-    "ios:mainnet": "APP_VARIANT=mainnet expo run:ios --scheme mainnet",
-    "web": "expo start --web",
+    "ios:mainnet:debug": "APP_VARIANT=mainnet expo run:ios --scheme Noah --configuration Debug",
+    "ios:regtest:debug": "APP_VARIANT=regtest expo run:ios --scheme Noah-Regtest --configuration Debug",
+    "ios:signet:debug": "APP_VARIANT=signet expo run:ios --scheme Noah-Signet --configuration Debug",
+    "ios:mainnet:release": "APP_VARIANT=mainnet expo run:ios --scheme Noah --configuration Release",
+    "ios:regtest:release": "APP_VARIANT=regtest expo run:ios --scheme Noah-Regtest --configuration Release",
+    "ios:signet:release": "APP_VARIANT=signet expo run:ios --scheme Noah-Signet --configuration Release",
     "postinstall": "bun scripts/download_ark_binaries.js",
     "prebuild:signet": "APP_VARIANT=signet expo prebuild --clean",
     "prebuild:regtest": "APP_VARIANT=regtest expo prebuild --clean",
@@ -25,7 +26,7 @@
     "build:android:signet:debug": "cd android && ./gradlew assembleSignetDebug",
     "build:android:regtest:debug": "cd android && ./gradlew assembleRegtestDebug",
     "build:android:mainnet:debug": "cd android && ./gradlew assembleMainnetDebug",
-    "android": "expo run:android"
+    "web": "expo start --web"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.9.2",

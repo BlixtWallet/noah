@@ -13,7 +13,8 @@ install! 'cocoapods',
 
 prepare_react_native_project!
 
-target 'noah' do
+# Abstract target for all flavors to inherit common pods and settings
+abstract_target 'noah-common' do
   use_expo_modules!
 
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
@@ -60,5 +61,13 @@ target 'noah' do
         end
       end
     end
+  end
+
+  # Define the actual app targets. They will inherit all the settings from the abstract target.
+  target 'Noah' do
+  end
+  target 'Noah-Signet' do
+  end
+  target 'Noah-Regtest' do
   end
 end
