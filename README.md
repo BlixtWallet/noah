@@ -1,4 +1,4 @@
-# 🪙 Noah's Ark
+# Noah's Ark 🚢
 
 Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protocol. It is built with React Native and Expo.
 
