@@ -11,7 +11,7 @@ const variants = {
     bundleIdentifier: "com.anonymous.noah.regtest",
     packageName: "com.anonymous.noah.regtest",
   },
-  production: {
+  mainnet: {
     name: "Noah",
     bundleIdentifier: "com.anonymous.noah",
     packageName: "com.anonymous.noah",
