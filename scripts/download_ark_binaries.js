@@ -3,11 +3,11 @@ const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
 
-const ARK_VERSION = "v0.0.14";
+const NITRO_ARK_VERSION = "v0.0.15";
 
 // --- Configuration ---
-const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/Ark.xcframework.zip`;
-const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${ARK_VERSION}/jniLibs.zip`;
+const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
+const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
 
 const projectRoot = process.cwd();
 const nitroArkPath = path.resolve(

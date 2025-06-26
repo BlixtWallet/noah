@@ -3,18 +3,12 @@ import { ExpoConfig } from "expo/config";
 const variants = {
   signet: {
     name: "Noah (Signet)",
-    bundleIdentifier: "com.anonymous.noah.signet",
-    packageName: "com.anonymous.noah.signet",
   },
   regtest: {
     name: "Noah (Regtest)",
-    bundleIdentifier: "com.anonymous.noah.regtest",
-    packageName: "com.anonymous.noah.regtest",
   },
   mainnet: {
     name: "Noah",
-    bundleIdentifier: "com.anonymous.noah",
-    packageName: "com.anonymous.noah",
   },
 };
 
@@ -26,7 +20,7 @@ const getAppVariant = (): AppVariant => {
     return variantEnv as AppVariant;
   }
   // Default to mainnet for generic commands like `expo start`
-  return "mainnet";
+  return "signet";
 };
 
 const appVariant = getAppVariant();
@@ -70,7 +64,6 @@ const config: { expo: ExpoConfig } = {
     ],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: variantConfig.bundleIdentifier,
     },
     android: {
       adaptiveIcon: {
@@ -78,7 +71,6 @@ const config: { expo: ExpoConfig } = {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: variantConfig.packageName,
     },
     web: {
       favicon: "./assets/favicon.png",

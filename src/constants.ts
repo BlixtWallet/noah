@@ -2,12 +2,27 @@ import type { BarkCreateOpts } from "react-native-nitro-ark";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import Constants from "expo-constants";
 
-export const ARK_DATA_PATH = `${RNFS.DocumentDirectoryPath}/ark-data`;
+const getArkDataPath = (): string => {
+  const appVariant = Constants.expoConfig?.extra?.APP_VARIANT;
+  switch (appVariant) {
+    case "regtest":
+      return `${RNFS.DocumentDirectoryPath}/noah-data-regtest`;
+    case "signet":
+      return `${RNFS.DocumentDirectoryPath}/noah-data-signet`;
+    case "mainnet":
+      return `${RNFS.DocumentDirectoryPath}/noah-data-mainnet`;
+    default:
+      // Default to signet for development builds that aren't launched via a profile
+      return `${RNFS.DocumentDirectoryPath}/noah-data-signet`;
+  }
+};
+
+export const ARK_DATA_PATH = getArkDataPath();
 
 type WalletCreationOptions = Omit<BarkCreateOpts, "mnemonic">;
 
 export const SIGNET_CONFIG: WalletCreationOptions = {
-  force: false,
+  force: true,
   regtest: false,
   signet: true,
   bitcoin: false,
@@ -24,8 +39,8 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   signet: false,
   bitcoin: false,
   config: {
-    bitcoind: "http://10.0.2.2:18443",
-    asp: "http://10.0.2.2:3535",
+    bitcoind: "http://192.168.4.253:18443",
+    asp: "http://192.168.4.253:3535",
     bitcoind_user: "polaruser",
     bitcoind_pass: "polarpass",
     vtxo_refresh_expiry_threshold: 288,

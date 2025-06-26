@@ -32,7 +32,7 @@ react {
     //   The list of variants to that are debuggable. For those we're going to
     //   skip the bundling of the JS bundle and the assets. By default is just 'debug'.
     //   If you add flavors like lite, prod, etc. you'll have to list your debuggableVariants.
-    // debuggableVariants = ["liteDebug", "prodDebug"]
+    debuggableVariants = ["noahMainnetDebug", "noahSignetDebug", "noahRegtestDebug"]
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
@@ -89,36 +89,31 @@ android {
 
     namespace 'com.anonymous.noah'
     defaultConfig {
+        applicationId "com.anonymous.noah"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
     }
 
-    flavorDimensions 'app'
+    flavorDimensions 'version'
     productFlavors {
         signet {
-            dimension 'app'
-            applicationId 'com.anonymous.noah.signet'
+            dimension 'version'
+            applicationIdSuffix ".signet"
+            versionNameSuffix "-signet"
             resValue "string", "app_name", "Noah (Signet)"
         }
         regtest {
-            dimension 'app'
-            applicationId 'com.anonymous.noah.regtest'
+            dimension 'version'
+            applicationIdSuffix ".regtest"
+            versionNameSuffix "-regtest"
             resValue "string", "app_name", "Noah (Regtest)"
         }
         mainnet {
-            dimension 'app'
-            applicationId 'com.anonymous.noah'
+            dimension 'version'
             resValue "string", "app_name", "Noah"
         }
-    }
-
-    sourceSets {
-        main.java.srcDirs = ['src/main/java/com/anonymous/noah']
-        signet.java.srcDirs = ['src/signet/java']
-        regtest.java.srcDirs = ['src/regtest/java']
-        mainnet.java.srcDirs = ['src/mainnet/java']
     }
 
     signingConfigs {
