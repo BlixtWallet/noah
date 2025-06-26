@@ -7,7 +7,7 @@ export const ARK_DATA_PATH = `${RNFS.DocumentDirectoryPath}/ark-data`;
 type WalletCreationOptions = Omit<BarkCreateOpts, "mnemonic">;
 
 export const SIGNET_CONFIG: WalletCreationOptions = {
-  force: true,
+  force: false,
   regtest: false,
   signet: true,
   bitcoin: false,

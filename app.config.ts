@@ -25,12 +25,11 @@ const getAppVariant = (): AppVariant => {
   if (variantEnv && variantEnv in variants) {
     return variantEnv as AppVariant;
   }
-  console.log("App variant env", variantEnv);
-  return "signet";
+  // Default to mainnet for generic commands like `expo start`
+  return "mainnet";
 };
 
 const appVariant = getAppVariant();
-
 const variantConfig = variants[appVariant];
 
 const config: { expo: ExpoConfig } = {
