@@ -1,7 +1,7 @@
 // Configuration settings for the regtest flavor
 
 // App Scheme for deep linking
-APP_SCHEME = noah.regtest
+APP_SCHEME = com.anonymous.noah.regtest
 
 // Bundle Identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.regtest

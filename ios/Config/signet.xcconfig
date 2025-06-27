@@ -1,7 +1,7 @@
 // Configuration settings for the signet flavor
 
 // App Scheme for deep linking
-APP_SCHEME = noah.signet
+APP_SCHEME = com.anonymous.noah.signet
 
 // Bundle Identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.signet
