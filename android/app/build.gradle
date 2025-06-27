@@ -103,16 +103,19 @@ android {
             applicationIdSuffix ".signet"
             versionNameSuffix "-signet"
             resValue "string", "app_name", "Noah (Signet)"
+            buildConfigField "String", "APP_VARIANT", '"signet"'
         }
         regtest {
             dimension 'version'
             applicationIdSuffix ".regtest"
             versionNameSuffix "-regtest"
             resValue "string", "app_name", "Noah (Regtest)"
+            buildConfigField "String", "APP_VARIANT", '"regtest"'
         }
         mainnet {
             dimension 'version'
             resValue "string", "app_name", "Noah"
+            buildConfigField "String", "APP_VARIANT", '"mainnet"'
         }
     }
 

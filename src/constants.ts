@@ -1,10 +1,9 @@
 import type { BarkCreateOpts } from "react-native-nitro-ark";
 import * as RNFS from "@dr.pogodin/react-native-fs";
-import Constants from "expo-constants";
+import { APP_VARIANT } from "./config";
 
 const getArkDataPath = (): string => {
-  const appVariant = Constants.expoConfig?.extra?.APP_VARIANT;
-  switch (appVariant) {
+  switch (APP_VARIANT) {
     case "regtest":
       return `${RNFS.DocumentDirectoryPath}/noah-data-regtest`;
     case "signet":
@@ -64,8 +63,7 @@ export const PRODUCTION_CONFIG: WalletCreationOptions = {
 };
 
 const getActiveWalletConfig = (): WalletCreationOptions => {
-  const appVariant = Constants.expoConfig?.extra?.APP_VARIANT;
-  switch (appVariant) {
+  switch (APP_VARIANT) {
     case "regtest":
       console.log("Using regtest configuration");
       return REGTEST_CONFIG;

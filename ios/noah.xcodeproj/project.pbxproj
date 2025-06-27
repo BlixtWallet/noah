@@ -15,6 +15,9 @@
 		90A46AE18A163BF183119CB6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */; };
 		B9EBC327DB966506782A2DA8 /* libPods-noah-common-Noah.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F063A0268003AC078FBB106F /* libPods-noah-common-Noah.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C3778B252E0E2FEF0084F213 /* AppVariant.m in Sources */ = {isa = PBXBuildFile; fileRef = C3778B242E0E2FEF0084F213 /* AppVariant.m */; };
+		C3778B262E0E2FEF0084F213 /* AppVariant.m in Sources */ = {isa = PBXBuildFile; fileRef = C3778B242E0E2FEF0084F213 /* AppVariant.m */; };
+		C3778B272E0E2FEF0084F213 /* AppVariant.m in Sources */ = {isa = PBXBuildFile; fileRef = C3778B242E0E2FEF0084F213 /* AppVariant.m */; };
 		C39DD7062E0C95AF000CB6A9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		C39DD70B2E0C95AF000CB6A9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		C39DD70C2E0C95AF000CB6A9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -65,6 +68,8 @@
 		B2CF17E77D223D7EC1A61FF9 /* libPods-noah-common-Noah-Signet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah-common-Noah-Signet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		BCDAA6B157059A8D05E8F8C5 /* Pods-noah-common-noah-regtest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah-regtest.release.xcconfig"; path = "Target Support Files/Pods-noah-common-noah-regtest/Pods-noah-common-noah-regtest.release.xcconfig"; sourceTree = "<group>"; };
+		C3778B232E0E2FEF0084F213 /* AppVariant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AppVariant.h; path = noah/AppVariant.h; sourceTree = "<group>"; };
+		C3778B242E0E2FEF0084F213 /* AppVariant.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AppVariant.m; path = noah/AppVariant.m; sourceTree = "<group>"; };
 		C39DD7152E0C95AF000CB6A9 /* Noah-Signet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noah-Signet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noah-Regtest.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Config/Debug.xcconfig; sourceTree = "<group>"; };
@@ -182,6 +187,8 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				C3778B232E0E2FEF0084F213 /* AppVariant.h */,
+				C3778B242E0E2FEF0084F213 /* AppVariant.m */,
 				C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */,
 				C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */,
 				C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */,
@@ -731,6 +738,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3778B262E0E2FEF0084F213 /* AppVariant.m in Sources */,
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				90A46AE18A163BF183119CB6 /* ExpoModulesProvider.swift in Sources */,
 			);
@@ -740,6 +748,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3778B272E0E2FEF0084F213 /* AppVariant.m in Sources */,
 				C39DD7062E0C95AF000CB6A9 /* AppDelegate.swift in Sources */,
 				7DF2E503400EE172682AF07B /* ExpoModulesProvider.swift in Sources */,
 			);
@@ -749,6 +758,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3778B252E0E2FEF0084F213 /* AppVariant.m in Sources */,
 				C39DD71B2E0C973E000CB6A9 /* AppDelegate.swift in Sources */,
 				601942D0AB763A941862EDE2 /* ExpoModulesProvider.swift in Sources */,
 			);
@@ -882,10 +892,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -940,10 +947,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

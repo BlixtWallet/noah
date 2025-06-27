@@ -12,3 +12,5 @@ PRODUCT_DISPLAY_NAME = Noah (Signet)
 
 // App Icon
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Signet
+
+APP_VARIANT = signet

@@ -70,5 +70,7 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>APP_VARIANT</key>
+    <string>$(APP_VARIANT)</string>
   </dict>
 </plist>

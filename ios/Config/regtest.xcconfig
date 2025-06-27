@@ -12,3 +12,5 @@ PRODUCT_NAME = Noah (Regtest)
 
 // App Icon
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Regtest
+
+APP_VARIANT = regtest
