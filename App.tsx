@@ -1,19 +1,33 @@
 import "./global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  DefaultTheme,
+  Theme,
+} from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "./src/screens/HomeScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform } from "react-native";
+import { Platform, StatusBar } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
 
 const Tab = createNativeBottomTabNavigator();
 
 const queryClient = new QueryClient();
+
+const navTheme: Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "#000000",
+    card: "#000000",
+    text: "#FFFFFF",
+  },
+};
 
 const AppContent = () => {
   const isInitialized = useWalletStore((state) => state.isInitialized);
@@ -24,15 +38,26 @@ const AppContent = () => {
   }
 
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      tabBarStyle={{
+        backgroundColor: "#1C1C1E",
+      }}
+      tabBarInactiveTintColor="#8e8e93"
+      screenOptions={{
+        tabBarActiveTintColor: "#F7931A",
+      }}
+    >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: () => {
-            return isIos
-              ? { sfSymbol: "book" }
-              : Icon.getImageSourceSync("home", 24)!;
+          tabBarIcon: ({ focused }) => {
+            if (isIos) {
+              return { sfSymbol: focused ? "house.fill" : "house" };
+            }
+            const iconName = focused ? "home" : "home-outline";
+            const color = focused ? "#F7931A" : "#8e8e93";
+            return Icon.getImageSourceSync(iconName, 24, color)!;
           },
         }}
       />
@@ -40,10 +65,13 @@ const AppContent = () => {
         name="Settings"
         component={SettingsScreen}
         options={{
-          tabBarIcon: () => {
-            return isIos
-              ? { sfSymbol: "gear" }
-              : Icon.getImageSourceSync("settings", 24)!;
+          tabBarIcon: ({ focused }) => {
+            if (isIos) {
+              return { sfSymbol: focused ? "gearshape.fill" : "gear" };
+            }
+            const iconName = focused ? "settings" : "settings-outline";
+            const color = focused ? "#F7931A" : "#8e8e93";
+            return Icon.getImageSourceSync(iconName, 24, color)!;
           },
         }}
       />
@@ -55,7 +83,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer theme={navTheme}>
+          <StatusBar barStyle="light-content" />
           <AppContent />
         </NavigationContainer>
       </SafeAreaProvider>

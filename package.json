@@ -4,9 +4,6 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "start:signet": "expo start",
-    "start:regtest": "expo start",
-    "start:mainnet": "expo start",
     "android:mainnet:debug": "expo run:android --variant mainnetDebug --app-id=com.anonymous.noah",
     "android:mainnet:release": "expo run:android --variant mainnetRelease --app-id=com.anonymous.noah",
     "android:signet:debug": "expo run:android --variant signetDebug --app-id=com.anonymous.noah.signet",
