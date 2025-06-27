@@ -29,7 +29,8 @@
     "build:android:mainnet:release": "cd android && ./gradlew assembleMainnetRelease",
     "build:android:signet:debug": "cd android && ./gradlew assembleSignetDebug",
     "build:android:regtest:debug": "cd android && ./gradlew assembleRegtestDebug",
-    "build:android:mainnet:debug": "cd android && ./gradlew assembleMainnetDebug"
+    "build:android:mainnet:debug": "cd android && ./gradlew assembleMainnetDebug",
+    "lint": "expo lint"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.9.2",
@@ -58,6 +59,11 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "eslint": "^9.29.0",
+    "eslint-config-expo": "^9.2.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.5.1",
+    "prettier": "^3.6.1",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"

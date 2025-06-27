@@ -1,9 +1,12 @@
 import { NativeModules } from "react-native";
 
-const AppVariant = NativeModules.AppVariant
-  ? NativeModules.AppVariant.getConstants()
-  : {};
+type AppVariantConstants = {
+  APP_VARIANT: "mainnet" | "signet" | "regtest";
+};
 
-  console.log("AppVariant", AppVariant);
+const AppVariant = (
+  NativeModules.AppVariant ? NativeModules.AppVariant.getConstants() : {}
+) as Partial<AppVariantConstants>;
 
-export const APP_VARIANT = AppVariant.APP_VARIANT;
+export const APP_VARIANT: AppVariantConstants["APP_VARIANT"] =
+  AppVariant.APP_VARIANT ?? "signet";

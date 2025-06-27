@@ -25,7 +25,7 @@ const OnboardingScreen = () => {
         throw new Error(
           `Failed to create wallet: ${
             error instanceof Error ? error.message : String(error)
-          }`,
+          }`
         );
       }
     },
