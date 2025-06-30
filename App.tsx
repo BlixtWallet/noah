@@ -1,11 +1,7 @@
 import "./global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  NavigationContainer,
-  DefaultTheme,
-  Theme,
-} from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, Theme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "./src/screens/HomeScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -44,7 +40,7 @@ const AppContent = () => {
       }}
       tabBarInactiveTintColor="#8e8e93"
       screenOptions={{
-        tabBarActiveTintColor: "#F7931A",
+        tabBarActiveTintColor: "#c98a3c",
       }}
     >
       <Tab.Screen
@@ -56,8 +52,8 @@ const AppContent = () => {
               return { sfSymbol: focused ? "house.fill" : "house" };
             }
             const iconName = focused ? "home" : "home-outline";
-            const color = focused ? "#F7931A" : "#8e8e93";
-            return Icon.getImageSourceSync(iconName, 24, color)!;
+
+            return Icon.getImageSourceSync(iconName, 24)!;
           },
         }}
       />
@@ -70,8 +66,8 @@ const AppContent = () => {
               return { sfSymbol: focused ? "gearshape.fill" : "gear" };
             }
             const iconName = focused ? "settings" : "settings-outline";
-            const color = focused ? "#F7931A" : "#8e8e93";
-            return Icon.getImageSourceSync(iconName, 24, color)!;
+
+            return Icon.getImageSourceSync(iconName, 24)!;
           },
         }}
       />
