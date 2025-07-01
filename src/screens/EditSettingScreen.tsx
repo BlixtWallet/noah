@@ -6,6 +6,7 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Text } from "../components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS } from "../lib/constants";
 
 const EditSettingScreen = () => {
   const route = useRoute();
@@ -29,10 +30,14 @@ const EditSettingScreen = () => {
           <Input
             value={value}
             onChangeText={setValue}
-            className="border border-gray-700 bg-gray-800 p-4 rounded-lg text-white"
+            className="border-border bg-card p-4 rounded-lg text-foreground"
           />
         </View>
-        <Button onPress={handleSave} className="mt-8">
+        <Button
+          onPress={handleSave}
+          className="mt-8"
+          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
+        >
           <Text>Save</Text>
         </Button>
       </View>

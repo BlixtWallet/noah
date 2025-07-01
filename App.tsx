@@ -1,7 +1,7 @@
 import "./global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NavigationContainer, DarkTheme, Theme } from "@react-navigation/native";
+import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "./src/screens/HomeScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -12,9 +12,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Platform, StatusBar } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PortalHost } from "@rn-primitives/portal";
-import { NAV_THEME } from "./src/lib/constants";
+import { COLORS } from "./src/lib/constants";
 import React from "react";
 export type SettingsStackParamList = {
   SettingsList: undefined;
@@ -26,13 +25,6 @@ const Stack = createNativeStackNavigator<SettingsStackParamList>();
 const HomeStack = createNativeStackNavigator();
 
 const queryClient = new QueryClient();
-
-const navTheme: Theme = {
-  ...DarkTheme,
-  colors: {
-    ...NAV_THEME.dark,
-  },
-};
 
 const SettingsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -58,11 +50,11 @@ const AppContent = () => {
   return (
     <Tab.Navigator
       tabBarStyle={{
-        backgroundColor: NAV_THEME.dark.background,
+        backgroundColor: COLORS.TAB_BAR_BACKGROUND,
       }}
-      tabBarInactiveTintColor={NAV_THEME.dark.border}
+      tabBarInactiveTintColor={COLORS.TAB_BAR_INACTIVE}
       screenOptions={{
-        tabBarActiveTintColor: NAV_THEME.dark.primary,
+        tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
       }}
     >
       <Tab.Screen
@@ -99,16 +91,14 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }} className="dark">
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <NavigationContainer theme={navTheme}>
-            <StatusBar barStyle="light-content" />
-            <AppContent />
-          </NavigationContainer>
-          <PortalHost />
-        </SafeAreaProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <NavigationContainer theme={DarkTheme}>
+          <StatusBar barStyle="light-content" />
+          <AppContent />
+        </NavigationContainer>
+        <PortalHost />
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }
