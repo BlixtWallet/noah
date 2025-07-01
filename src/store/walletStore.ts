@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { MMKV } from "react-native-mmkv";
-import { ACTIVE_WALLET_CONFIG } from "../constants";
+import { ACTIVE_WALLET_CONFIG, ARK_DATA_PATH } from "../constants";
 import { APP_VARIANT } from "../config";
 
 const storage = new MMKV();
@@ -46,10 +46,8 @@ const initialConfig = () => {
 };
 
 interface WalletState {
-  mnemonic: string | null;
   isInitialized: boolean;
   config: WalletConfig;
-  setMnemonic: (mnemonic: string) => void;
   finishOnboarding: () => void;
   setConfig: (config: WalletConfig) => void;
 }
@@ -57,10 +55,8 @@ interface WalletState {
 export const useWalletStore = create<WalletState>()(
   persist(
     (set) => ({
-      mnemonic: null,
       isInitialized: false,
       config: initialConfig(),
-      setMnemonic: (mnemonic) => set({ mnemonic, isInitialized: true }),
       finishOnboarding: () => set({ isInitialized: true }),
       setConfig: (config) => set({ config }),
     }),

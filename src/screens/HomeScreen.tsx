@@ -1,36 +1,15 @@
 import { View, ScrollView, RefreshControl, Pressable, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useQuery } from "@tanstack/react-query";
-import { getBalance } from "react-native-nitro-ark";
-import { useWalletStore } from "../store/walletStore";
-import { ARK_DATA_PATH } from "../constants";
 import { Text } from "../components/ui/text";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle } from "lucide-react-native";
 import { useCallback } from "react";
 import { COLORS } from "../lib/constants";
+import { useBalance } from "../hooks/useWallet";
 
 const HomeScreen = () => {
-  const mnemonic = useWalletStore((state) => state.mnemonic);
-
-  const fetchBalance = async (sync: boolean) => {
-    if (!mnemonic) return null;
-    const newBalance = await getBalance(ARK_DATA_PATH, mnemonic, sync);
-    return newBalance;
-  };
-
-  const {
-    data: balance,
-    isFetching,
-    refetch,
-    error,
-  } = useQuery({
-    queryKey: ["balance"],
-    queryFn: () => fetchBalance(true),
-    enabled: !!mnemonic,
-    retry: false,
-  });
+  const { data: balance, isFetching, refetch, error } = useBalance();
 
   const onRefresh = useCallback(async () => {
     await refetch();
