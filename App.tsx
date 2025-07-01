@@ -5,8 +5,11 @@ import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "./src/screens/HomeScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
+import ReceiveScreen from "./src/screens/ReceiveScreen";
+import SendScreen from "./src/screens/SendScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EditSettingScreen from "./src/screens/EditSettingScreen";
+import BoardArkScreen from "./src/screens/BoardArkScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -26,10 +29,17 @@ export type OnboardingStackParamList = {
   EditConfiguration: { item: { id: string; title: string; value?: string } };
 };
 
+export type HomeStackParamList = {
+  HomeStack: undefined;
+  BoardArk: undefined;
+};
+
 const Tab = createNativeBottomTabNavigator();
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
-const HomeStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator<HomeStackParamList>();
+const ReceiveStack = createNativeStackNavigator();
+const SendStack = createNativeStackNavigator();
 
 const queryClient = new QueryClient();
 
@@ -42,7 +52,24 @@ const SettingsStack = () => (
 const HomeStackScreen = () => (
   <HomeStack.Navigator>
     <HomeStack.Screen name="HomeStack" component={HomeScreen} options={{ headerShown: false }} />
+    <HomeStack.Screen name="BoardArk" component={BoardArkScreen} options={{ headerShown: false }} />
   </HomeStack.Navigator>
+);
+
+const ReceiveStackScreen = () => (
+  <ReceiveStack.Navigator>
+    <ReceiveStack.Screen
+      name="ReceiveStack"
+      component={ReceiveScreen}
+      options={{ headerShown: false }}
+    />
+  </ReceiveStack.Navigator>
+);
+
+const SendStackScreen = () => (
+  <SendStack.Navigator>
+    <SendStack.Screen name="SendStack" component={SendScreen} options={{ headerShown: false }} />
+  </SendStack.Navigator>
 );
 
 const OnboardingStackScreen = () => (
@@ -80,6 +107,34 @@ const AppContent = () => {
               return { sfSymbol: focused ? "house.fill" : "house" };
             }
             const iconName = focused ? "home" : "home-outline";
+
+            return Icon.getImageSourceSync(iconName, 24)!;
+          },
+        }}
+      />
+      <Tab.Screen
+        name="Receive"
+        component={ReceiveStackScreen}
+        options={{
+          tabBarIcon: ({ focused }) => {
+            if (isIos) {
+              return { sfSymbol: focused ? "arrow.down.left" : "arrow.down.left" };
+            }
+            const iconName = focused ? "arrow-down" : "arrow-down-outline";
+
+            return Icon.getImageSourceSync(iconName, 24)!;
+          },
+        }}
+      />
+      <Tab.Screen
+        name="Send"
+        component={SendStackScreen}
+        options={{
+          tabBarIcon: ({ focused }) => {
+            if (isIos) {
+              return { sfSymbol: focused ? "arrow.up.right" : "arrow.up.right" };
+            }
+            const iconName = focused ? "arrow-up" : "arrow-up-outline";
 
             return Icon.getImageSourceSync(iconName, 24)!;
           },

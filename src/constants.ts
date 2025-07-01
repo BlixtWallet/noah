@@ -29,6 +29,7 @@ export const SIGNET_CONFIG: WalletCreationOptions = {
     esplora: "esplora.signet.2nd.dev",
     asp: "ark.signet.2nd.dev",
     vtxo_refresh_expiry_threshold: 288,
+    fallback_fee_rate: 10000,
   },
 };
 
@@ -43,6 +44,7 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
     bitcoind_user: "polaruser",
     bitcoind_pass: "polarpass",
     vtxo_refresh_expiry_threshold: 288,
+    fallback_fee_rate: 10000,
   },
 };
 
@@ -59,6 +61,7 @@ export const PRODUCTION_CONFIG: WalletCreationOptions = {
     // you will need a production ASP for mainnet.
     asp: "http://192.168.4.252:3535",
     vtxo_refresh_expiry_threshold: 288,
+    fallback_fee_rate: 10000,
   },
 };
 

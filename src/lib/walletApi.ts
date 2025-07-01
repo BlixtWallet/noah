@@ -32,6 +32,7 @@ export const createWallet = async () => {
             bitcoind_user: config.bitcoind_user,
             bitcoind_pass: config.bitcoind_pass,
             vtxo_refresh_expiry_threshold: 288,
+            fallback_fee_rate: 10000,
           },
         }
       : {
@@ -43,6 +44,7 @@ export const createWallet = async () => {
             esplora: config.esplora,
             asp: config.asp,
             vtxo_refresh_expiry_threshold: 288,
+            fallback_fee_rate: 10000,
           },
         };
 
@@ -64,7 +66,7 @@ export const createWallet = async () => {
   }
 };
 
-export const fetchBalance = async (sync: boolean) => {
+export const fetchBalance = async (no_sync: boolean) => {
   const credentials = await Keychain.getGenericPassword({
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
@@ -74,7 +76,9 @@ export const fetchBalance = async (sync: boolean) => {
     return null;
   }
   const { password: mnemonic } = credentials;
-  const newBalance = await getBalanceNitro(ARK_DATA_PATH, mnemonic, sync);
+  const newBalance = await getBalanceNitro(ARK_DATA_PATH, mnemonic, no_sync);
+
+  console.log("fetchBalance result", newBalance, no_sync);
   return newBalance;
 };
 

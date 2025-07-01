@@ -26,7 +26,7 @@ export function useBalance() {
 
   return useQuery({
     queryKey: ["balance"],
-    queryFn: () => fetchBalanceAction(true),
+    queryFn: () => fetchBalanceAction(false),
     enabled: isInitialized,
     retry: false,
   });

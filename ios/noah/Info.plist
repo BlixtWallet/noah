@@ -72,5 +72,7 @@
     <false/>
     <key>APP_VARIANT</key>
     <string>$(APP_VARIANT)</string>
+    <key>NSCameraUsageDescription</key>
+    <string>$(PRODUCT_NAME) needs access to your Camera.</string>
   </dict>
 </plist>
