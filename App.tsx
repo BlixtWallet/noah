@@ -1,7 +1,7 @@
 import "./global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NavigationContainer, DefaultTheme, Theme } from "@react-navigation/native";
+import { NavigationContainer, DarkTheme, Theme } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "./src/screens/HomeScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -12,7 +12,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Platform, StatusBar } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
-
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { PortalHost } from "@rn-primitives/portal";
+import { NAV_THEME } from "./src/lib/constants";
+import React from "react";
 export type SettingsStackParamList = {
   SettingsList: undefined;
   EditSetting: { item: { id: string; title: string; value?: string } };
@@ -20,16 +23,14 @@ export type SettingsStackParamList = {
 
 const Tab = createNativeBottomTabNavigator();
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
+const HomeStack = createNativeStackNavigator();
 
 const queryClient = new QueryClient();
 
 const navTheme: Theme = {
-  ...DefaultTheme,
+  ...DarkTheme,
   colors: {
-    ...DefaultTheme.colors,
-    background: "#000000",
-    card: "#000000",
-    text: "#FFFFFF",
+    ...NAV_THEME.dark,
   },
 };
 
@@ -38,6 +39,12 @@ const SettingsStack = () => (
     <Stack.Screen name="SettingsList" component={SettingsScreen} />
     <Stack.Screen name="EditSetting" component={EditSettingScreen} />
   </Stack.Navigator>
+);
+
+const HomeStackScreen = () => (
+  <HomeStack.Navigator>
+    <HomeStack.Screen name="HomeStack" component={HomeScreen} options={{ headerShown: false }} />
+  </HomeStack.Navigator>
 );
 
 const AppContent = () => {
@@ -51,16 +58,16 @@ const AppContent = () => {
   return (
     <Tab.Navigator
       tabBarStyle={{
-        backgroundColor: "#1C1C1E",
+        backgroundColor: NAV_THEME.dark.background,
       }}
-      tabBarInactiveTintColor="#8e8e93"
+      tabBarInactiveTintColor={NAV_THEME.dark.border}
       screenOptions={{
-        tabBarActiveTintColor: "#c98a3c",
+        tabBarActiveTintColor: NAV_THEME.dark.primary,
       }}
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStackScreen}
         options={{
           tabBarIcon: ({ focused }) => {
             if (isIos) {
@@ -92,13 +99,16 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <NavigationContainer theme={navTheme}>
-          <StatusBar barStyle="light-content" />
-          <AppContent />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }} className="dark">
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <NavigationContainer theme={navTheme}>
+            <StatusBar barStyle="light-content" />
+            <AppContent />
+          </NavigationContainer>
+          <PortalHost />
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

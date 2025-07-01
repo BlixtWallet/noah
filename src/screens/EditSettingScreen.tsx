@@ -4,7 +4,6 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useWalletStore } from "../store/walletStore";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { Label } from "../components/ui/label";
 import { Text } from "../components/ui/text";
 import { SafeAreaView } from "react-native-safe-area-context";
 

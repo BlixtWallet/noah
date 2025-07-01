@@ -59,7 +59,7 @@ const SettingsScreen = () => {
             >
               <View>
                 <Label className="text-foreground text-lg">{item.title}</Label>
-                <Text className="text-slate-400 text-base mt-1">{item.value}</Text>
+                <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
               </View>
               <Icon name="chevron-forward-outline" size={24} color="white" />
             </Pressable>
