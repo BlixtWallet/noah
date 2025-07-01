@@ -7,6 +7,8 @@ import { ARK_DATA_PATH } from "../constants";
 import { APP_VARIANT } from "../config";
 import { Button } from "../components/ui/button";
 import { Text } from "../components/ui/text";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS } from "../lib/constants";
 
 const OnboardingScreen = () => {
   const { setMnemonic, config } = useWalletStore();
@@ -66,22 +68,26 @@ const OnboardingScreen = () => {
   });
 
   return (
-    <View className="flex-1 items-center justify-center bg-background p-5">
+    <SafeAreaView className="flex-1 items-center justify-center bg-background p-5">
       <Text className="text-3xl font-bold mb-4 text-center">Welcome to Noah</Text>
       <Text className="text-lg text-muted-foreground mb-10 text-center">
         Tap the button below to create your secure Bitcoin wallet.
       </Text>
       {createWalletMutation.status === "pending" ? (
         <View className="items-center">
-          <ActivityIndicator size="large" color="#0000ff" />
+          <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
           <Text className="mt-4 text-muted-foreground">Creating your wallet...</Text>
         </View>
       ) : (
-        <Button onPress={() => createWalletMutation.mutate()} size="lg">
+        <Button
+          onPress={() => createWalletMutation.mutate()}
+          size="lg"
+          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
+        >
           <Text>Create Wallet</Text>
         </Button>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
