@@ -14,13 +14,21 @@ import { Platform, StatusBar } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
 import { COLORS } from "./src/lib/constants";
 import React from "react";
+import { PortalHost } from "@rn-primitives/portal";
+
 export type SettingsStackParamList = {
   SettingsList: undefined;
-  EditSetting: { item: { id: string; title: string; value?: string } };
+};
+
+export type OnboardingStackParamList = {
+  Onboarding: undefined;
+  Configuration: undefined;
+  EditConfiguration: { item: { id: string; title: string; value?: string } };
 };
 
 const Tab = createNativeBottomTabNavigator();
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
+const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 const HomeStack = createNativeStackNavigator();
 
 const queryClient = new QueryClient();
@@ -28,7 +36,6 @@ const queryClient = new QueryClient();
 const SettingsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="SettingsList" component={SettingsScreen} />
-    <Stack.Screen name="EditSetting" component={EditSettingScreen} />
   </Stack.Navigator>
 );
 
@@ -38,12 +45,20 @@ const HomeStackScreen = () => (
   </HomeStack.Navigator>
 );
 
+const OnboardingStackScreen = () => (
+  <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
+    <OnboardingStack.Screen name="Onboarding" component={OnboardingScreen} />
+    <OnboardingStack.Screen name="Configuration" component={SettingsScreen} />
+    <OnboardingStack.Screen name="EditConfiguration" component={EditSettingScreen} />
+  </OnboardingStack.Navigator>
+);
+
 const AppContent = () => {
   const isInitialized = useWalletStore((state) => state.isInitialized);
   const isIos = Platform.OS === "ios";
 
   if (!isInitialized) {
-    return <OnboardingScreen />;
+    return <OnboardingStackScreen />;
   }
 
   return (
@@ -95,6 +110,7 @@ export default function App() {
         <NavigationContainer theme={DarkTheme}>
           <StatusBar barStyle="light-content" />
           <AppContent />
+          <PortalHost />
         </NavigationContainer>
       </SafeAreaProvider>
     </QueryClientProvider>

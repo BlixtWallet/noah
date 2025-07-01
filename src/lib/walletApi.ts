@@ -16,10 +16,13 @@ export const createWallet = async () => {
   const { config } = useWalletStore.getState();
   const mnemonic = await createMnemonic();
 
+  // Important note: force is set to true to ensure a new wallet
+  // is created even if one already exists.
+  // Only use force if you want to overwrite an existing wallet.
   const creationConfig =
     APP_VARIANT === "regtest"
       ? {
-          force: false,
+          force: true,
           regtest: true,
           signet: false,
           bitcoin: false,
@@ -32,7 +35,7 @@ export const createWallet = async () => {
           },
         }
       : {
-          force: false,
+          force: true,
           regtest: false,
           signet: APP_VARIANT === "signet",
           bitcoin: APP_VARIANT === "mainnet",
@@ -73,4 +76,20 @@ export const fetchBalance = async (sync: boolean) => {
   const { password: mnemonic } = credentials;
   const newBalance = await getBalanceNitro(ARK_DATA_PATH, mnemonic, sync);
   return newBalance;
+};
+
+export const deleteWallet = async () => {
+  try {
+    const dataDirExists = await RNFS.exists(ARK_DATA_PATH);
+    if (dataDirExists) {
+      await RNFS.unlink(ARK_DATA_PATH);
+    }
+
+    await Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE });
+  } catch (error) {
+    console.error("Failed to delete wallet:", error);
+    throw new Error(
+      `Failed to delete wallet: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 };

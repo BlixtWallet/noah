@@ -1,9 +1,10 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
 import { useWalletStore } from "../store/walletStore";
 import {
   createWallet as createWalletAction,
   fetchBalance as fetchBalanceAction,
+  deleteWallet as deleteWalletAction,
 } from "../lib/walletApi";
 
 export function useCreateWallet() {
@@ -28,5 +29,21 @@ export function useBalance() {
     queryFn: () => fetchBalanceAction(true),
     enabled: isInitialized,
     retry: false,
+  });
+}
+
+export function useDeleteWallet() {
+  const { reset } = useWalletStore();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteWalletAction,
+    onSuccess: () => {
+      reset();
+      queryClient.clear();
+    },
+    onError: (error: Error) => {
+      Alert.alert("Deletion Failed", error.message);
+    },
   });
 }

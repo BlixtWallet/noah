@@ -50,15 +50,21 @@ interface WalletState {
   config: WalletConfig;
   finishOnboarding: () => void;
   setConfig: (config: WalletConfig) => void;
+  reset: () => void;
 }
+
+const initialState = {
+  isInitialized: false,
+  config: initialConfig(),
+};
 
 export const useWalletStore = create<WalletState>()(
   persist(
     (set) => ({
-      isInitialized: false,
-      config: initialConfig(),
+      ...initialState,
       finishOnboarding: () => set({ isInitialized: true }),
       setConfig: (config) => set({ config }),
+      reset: () => set(initialState),
     }),
     {
       name: "wallet-storage",

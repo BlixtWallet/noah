@@ -1,31 +1,51 @@
-import { View, Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { APP_VARIANT } from "../config";
-import { Text } from "../components/ui/text";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../components/ui/alert-dialog";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import React from "react";
+import { Separator } from "../components/ui/separator";
+import { Text } from "../components/ui/text";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LegendList } from "@legendapp/list";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { SettingsStackParamList } from "../../App";
+import type { OnboardingStackParamList, SettingsStackParamList } from "../../App";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useDeleteWallet } from "../hooks/useWallet";
 
-type EditableSetting = {
+type Setting = {
   id: keyof WalletConfig;
   title: string;
   value?: string;
 };
 
 const SettingsScreen = () => {
-  const { config } = useWalletStore();
-  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const [confirmText, setConfirmText] = useState("");
+  const { config, isInitialized } = useWalletStore();
+  const deleteWalletMutation = useDeleteWallet();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
-  const handlePress = (item: EditableSetting) => {
-    navigation.navigate("EditSetting", { item });
+  const handlePress = (item: Setting) => {
+    if (!isInitialized) {
+      navigation.navigate("EditConfiguration", { item });
+    }
   };
 
-  const data: EditableSetting[] =
+  const data: Setting[] =
     APP_VARIANT === "regtest"
       ? [
           { id: "bitcoind", title: "Bitcoind RPC", value: config.bitcoind },
@@ -49,24 +69,79 @@ const SettingsScreen = () => {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="p-4">
-        <Text className="text-2xl font-bold text-foreground mb-4">Settings</Text>
+        <View className="flex-row items-center mb-4">
+          {!isInitialized && (
+            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color="white" />
+            </Pressable>
+          )}
+          <Text className="text-2xl font-bold text-foreground">
+            {isInitialized ? "Settings" : "Configuration"}
+          </Text>
+        </View>
         <LegendList
           data={data}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => handlePress(item)}
+              disabled={isInitialized}
               className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
             >
               <View>
                 <Label className="text-foreground text-lg">{item.title}</Label>
                 <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
               </View>
-              <Icon name="chevron-forward-outline" size={24} color="white" />
+              {!isInitialized && <Icon name="chevron-forward-outline" size={24} color="white" />}
             </Pressable>
           )}
           keyExtractor={(item) => item.id}
           recycleItems
         />
+
+        {isInitialized && (
+          <>
+            <Separator className="my-6" />
+            <View>
+              <Text className="text-lg font-bold text-destructive mb-2">Danger Zone</Text>
+              <AlertDialog onOpenChange={() => setConfirmText("")}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <Text>Delete Wallet</Text>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action is irreversible. To confirm, please type "delete" in the box
+                      below.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    value={confirmText}
+                    onChangeText={setConfirmText}
+                    placeholder='Type "delete" to confirm'
+                    className="h-12"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>
+                      <Text>Cancel</Text>
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      disabled={confirmText.toLowerCase() !== "delete"}
+                      onPress={() => deleteWalletMutation.mutate()}
+                    >
+                      <Text>Delete</Text>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </View>
+          </>
+        )}
       </View>
     </SafeAreaView>
   );
