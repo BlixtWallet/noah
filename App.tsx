@@ -12,7 +12,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Platform, StatusBar } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
-import { PortalHost } from "@rn-primitives/portal";
 import { COLORS } from "./src/lib/constants";
 import React from "react";
 export type SettingsStackParamList = {
@@ -97,7 +96,6 @@ export default function App() {
           <StatusBar barStyle="light-content" />
           <AppContent />
         </NavigationContainer>
-        <PortalHost />
       </SafeAreaProvider>
     </QueryClientProvider>
   );
