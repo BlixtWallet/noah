@@ -6,12 +6,20 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import HomeScreen from "./src/screens/HomeScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
+import EditSettingScreen from "./src/screens/EditSettingScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Platform, StatusBar } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
 
+export type SettingsStackParamList = {
+  SettingsList: undefined;
+  EditSetting: { item: { id: string; title: string; value?: string } };
+};
+
 const Tab = createNativeBottomTabNavigator();
+const Stack = createNativeStackNavigator<SettingsStackParamList>();
 
 const queryClient = new QueryClient();
 
@@ -24,6 +32,13 @@ const navTheme: Theme = {
     text: "#FFFFFF",
   },
 };
+
+const SettingsStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="SettingsList" component={SettingsScreen} />
+    <Stack.Screen name="EditSetting" component={EditSettingScreen} />
+  </Stack.Navigator>
+);
 
 const AppContent = () => {
   const isInitialized = useWalletStore((state) => state.isInitialized);
@@ -59,7 +74,7 @@ const AppContent = () => {
       />
       <Tab.Screen
         name="Settings"
-        component={SettingsScreen}
+        component={SettingsStack}
         options={{
           tabBarIcon: ({ focused }) => {
             if (isIos) {

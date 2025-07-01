@@ -38,8 +38,8 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   signet: false,
   bitcoin: false,
   config: {
-    bitcoind: "http://192.168.4.253:18443",
-    asp: "http://192.168.4.253:3535",
+    bitcoind: "http://192.168.4.252:18443",
+    asp: "http://192.168.4.252:3535",
     bitcoind_user: "polaruser",
     bitcoind_pass: "polarpass",
     vtxo_refresh_expiry_threshold: 288,
@@ -57,7 +57,7 @@ export const PRODUCTION_CONFIG: WalletCreationOptions = {
     esplora: "https://mempool.space/api",
     // This ASP is likely for a local regtest setup,
     // you will need a production ASP for mainnet.
-    asp: "http://192.168.4.253:3535",
+    asp: "http://192.168.4.252:3535",
     vtxo_refresh_expiry_threshold: 288,
   },
 };
