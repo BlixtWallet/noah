@@ -90,6 +90,7 @@ const AppContent = () => {
 
   return (
     <Tab.Navigator
+      disablePageAnimations={true}
       tabBarStyle={{
         backgroundColor: COLORS.TAB_BAR_BACKGROUND,
       }}
