@@ -25,12 +25,12 @@
     "build:android:regtest:debug": "cd android && ./gradlew assembleRegtestDebug",
     "build:android:mainnet:debug": "cd android && ./gradlew assembleMainnetDebug",
     "ios:prebuild": "cd ios && bundle install && bundle exec pod install",
-    "build:ios:mainnet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Debug -sdk iphonesimulator",
-    "build:ios:mainnet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Release -sdk iphonesimulator",
-    "build:ios:signet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Debug -sdk iphonesimulator",
-    "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator",
-    "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator",
-    "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator",
+    "build:ios:mainnet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Debug -sdk iphonesimulator -quiet",
+    "build:ios:mainnet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Release -sdk iphonesimulator -quiet",
+    "build:ios:signet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Debug -sdk iphonesimulator -quiet",
+    "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator -quiet",
+    "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator -quiet",
+    "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
