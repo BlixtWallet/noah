@@ -63,7 +63,7 @@
     "react-native-edge-to-edge": "^1.6.1",
     "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^3.3.0",
-    "react-native-nitro-ark": "^0.0.15",
+    "react-native-nitro-ark": "^0.0.16",
     "react-native-nitro-modules": "^0.26.2",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "~3.17.4",

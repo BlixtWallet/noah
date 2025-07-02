@@ -3,38 +3,25 @@ const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
 
-const NITRO_ARK_VERSION = "v0.0.15";
+const NITRO_ARK_VERSION = "v0.0.16";
 
 // --- Configuration ---
 const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
 const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
 
 const projectRoot = process.cwd();
-const nitroArkPath = path.resolve(
-  projectRoot,
-  "node_modules",
-  "react-native-nitro-ark",
-);
+const nitroArkPath = path.resolve(projectRoot, "node_modules", "react-native-nitro-ark");
 const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
 
 // iOS paths
 const xcFrameworkZipPath = path.join(tempDir, "Ark.xcframework.zip");
 const xcFrameworkDestPath = path.join(nitroArkPath, "Ark.xcframework");
 const unzippedFrameworkContainer = path.join(tempDir, "target");
-const unzippedFrameworkPath = path.join(
-  unzippedFrameworkContainer,
-  "Ark.xcframework",
-);
+const unzippedFrameworkPath = path.join(unzippedFrameworkContainer, "Ark.xcframework");
 
 // Android paths
 const jniLibsZipPath = path.join(tempDir, "jniLibs.zip");
-const jniLibsDestPath = path.resolve(
-  nitroArkPath,
-  "android",
-  "src",
-  "main",
-  "jniLibs",
-);
+const jniLibsDestPath = path.resolve(nitroArkPath, "android", "src", "main", "jniLibs");
 const unzippedJniLibsPath = path.join(tempDir, "jniLibs");
 
 /**
@@ -49,22 +36,12 @@ function download(url, dest) {
     https
       .get(url, (response) => {
         // Handle redirects
-        if (
-          response.statusCode >= 300 &&
-          response.statusCode < 400 &&
-          response.headers.location
-        ) {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
           console.log(`Redirected to ${response.headers.location}`);
-          return download(response.headers.location, dest)
-            .then(resolve)
-            .catch(reject);
+          return download(response.headers.location, dest).then(resolve).catch(reject);
         }
         if (response.statusCode !== 200) {
-          return reject(
-            new Error(
-              `Failed to download '${url}' (status: ${response.statusCode})`,
-            ),
-          );
+          return reject(new Error(`Failed to download '${url}' (status: ${response.statusCode})`));
         }
         response.pipe(file);
         file.on("finish", () => {
@@ -92,9 +69,7 @@ async function main() {
 
   // Ensure node_modules/react-native-nitro-ark exists
   if (!fs.existsSync(nitroArkPath)) {
-    console.log(
-      "react-native-nitro-ark not found in node_modules, skipping script.",
-    );
+    console.log("react-native-nitro-ark not found in node_modules, skipping script.");
     return;
   }
 
@@ -115,9 +90,7 @@ async function main() {
     execSync(`unzip -o "${xcFrameworkZipPath}" -d "${tempDir}"`);
     console.log("Unzip complete.");
     if (!fs.existsSync(unzippedFrameworkPath)) {
-      throw new Error(
-        `Expected framework not found at ${unzippedFrameworkPath}`,
-      );
+      throw new Error(`Expected framework not found at ${unzippedFrameworkPath}`);
     }
     console.log(`Moving Ark.xcframework to ${nitroArkPath}`);
     fs.renameSync(unzippedFrameworkPath, xcFrameworkDestPath);
@@ -142,9 +115,7 @@ async function main() {
     fs.renameSync(unzippedJniLibsPath, jniLibsDestPath);
     console.log("--- Android Setup Complete ---\n");
 
-    console.log(
-      "Postinstall script for react-native-nitro-ark finished successfully!",
-    );
+    console.log("Postinstall script for react-native-nitro-ark finished successfully!");
   } catch (error) {
     console.error("An error occurred during the postinstall script:");
     console.error(error);
