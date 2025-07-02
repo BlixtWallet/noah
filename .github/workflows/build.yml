@@ -46,7 +46,7 @@ jobs:
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
       - name: Build signet Android app
-        run: nix develop .# --command bash -c "bun android:signet:release"
+        run: nix develop .# --command bash -c "bun build:android:signet:release"
 
   ios_build:
     runs-on: self-hosted
@@ -66,4 +66,4 @@ jobs:
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun ios:prebuild"
 
       - name: Build iOS signet app
-        run: nix develop .# --command bash -c "bun ios:signet:release"
+        run: nix develop .# --command bash -c "bun build:ios:signet:release"
