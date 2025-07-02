@@ -1,0 +1,69 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  check_if_release_commit:
+    runs-on: self-hosted
+    outputs:
+      is_release: ${{ steps.check_tag.outputs.is_release }}
+    steps:
+      - name: Checkout code with tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history and tags
+      - name: Check if commit is tagged for release (v*)
+        id: check_tag
+        run: |
+          # Check if any tag starting with 'v' points to the current commit HEAD
+          if git tag --points-at HEAD | grep -q "^v"; then
+            echo "Commit is tagged with a 'v*' tag. Build/test steps will be skipped in this workflow."
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "Commit is NOT tagged with a 'v*' tag. Build/test steps will proceed."
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+  android_build:
+    runs-on: self-hosted
+    needs: check_if_release_commit
+    if: needs.check_if_release_commit.outputs.is_release == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # - name: Install Nix
+      #   uses: DeterminateSystems/nix-installer-action@main
+
+      # - name: Enable Nix Magic Cache
+      #   uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install signet app dependencies
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+
+      - name: Build signet Android app
+        run: nix develop .# --command bash -c "bun android:signet:release"
+
+  ios_build:
+    runs-on: self-hosted
+    needs: check_if_release_commit
+    if: needs.check_if_release_commit.outputs.is_release == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # - name: Install Nix
+      #   uses: DeterminateSystems/nix-installer-action@main
+
+      # - name: Enable Nix Magic Cache
+      #   uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install signet app dependencies
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun ios:prebuild"
+
+      - name: Build iOS signet app
+        run: nix develop .# --command bash -c "bun ios:signet:release"

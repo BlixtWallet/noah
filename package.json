@@ -18,16 +18,20 @@
     "ios:regtest:release": "expo run:ios --scheme Noah-Regtest --configuration Release",
     "web": "expo start --web",
     "postinstall": "bun scripts/download_ark_binaries.js",
-    "prebuild:signet": "expo prebuild --clean",
-    "prebuild:regtest": "expo prebuild --clean",
-    "prebuild:mainnet": "expo prebuild --clean",
     "build:android:signet:release": "cd android && ./gradlew assembleSignetRelease",
     "build:android:regtest:release": "cd android && ./gradlew assembleRegtestRelease",
     "build:android:mainnet:release": "cd android && ./gradlew assembleMainnetRelease",
     "build:android:signet:debug": "cd android && ./gradlew assembleSignetDebug",
     "build:android:regtest:debug": "cd android && ./gradlew assembleRegtestDebug",
     "build:android:mainnet:debug": "cd android && ./gradlew assembleMainnetDebug",
-    "lint": "expo lint"
+    "ios:prebuild": "cd ios && bundle install && bundle exec pod install",
+    "build:ios:mainnet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Debug -sdk iphonesimulator",
+    "build:ios:mainnet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Release -sdk iphonesimulator",
+    "build:ios:signet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Debug -sdk iphonesimulator",
+    "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator",
+    "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator",
+    "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.9.2",
@@ -84,7 +88,8 @@
     "prettier": "^3.6.1",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.35.1"
   },
   "private": true
 }
