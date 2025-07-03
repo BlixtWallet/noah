@@ -5,6 +5,7 @@ import {
   createWallet as createWalletAction,
   fetchBalance as fetchBalanceAction,
   deleteWallet as deleteWalletAction,
+  loadWallet as loadWalletAction,
 } from "../lib/walletApi";
 
 export function useCreateWallet() {
@@ -17,6 +18,22 @@ export function useCreateWallet() {
     },
     onError: (error: Error) => {
       Alert.alert("Creation Failed", error.message);
+    },
+  });
+}
+
+export function useLoadWallet() {
+  const { setWalletLoaded } = useWalletStore();
+
+  return useMutation({
+    mutationFn: loadWalletAction,
+    onSuccess: (walletExists) => {
+      if (walletExists) {
+        setWalletLoaded();
+      }
+    },
+    onError: (error: Error) => {
+      Alert.alert("Failed to load wallet", error.message);
     },
   });
 }

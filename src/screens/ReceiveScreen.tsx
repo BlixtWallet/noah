@@ -11,16 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { useGenerateOnchainAddress, useGenerateVtxoPubkey } from "../hooks/usePayments";
+import {
+  useGenerateLightningInvoice,
+  useGenerateOnchainAddress,
+  useGenerateVtxoPubkey,
+} from "../hooks/usePayments";
 import { COLORS } from "../lib/constants";
 import Clipboard from "@react-native-clipboard/clipboard";
 import QRCode from "react-native-qrcode-svg";
 
-type ReceiveType = "ark" | "onchain";
+type ReceiveType = "ark" | "onchain" | "lightning";
 
 const receiveTypeDisplay: Record<ReceiveType, string> = {
   ark: "Ark",
   onchain: "On-chain",
+  lightning: "Lightning",
 };
 
 const ReceiveScreen = () => {
@@ -41,22 +46,41 @@ const ReceiveScreen = () => {
     reset: resetOnchain,
   } = useGenerateOnchainAddress();
 
-  const isLoading = isGeneratingVtxo || isGeneratingOnchain;
-  const address = receiveType === "ark" ? vtxoPubkey : onchainAddress;
+  const {
+    mutate: generateLightningInvoice,
+    data: lightningInvoice,
+    isPending: isGeneratingLightning,
+    reset: resetLightning,
+  } = useGenerateLightningInvoice();
+
+  const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
+  const address =
+    receiveType === "ark"
+      ? vtxoPubkey
+      : receiveType === "onchain"
+        ? onchainAddress
+        : lightningInvoice;
 
   useEffect(() => {
     if (receiveType === "ark") {
       resetOnchain();
-    } else {
+      resetLightning();
+    } else if (receiveType === "onchain") {
       resetVtxo();
+      resetLightning();
+    } else if (receiveType === "lightning") {
+      resetVtxo();
+      resetOnchain();
     }
-  }, [receiveType, resetOnchain, resetVtxo]);
+  }, [receiveType, resetOnchain, resetVtxo, resetLightning]);
 
-  const handleGenerateAddress = () => {
+  const handleGenerate = () => {
     if (receiveType === "ark") {
       generateVtxoPubkey();
     } else if (receiveType === "onchain") {
       generateOnchainAddress();
+    } else if (receiveType === "lightning") {
+      generateLightningInvoice(parseInt(amount));
     }
   };
 
@@ -88,6 +112,7 @@ const ReceiveScreen = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem label={receiveTypeDisplay.ark} value="ark" />
+              <SelectItem label={receiveTypeDisplay.lightning} value="lightning" />
               <SelectItem label={receiveTypeDisplay.onchain} value="onchain" />
             </SelectContent>
           </Select>
@@ -105,12 +130,12 @@ const ReceiveScreen = () => {
         </View>
 
         <Button
-          onPress={handleGenerateAddress}
+          onPress={handleGenerate}
           disabled={isLoading || !receiveType}
           className="mt-8"
           style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
         >
-          {isLoading ? <ActivityIndicator color="white" /> : <Text>Generate Address</Text>}
+          {isLoading ? <ActivityIndicator color="white" /> : <Text>Generate</Text>}
         </Button>
 
         {address && (

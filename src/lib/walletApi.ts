@@ -1,7 +1,8 @@
 import {
   createMnemonic,
-  createWallet as createWalletNitro,
+  loadWallet as loadWalletNitro,
   getBalance as getBalanceNitro,
+  closeWallet as closeWalletNitro,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
@@ -12,17 +13,12 @@ import { APP_VARIANT } from "../config";
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 const USERNAME = "noah";
 
-export const createWallet = async () => {
+const createWalletFromMnemonic = async (mnemonic: string) => {
   const { config } = useWalletStore.getState();
-  const mnemonic = await createMnemonic();
 
-  // Important note: force is set to true to ensure a new wallet
-  // is created even if one already exists.
-  // Only use force if you want to overwrite an existing wallet.
   const creationConfig =
     APP_VARIANT === "regtest"
       ? {
-          force: true,
           regtest: true,
           signet: false,
           bitcoin: false,
@@ -36,7 +32,6 @@ export const createWallet = async () => {
           },
         }
       : {
-          force: true,
           regtest: false,
           signet: APP_VARIANT === "signet",
           bitcoin: APP_VARIANT === "mainnet",
@@ -48,7 +43,7 @@ export const createWallet = async () => {
           },
         };
 
-  await createWalletNitro(ARK_DATA_PATH, {
+  await loadWalletNitro(ARK_DATA_PATH, {
     ...creationConfig,
     mnemonic,
   });
@@ -56,14 +51,26 @@ export const createWallet = async () => {
   await Keychain.setGenericPassword(USERNAME, mnemonic, {
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
+};
 
-  const mnemonicFilePath = `${ARK_DATA_PATH}/mnemonic`;
-  const fileExists = await RNFS.exists(mnemonicFilePath);
+export const createWallet = async () => {
+  const mnemonic = await createMnemonic();
 
-  console.log("mnemonic file exists, deleting....");
-  if (fileExists) {
-    await RNFS.unlink(mnemonicFilePath);
+  await createWalletFromMnemonic(mnemonic);
+};
+
+export const loadWallet = async () => {
+  const credentials = await Keychain.getGenericPassword({
+    service: MNEMONIC_KEYCHAIN_SERVICE,
+  });
+
+  if (!credentials) {
+    // This is not an error, it just means the wallet is not created yet.
+    return false;
   }
+
+  await createWalletFromMnemonic(credentials.password);
+  return true;
 };
 
 export const fetchBalance = async (no_sync: boolean) => {
@@ -75,8 +82,8 @@ export const fetchBalance = async (no_sync: boolean) => {
     // This is not an error, it just means the wallet is not created yet.
     return null;
   }
-  const { password: mnemonic } = credentials;
-  const newBalance = await getBalanceNitro(ARK_DATA_PATH, mnemonic, no_sync);
+
+  const newBalance = await getBalanceNitro(no_sync);
 
   console.log("fetchBalance result", newBalance, no_sync);
   return newBalance;
@@ -84,11 +91,16 @@ export const fetchBalance = async (no_sync: boolean) => {
 
 export const deleteWallet = async () => {
   try {
+    // Close the wallet
+    await closeWalletNitro();
+
+    // Delete the wallet data directory
     const dataDirExists = await RNFS.exists(ARK_DATA_PATH);
     if (dataDirExists) {
       await RNFS.unlink(ARK_DATA_PATH);
     }
 
+    // Remove the mnemonic from keychain
     await Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE });
   } catch (error) {
     console.error("Failed to delete wallet:", error);

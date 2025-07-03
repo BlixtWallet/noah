@@ -21,7 +21,6 @@ export const ARK_DATA_PATH = getArkDataPath();
 type WalletCreationOptions = Omit<BarkCreateOpts, "mnemonic">;
 
 export const SIGNET_CONFIG: WalletCreationOptions = {
-  force: false,
   regtest: false,
   signet: true,
   bitcoin: false,
@@ -34,7 +33,6 @@ export const SIGNET_CONFIG: WalletCreationOptions = {
 };
 
 export const REGTEST_CONFIG: WalletCreationOptions = {
-  force: false,
   regtest: true,
   signet: false,
   bitcoin: false,
@@ -50,7 +48,6 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
 
 // In a real app, you would have a separate production configuration.
 export const PRODUCTION_CONFIG: WalletCreationOptions = {
-  force: false,
   regtest: false,
   signet: false,
   bitcoin: true,

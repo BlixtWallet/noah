@@ -1,6 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
-import { generateVtxoPubkey, generateOnchainAddress, boardArk, send } from "../lib/paymentsApi";
+import {
+  generateVtxoPubkey,
+  generateOnchainAddress,
+  boardArk,
+  send,
+  generateLightningInvoice,
+} from "../lib/paymentsApi";
 
 export function useGenerateVtxoPubkey() {
   return useMutation({
@@ -16,6 +22,15 @@ export function useGenerateOnchainAddress() {
     mutationFn: generateOnchainAddress,
     onError: (error: Error) => {
       Alert.alert("On-chain Address Generation Failed", error.message);
+    },
+  });
+}
+
+export function useGenerateLightningInvoice() {
+  return useMutation({
+    mutationFn: generateLightningInvoice,
+    onError: (error: Error) => {
+      Alert.alert("Lightning Invoice Generation Failed", error.message);
     },
   });
 }

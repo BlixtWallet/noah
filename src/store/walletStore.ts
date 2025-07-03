@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { MMKV } from "react-native-mmkv";
-import { ACTIVE_WALLET_CONFIG, ARK_DATA_PATH } from "../constants";
+import { ACTIVE_WALLET_CONFIG } from "../constants";
 import { APP_VARIANT } from "../config";
 
 const storage = new MMKV();
@@ -47,14 +47,17 @@ const initialConfig = () => {
 
 interface WalletState {
   isInitialized: boolean;
+  isWalletLoaded: boolean;
   config: WalletConfig;
   finishOnboarding: () => void;
+  setWalletLoaded: () => void;
   setConfig: (config: WalletConfig) => void;
   reset: () => void;
 }
 
 const initialState = {
   isInitialized: false,
+  isWalletLoaded: false,
   config: initialConfig(),
 };
 
@@ -62,13 +65,18 @@ export const useWalletStore = create<WalletState>()(
   persist(
     (set) => ({
       ...initialState,
-      finishOnboarding: () => set({ isInitialized: true }),
+      finishOnboarding: () => set({ isInitialized: true, isWalletLoaded: true }),
+      setWalletLoaded: () => set({ isWalletLoaded: true }),
       setConfig: (config) => set({ config }),
       reset: () => set(initialState),
     }),
     {
       name: "wallet-storage",
       storage: createJSONStorage(() => zustandStorage),
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => !["isWalletLoaded"].includes(key)),
+        ),
     },
   ),
 );

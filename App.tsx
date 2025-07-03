@@ -13,11 +13,12 @@ import BoardArkScreen from "./src/screens/BoardArkScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform, StatusBar } from "react-native";
+import { ActivityIndicator, Platform, StatusBar, View, Text } from "react-native";
 import { useWalletStore } from "./src/store/walletStore";
 import { COLORS } from "./src/lib/constants";
-import React from "react";
+import React, { useEffect } from "react";
 import { PortalHost } from "@rn-primitives/portal";
+import { useLoadWallet } from "./src/hooks/useWallet";
 
 export type SettingsStackParamList = {
   SettingsList: undefined;
@@ -81,16 +82,46 @@ const OnboardingStackScreen = () => (
 );
 
 const AppContent = () => {
-  const isInitialized = useWalletStore((state) => state.isInitialized);
+  const { isInitialized, isWalletLoaded, setWalletLoaded } = useWalletStore();
+  const { mutate: loadWallet, isPending: isWalletLoading, isSuccess } = useLoadWallet();
   const isIos = Platform.OS === "ios";
+
+  console.log("wallet loadded", isInitialized, isWalletLoaded);
+
+  useEffect(() => {
+    if (isInitialized && !isWalletLoaded) {
+      loadWallet();
+    }
+  }, [isInitialized, isWalletLoaded, loadWallet]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      setWalletLoaded();
+    }
+  }, [isSuccess, setWalletLoaded]);
 
   if (!isInitialized) {
     return <OnboardingStackScreen />;
   }
 
+  if (isWalletLoading || !isWalletLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: COLORS.BITCOIN_ORANGE,
+        }}
+      >
+        <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+        <Text style={{ marginTop: 10, color: "white" }}>Loading Wallet...</Text>
+      </View>
+    );
+  }
+
   return (
     <Tab.Navigator
-      disablePageAnimations={true}
       tabBarStyle={{
         backgroundColor: COLORS.TAB_BAR_BACKGROUND,
       }}
