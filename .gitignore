@@ -38,3 +38,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 .direnv
+
+## Android Studio and IntelliJ
+.idea

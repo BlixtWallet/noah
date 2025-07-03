@@ -1,0 +1,19 @@
+{
+  "name": "noah-tools",
+  "version": "0.0.0",
+  "description": "Auxiliary tools for Noah",
+  "main": "src/index",
+  "codegenConfig": {
+    "name": "NoahToolsSpec",
+    "type": "modules",
+    "jsSrcsDir": "src"
+  },
+  "author": " <> ()",
+  "license": "UNLICENSED",
+  "homepage": "#readme",
+  "create-react-native-library": {
+    "languages": "kotlin-swift",
+    "type": "nitro-module",
+    "version": "0.51.1"
+  }
+}

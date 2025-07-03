@@ -1,0 +1,17 @@
+{
+  "cxxNamespace": ["noahtools"],
+  "ios": {
+    "iosModuleName": "NoahTools"
+  },
+  "android": {
+    "androidNamespace": ["noahtools"],
+    "androidCxxLibName": "noahtools"
+  },
+  "autolinking": {
+    "NoahTools": {
+      "swift": "NoahTools",
+      "kotlin": "NoahTools"
+    }
+  },
+  "ignorePaths": ["node_modules"]
+}

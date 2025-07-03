@@ -25,7 +25,6 @@ class MainApplication : Application(), ReactApplication {
                             // Packages that cannot be autolinked yet can be added manually here,
                             // for example:
                             // packages.add(MyReactNativePackage())
-                            packages.add(AppVariantPackage())
                             return packages
                         }
 
