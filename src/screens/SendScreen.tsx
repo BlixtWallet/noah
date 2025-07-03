@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, Alert, ActivityIndicator, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { useIsFocused } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
@@ -25,7 +25,6 @@ type SendResult = {
 };
 
 const SendScreen = () => {
-  const navigation = useNavigation();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [comment, setComment] = useState("");

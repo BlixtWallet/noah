@@ -113,8 +113,8 @@ const SettingsScreen = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action is irreversible. To confirm, please type "delete" in the box
-                      below.
+                      {`This action is irreversible. To confirm, please type "delete" in the box
+                      below.`}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <Input
