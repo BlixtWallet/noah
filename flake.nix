@@ -120,7 +120,7 @@
           ];
 
           darwinPackages = with pkgs; [
-            ruby
+            ruby_3_1
             bundler
             (darwinDerivations.xcode-wrapper pkgs)
           ];
