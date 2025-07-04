@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, ActivityIndicator, Pressable, ScrollView } from "react-native";
+import {
+  View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -116,113 +123,117 @@ const BoardArkScreen = () => {
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
-      <ScrollView
-        className="p-4"
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View className="flex-row items-center mb-8">
-          <Pressable onPress={() => navigation.goBack()} className="mr-4">
-            <Icon name="arrow-back-outline" size={24} color="white" />
-          </Pressable>
-          <Text className="text-2xl font-bold text-foreground">Board Ark</Text>
-        </View>
-
-        <View className="mb-8">
-          <Text className="text-lg text-muted-foreground">Confirmed On-chain Balance</Text>
-          {isBalanceLoading ? (
-            <ActivityIndicator color={COLORS.BITCOIN_ORANGE} className="mt-2" />
-          ) : (
-            <Text className="text-3xl font-bold text-foreground mt-1">
-              {onchainBalance.toLocaleString()} sats
-            </Text>
-          )}
-        </View>
-
-        <View className="mb-4">
-          <Text className="text-lg text-muted-foreground mb-2">Amount to Board</Text>
-          <View className="flex-row items-center">
-            <Input
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="Enter amount in sats"
-              keyboardType="numeric"
-              className="flex-1 border-border bg-card p-4 rounded-lg text-foreground"
-            />
-            <Button
-              variant="outline"
-              onPress={() => setAmount(String(onchainBalance))}
-              className="ml-2"
-            >
-              <Text>Max</Text>
-            </Button>
-          </View>
-        </View>
-
-        <NoahButton
-          onPress={handleBoard}
-          isLoading={isBoarding}
-          disabled={isBoarding || !amount || onchainBalance === 0}
-          className="mt-8"
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          className="p-4"
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+          keyboardShouldPersistTaps="handled"
         >
-          Board Ark
-        </NoahButton>
+          <View className="flex-row items-center mb-8">
+            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color="white" />
+            </Pressable>
+            <Text className="text-2xl font-bold text-foreground">Board Ark</Text>
+          </View>
 
-        {parsedData && (
-          <View className="mt-8 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-green-500">Boarding Transaction Sent!</CardTitle>
-                <CardDescription>Funding TXID</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Pressable onPress={() => handleCopyToClipboard(parsedData.funding_txid)}>
-                  <Text
-                    className="text-base text-primary break-words"
-                    numberOfLines={1}
-                    ellipsizeMode="middle"
-                  >
-                    {parsedData.funding_txid}
-                  </Text>
-                </Pressable>
-              </CardContent>
-            </Card>
+          <View className="mb-8">
+            <Text className="text-lg text-muted-foreground">Confirmed On-chain Balance</Text>
+            {isBalanceLoading ? (
+              <ActivityIndicator color={COLORS.BITCOIN_ORANGE} className="mt-2" />
+            ) : (
+              <Text className="text-3xl font-bold text-foreground mt-1">
+                {onchainBalance.toLocaleString()} sats
+              </Text>
+            )}
+          </View>
 
-            <Text className="text-xl font-bold text-foreground pt-4">vTXOs Created</Text>
-            {parsedData.vtxos.map((vtxo) => (
-              <Card key={vtxo.id}>
+          <View className="mb-4">
+            <Text className="text-lg text-muted-foreground mb-2">Amount to Board</Text>
+            <View className="flex-row items-center">
+              <Input
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="Enter amount in sats"
+                keyboardType="numeric"
+                className="flex-1 border-border bg-card p-4 rounded-lg text-foreground"
+              />
+              <Button
+                variant="outline"
+                onPress={() => setAmount(String(onchainBalance))}
+                className="ml-2"
+              >
+                <Text>Max</Text>
+              </Button>
+            </View>
+          </View>
+
+          <NoahButton
+            onPress={handleBoard}
+            isLoading={isBoarding}
+            disabled={isBoarding || !amount || onchainBalance === 0}
+            className="mt-8"
+          >
+            Board Ark
+          </NoahButton>
+
+          {parsedData && (
+            <View className="mt-8 space-y-4">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg" numberOfLines={1} ellipsizeMode="middle">
-                    ID: {vtxo.id}
+                  <CardTitle className="text-lg text-green-500">
+                    Boarding Transaction Sent!
                   </CardTitle>
+                  <CardDescription>Funding TXID</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <DetailRow label="Amount" value={`${vtxo.amount_sat.toLocaleString()} sats`} />
-                  <DetailRow label="Type" value={vtxo.vtxo_type} />
-                  <DetailRow label="UTXO" value={vtxo.utxo} isCopyable />
-                  <DetailRow label="User Pubkey" value={vtxo.user_pubkey} isCopyable />
-                  <DetailRow label="ASP Pubkey" value={vtxo.asp_pubkey} isCopyable />
-                  <DetailRow label="Expiry Height" value={vtxo.expiry_height} />
-                  <DetailRow label="Exit Delta" value={vtxo.exit_delta} />
-                  <DetailRow label="SPK" value={vtxo.spk} />
+                  <Pressable onPress={() => handleCopyToClipboard(parsedData.funding_txid)}>
+                    <Text
+                      className="text-base text-primary break-words"
+                      numberOfLines={1}
+                      ellipsizeMode="middle"
+                    >
+                      {parsedData.funding_txid}
+                    </Text>
+                  </Pressable>
                 </CardContent>
               </Card>
-            ))}
-          </View>
-        )}
-        {error && (
-          <Card className="mt-8 bg-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive-foreground">Error</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Text className="text-base text-center text-destructive-foreground">
-                {errorMessage}
-              </Text>
-            </CardContent>
-          </Card>
-        )}
-      </ScrollView>
+
+              <Text className="text-xl font-bold text-foreground pt-4">vTXOs Created</Text>
+              {parsedData.vtxos.map((vtxo) => (
+                <Card key={vtxo.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg" numberOfLines={1} ellipsizeMode="middle">
+                      ID: {vtxo.id}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <DetailRow label="Amount" value={`${vtxo.amount_sat.toLocaleString()} sats`} />
+                    <DetailRow label="Type" value={vtxo.vtxo_type} />
+                    <DetailRow label="UTXO" value={vtxo.utxo} isCopyable />
+                    <DetailRow label="User Pubkey" value={vtxo.user_pubkey} isCopyable />
+                    <DetailRow label="ASP Pubkey" value={vtxo.asp_pubkey} isCopyable />
+                    <DetailRow label="Expiry Height" value={vtxo.expiry_height} />
+                    <DetailRow label="Exit Delta" value={vtxo.exit_delta} />
+                    <DetailRow label="SPK" value={vtxo.spk} />
+                  </CardContent>
+                </Card>
+              ))}
+            </View>
+          )}
+          {error && (
+            <Card className="mt-8 bg-destructive">
+              <CardHeader>
+                <CardTitle className="text-destructive-foreground">Error</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Text className="text-base text-center text-destructive-foreground">
+                  {errorMessage}
+                </Text>
+              </CardContent>
+            </Card>
+          )}
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </NoahSafeAreaView>
   );
 };

@@ -18,6 +18,8 @@ import {
 import Clipboard from "@react-native-clipboard/clipboard";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { useNavigation } from "@react-navigation/native";
+import Icon from "@react-native-vector-icons/ionicons";
 
 type ReceiveType = "ark" | "onchain" | "lightning";
 
@@ -28,6 +30,7 @@ const receiveTypeDisplay: Record<ReceiveType, string> = {
 };
 
 const ReceiveScreen = () => {
+  const navigation = useNavigation();
   const [receiveType, setReceiveType] = useState<ReceiveType | undefined>(undefined);
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
@@ -104,8 +107,13 @@ const ReceiveScreen = () => {
   return (
     <NoahSafeAreaView className="flex-1 bg-background p-4">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View className="flex-1">
-          <Text className="text-2xl font-bold text-foreground mb-8">Receive Funds</Text>
+        <View className="flex-1 p-4">
+          <View className="flex-row items-center mb-8">
+            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color="white" />
+            </Pressable>
+            <Text className="text-2xl font-bold text-foreground">Receive Funds</Text>
+          </View>
 
           <View className="mb-4">
             <Text className="text-lg text-muted-foreground mb-2">Receive via</Text>

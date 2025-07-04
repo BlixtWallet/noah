@@ -38,6 +38,7 @@ const config: { expo: ExpoConfig } = {
     ],
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.anonymous.noah",
     },
     android: {
       adaptiveIcon: {
@@ -45,6 +46,7 @@ const config: { expo: ExpoConfig } = {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
+      package: "com.anonymous.noah",
     },
     androidStatusBar: {
       barStyle: "light-content",

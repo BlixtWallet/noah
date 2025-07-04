@@ -32,7 +32,9 @@
     "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator -quiet",
     "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator -quiet",
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.9.2",
@@ -72,7 +74,7 @@
     "react-native-edge-to-edge": "^1.6.1",
     "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^3.3.0",
-    "react-native-nitro-ark": "^0.0.22",
+    "react-native-nitro-ark": "^0.0.23",
     "react-native-nitro-modules": "0.26.3",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "~3.17.4",

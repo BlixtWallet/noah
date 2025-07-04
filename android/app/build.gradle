@@ -89,7 +89,7 @@ android {
 
     namespace 'com.anonymous.noah'
     defaultConfig {
-        applicationId "com.anonymous.noah"
+        applicationId 'com.anonymous.noah'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

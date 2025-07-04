@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
@@ -29,6 +29,7 @@ type SendResult = {
 };
 
 const SendScreen = () => {
+  const navigation = useNavigation();
   const { showAlert } = useAlert();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
@@ -251,7 +252,12 @@ const SendScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View className="flex-1 p-4">
           <View className="flex-row items-center justify-between mb-8">
-            <Text className="text-2xl font-bold text-foreground">Send</Text>
+            <View className="flex-row items-center">
+              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+                <Icon name="arrow-back-outline" size={24} color="white" />
+              </Pressable>
+              <Text className="text-2xl font-bold text-foreground">Send</Text>
+            </View>
             <Pressable onPress={handleScanPress}>
               <Icon name="qr-code-outline" size={28} color="white" />
             </Pressable>
@@ -263,8 +269,8 @@ const SendScreen = () => {
               <Input
                 value={destination}
                 onChangeText={setDestination}
-                placeholder="Address or vTXO pubkey"
-                className="border-border bg-card p-4 rounded-lg text-foreground"
+                placeholder="Lightning / Onchain / Ark"
+                className="border-border bg-card p-4 rounded-lg text-foreground mb-2"
               />
             </View>
             <View>
@@ -274,7 +280,7 @@ const SendScreen = () => {
                 onChangeText={setAmount}
                 placeholder="Enter amount"
                 keyboardType="numeric"
-                className="border-border bg-card p-4 rounded-lg text-foreground"
+                className="border-border bg-card p-4 rounded-lg text-foreground mb-2"
                 editable={isAmountEditable}
               />
             </View>
@@ -284,7 +290,7 @@ const SendScreen = () => {
                 value={comment}
                 onChangeText={setComment}
                 placeholder="Add a note"
-                className="border-border bg-card p-4 rounded-lg text-foreground"
+                className="border-border bg-card p-4 rounded-lg text-foreground mb-2"
               />
             </View>
           </View>

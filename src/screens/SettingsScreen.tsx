@@ -70,14 +70,10 @@ const SettingsScreen = () => {
     <NoahSafeAreaView className="flex-1 bg-background">
       <View className="p-4">
         <View className="flex-row items-center mb-4">
-          {!isInitialized && (
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
-            </Pressable>
-          )}
-          <Text className="text-2xl font-bold text-foreground">
-            {isInitialized ? "Settings" : "Configuration"}
-          </Text>
+          <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Icon name="arrow-back-outline" size={24} color="white" />
+          </Pressable>
+          <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
         <LegendList
           data={data}
