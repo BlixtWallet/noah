@@ -77,7 +77,7 @@ export const send = async ({
   noSync = false,
 }: {
   destination: string;
-  amountSat: number;
+  amountSat: number | null;
   comment: string | null;
   noSync?: boolean;
 }): Promise<string> => {

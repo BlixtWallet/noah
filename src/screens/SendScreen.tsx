@@ -7,7 +7,7 @@ import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { COLORS } from "../lib/constants";
-import { decodeBolt11, isArkPublicKey, isValidBitcoinAddress, isValidBolt11 } from "../constants";
+import { parseDestination, isValidDestination, type DestinationTypes } from "../lib/sendUtils";
 import { useSend } from "../hooks/usePayments";
 import SuccessAnimation from "../components/SuccessAnimation";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -32,43 +32,26 @@ const SendScreen = () => {
   const [comment, setComment] = useState("");
   const [showCamera, setShowCamera] = useState(false);
   const [parsedResult, setParsedResult] = useState<SendResult | null>(null);
+  const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
 
   useEffect(() => {
-    if (isValidBolt11(destination)) {
-      try {
-        const decoded = decodeBolt11(destination);
-        if (decoded === null) {
-          throw new Error("Invalid invoice");
-        }
+    if (destination) {
+      const {
+        destinationType: newDestinationType,
+        amount: newAmount,
+        isAmountEditable: newIsAmountEditable,
+        error: parseError,
+      } = parseDestination(destination);
 
-        const msats = decoded.sections.find((n) => n.name === "amount")?.value;
-
-        if (msats === undefined) {
-          throw new Error("Missing amount");
-        }
-
-        if (Number(msats) > 0 && Number(msats) < 1000) {
-          Alert.alert("Invalid Amount", "Invoice amount is less than 1 satoshi.");
-          setAmount("");
-          setIsAmountEditable(true);
-          return;
-        }
-
-        const sats = Number(msats) / 1000;
-
-        if (sats >= 1) {
-          setAmount(sats.toString());
-          setIsAmountEditable(false);
-        } else {
-          setAmount("");
-          setIsAmountEditable(true);
-        }
-      } catch (e) {
-        console.error("Failed to decode bolt11 invoice", e);
-        setAmount("");
-        setIsAmountEditable(true);
+      if (parseError) {
+        Alert.alert("Invalid Destination", parseError);
       }
+
+      setDestinationType(newDestinationType);
+      setAmount(newAmount?.toString() ?? "");
+      setIsAmountEditable(newIsAmountEditable);
     } else {
+      setDestinationType(null);
       setAmount("");
       setIsAmountEditable(true);
     }
@@ -87,17 +70,8 @@ const SendScreen = () => {
     }
   }, [result]);
 
-  const isValidDestination = (dest: string) => {
-    const cleanedDest = dest.replace(/^(bitcoin:|lightning:)/i, "");
-    return (
-      isArkPublicKey(cleanedDest) ||
-      isValidBitcoinAddress(cleanedDest) ||
-      isValidBolt11(cleanedDest)
-    );
-  };
-
   const handleSend = () => {
-    const amountSat = parseInt(amount, 10);
+    let amountSat: number | null = parseInt(amount, 10);
     if (!isValidDestination(destination)) {
       Alert.alert(
         "Invalid Destination",
@@ -109,7 +83,14 @@ const SendScreen = () => {
       Alert.alert("Invalid Amount", "Please enter a valid amount.");
       return;
     }
+
+    if (destinationType === "lightning" && amountSat !== 0) {
+      amountSat = null;
+    }
+
     const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
+
+    console.log("send details", cleanedDestination, amountSat, comment);
     send({ destination: cleanedDestination, amountSat, comment: comment || null });
   };
 
