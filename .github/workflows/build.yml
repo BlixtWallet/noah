@@ -44,8 +44,7 @@ jobs:
 
   android_build:
     runs-on: self-hosted
-    needs: check_if_release_commit
-    if: needs.check_if_release_commit.outputs.is_release == 'false'
+    needs: lint
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,8 +69,7 @@ jobs:
 
   ios_build:
     runs-on: self-hosted
-    needs: check_if_release_commit
-    if: needs.check_if_release_commit.outputs.is_release == 'false'
+    needs: lint
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
