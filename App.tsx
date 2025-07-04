@@ -13,7 +13,8 @@ import BoardArkScreen from "./src/screens/BoardArkScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { ActivityIndicator, Platform, StatusBar, View, Text } from "react-native";
+import { ActivityIndicator, Platform, View, Text } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useWalletStore } from "./src/store/walletStore";
 import { COLORS } from "./src/lib/constants";
 import React, { useEffect } from "react";
@@ -118,14 +119,7 @@ const AppContent = () => {
 
   if (isWalletLoading || !isWalletLoaded) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: COLORS.BITCOIN_ORANGE,
-        }}
-      >
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
         <Text style={{ marginTop: 10, color: "white" }}>Loading Wallet...</Text>
       </View>
@@ -207,13 +201,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <AlertProvider>
-          <NavigationContainer theme={DarkTheme}>
-            <StatusBar barStyle="light-content" />
-            <AppContent />
-            <PortalHost />
-          </NavigationContainer>
-        </AlertProvider>
+        <NavigationContainer theme={DarkTheme}>
+          <StatusBar style="light" />
+          <AppContent />
+          <PortalHost />
+        </NavigationContainer>
       </SafeAreaProvider>
     </QueryClientProvider>
   );

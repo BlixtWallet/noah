@@ -43,14 +43,16 @@ const HomeScreen = () => {
           flexGrow: 1,
         }}
         refreshControl={
-          <RefreshControl
-            refreshing={isFetching}
-            onRefresh={onRefresh}
-            tintColor={COLORS.BITCOIN_ORANGE}
-            colors={[COLORS.BITCOIN_ORANGE]}
-            title="Refreshing..."
-            titleColor={COLORS.BITCOIN_ORANGE}
-          />
+          !balance ? undefined : (
+            <RefreshControl
+              refreshing={isFetching}
+              onRefresh={onRefresh}
+              tintColor={COLORS.BITCOIN_ORANGE}
+              colors={[COLORS.BITCOIN_ORANGE]}
+              title="Refreshing..."
+              titleColor={COLORS.BITCOIN_ORANGE}
+            />
+          )
         }
       >
         <View className="items-center justify-center flex-1 pb-24">

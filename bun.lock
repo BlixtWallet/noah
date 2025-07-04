@@ -30,6 +30,7 @@
         "expo-build-properties": "~0.14.6",
         "expo-constants": "^17.1.6",
         "expo-status-bar": "~2.2.3",
+        "expo-system-ui": "~5.0.10",
         "light-bolt11-decoder": "^3.2.0",
         "lucide-react-native": "^0.525.0",
         "nativewind": "^4.1.23",
@@ -493,7 +494,7 @@
 
     "@react-native/js-polyfills": ["@react-native/js-polyfills@0.79.4", "", {}, "sha512-VyKPo/l9zP4+oXpQHrJq4vNOtxF7F5IMdQmceNzTnRpybRvGGgO/9jYu9mdmdKRO2KpQEc5dB4W2rYhVKdGNKg=="],
 
-    "@react-native/normalize-colors": ["@react-native/normalize-colors@0.79.4", "", {}, "sha512-247/8pHghbYY2wKjJpUsY6ZNbWcdUa5j5517LZMn6pXrbSSgWuj3JA4OYibNnocCHBaVrt+3R8XC3VEJqLlHFg=="],
+    "@react-native/normalize-colors": ["@react-native/normalize-colors@0.79.5", "", {}, "sha512-nGXMNMclZgzLUxijQQ38Dm3IAEhgxuySAWQHnljFtfB0JdaMwpe0Ox9H7Tp2OgrEA+EMEv+Od9ElKlHwGKmmvQ=="],
 
     "@react-native/virtualized-lists": ["@react-native/virtualized-lists@0.79.4", "", { "dependencies": { "invariant": "^2.2.4", "nullthrows": "^1.1.1" }, "peerDependencies": { "@types/react": "^19.0.0", "react": "*", "react-native": "*" }, "optionalPeers": ["@types/react"] }, "sha512-0Mdcox6e5PTonuM1WIo3ks7MBAa3IDzj0pKnE5xAwSgQ0DJW2P5dYf+KjWmpkE+Yb0w41ZbtXPhKq+U2JJ6C/Q=="],
 
@@ -1012,6 +1013,8 @@
     "expo-modules-core": ["expo-modules-core@2.4.0", "", { "dependencies": { "invariant": "^2.2.4" } }, "sha512-Ko5eHBdvuMykjw9P9C9PF54/wBSsGOxaOjx92I5BwgKvEmUwN3UrXFV4CXzlLVbLfSYUQaLcB220xmPfgvT7Fg=="],
 
     "expo-status-bar": ["expo-status-bar@2.2.3", "", { "dependencies": { "react-native-edge-to-edge": "1.6.0", "react-native-is-edge-to-edge": "^1.1.6" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-+c8R3AESBoduunxTJ8353SqKAKpxL6DvcD8VKBuh81zzJyUUbfB4CVjr1GufSJEKsMzNPXZU+HJwXx7Xh7lx8Q=="],
+
+    "expo-system-ui": ["expo-system-ui@5.0.10", "", { "dependencies": { "@react-native/normalize-colors": "0.79.5", "debug": "^4.3.2" }, "peerDependencies": { "expo": "*", "react-native": "*", "react-native-web": "*" }, "optionalPeers": ["react-native-web"] }, "sha512-BTXbSyJr80yuN6VO4XQKZj7BjesZQLHgOYZ0bWyf4VB19GFZq7ZnZOEc/eoKk1B3eIocOMKUfNCrg/Wn8Kfcuw=="],
 
     "exponential-backoff": ["exponential-backoff@3.1.2", "", {}, "sha512-8QxYTVXUkuy7fIIoitQkPwGonB8F3Zj8eEO8Sqg9Zv/bkI7RJAzowee4gr81Hak/dUTpA2Z7VfQgoijjPNlUZA=="],
 
@@ -2003,6 +2006,8 @@
 
     "@expo/package-manager/ora": ["ora@3.4.0", "", { "dependencies": { "chalk": "^2.4.2", "cli-cursor": "^2.1.0", "cli-spinners": "^2.0.0", "log-symbols": "^2.2.0", "strip-ansi": "^5.2.0", "wcwidth": "^1.0.1" } }, "sha512-eNwHudNbO1folBP3JsZ19v9azXWtQZjICdr3Q0TDPIaeBQ3mXLrh54wM+er0+hSp+dWKf+Z8KM58CYzEyIYxYg=="],
 
+    "@expo/prebuild-config/@react-native/normalize-colors": ["@react-native/normalize-colors@0.79.4", "", {}, "sha512-247/8pHghbYY2wKjJpUsY6ZNbWcdUa5j5517LZMn6pXrbSSgWuj3JA4OYibNnocCHBaVrt+3R8XC3VEJqLlHFg=="],
+
     "@expo/prebuild-config/semver": ["semver@7.7.2", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA=="],
 
     "@expo/xcpretty/@babel/code-frame": ["@babel/code-frame@7.10.4", "", { "dependencies": { "@babel/highlight": "^7.10.4" } }, "sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg=="],
@@ -2148,6 +2153,8 @@
     "react-devtools-core/ws": ["ws@7.5.10", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": "^5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ=="],
 
     "react-dom/scheduler": ["scheduler@0.26.0", "", {}, "sha512-NlHwttCI/l5gCPR3D1nNXtWABUmBwvZpEQiD4IXSbIDq8BzLIK/7Ir5gTFSGZDUu37K5cMNp0hFtzO38sC7gWA=="],
+
+    "react-native/@react-native/normalize-colors": ["@react-native/normalize-colors@0.79.4", "", {}, "sha512-247/8pHghbYY2wKjJpUsY6ZNbWcdUa5j5517LZMn6pXrbSSgWuj3JA4OYibNnocCHBaVrt+3R8XC3VEJqLlHFg=="],
 
     "react-native/semver": ["semver@7.7.2", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA=="],
 

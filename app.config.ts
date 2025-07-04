@@ -7,7 +7,7 @@ const config: { expo: ExpoConfig } = {
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
-    userInterfaceStyle: "light",
+    userInterfaceStyle: "dark",
     newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
@@ -45,6 +45,10 @@ const config: { expo: ExpoConfig } = {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
+    },
+    androidStatusBar: {
+      barStyle: "light-content",
+      backgroundColor: "#000000",
     },
     web: {
       favicon: "./assets/favicon.png",
