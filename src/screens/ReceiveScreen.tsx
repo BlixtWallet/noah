@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator, Pressable, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -19,6 +18,7 @@ import {
 import { COLORS } from "../lib/constants";
 import Clipboard from "@react-native-clipboard/clipboard";
 import QRCode from "react-native-qrcode-svg";
+import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type ReceiveType = "ark" | "onchain" | "lightning";
 
@@ -94,7 +94,7 @@ const ReceiveScreen = () => {
     : undefined;
 
   return (
-    <SafeAreaView className="flex-1 bg-background p-4">
+    <NoahSafeAreaView className="flex-1 bg-background p-4">
       <View className="flex-1">
         <Text className="text-2xl font-bold text-foreground mb-8">Receive Funds</Text>
 
@@ -152,7 +152,7 @@ const ReceiveScreen = () => {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </NoahSafeAreaView>
   );
 };
 

@@ -3,7 +3,6 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Button } from "../components/ui/button";
 import type { HomeStackParamList } from "../../App";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "../components/ui/text";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
@@ -17,6 +16,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
+import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -37,7 +37,7 @@ const HomeScreen = () => {
   }, [isOpen]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <NoahSafeAreaView className="flex-1 bg-background">
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -99,7 +99,7 @@ const HomeScreen = () => {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </NoahSafeAreaView>
   );
 };
 

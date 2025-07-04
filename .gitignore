@@ -39,5 +39,8 @@ yarn-error.*
 *.tsbuildinfo
 .direnv
 
-## Android Studio and IntelliJ
+# Android Studio and IntelliJ
 .idea
+
+# Noah temp
+temp_ark_downloads

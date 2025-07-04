@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, Alert, ActivityIndicator, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useIsFocused } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -17,6 +16,7 @@ import {
   useCodeScanner,
   useCameraPermission,
 } from "react-native-vision-camera";
+import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type SendResult = {
   amount_sat: number;
@@ -141,7 +141,7 @@ const SendScreen = () => {
 
   if (parsedResult?.success) {
     return (
-      <SafeAreaView className="flex-1 bg-background justify-center items-center p-4 space-y-4">
+      <NoahSafeAreaView className="flex-1 bg-background justify-center items-center p-4 space-y-4">
         <SuccessAnimation />
         <Card className="w-full">
           <CardHeader>
@@ -177,19 +177,19 @@ const SendScreen = () => {
         >
           <Text>Done</Text>
         </Button>
-      </SafeAreaView>
+      </NoahSafeAreaView>
     );
   }
 
   if (showCamera) {
     if (!device) {
       return (
-        <SafeAreaView className="flex-1 bg-background justify-center items-center p-4">
+        <NoahSafeAreaView className="flex-1 bg-background justify-center items-center p-4">
           <Text className="text-lg text-center">No camera device found.</Text>
           <Button onPress={() => setShowCamera(false)} className="mt-4">
             <Text>Back</Text>
           </Button>
-        </SafeAreaView>
+        </NoahSafeAreaView>
       );
     }
     return (
@@ -200,17 +200,17 @@ const SendScreen = () => {
           isActive={isFocused && showCamera}
           codeScanner={codeScanner}
         />
-        <SafeAreaView>
+        <NoahSafeAreaView>
           <Pressable onPress={() => setShowCamera(false)} className="m-4 self-start">
             <Icon name="close-circle" size={32} color="white" />
           </Pressable>
-        </SafeAreaView>
+        </NoahSafeAreaView>
       </View>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background p-4">
+    <NoahSafeAreaView className="flex-1 bg-background p-4">
       <View className="flex-row items-center justify-between mb-8">
         <Text className="text-2xl font-bold text-foreground">Send</Text>
         <Pressable onPress={handleScanPress}>
@@ -270,7 +270,7 @@ const SendScreen = () => {
           </Button>
         </View>
       )}
-    </SafeAreaView>
+    </NoahSafeAreaView>
   );
 };
 

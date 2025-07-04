@@ -18,13 +18,13 @@ import { Label } from "../components/ui/label";
 import { Separator } from "../components/ui/separator";
 import { Text } from "../components/ui/text";
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LegendList } from "@legendapp/list";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../../App";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
+import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type Setting = {
   id: keyof WalletConfig;
@@ -67,7 +67,7 @@ const SettingsScreen = () => {
         ];
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <NoahSafeAreaView className="flex-1 bg-background">
       <View className="p-4">
         <View className="flex-row items-center mb-4">
           {!isInitialized && (
@@ -143,7 +143,7 @@ const SettingsScreen = () => {
           </>
         )}
       </View>
-    </SafeAreaView>
+    </NoahSafeAreaView>
   );
 };
 

@@ -6,10 +6,10 @@ import { useWalletStore } from "../store/walletStore";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Text } from "../components/ui/text";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../lib/constants";
 import type { OnboardingStackParamList } from "../../App";
 import Icon from "@react-native-vector-icons/ionicons";
+import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 const EditSettingScreen = () => {
   const route = useRoute<RouteProp<OnboardingStackParamList, "EditConfiguration">>();
@@ -24,7 +24,7 @@ const EditSettingScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <NoahSafeAreaView className="flex-1 bg-background">
       <View className="p-4">
         <View className="flex-row items-center mb-8">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
@@ -47,7 +47,7 @@ const EditSettingScreen = () => {
           <Text>Save</Text>
         </Button>
       </View>
-    </SafeAreaView>
+    </NoahSafeAreaView>
   );
 };
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, Pressable, Alert, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -12,6 +11,7 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import { cn } from "../lib/utils";
 import { COLORS } from "../lib/constants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type Vtxo = {
   id: string;
@@ -104,7 +104,7 @@ const BoardArkScreen = () => {
   const errorMessage = error instanceof Error ? error.message : String(error);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <NoahSafeAreaView className="flex-1 bg-background">
       <ScrollView
         className="p-4"
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
@@ -216,7 +216,7 @@ const BoardArkScreen = () => {
           </Card>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </NoahSafeAreaView>
   );
 };
 
