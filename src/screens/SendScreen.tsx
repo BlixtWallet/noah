@@ -17,6 +17,7 @@ import {
   useCameraPermission,
 } from "react-native-vision-camera";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type SendResult = {
   amount_sat: number;
@@ -200,11 +201,11 @@ const SendScreen = () => {
           isActive={isFocused && showCamera}
           codeScanner={codeScanner}
         />
-        <NoahSafeAreaView>
+        <SafeAreaView>
           <Pressable onPress={() => setShowCamera(false)} className="m-4 self-start">
             <Icon name="close-circle" size={32} color="white" />
           </Pressable>
-        </NoahSafeAreaView>
+        </SafeAreaView>
       </View>
     );
   }
