@@ -1,6 +1,8 @@
 import type { BarkCreateOpts } from "react-native-nitro-ark";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { APP_VARIANT } from "./config";
+import { decode } from "light-bolt11-decoder";
+import validate, { Network } from "bitcoin-address-validation";
 
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {
@@ -81,3 +83,38 @@ const getActiveWalletConfig = (): WalletCreationOptions => {
 };
 
 export const ACTIVE_WALLET_CONFIG = getActiveWalletConfig();
+
+const network = () => {
+  switch (APP_VARIANT) {
+    case "mainnet":
+      return Network.mainnet;
+    case "signet":
+      return Network.signet;
+    case "regtest":
+      return Network.regtest;
+  }
+};
+
+export const isArkPublicKey = (n: string) => !!n && /^0[2-3][0-9A-F]{64}$/i.test(n);
+
+export const isValidBitcoinAddress = (address: string) => validate(address, network());
+
+export const isValidBolt11 = (invoice: string) => {
+  try {
+    decode(invoice);
+    return true;
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+  } catch (_e: any) {
+    return false;
+  }
+};
+
+export const decodeBolt11 = (invoice: string) => {
+  try {
+    return decode(invoice);
+  } catch (error) {
+    return null;
+  }
+};
+
+export const msatToSatoshi = (msat: number) => msat / 1000;

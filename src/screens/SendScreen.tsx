@@ -7,6 +7,7 @@ import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { COLORS } from "../lib/constants";
+import { decodeBolt11, isArkPublicKey, isValidBitcoinAddress, isValidBolt11 } from "../constants";
 import { useSend } from "../hooks/usePayments";
 import SuccessAnimation from "../components/SuccessAnimation";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -27,9 +28,51 @@ type SendResult = {
 const SendScreen = () => {
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
+  const [isAmountEditable, setIsAmountEditable] = useState(true);
   const [comment, setComment] = useState("");
   const [showCamera, setShowCamera] = useState(false);
   const [parsedResult, setParsedResult] = useState<SendResult | null>(null);
+
+  useEffect(() => {
+    if (isValidBolt11(destination)) {
+      try {
+        const decoded = decodeBolt11(destination);
+        if (decoded === null) {
+          throw new Error("Invalid invoice");
+        }
+
+        const msats = decoded.sections.find((n) => n.name === "amount")?.value;
+
+        if (msats === undefined) {
+          throw new Error("Missing amount");
+        }
+
+        if (Number(msats) > 0 && Number(msats) < 1000) {
+          Alert.alert("Invalid Amount", "Invoice amount is less than 1 satoshi.");
+          setAmount("");
+          setIsAmountEditable(true);
+          return;
+        }
+
+        const sats = Number(msats) / 1000;
+
+        if (sats >= 1) {
+          setAmount(sats.toString());
+          setIsAmountEditable(false);
+        } else {
+          setAmount("");
+          setIsAmountEditable(true);
+        }
+      } catch (e) {
+        console.error("Failed to decode bolt11 invoice", e);
+        setAmount("");
+        setIsAmountEditable(true);
+      }
+    } else {
+      setAmount("");
+      setIsAmountEditable(true);
+    }
+  }, [destination]);
 
   const { mutate: send, isPending: isSending, data: result, error, reset } = useSend();
 
@@ -44,17 +87,30 @@ const SendScreen = () => {
     }
   }, [result]);
 
+  const isValidDestination = (dest: string) => {
+    const cleanedDest = dest.replace(/^(bitcoin:|lightning:)/i, "");
+    return (
+      isArkPublicKey(cleanedDest) ||
+      isValidBitcoinAddress(cleanedDest) ||
+      isValidBolt11(cleanedDest)
+    );
+  };
+
   const handleSend = () => {
     const amountSat = parseInt(amount, 10);
-    if (!destination) {
-      Alert.alert("Invalid Destination", "Please enter a destination address.");
+    if (!isValidDestination(destination)) {
+      Alert.alert(
+        "Invalid Destination",
+        "Please enter a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
+      );
       return;
     }
     if (isNaN(amountSat) || amountSat <= 0) {
       Alert.alert("Invalid Amount", "Please enter a valid amount.");
       return;
     }
-    send({ destination, amountSat, comment: comment || null });
+    const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
+    send({ destination: cleanedDestination, amountSat, comment: comment || null });
   };
 
   const handleDone = () => {
@@ -73,9 +129,18 @@ const SendScreen = () => {
     codeTypes: ["qr", "ean-13"],
     onCodeScanned: (codes) => {
       if (codes.length > 0 && codes[0].value) {
+        const scannedValue = codes[0].value;
         // TODO: This can be improved to parse different QR code types (BIP21, LNURL, etc.)
-        setDestination(codes[0].value);
-        setShowCamera(false);
+        if (isValidDestination(scannedValue)) {
+          setDestination(scannedValue);
+          setShowCamera(false);
+        } else {
+          setShowCamera(false);
+          Alert.alert(
+            "Invalid QR Code",
+            "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
+          );
+        }
       }
     },
   });
@@ -190,6 +255,7 @@ const SendScreen = () => {
             placeholder="Enter amount"
             keyboardType="numeric"
             className="border-border bg-card p-4 rounded-lg text-foreground"
+            editable={isAmountEditable}
           />
         </View>
         <View>

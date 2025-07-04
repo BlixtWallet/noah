@@ -126,6 +126,7 @@ const AppContent = () => {
         backgroundColor: COLORS.TAB_BAR_BACKGROUND,
       }}
       tabBarInactiveTintColor={COLORS.TAB_BAR_INACTIVE}
+      disablePageAnimations={true}
       screenOptions={{
         tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
       }}
