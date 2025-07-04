@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -247,61 +247,65 @@ const SendScreen = () => {
   }
 
   return (
-    <NoahSafeAreaView className="flex-1 bg-background p-4">
-      <View className="flex-row items-center justify-between mb-8">
-        <Text className="text-2xl font-bold text-foreground">Send</Text>
-        <Pressable onPress={handleScanPress}>
-          <Icon name="qr-code-outline" size={28} color="white" />
-        </Pressable>
-      </View>
+    <NoahSafeAreaView className="flex-1 bg-background">
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View className="flex-1 p-4">
+          <View className="flex-row items-center justify-between mb-8">
+            <Text className="text-2xl font-bold text-foreground">Send</Text>
+            <Pressable onPress={handleScanPress}>
+              <Icon name="qr-code-outline" size={28} color="white" />
+            </Pressable>
+          </View>
 
-      <View className="space-y-4">
-        <View>
-          <Text className="text-lg text-muted-foreground mb-2">Destination</Text>
-          <Input
-            value={destination}
-            onChangeText={setDestination}
-            placeholder="Address or vTXO pubkey"
-            className="border-border bg-card p-4 rounded-lg text-foreground"
-          />
-        </View>
-        <View>
-          <Text className="text-lg text-muted-foreground mb-2">Amount (sats)</Text>
-          <Input
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="Enter amount"
-            keyboardType="numeric"
-            className="border-border bg-card p-4 rounded-lg text-foreground"
-            editable={isAmountEditable}
-          />
-        </View>
-        <View>
-          <Text className="text-lg text-muted-foreground mb-2">Comment (Optional)</Text>
-          <Input
-            value={comment}
-            onChangeText={setComment}
-            placeholder="Add a note"
-            className="border-border bg-card p-4 rounded-lg text-foreground"
-          />
-        </View>
-      </View>
+          <View className="space-y-4">
+            <View>
+              <Text className="text-lg text-muted-foreground mb-2">Destination</Text>
+              <Input
+                value={destination}
+                onChangeText={setDestination}
+                placeholder="Address or vTXO pubkey"
+                className="border-border bg-card p-4 rounded-lg text-foreground"
+              />
+            </View>
+            <View>
+              <Text className="text-lg text-muted-foreground mb-2">Amount (sats)</Text>
+              <Input
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="Enter amount"
+                keyboardType="numeric"
+                className="border-border bg-card p-4 rounded-lg text-foreground"
+                editable={isAmountEditable}
+              />
+            </View>
+            <View>
+              <Text className="text-lg text-muted-foreground mb-2">Comment (Optional)</Text>
+              <Input
+                value={comment}
+                onChangeText={setComment}
+                placeholder="Add a note"
+                className="border-border bg-card p-4 rounded-lg text-foreground"
+              />
+            </View>
+          </View>
 
-      <NoahButton onPress={handleSend} isLoading={isSending} className="mt-8">
-        Send
-      </NoahButton>
+          <NoahButton onPress={handleSend} isLoading={isSending} className="mt-8">
+            Send
+          </NoahButton>
 
-      {(error || (parsedResult && !parsedResult.success)) && (
-        <View className="mt-8 p-4 bg-destructive rounded-lg items-center">
-          <Text className="text-lg font-bold text-destructive-foreground mb-2">Error</Text>
-          <Text className="text-base text-center text-destructive-foreground">
-            {error ? errorMessage : "The transaction failed. Please try again."}
-          </Text>
-          <Button onPress={handleDone} variant="secondary" className="mt-4">
-            <Text>Try Again</Text>
-          </Button>
+          {(error || (parsedResult && !parsedResult.success)) && (
+            <View className="mt-8 p-4 bg-destructive rounded-lg items-center">
+              <Text className="text-lg font-bold text-destructive-foreground mb-2">Error</Text>
+              <Text className="text-base text-center text-destructive-foreground">
+                {error ? errorMessage : "The transaction failed. Please try again."}
+              </Text>
+              <Button onPress={handleDone} variant="secondary" className="mt-4">
+                <Text>Try Again</Text>
+              </Button>
+            </View>
+          )}
         </View>
-      )}
+      </TouchableWithoutFeedback>
     </NoahSafeAreaView>
   );
 };
