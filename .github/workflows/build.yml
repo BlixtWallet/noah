@@ -28,6 +28,20 @@ jobs:
           fi
         shell: bash
 
+  lint:
+    runs-on: self-hosted
+    needs: check_if_release_commit
+    if: needs.check_if_release_commit.outputs.is_release == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install signet app dependencies
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+
+      - name: Lint code
+        run: nix develop .# --command bash -c "bun lint"
+
   android_build:
     runs-on: self-hosted
     needs: check_if_release_commit
@@ -47,6 +61,12 @@ jobs:
 
       - name: Build signet Android app
         run: nix develop .# --command bash -c "bun build:android:ci"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: noah-android-apk
+          path: android/app/build/outputs/apk/signet/release/app-signet-release.apk
 
   ios_build:
     runs-on: self-hosted

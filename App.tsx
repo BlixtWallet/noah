@@ -20,7 +20,6 @@ import { COLORS } from "./src/lib/constants";
 import React, { useEffect } from "react";
 import { PortalHost } from "@rn-primitives/portal";
 import { useLoadWallet, useCloseWallet } from "./src/hooks/useWallet";
-import { AlertProvider } from "./src/contexts/AlertProvider";
 
 export type SettingsStackParamList = {
   SettingsList: undefined;
