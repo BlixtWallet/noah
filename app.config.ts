@@ -6,7 +6,6 @@ const config: { expo: ExpoConfig } = {
     slug: "noah",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/icon.png",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
     splash: {
@@ -39,12 +38,14 @@ const config: { expo: ExpoConfig } = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.noah",
+      icon: "./assets/appstore.png",
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#000000",
       },
+      icon: "./assets/playstore.png",
       edgeToEdgeEnabled: true,
       package: "com.anonymous.noah",
     },
