@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 import { MMKV } from "react-native-mmkv";
 import { ACTIVE_WALLET_CONFIG } from "../constants";
 import { APP_VARIANT } from "../config";
 
 const storage = new MMKV();
 
-const zustandStorage = {
+const zustandStorage: StateStorage = {
   setItem: (name: string, value: string) => {
     return storage.set(name, value);
   },
