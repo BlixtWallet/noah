@@ -41,8 +41,8 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   config: {
     bitcoind: "http://192.168.4.252:18443",
     asp: "http://192.168.4.252:3535",
-    bitcoind_user: "polaruser",
-    bitcoind_pass: "polarpass",
+    bitcoind_user: "second",
+    bitcoind_pass: "ark",
     vtxo_refresh_expiry_threshold: 288,
     fallback_fee_rate: 10000,
   },
