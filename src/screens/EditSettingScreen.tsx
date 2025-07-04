@@ -4,9 +4,8 @@ import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useWalletStore } from "../store/walletStore";
 import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
+import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
-import { COLORS } from "../lib/constants";
 import type { OnboardingStackParamList } from "../../App";
 import Icon from "@react-native-vector-icons/ionicons";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -39,13 +38,9 @@ const EditSettingScreen = () => {
             className="border-border bg-card p-4 rounded-lg text-foreground"
           />
         </View>
-        <Button
-          onPress={handleSave}
-          className="mt-8"
-          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
-        >
-          <Text>Save</Text>
-        </Button>
+        <NoahButton onPress={handleSave} className="mt-8">
+          Save
+        </NoahButton>
       </View>
     </NoahSafeAreaView>
   );

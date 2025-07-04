@@ -2,7 +2,7 @@ import type { BarkCreateOpts } from "react-native-nitro-ark";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { APP_VARIANT } from "./config";
 import { decode } from "light-bolt11-decoder";
-import validate, { Network } from "bitcoin-address-validation";
+import { validate, Network } from "bitcoin-address-validation";
 
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {

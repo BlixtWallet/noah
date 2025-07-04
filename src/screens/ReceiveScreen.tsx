@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator, Pressable, Alert } from "react-native";
+import { View, Pressable, Alert } from "react-native";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
+import { NoahButton } from "../components/ui/NoahButton";
 import {
   Select,
   SelectContent,
@@ -15,7 +15,6 @@ import {
   useGenerateOnchainAddress,
   useGenerateVtxoPubkey,
 } from "../hooks/usePayments";
-import { COLORS } from "../lib/constants";
 import Clipboard from "@react-native-clipboard/clipboard";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -129,14 +128,14 @@ const ReceiveScreen = () => {
           />
         </View>
 
-        <Button
+        <NoahButton
           onPress={handleGenerate}
+          isLoading={isLoading}
           disabled={isLoading || !receiveType}
           className="mt-8"
-          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
         >
-          {isLoading ? <ActivityIndicator color="white" /> : <Text>Generate</Text>}
-        </Button>
+          Generate
+        </NoahButton>
 
         {address && (
           <View className="mt-8 p-4 bg-card rounded-lg items-center">

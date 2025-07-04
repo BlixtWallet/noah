@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, Alert, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Pressable, Alert, StyleSheet } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { COLORS } from "../lib/constants";
+import { NoahButton } from "../components/ui/NoahButton";
 import { parseDestination, isValidDestination, type DestinationTypes } from "../lib/sendUtils";
 import { useSend } from "../hooks/usePayments";
 import SuccessAnimation from "../components/SuccessAnimation";
@@ -22,6 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type SendResult = {
   amount_sat: number;
   destination_pubkey: string;
+  txid?: string;
   success: boolean;
   type: string;
 };
@@ -58,18 +59,39 @@ const SendScreen = () => {
     }
   }, [destination]);
 
-  const { mutate: send, isPending: isSending, data: result, error, reset } = useSend();
+  const {
+    mutate: send,
+    isPending: isSending,
+    data: result,
+    error,
+    reset,
+  } = useSend(destinationType);
 
   useEffect(() => {
     if (result) {
-      try {
-        setParsedResult(JSON.parse(result));
-      } catch (e) {
-        console.error("Failed to parse send result", e);
-        setParsedResult({ success: false, amount_sat: 0, destination_pubkey: "", type: "error" });
+      if (destinationType === "onchain" && typeof result === "string") {
+        setParsedResult({
+          success: true,
+          amount_sat: parseInt(amount, 10) || 0,
+          destination_pubkey: destination,
+          txid: result,
+          type: "bitcoin",
+        });
+      } else {
+        try {
+          setParsedResult(JSON.parse(result));
+        } catch (e) {
+          console.error("Failed to parse send result", e);
+          setParsedResult({
+            success: false,
+            amount_sat: 0,
+            destination_pubkey: "",
+            type: "error",
+          });
+        }
       }
     }
-  }, [result]);
+  }, [result, destinationType, amount, destination]);
 
   const handleSend = () => {
     let amountSat: number | null = parseInt(amount, 10);
@@ -142,8 +164,8 @@ const SendScreen = () => {
 
   if (parsedResult?.success) {
     return (
-      <NoahSafeAreaView className="flex-1 bg-background justify-center items-center p-4 space-y-4">
-        <SuccessAnimation />
+      <NoahSafeAreaView className="flex-1 bg-background justify-center items-center py-4">
+        <SuccessAnimation className="mb-8" />
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Transaction Details</CardTitle>
@@ -169,15 +191,23 @@ const SendScreen = () => {
                 {parsedResult.destination_pubkey}
               </Text>
             </View>
+            {parsedResult.txid && (
+              <View className="mt-2">
+                <Text className="text-muted-foreground">Transaction ID:</Text>
+                <Text
+                  className="text-foreground font-semibold"
+                  ellipsizeMode="middle"
+                  numberOfLines={1}
+                >
+                  {parsedResult.txid}
+                </Text>
+              </View>
+            )}
           </CardContent>
         </Card>
-        <Button
-          onPress={handleDone}
-          className="w-full"
-          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
-        >
-          <Text>Done</Text>
-        </Button>
+        <NoahButton onPress={handleDone} className="w-full mt-8">
+          Done
+        </NoahButton>
       </NoahSafeAreaView>
     );
   }
@@ -251,14 +281,9 @@ const SendScreen = () => {
         </View>
       </View>
 
-      <Button
-        onPress={handleSend}
-        disabled={isSending}
-        className="mt-8"
-        style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
-      >
-        {isSending ? <ActivityIndicator color="white" /> : <Text>Send</Text>}
-      </Button>
+      <NoahButton onPress={handleSend} isLoading={isSending} className="mt-8">
+        Send
+      </NoahButton>
 
       {(error || (parsedResult && !parsedResult.success)) && (
         <View className="mt-8 p-4 bg-destructive rounded-lg items-center">

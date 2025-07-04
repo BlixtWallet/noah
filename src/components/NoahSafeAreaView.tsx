@@ -13,21 +13,19 @@ export function NoahSafeAreaView({
   const insets = useSafeAreaInsets();
 
   return (
-    <View className={className}>
-      <View
-        style={[
-          {
-            flex: 1,
-            top: insets.top,
-            bottom: insets.bottom,
-            left: insets.left,
-            right: insets.right,
-          },
-          style,
-        ]}
-      >
-        {children}
-      </View>
+    <View
+      style={[
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left + 16,
+          paddingRight: insets.right + 16,
+        },
+        style,
+      ]}
+      className={className}
+    >
+      {children}
     </View>
   );
 }

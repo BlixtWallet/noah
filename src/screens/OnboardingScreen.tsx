@@ -3,7 +3,7 @@ import { View, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "../../App";
-import { Button } from "../components/ui/button";
+import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import { COLORS } from "../lib/constants";
 import { useCreateWallet } from "../hooks/useWallet";
@@ -24,15 +24,14 @@ const OnboardingScreen = () => {
           <Text className="mt-4 text-muted-foreground">Creating your wallet...</Text>
         </View>
       ) : (
-        <Button
+        <NoahButton
           onPress={() => createWallet()}
           onLongPress={() => navigation.navigate("Configuration")}
           delayLongPress={200}
           size="lg"
-          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
         >
-          <Text>Create Wallet</Text>
-        </Button>
+          Create Wallet
+        </NoahButton>
       )}
     </View>
   );

@@ -5,6 +5,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import { NoahButton } from "../components/ui/NoahButton";
 import { useBalance } from "../hooks/useWallet";
 import { useBoardArk } from "../hooks/usePayments";
 import Clipboard from "@react-native-clipboard/clipboard";
@@ -148,18 +149,14 @@ const BoardArkScreen = () => {
           </View>
         </View>
 
-        <Button
+        <NoahButton
           onPress={handleBoard}
+          isLoading={isBoarding}
           disabled={isBoarding || !amount || onchainBalance === 0}
           className="mt-8"
-          style={{ backgroundColor: COLORS.BITCOIN_ORANGE }}
         >
-          {isBoarding ? (
-            <ActivityIndicator color={COLORS.BITCOIN_ORANGE} />
-          ) : (
-            <Text>Board Ark</Text>
-          )}
-        </Button>
+          Board Ark
+        </NoahButton>
 
         {parsedData && (
           <View className="mt-8 space-y-4">

@@ -1,18 +1,24 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useEffect } from "react";
+import { View } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedProps,
   withTiming,
   withDelay,
-} from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { Text } from '~/components/ui/text';
+} from "react-native-reanimated";
+import Svg, { Circle, Path } from "react-native-svg";
+import { Text } from "~/components/ui/text";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const SuccessAnimation = ({ onAnimationEnd }: { onAnimationEnd?: () => void }) => {
+const SuccessAnimation = ({
+  onAnimationEnd,
+  className,
+}: {
+  onAnimationEnd?: () => void;
+  className?: string;
+}) => {
   const circleRadius = 50;
   const checkmarkPathLength = 60; // Approximate length of the checkmark path
 
@@ -38,7 +44,7 @@ const SuccessAnimation = ({ onAnimationEnd }: { onAnimationEnd?: () => void }) =
   }, [onAnimationEnd, scale, strokeOffset]);
 
   return (
-    <View className="items-center justify-center">
+    <View className={`items-center justify-center ${className ?? ""}`}>
       <Svg width="120" height="120" viewBox="0 0 120 120">
         <AnimatedCircle
           cx="60"

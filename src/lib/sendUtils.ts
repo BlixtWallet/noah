@@ -1,6 +1,6 @@
 import { decodeBolt11, isArkPublicKey, isValidBitcoinAddress, isValidBolt11 } from "../constants";
 
-export type DestinationTypes = "bitcoin" | "lightning" | "ark" | null;
+export type DestinationTypes = "onchain" | "lightning" | "ark" | null;
 
 export type ParsedDestination = {
   destinationType: DestinationTypes;
@@ -67,7 +67,7 @@ export const parseDestination = (destination: string): ParsedDestination => {
     }
   } else if (isValidBitcoinAddress(cleanedDestination)) {
     return {
-      destinationType: "bitcoin",
+      destinationType: "onchain",
       isAmountEditable: true,
     };
   } else if (isArkPublicKey(cleanedDestination)) {

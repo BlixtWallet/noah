@@ -1,7 +1,7 @@
 import { View, ScrollView, RefreshControl, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Button } from "../components/ui/button";
+import { NoahButton } from "../components/ui/NoahButton";
 import type { HomeStackParamList } from "../../App";
 import { Text } from "../components/ui/text";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
@@ -53,7 +53,7 @@ const HomeScreen = () => {
           />
         }
       >
-        <View className="items-center justify-center flex-1 px-4">
+        <View className="items-center justify-center flex-1 pb-24">
           {isFetching && !balance ? (
             <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
           ) : error ? (
@@ -92,9 +92,9 @@ const HomeScreen = () => {
                   </Animated.View>
                 </CollapsibleContent>
               </Collapsible>
-              <Button onPress={() => navigation.navigate("BoardArk")} className="mt-8">
-                <Text>🚢 Board Ark</Text>
-              </Button>
+              <NoahButton onPress={() => navigation.navigate("BoardArk")} className="mt-8">
+                🚢 Board Ark
+              </NoahButton>
             </>
           )}
         </View>

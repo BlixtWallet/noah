@@ -3,6 +3,7 @@ import {
   getOnchainAddress as getOnchainAddressNitro,
   boardAmount as boardAmountNitro,
   send as sendNitro,
+  sendOnchain as sendOnchainNitro,
   bolt11Invoice,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
@@ -89,6 +90,32 @@ export const send = async ({
     console.error("Failed to send funds:", error);
     throw new Error(
       `Failed to send funds: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+};
+
+export const sendOnchain = async ({
+  destination,
+  amountSat,
+  noSync = false,
+}: {
+  destination: string;
+  amountSat: number | null;
+  comment: string | null;
+  noSync?: boolean;
+}): Promise<string> => {
+  try {
+    if (amountSat === null) {
+      throw new Error("Amount is required to send onchain funds");
+    }
+    // The last parameter `no_sync` is set to false to ensure the wallet syncs after sending.
+    const result = await sendOnchainNitro(destination, amountSat, noSync);
+    console.log("Onchain send result:", result);
+    return result;
+  } catch (error) {
+    console.error("Failed to send onchain funds:", error);
+    throw new Error(
+      `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 };

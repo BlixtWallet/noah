@@ -15,7 +15,6 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Separator } from "../components/ui/separator";
 import { Text } from "../components/ui/text";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -100,9 +99,8 @@ const SettingsScreen = () => {
 
         {isInitialized && (
           <>
-            <Separator className="my-6" />
             <View>
-              <Text className="text-lg font-bold text-destructive mb-2">Danger Zone</Text>
+              <Text className="text-lg font-bold text-destructive mb-4 mt-4">Danger Zone</Text>
               <AlertDialog onOpenChange={() => setConfirmText("")}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive">

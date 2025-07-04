@@ -6,7 +6,9 @@ import {
   boardArk,
   send,
   generateLightningInvoice,
+  sendOnchain,
 } from "../lib/paymentsApi";
+import { DestinationTypes } from "~/lib/sendUtils";
 
 export function useGenerateVtxoPubkey() {
   return useMutation({
@@ -49,11 +51,11 @@ export function useBoardArk() {
   });
 }
 
-export function useSend() {
+export function useSend(destinationType: DestinationTypes) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: send,
+    mutationFn: destinationType === "onchain" ? sendOnchain : send,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
