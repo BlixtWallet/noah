@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, Alert, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
 import { parseDestination, isValidDestination, type DestinationTypes } from "../lib/sendUtils";
 import { useSend } from "../hooks/usePayments";
+import { useAlert } from "~/contexts/AlertProvider";
 import SuccessAnimation from "../components/SuccessAnimation";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
@@ -28,6 +29,7 @@ type SendResult = {
 };
 
 const SendScreen = () => {
+  const { showAlert } = useAlert();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [isAmountEditable, setIsAmountEditable] = useState(true);
@@ -46,7 +48,7 @@ const SendScreen = () => {
       } = parseDestination(destination);
 
       if (parseError) {
-        Alert.alert("Invalid Destination", parseError);
+        showAlert({ title: "Invalid Destination", description: parseError });
       }
 
       setDestinationType(newDestinationType);
@@ -57,7 +59,7 @@ const SendScreen = () => {
       setAmount("");
       setIsAmountEditable(true);
     }
-  }, [destination]);
+  }, [destination, showAlert]);
 
   const {
     mutate: send,
@@ -96,14 +98,14 @@ const SendScreen = () => {
   const handleSend = () => {
     let amountSat: number | null = parseInt(amount, 10);
     if (!isValidDestination(destination)) {
-      Alert.alert(
-        "Invalid Destination",
-        "Please enter a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
-      );
+      showAlert({
+        title: "Invalid Destination",
+        description: "Please enter a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
+      });
       return;
     }
     if (isNaN(amountSat) || amountSat <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid amount.");
+      showAlert({ title: "Invalid Amount", description: "Please enter a valid amount." });
       return;
     }
 
@@ -140,10 +142,11 @@ const SendScreen = () => {
           setShowCamera(false);
         } else {
           setShowCamera(false);
-          Alert.alert(
-            "Invalid QR Code",
-            "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
-          );
+          showAlert({
+            title: "Invalid QR Code",
+            description:
+              "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
+          });
         }
       }
     },
@@ -153,7 +156,10 @@ const SendScreen = () => {
     if (!hasPermission) {
       const permissionGranted = await requestPermission();
       if (!permissionGranted) {
-        Alert.alert("Permission required", "Camera permission is required to scan QR codes.");
+        showAlert({
+          title: "Permission required",
+          description: "Camera permission is required to scan QR codes.",
+        });
         return;
       }
     }

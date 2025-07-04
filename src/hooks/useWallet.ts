@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-native";
+import { useAlert } from "~/contexts/AlertProvider";
 import { useWalletStore } from "../store/walletStore";
 import {
   createWallet as createWalletAction,
@@ -11,6 +11,7 @@ import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 
 export function useCreateWallet() {
   const { finishOnboarding } = useWalletStore();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: createWalletAction,
@@ -18,13 +19,14 @@ export function useCreateWallet() {
       finishOnboarding();
     },
     onError: (error: Error) => {
-      Alert.alert("Creation Failed", error.message);
+      showAlert({ title: "Creation Failed", description: error.message });
     },
   });
 }
 
 export function useLoadWallet() {
   const { setWalletLoaded } = useWalletStore();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: loadWalletAction,
@@ -34,7 +36,7 @@ export function useLoadWallet() {
       }
     },
     onError: (error: Error) => {
-      Alert.alert("Failed to load wallet", error.message);
+      showAlert({ title: "Failed to load wallet", description: error.message });
     },
   });
 }
@@ -52,11 +54,12 @@ export function useBalance() {
 
 export function useCloseWallet() {
   const { setWalletUnloaded } = useWalletStore();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: closeWalletNitro,
     onError: (error: Error) => {
-      Alert.alert("Failed to close wallet", error.message);
+      showAlert({ title: "Failed to close wallet", description: error.message });
     },
     onSuccess: () => {
       setWalletUnloaded();
@@ -67,6 +70,7 @@ export function useCloseWallet() {
 export function useDeleteWallet() {
   const { reset } = useWalletStore();
   const queryClient = useQueryClient();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: deleteWalletAction,
@@ -75,7 +79,7 @@ export function useDeleteWallet() {
       queryClient.clear();
     },
     onError: (error: Error) => {
-      Alert.alert("Deletion Failed", error.message);
+      showAlert({ title: "Deletion Failed", description: error.message });
     },
   });
 }

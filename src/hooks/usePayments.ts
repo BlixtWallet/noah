@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-native";
+import { useAlert } from "~/contexts/AlertProvider";
 import {
   generateVtxoPubkey,
   generateOnchainAddress,
@@ -11,34 +11,41 @@ import {
 import { DestinationTypes } from "~/lib/sendUtils";
 
 export function useGenerateVtxoPubkey() {
+  const { showAlert } = useAlert();
+
   return useMutation({
     mutationFn: generateVtxoPubkey,
     onError: (error: Error) => {
-      Alert.alert("Vtxo Pubkey Generation Failed", error.message);
+      showAlert({ title: "Vtxo Pubkey Generation Failed", description: error.message });
     },
   });
 }
 
 export function useGenerateOnchainAddress() {
+  const { showAlert } = useAlert();
+
   return useMutation({
     mutationFn: generateOnchainAddress,
     onError: (error: Error) => {
-      Alert.alert("On-chain Address Generation Failed", error.message);
+      showAlert({ title: "On-chain Address Generation Failed", description: error.message });
     },
   });
 }
 
 export function useGenerateLightningInvoice() {
+  const { showAlert } = useAlert();
+
   return useMutation({
     mutationFn: generateLightningInvoice,
     onError: (error: Error) => {
-      Alert.alert("Lightning Invoice Generation Failed", error.message);
+      showAlert({ title: "Lightning Invoice Generation Failed", description: error.message });
     },
   });
 }
 
 export function useBoardArk() {
   const queryClient = useQueryClient();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: boardArk,
@@ -46,13 +53,14 @@ export function useBoardArk() {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
     onError: (error: Error) => {
-      Alert.alert("Boarding Failed", error.message);
+      showAlert({ title: "Boarding Failed", description: error.message });
     },
   });
 }
 
 export function useSend(destinationType: DestinationTypes) {
   const queryClient = useQueryClient();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: destinationType === "onchain" ? sendOnchain : send,
@@ -60,7 +68,7 @@ export function useSend(destinationType: DestinationTypes) {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
     onError: (error: Error) => {
-      Alert.alert("Send Failed", error.message);
+      showAlert({ title: "Send Failed", description: error.message });
     },
   });
 }

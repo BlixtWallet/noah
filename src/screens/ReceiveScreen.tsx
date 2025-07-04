@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable, Alert } from "react-native";
+import { View, Pressable } from "react-native";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { NoahButton } from "../components/ui/NoahButton";
@@ -18,6 +18,7 @@ import {
 import Clipboard from "@react-native-clipboard/clipboard";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { useAlert } from "~/contexts/AlertProvider";
 
 type ReceiveType = "ark" | "onchain" | "lightning";
 
@@ -28,6 +29,7 @@ const receiveTypeDisplay: Record<ReceiveType, string> = {
 };
 
 const ReceiveScreen = () => {
+  const { showAlert } = useAlert();
   const [receiveType, setReceiveType] = useState<ReceiveType | undefined>(undefined);
   const [amount, setAmount] = useState("");
 
@@ -85,7 +87,7 @@ const ReceiveScreen = () => {
 
   const handleCopyToClipboard = (value: string) => {
     Clipboard.setString(value);
-    Alert.alert("Copied!", "Address copied to clipboard.");
+    showAlert({ title: "Copied!", description: "Address copied to clipboard." });
   };
 
   const currentSelectValue = receiveType

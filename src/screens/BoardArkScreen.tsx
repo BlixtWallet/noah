@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, ActivityIndicator, Pressable, Alert, ScrollView } from "react-native";
+import { View, ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -13,6 +13,7 @@ import { cn } from "../lib/utils";
 import { COLORS } from "../lib/constants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { useAlert } from "~/contexts/AlertProvider";
 
 type Vtxo = {
   id: string;
@@ -42,9 +43,11 @@ const DetailRow = ({
 }) => {
   const displayValue = String(value);
 
+  const { showAlert } = useAlert();
+
   const handleCopy = () => {
     Clipboard.setString(displayValue);
-    Alert.alert("Copied to Clipboard", `${label} has been copied.`);
+    showAlert({ title: "Copied to Clipboard", description: `${label} has been copied.` });
   };
 
   return (
@@ -64,6 +67,7 @@ const DetailRow = ({
 };
 
 const BoardArkScreen = () => {
+  const { showAlert } = useAlert();
   const navigation = useNavigation();
   const { data: balance, isLoading: isBalanceLoading } = useBalance();
   const { mutate: boardArk, isPending: isBoarding, data: boardResult, error } = useBoardArk();
@@ -86,11 +90,17 @@ const BoardArkScreen = () => {
   const handleBoard = () => {
     const amountSat = parseInt(amount, 10);
     if (isNaN(amountSat) || amountSat <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid amount to board.");
+      showAlert({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount to board.",
+      });
       return;
     }
     if (amountSat > onchainBalance) {
-      Alert.alert("Insufficient Funds", "The amount exceeds your on-chain balance.");
+      showAlert({
+        title: "Insufficient Funds",
+        description: "The amount exceeds your on-chain balance.",
+      });
       return;
     }
     setParsedData(null);
@@ -99,7 +109,7 @@ const BoardArkScreen = () => {
 
   const handleCopyToClipboard = (value: string) => {
     Clipboard.setString(value);
-    Alert.alert("Copied!", "TXID copied to clipboard.");
+    showAlert({ title: "Copied!", description: "TXID copied to clipboard." });
   };
 
   const errorMessage = error instanceof Error ? error.message : String(error);
