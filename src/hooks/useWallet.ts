@@ -51,10 +51,15 @@ export function useBalance() {
 }
 
 export function useCloseWallet() {
+  const { setWalletUnloaded } = useWalletStore();
+
   return useMutation({
     mutationFn: closeWalletNitro,
     onError: (error: Error) => {
       Alert.alert("Failed to close wallet", error.message);
+    },
+    onSuccess: () => {
+      setWalletUnloaded();
     },
   });
 }

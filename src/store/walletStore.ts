@@ -51,6 +51,7 @@ interface WalletState {
   config: WalletConfig;
   finishOnboarding: () => void;
   setWalletLoaded: () => void;
+  setWalletUnloaded: () => void;
   setConfig: (config: WalletConfig) => void;
   reset: () => void;
 }
@@ -67,6 +68,7 @@ export const useWalletStore = create<WalletState>()(
       ...initialState,
       finishOnboarding: () => set({ isInitialized: true, isWalletLoaded: true }),
       setWalletLoaded: () => set({ isWalletLoaded: true }),
+      setWalletUnloaded: () => set({ isWalletLoaded: true }),
       setConfig: (config) => set({ config }),
       reset: () => set(initialState),
     }),
