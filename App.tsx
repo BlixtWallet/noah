@@ -18,7 +18,7 @@ import { useWalletStore } from "./src/store/walletStore";
 import { COLORS } from "./src/lib/constants";
 import React, { useEffect } from "react";
 import { PortalHost } from "@rn-primitives/portal";
-import { useLoadWallet } from "./src/hooks/useWallet";
+import { useLoadWallet, useCloseWallet } from "./src/hooks/useWallet";
 
 export type SettingsStackParamList = {
   SettingsList: undefined;
@@ -84,9 +84,10 @@ const OnboardingStackScreen = () => (
 const AppContent = () => {
   const { isInitialized, isWalletLoaded, setWalletLoaded } = useWalletStore();
   const { mutate: loadWallet, isPending: isWalletLoading, isSuccess } = useLoadWallet();
+  const { mutate: closeWallet } = useCloseWallet();
   const isIos = Platform.OS === "ios";
 
-  console.log("wallet loadded", isInitialized, isWalletLoaded);
+  console.log("wallet loaded", isInitialized, isWalletLoaded);
 
   useEffect(() => {
     if (isInitialized && !isWalletLoaded) {
@@ -99,6 +100,16 @@ const AppContent = () => {
       setWalletLoaded();
     }
   }, [isSuccess, setWalletLoaded]);
+
+  // Cleanup: close wallet when AppContent unmounts
+  useEffect(() => {
+    return () => {
+      if (isWalletLoaded) {
+        console.log("Closing wallet");
+        closeWallet();
+      }
+    };
+  }, [isWalletLoaded, closeWallet]);
 
   if (!isInitialized) {
     return <OnboardingStackScreen />;

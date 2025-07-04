@@ -7,6 +7,7 @@ import {
   deleteWallet as deleteWalletAction,
   loadWallet as loadWalletAction,
 } from "../lib/walletApi";
+import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 
 export function useCreateWallet() {
   const { finishOnboarding } = useWalletStore();
@@ -46,6 +47,15 @@ export function useBalance() {
     queryFn: () => fetchBalanceAction(false),
     enabled: isInitialized,
     retry: false,
+  });
+}
+
+export function useCloseWallet() {
+  return useMutation({
+    mutationFn: closeWalletNitro,
+    onError: (error: Error) => {
+      Alert.alert("Failed to close wallet", error.message);
+    },
   });
 }
 
