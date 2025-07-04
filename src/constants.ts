@@ -3,6 +3,7 @@ import * as RNFS from "@dr.pogodin/react-native-fs";
 import { APP_VARIANT } from "./config";
 import { decode } from "light-bolt11-decoder";
 import { validate, Network } from "bitcoin-address-validation";
+import { Platform } from "react-native";
 
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {
@@ -118,3 +119,5 @@ export const decodeBolt11 = (invoice: string) => {
 };
 
 export const msatToSatoshi = (msat: number) => msat / 1000;
+
+export const PLATFORM = Platform.OS;

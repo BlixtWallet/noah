@@ -17,11 +17,14 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { useBottomTabBarHeight } from "react-native-bottom-tabs";
+import { PLATFORM } from "~/constants";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { data: balance, isFetching, refetch, error } = useBalance();
   const [isOpen, setIsOpen] = useState(false);
+  const bottomTabBarHeight = useBottomTabBarHeight();
 
   const onRefresh = useCallback(async () => {
     await refetch();
@@ -37,7 +40,12 @@ const HomeScreen = () => {
   }, [isOpen]);
 
   return (
-    <NoahSafeAreaView className="flex-1 bg-background">
+    <NoahSafeAreaView
+      className="flex-1 bg-background"
+      style={{
+        paddingBottom: PLATFORM === "ios" ? bottomTabBarHeight : 0,
+      }}
+    >
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
@@ -51,11 +59,12 @@ const HomeScreen = () => {
               colors={[COLORS.BITCOIN_ORANGE]}
               title="Refreshing..."
               titleColor={COLORS.BITCOIN_ORANGE}
+              progressViewOffset={-10}
             />
           )
         }
       >
-        <View className="items-center justify-center flex-1 pb-24">
+        <View className="items-center justify-center flex-1">
           {isFetching && !balance ? (
             <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
           ) : error ? (
