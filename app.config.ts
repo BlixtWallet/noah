@@ -42,7 +42,7 @@ const config: { expo: ExpoConfig } = {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/playstore.png",
         backgroundColor: "#000000",
       },
       icon: "./assets/playstore.png",
