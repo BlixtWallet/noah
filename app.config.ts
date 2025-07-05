@@ -8,6 +8,9 @@ const config: { expo: ExpoConfig } = {
     orientation: "portrait",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
+    experiments: {
+      reactCompiler: true,
+    },
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
