@@ -1,13 +1,16 @@
 #!/bin/bash
 
-# A simple dev script for managing the Ark docker environment.
-# Contains helper commands to manage the environment.
+# A complete bootstrap and management script for the Ark dev environment.
 #
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
 # --- Configuration ---
-COMPOSE_FILE="contrib/docker/docker-compose.yml"
+# This script assumes it lives one level above the 'bark' repo directory.
+# The 'setup' command will create this structure.
+REPO_DIR="bark"
+COMPOSE_FILE="$REPO_DIR/contrib/docker/docker-compose.yml"
+
 BITCOIND_SERVICE="bitcoind"
 ASPD_SERVICE="aspd"
 BARK_SERVICE="bark"
@@ -16,7 +19,6 @@ BARK_SERVICE="bark"
 WALLET_NAME="dev-wallet"
 
 # Bitcoin-cli options (matches the user/pass from the docker-compose.yml healthcheck)
-# We add the -rpcwallet flag to target our specific wallet for all commands.
 BITCOIN_CLI_OPTS="-regtest -rpcuser=second -rpcpassword=ark -rpcwallet=$WALLET_NAME"
 # --- End Configuration ---
 
@@ -30,26 +32,47 @@ dcr() {
 
 # Displays how to use the script
 usage() {
+    echo "A bootstrap and management script for the Ark dev environment."
+    echo ""
     echo "Usage: $0 <command> [arguments]"
     echo ""
-    echo "Commands:"
+    echo "SETUP:"
+    echo "  setup                      Clone the bark repo and checkout the correct version."
+    echo ""
+    echo "LIFECYCLE COMMANDS (run after 'setup'):"
+    echo "  up                         Start all services in the background (docker-compose up -d)."
+    echo "  down                       Stop and remove all services (docker-compose down)."
+    echo ""
+    echo "MANAGEMENT COMMANDS (run while services are 'up'):"
     echo "  create-wallet              Create and load a new wallet in bitcoind named '$WALLET_NAME'."
     echo "  create-bark-wallet         Create a new bark wallet with pre-configured dev settings."
     echo "  generate <num_blocks>      Mine blocks on bitcoind. Creates wallet if it doesn't exist."
-    echo "                               Default: 101 to mature the coinbase."
     echo "  fund-aspd <amount>         Send <amount> of BTC from bitcoind to the ASPD wallet."
     echo "  send-to <addr> <amt>       Send <amt> BTC from bitcoind to <addr> and mine 1 block."
     echo "  aspd <args...>             Execute a command on the running aspd container."
     echo "  bark <args...>             Execute a command on a new bark container."
-    echo ""
-    echo "Examples:"
-    echo "  ./ark-dev.sh create-wallet"
-    echo "  ./ark-dev.sh create-bark-wallet"
-    echo "  ./ark-dev.sh generate 101"
-    echo "  ./ark-dev.sh fund-aspd 0.5"
-    echo "  ./ark-dev.sh send-to bcrt1q... 0.1"
-    echo "  ./ark-dev.sh aspd aspd rpc wallet --help"
-    echo "  ./ark-dev.sh bark ark-info"
+}
+
+# Clones the repository and checks out the correct tag.
+setup_environment() {
+    local repo_url="https://codeberg.org/ark-bitcoin/bark.git"
+    local repo_tag="all-0.0.0-alpha.16"
+
+    if ! command -v git &> /dev/null; then
+        echo "Error: 'git' is not installed. Please install it to continue." >&2
+        exit 1
+    fi
+
+    if [ -d "$REPO_DIR" ]; then
+        echo "✅ Directory '$REPO_DIR' already exists. Setup is likely complete."
+        echo "To re-run setup, please remove the '$REPO_DIR' directory first."
+        return
+    fi
+
+    echo "Cloning repository '$repo_url' into './$REPO_DIR'..."
+    git clone --branch "$repo_tag" "$repo_url" "$REPO_DIR"
+
+    echo "✅ Setup complete. You can now run management commands."
 }
 
 # Creates a new wallet in bitcoind if it doesn't already exist
@@ -67,8 +90,6 @@ create_wallet() {
 # Creates a new bark wallet with default dev settings
 create_bark_wallet() {
     echo "Creating a new bark wallet with dev settings..."
-    # Note: We use 'run --rm' as this is a one-off setup command.
-    # The arguments are specific to the dev environment (aspd, bitcoind services).
     dcr run --rm "$BARK_SERVICE" bark create \
         --regtest \
         --asp http://aspd:3535 \
@@ -138,9 +159,30 @@ if [[ -z "$COMMAND" ]]; then
     exit 1
 fi
 
+# For any command other than 'setup', ensure the environment is actually set up.
+if [[ "$COMMAND" != "setup" && ! -f "$COMPOSE_FILE" ]]; then
+    echo "Error: Environment not found at '$COMPOSE_FILE'." >&2
+    echo "Please run './ark-dev.sh setup' first." >&2
+    exit 1
+fi
+
 shift
 
 case "$COMMAND" in
+    setup)
+        setup_environment
+        ;;
+
+    up)
+        echo "🚀 Starting Ark services in the background..."
+        dcr up -d "$@"
+        ;;
+
+    down)
+        echo "🛑 Stopping and removing Ark services..."
+        dcr down "$@"
+        ;;
+
     create-wallet)
         create_wallet
         ;;
@@ -175,7 +217,6 @@ case "$COMMAND" in
 
     bark)
         echo "Running command on bark: bark $@"
-        # The 'bark' executable must be the first argument inside the container
         dcr run --rm "$BARK_SERVICE" "bark" "$@"
         ;;
 
@@ -186,7 +227,7 @@ case "$COMMAND" in
         ;;
 esac
 
-# Don't print success message for passthrough commands
-if [[ "$COMMAND" != "aspd" && "$COMMAND" != "bark" ]]; then
+# Don't print success message for passthrough or lifecycle commands
+if [[ "$COMMAND" != "aspd" && "$COMMAND" != "bark" && "$COMMAND" != "setup" && "$COMMAND" != "up" && "$COMMAND" != "down" ]]; then
     echo "🎉 Script finished successfully."
 fi

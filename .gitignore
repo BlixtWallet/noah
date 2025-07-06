@@ -44,3 +44,6 @@ yarn-error.*
 
 # Noah temp
 temp_ark_downloads
+
+# Bark
+bark/
