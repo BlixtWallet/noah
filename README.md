@@ -76,7 +76,6 @@ This project uses [Nix](https://nixos.org/) to provide a reproducible developmen
     This step links the native iOS libraries.
     ```bash
     bun ios:prebuild
-    cd ..
     ```
 
 Now the project is ready to run.
