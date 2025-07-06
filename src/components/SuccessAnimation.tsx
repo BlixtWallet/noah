@@ -26,16 +26,16 @@ const SuccessAnimation = ({
   const strokeOffset = useSharedValue(checkmarkPathLength);
 
   const animatedCircleProps = useAnimatedProps(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   const animatedPathProps = useAnimatedProps(() => ({
-    strokeDashoffset: strokeOffset.value,
+    strokeDashoffset: strokeOffset.get(),
   }));
 
   useEffect(() => {
-    scale.value = withTiming(1, { duration: 300 });
-    strokeOffset.value = withDelay(200, withTiming(0, { duration: 400 }));
+    scale.set(withTiming(1, { duration: 300 }));
+    strokeOffset.set(withDelay(200, withTiming(0, { duration: 400 })));
 
     if (onAnimationEnd) {
       const timer = setTimeout(onAnimationEnd, 2000); // Wait for animation to finish
