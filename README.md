@@ -75,9 +75,7 @@ This project uses [Nix](https://nixos.org/) to provide a reproducible developmen
 4.  **Install iOS Dependencies (for macOS users)**
     This step links the native iOS libraries.
     ```bash
-    cd ios
-    bundle install
-    bundle exec pod install
+    bun ios:prebuild
     cd ..
     ```
 
@@ -106,9 +104,7 @@ Once your environment is set up, follow these steps:
 
 3.  **Install iOS Dependencies (for macOS users)**
     ```bash
-    cd ios
-    pod install
-    cd ..
+    bun ios:prebuild
     ```
 
 ---
