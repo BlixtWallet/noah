@@ -151,7 +151,7 @@ For more commands and details, run `./scripts/ark-dev.sh` without arguments.
 
 This project uses various scripts to run the application in different environments (Mainnet, Signet, Regtest).
 
-Please see the `scripts` section in the [`package.json`](./package.json:5) file for a full list of available commands.
+Please see the `scripts` section in the [`package.json`](./package.json) file for a full list of available commands.
 
 **Example (running on Android Regtest):**
 
@@ -171,7 +171,7 @@ bun run ios:regtest:debug
 
 You can create production-ready application binaries using the build scripts.
 
-Please see the `scripts` section in the [`package.json`](./package.json:5) file for commands starting with `build:`.
+Please see the `scripts` section in the [`package.json`](./package.json) file for commands starting with `build:`.
 
 **Note on Code Signing:** For production builds, you will need to configure your own signing keys. Refer to the official React Native and Expo documentation for code signing on [Android](https://reactnative.dev/docs/signed-apk-android) and iOS.
 
