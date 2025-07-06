@@ -121,3 +121,6 @@ export const decodeBolt11 = (invoice: string) => {
 export const msatToSatoshi = (msat: number) => msat / 1000;
 
 export const PLATFORM = Platform.OS;
+
+export const coingeckoEndpoint =
+  "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";

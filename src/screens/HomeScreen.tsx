@@ -10,6 +10,7 @@ import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { COLORS } from "../lib/constants";
 import { useBalance } from "../hooks/useWallet";
+
 import Animated, {
   FadeInDown,
   FadeOutDown,
@@ -19,10 +20,12 @@ import Animated, {
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { PLATFORM } from "~/constants";
+import { useBtcToUsdRate } from "~/hooks/useMarketData";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { data: balance, isFetching, refetch, error } = useBalance();
+  const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const bottomTabBarHeight = useBottomTabBarHeight();
 
@@ -31,6 +34,7 @@ const HomeScreen = () => {
   }, [refetch]);
 
   const totalBalance = balance ? balance.onchain + balance.offchain : 0;
+  const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
   const errorMessage = error instanceof Error ? error.message : String(error);
 
   const animatedRotation = useAnimatedStyle(() => {
@@ -77,13 +81,28 @@ const HomeScreen = () => {
               <Collapsible open={isOpen} onOpenChange={setIsOpen} className="items-center">
                 <CollapsibleTrigger asChild>
                   <Pressable>
-                    <View className="flex-row items-center space-x-2">
-                      <Text className="text-4xl font-bold">
-                        {totalBalance.toLocaleString()} sats
-                      </Text>
-                      <Animated.View style={animatedRotation}>
-                        <ChevronDown className="text-white" size={28} />
-                      </Animated.View>
+                    <View className="items-center">
+                      {btcToUsdRate ? (
+                        <Text className="text-2xl text-muted-foreground mb-2">
+                          $
+                          {totalBalanceInUsd.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Text>
+                      ) : (
+                        <View className="h-[32px] mb-2 justify-center">
+                          <ActivityIndicator color={COLORS.BITCOIN_ORANGE} />
+                        </View>
+                      )}
+                      <View className="flex-row items-center space-x-2">
+                        <Text className="text-4xl font-bold">
+                          {totalBalance.toLocaleString()} sats
+                        </Text>
+                        <Animated.View style={animatedRotation}>
+                          <ChevronDown className="text-white" size={28} />
+                        </Animated.View>
+                      </View>
                     </View>
                   </Pressable>
                 </CollapsibleTrigger>
