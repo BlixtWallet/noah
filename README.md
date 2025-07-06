@@ -7,8 +7,10 @@ Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protoc
 ## Table of Contents
 
 - [✨ Core Technologies](#-core-technologies)
-- [🛠️ Prerequisites](#️-prerequisites)
 - [🚀 Getting Started](#-getting-started)
+  - [Using Nix (Recommended)](#using-nix-recommended)
+  - [Bare Expo Setup](#bare-expo-setup)
+- [⚡️ Local Ark Regtest Environment](#️-local-ark-regtest-environment)
 - [🏃 Running the Application](#-running-the-application)
 - [📦 Building for Production](#-building-for-production)
 - [📜 License](#-license)
@@ -26,128 +28,157 @@ Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protoc
 - **Data Fetching**: TanStack Query
 - **Local Storage**: MMKV
 - **Native Modules**: Nitro (Ark)
-
----
-
-## 🛠️ Prerequisites
-
-Before you begin, ensure you have the following tools installed on your system:
-
-- **Bun**: This project uses Bun for package management and script running. [Installation Guide](https://bun.sh/docs/installation).
-- **Git**: For version control.
-- **A code editor**: [Visual Studio Code](https://code.visualstudio.com/) is recommended.
-- **iOS Development**:
-  - Xcode (from the Mac App Store)
-  - CocoaPods (`sudo gem install cocoapods`)
-- **Android Development**:
-  - Android Studio & the Android SDK
-  - Java Development Kit (JDK)
+- **Development Environment**: Nix
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these steps to get the project up and running on your local machine.
+You can set up the development environment using Nix (recommended) or by manually installing the dependencies.
+
+### Using Nix (Recommended)
+
+This project uses [Nix](https://nixos.org/) to provide a reproducible development environment. While most dependencies are managed by Nix, you will still need to install a few tools manually.
+
+**Prerequisites:**
+
+1.  **Install Nix**: Follow the [official installation guide](https://docs.determinate.systems/).
+2.  **Install direnv**: This tool will automatically load the Nix environment when you enter the project directory. Follow the [direnv installation guide](https://direnv.net/docs/installation.html).
+3.  **Hook direnv into your shell**: Make sure to follow the instructions to hook direnv into your shell (e.g., add `eval "$(direnv hook zsh)"` to your `.zshrc`).
+4.  **Install IDEs and SDKs**:
+    - **Android**: Install [Android Studio](https://developer.android.com/studio).
+    - **iOS (macOS only)**: Install [Xcode](https://developer.apple.com/xcode/) from the Mac App Store.
+
+**Setup:**
 
 1.  **Clone the Repository**
+
+    ```bash
+    git clone https://github.com/BlixtWallet/noah.git
+    cd noah
+    ```
+
+2.  **Allow direnv to load the environment**
+    This command will trigger Nix to build the development shell. It might take a while on the first run.
+
+    ```bash
+    direnv allow
+    ```
+
+3.  **Install JavaScript Dependencies**
+    Once the Nix shell is active, you can install the project's dependencies using Bun.
+
+    ```bash
+    bun install
+    ```
+
+4.  **Install iOS Dependencies (for macOS users)**
+    This step links the native iOS libraries.
+    ```bash
+    cd ios
+    bundle install
+    bundle exec pod install
+    cd ..
+    ```
+
+Now the project is ready to run.
+
+### Bare Expo Setup
+
+If you prefer not to use Nix, you can set up your environment manually. This project is a bare Expo project.
+
+For a comprehensive guide on setting up your machine for bare Expo development, please refer to the **[Expo documentation](https://docs.expo.dev/get-started/set-up-your-environment/?mode=development-build&platform=android&device=simulated)**. This includes installing Node.js, Watchman, the Java Development Kit, Android Studio, and Xcode.
+
+Once your environment is set up, follow these steps:
+
+1.  **Clone the Repository**
+
     ```bash
     git clone https://github.com/BlixtWallet/noah.git
     cd noah
     ```
 
 2.  **Install JavaScript Dependencies**
-    This will install all the necessary packages defined in `package.json`.
+
     ```bash
     bun install
     ```
 
-3.  **Install iOS Dependencies**
-    This step links the native iOS libraries required by the project across all build targets.
+3.  **Install iOS Dependencies (for macOS users)**
     ```bash
     cd ios
     pod install
     cd ..
     ```
 
-After these steps, the project is ready to run.
+---
+
+## ⚡️ Local Ark Regtest Environment
+
+For development and testing, you can run a local Ark stack (bitcoind, aspd, bark) using Docker. The [`scripts/ark-dev.sh`](./scripts/ark-dev.sh) script helps manage this environment.
+
+**Prerequisites:**
+
+- **Docker**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+**Setup & Usage:**
+
+1.  **Bootstrap the environment**
+    This clones the `bark` repository and prepares the Docker setup.
+
+    ```bash
+    ./scripts/ark-dev.sh setup
+    ```
+
+2.  **Start the services**
+    This will start `bitcoind`, `aspd`, and `bark` in the background.
+
+    ```bash
+    ./scripts/ark-dev.sh up
+    ```
+
+3.  **Create and fund wallets**
+    - Create a Bitcoin Core wallet: `./scripts/ark-dev.sh create-wallet`
+    - Generate blocks to fund it: `./scripts/ark-dev.sh generate 101`
+    - Create a bark wallet: `./scripts/ark-dev.sh create-bark-wallet`
+    - Fund the ASPD: `./scripts/ark-dev.sh fund-aspd 1`
+
+4.  **Stop the services**
+    ```bash
+    ./scripts/ark-dev.sh down
+    ```
+
+For more commands and details, run `./scripts/ark-dev.sh` without arguments.
 
 ---
 
 ## 🏃 Running the Application
 
-This project is configured with different build flavors for development and testing.
+This project uses various scripts to run the application in different environments (Mainnet, Signet, Regtest).
 
-### 🤖 Android
+Please see the `scripts` section in the [`package.json`](./package.json:5) file for a full list of available commands.
 
-Run one of the following commands to build and launch a specific Android flavor.
+**Example (running on Android Regtest):**
 
--   **Mainnet:**
-    ```bash
-    bun run android:mainnet
-    ```
--   **Signet:**
-    ```bash
-    bun run android:signet
-    ```
--   **Regtest:**
-    ```bash
-    bun run android:regtest
-    ```
+```bash
+bun run android:regtest:debug
+```
 
-### 🍏 iOS
+**Example (running on iOS Regtest):**
 
-The iOS build system uses Xcode Schemes to differentiate between flavors. Each script specifies the correct scheme and build configuration (`Debug` or `Release`).
-
-**Development (Debug) Builds:**
-
--   **Mainnet:**
-    ```bash
-    bun run ios:mainnet:debug
-    ```
--   **Signet:**
-    ```bash
-    bun run ios:signet:debug
-    ```
--   **Regtest:**
-    ```bash
-    bun run ios:regtest:debug
-    ```
-
-**Production-like (Release) Builds:**
-
--   **Mainnet:**
-    ```bash
-    bun run ios:mainnet:release
-    ```
--   **Signet:**
-    ```bash
-    bun run ios:signet:release
-    ```
--   **Regtest:**
-    ```bash
-    bun run ios:regtest:release
-    ```
+```bash
+bun run ios:regtest:debug
+```
 
 ---
 
 ## 📦 Building for Production
 
-The following scripts are configured to create standalone production-ready application binaries (`.apk` or `.aab`) for Android.
+You can create production-ready application binaries using the build scripts.
 
-**Note on Code Signing:** For production builds, you will need to configure your own signing keys. The Android build is currently configured to use the default debug keystore. Please refer to the [React Native documentation for signing Android apps](https://reactnative.dev/docs/signed-apk-android).
+Please see the `scripts` section in the [`package.json`](./package.json:5) file for commands starting with `build:`.
 
--   **Build Mainnet Release:**
-    ```bash
-    bun run build:android:mainnet:release
-    ```
--   **Build Signet Release:**
-    ```bash
-    bun run build:android:signet:release
-    ```
--   **Build Regtest Release:**
-    ```bash
-    bun run build:android:regtest:release
-    ```
+**Note on Code Signing:** For production builds, you will need to configure your own signing keys. Refer to the official React Native and Expo documentation for code signing on [Android](https://reactnative.dev/docs/signed-apk-android) and iOS.
 
 ---
 

@@ -1,9 +1,13 @@
 name: CI
 on:
   pull_request:
+    paths-ignore:
+      - "README.md"
   push:
     branches:
       - master
+    paths-ignore:
+      - "README.md"
 
 jobs:
   check_if_release_commit:
