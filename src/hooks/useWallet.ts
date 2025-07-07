@@ -10,7 +10,7 @@ import {
   loadWallet as loadWalletAction,
 } from "../lib/walletApi";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
-import type { OnboardingStackParamList } from "../../App";
+import type { OnboardingStackParamList } from "../Navigators";
 
 export function useCreateWallet() {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
