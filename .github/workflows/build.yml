@@ -65,11 +65,21 @@ jobs:
       - name: Build signet Android app
         run: nix develop .# --command bash -c "bun build:android:ci"
 
+      - name: Rename APK with timestamp
+        id: apk-renamer
+        run: |
+          APK_DIR="android/app/build/outputs/apk/signet/release"
+          TIMESTAMP=$(date +"%Y-%m-%d-%H-%M")
+          NEW_NAME="noah-android-apk-${TIMESTAMP}.apk"
+          mv "${APK_DIR}/app-signet-release.apk" "${APK_DIR}/${NEW_NAME}"
+          echo "new_path=${APK_DIR}/${NEW_NAME}" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: noah-android-apk
-          path: android/app/build/outputs/apk/signet/release/app-signet-release.apk
+          path: ${{ steps.apk-renamer.outputs.new_path }}
 
   ios_build:
     runs-on: self-hosted
