@@ -21,8 +21,8 @@ export function useCreateWallet() {
     onSuccess: () => {
       navigation.navigate("Mnemonic", { fromOnboarding: true });
     },
-    onError: (error: Error) => {
-      deleteWalletAction();
+    onError: async (error: Error) => {
+      await deleteWalletAction();
       showAlert({ title: "Creation Failed", description: error.message });
     },
   });
