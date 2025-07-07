@@ -14,14 +14,15 @@ import MnemonicScreen from "./src/screens/MnemonicScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { ActivityIndicator, Platform, View, Text } from "react-native";
+import { Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useWalletStore } from "./src/store/walletStore";
 import { COLORS } from "./src/lib/constants";
-import React, { useEffect } from "react";
+import React from "react";
 import { PortalHost } from "@rn-primitives/portal";
-import { useLoadWallet, useCloseWallet } from "./src/hooks/useWallet";
+import WalletLoader from "~/components/WalletLoader";
 import { AlertProvider } from "~/contexts/AlertProvider";
+import AppServices from "~/AppServices";
 
 export type SettingsStackParamList = {
   SettingsList: undefined;
@@ -89,47 +90,7 @@ const OnboardingStackScreen = () => (
 );
 
 const AppContent = () => {
-  const { isInitialized, isWalletLoaded, setWalletLoaded } = useWalletStore();
-  const { mutate: loadWallet, isPending: isWalletLoading, isSuccess } = useLoadWallet();
-  const { mutate: closeWallet } = useCloseWallet();
   const isIos = Platform.OS === "ios";
-
-  console.log("wallet loaded", isInitialized, isWalletLoaded);
-
-  useEffect(() => {
-    if (isInitialized && !isWalletLoaded) {
-      loadWallet();
-    }
-  }, [isInitialized, isWalletLoaded, loadWallet]);
-
-  useEffect(() => {
-    if (isSuccess) {
-      setWalletLoaded();
-    }
-  }, [isSuccess, setWalletLoaded]);
-
-  // Cleanup: close wallet when AppContent unmounts
-  useEffect(() => {
-    return () => {
-      if (isWalletLoaded) {
-        console.log("Closing wallet");
-        closeWallet();
-      }
-    };
-  }, [isWalletLoaded, closeWallet]);
-
-  if (!isInitialized) {
-    return <OnboardingStackScreen />;
-  }
-
-  if (isWalletLoading || !isWalletLoaded) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
-        <Text style={{ marginTop: 10, color: "white" }}>Loading Wallet...</Text>
-      </View>
-    );
-  }
 
   return (
     <Tab.Navigator
@@ -203,13 +164,22 @@ const AppContent = () => {
 };
 
 export default function App() {
+  const { isInitialized } = useWalletStore();
+
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <AlertProvider>
           <NavigationContainer theme={DarkTheme}>
             <StatusBar style="light" />
-            <AppContent />
+            {isInitialized ? (
+              <WalletLoader>
+                <AppServices />
+                <AppContent />
+              </WalletLoader>
+            ) : (
+              <OnboardingStackScreen />
+            )}
             <PortalHost />
           </NavigationContainer>
         </AlertProvider>
