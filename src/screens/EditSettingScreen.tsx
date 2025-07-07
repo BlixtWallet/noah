@@ -6,7 +6,7 @@ import { useWalletStore } from "../store/walletStore";
 import { Input } from "../components/ui/input";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
-import type { OnboardingStackParamList } from "../../App";
+import type { OnboardingStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 

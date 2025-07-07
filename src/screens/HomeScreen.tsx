@@ -2,7 +2,7 @@ import { View, ScrollView, RefreshControl, Pressable, ActivityIndicator } from "
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NoahButton } from "../components/ui/NoahButton";
-import type { HomeStackParamList } from "../../App";
+import type { HomeStackParamList } from "../Navigators";
 import { Text } from "../components/ui/text";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";

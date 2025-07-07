@@ -20,7 +20,7 @@ import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { LegendList } from "@legendapp/list";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList, SettingsStackParamList } from "../../App";
+import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";

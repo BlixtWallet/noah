@@ -2,7 +2,7 @@ import React from "react";
 import { View, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList } from "../../App";
+import type { OnboardingStackParamList } from "../Navigators";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import { COLORS } from "../lib/constants";

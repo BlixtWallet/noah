@@ -11,7 +11,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
 import { getMnemonic } from "../lib/paymentsApi";
 import { useWalletStore } from "../store/walletStore";
-import type { OnboardingStackParamList, SettingsStackParamList } from "../../App";
+import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
 import { COLORS } from "~/lib/constants";
 
