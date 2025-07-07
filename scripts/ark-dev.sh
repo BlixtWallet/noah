@@ -41,6 +41,7 @@ usage() {
     echo ""
     echo "LIFECYCLE COMMANDS (run after 'setup'):"
     echo "  up                         Start all services in the background (docker-compose up -d)."
+    echo "  stop                       Stop all services (docker-compose stop)."
     echo "  down                       Stop and remove all services (docker-compose down)."
     echo ""
     echo "MANAGEMENT COMMANDS (run while services are 'up'):"
@@ -80,10 +81,16 @@ create_wallet() {
     echo "Checking for bitcoind wallet '$WALLET_NAME'..."
     if dcr exec "$BITCOIND_SERVICE" bitcoin-cli -regtest -rpcuser=second -rpcpassword=ark listwallets | grep -q "\"$WALLET_NAME\""; then
         echo "✅ Wallet '$WALLET_NAME' already exists."
-    else
-        echo "Wallet not found. Creating wallet '$WALLET_NAME'..."
-        dcr exec "$BITCOIND_SERVICE" bitcoin-cli -regtest -rpcuser=second -rpcpassword=ark createwallet "$WALLET_NAME"
+
+    # Else if attempt to load wallet
+    elif dcr exec "$BITCOIND_SERVICE" bitcoin-cli -regtest -rpcuser=second -rpcpassword=ark loadwallet "$WALLET_NAME"; then
+        echo "✅ Wallet '$WALLET_NAME' loaded successfully."
+
+    elif dcr exec "$BITCOIND_SERVICE" bitcoin-cli -regtest -rpcuser=second -rpcpassword=ark createwallet "$WALLET_NAME"; then
         echo "✅ Wallet '$WALLET_NAME' created successfully."
+
+    else
+        echo "Failed to create wallet '$WALLET_NAME'."
     fi
 }
 
@@ -178,9 +185,14 @@ case "$COMMAND" in
         dcr up -d "$@"
         ;;
 
+    stop)
+        echo "🛑 Stopping and removing Ark services..."
+        dcr stop "$@"
+        ;;
+
     down)
         echo "🛑 Stopping and removing Ark services..."
-        dcr down "$@"
+        dcr down "$@" --volumes
         ;;
 
     create-wallet)

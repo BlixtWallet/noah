@@ -5,6 +5,8 @@ import { decode } from "light-bolt11-decoder";
 import { validate, Network } from "bitcoin-address-validation";
 import { Platform } from "react-native";
 
+export const PLATFORM = Platform.OS;
+
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
@@ -40,8 +42,8 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   signet: false,
   bitcoin: false,
   config: {
-    bitcoind: "http://192.168.4.252:18443",
-    asp: "http://192.168.4.252:3535",
+    bitcoind: PLATFORM === "android" ? "http://10.0.2.2:18443" : "http://localhost:18443",
+    asp: PLATFORM === "android" ? "http://10.0.2.2:3535" : "http://localhost:3535",
     bitcoind_user: "second",
     bitcoind_pass: "ark",
     vtxo_refresh_expiry_threshold: 288,
@@ -119,8 +121,6 @@ export const decodeBolt11 = (invoice: string) => {
 };
 
 export const msatToSatoshi = (msat: number) => msat / 1000;
-
-export const PLATFORM = Platform.OS;
 
 export const coingeckoEndpoint =
   "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";

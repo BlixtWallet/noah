@@ -15,7 +15,6 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-
 import { Text } from "../components/ui/text";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -27,9 +26,10 @@ import { useDeleteWallet } from "../hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type Setting = {
-  id: keyof WalletConfig;
+  id: keyof WalletConfig | "showMnemonic";
   title: string;
   value?: string;
+  isPressable: boolean;
 };
 
 const SettingsScreen = () => {
@@ -40,31 +40,53 @@ const SettingsScreen = () => {
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
   const handlePress = (item: Setting) => {
-    if (!isInitialized) {
-      navigation.navigate("EditConfiguration", { item });
+    if (!item.isPressable) return;
+
+    if (item.id === "showMnemonic") {
+      navigation.navigate("Mnemonic", { fromOnboarding: false });
+    } else {
+      navigation.navigate("EditConfiguration", {
+        item: item as { id: keyof WalletConfig; title: string; value?: string },
+      });
     }
   };
 
   const data: Setting[] =
     APP_VARIANT === "regtest"
       ? [
-          { id: "bitcoind", title: "Bitcoind RPC", value: config.bitcoind },
-          { id: "asp", title: "ASP URL", value: config.asp },
+          {
+            id: "bitcoind",
+            title: "Bitcoind RPC",
+            value: config.bitcoind,
+            isPressable: !isInitialized,
+          },
+          { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
           {
             id: "bitcoind_user",
             title: "RPC User",
             value: config.bitcoind_user,
+            isPressable: !isInitialized,
           },
           {
             id: "bitcoind_pass",
             title: "RPC Pass",
             value: config.bitcoind_pass,
+            isPressable: !isInitialized,
           },
         ]
       : [
-          { id: "esplora", title: "Esplora URL", value: config.esplora },
-          { id: "asp", title: "ASP URL", value: config.asp },
+          {
+            id: "esplora",
+            title: "Esplora URL",
+            value: config.esplora,
+            isPressable: !isInitialized,
+          },
+          { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
         ];
+
+  if (isInitialized) {
+    data.push({ id: "showMnemonic", title: "Show Mnemonic", isPressable: true });
+  }
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -80,14 +102,16 @@ const SettingsScreen = () => {
           renderItem={({ item }) => (
             <Pressable
               onPress={() => handlePress(item)}
-              disabled={isInitialized}
+              disabled={!item.isPressable}
               className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
             >
               <View>
                 <Label className="text-foreground text-lg">{item.title}</Label>
-                <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
+                {item.value && (
+                  <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
+                )}
               </View>
-              {!isInitialized && <Icon name="chevron-forward-outline" size={24} color="white" />}
+              {item.isPressable && <Icon name="chevron-forward-outline" size={24} color="white" />}
             </Pressable>
           )}
           keyExtractor={(item) => item.id}
@@ -95,47 +119,45 @@ const SettingsScreen = () => {
         />
 
         {isInitialized && (
-          <>
-            <View>
-              <Text className="text-lg font-bold text-destructive mb-4 mt-4">Danger Zone</Text>
-              <AlertDialog onOpenChange={() => setConfirmText("")}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <Text>Delete Wallet</Text>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {`This action is irreversible. To confirm, please type "delete" in the box
+          <View className="mt-8">
+            <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
+            <AlertDialog onOpenChange={() => setConfirmText("")}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Text>Delete Wallet</Text>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {`This action is irreversible. To confirm, please type "delete" in the box
                       below.`}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <Input
-                    value={confirmText}
-                    onChangeText={setConfirmText}
-                    placeholder='Type "delete" to confirm'
-                    className="h-12"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>
-                      <Text>Cancel</Text>
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      disabled={confirmText.toLowerCase() !== "delete"}
-                      onPress={() => deleteWalletMutation.mutate()}
-                    >
-                      <Text>Delete</Text>
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </View>
-          </>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  value={confirmText}
+                  onChangeText={setConfirmText}
+                  placeholder='Type "delete" to confirm'
+                  className="h-12"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    <Text>Cancel</Text>
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    disabled={confirmText.toLowerCase() !== "delete"}
+                    onPress={() => deleteWalletMutation.mutate()}
+                  >
+                    <Text>Delete</Text>
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </View>
         )}
       </View>
     </NoahSafeAreaView>

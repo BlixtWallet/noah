@@ -3,6 +3,7 @@ import {
   loadWallet as loadWalletNitro,
   getBalance as getBalanceNitro,
   closeWallet as closeWalletNitro,
+  isWalletLoaded,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
@@ -91,8 +92,10 @@ export const fetchBalance = async (no_sync: boolean) => {
 
 export const deleteWallet = async () => {
   try {
-    // Close the wallet
-    await closeWalletNitro();
+    // Close the wallet if open
+    if (!isWalletLoaded()) {
+      await closeWalletNitro();
+    }
 
     // Delete the wallet data directory
     const dataDirExists = await RNFS.exists(ARK_DATA_PATH);

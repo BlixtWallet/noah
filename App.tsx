@@ -10,6 +10,7 @@ import SendScreen from "./src/screens/SendScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EditSettingScreen from "./src/screens/EditSettingScreen";
 import BoardArkScreen from "./src/screens/BoardArkScreen";
+import MnemonicScreen from "./src/screens/MnemonicScreen";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -24,12 +25,14 @@ import { AlertProvider } from "~/contexts/AlertProvider";
 
 export type SettingsStackParamList = {
   SettingsList: undefined;
+  Mnemonic: { fromOnboarding: boolean };
 };
 
 export type OnboardingStackParamList = {
   Onboarding: undefined;
   Configuration: undefined;
   EditConfiguration: { item: { id: string; title: string; value?: string } };
+  Mnemonic: { fromOnboarding: boolean };
 };
 
 export type HomeStackParamList = {
@@ -46,9 +49,10 @@ const SendStack = createNativeStackNavigator();
 
 const queryClient = new QueryClient();
 
-const SettingsStack = () => (
+const SettingsStackNav = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="SettingsList" component={SettingsScreen} />
+    <Stack.Screen name="Mnemonic" component={MnemonicScreen} />
   </Stack.Navigator>
 );
 
@@ -80,6 +84,7 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen name="Onboarding" component={OnboardingScreen} />
     <OnboardingStack.Screen name="Configuration" component={SettingsScreen} />
     <OnboardingStack.Screen name="EditConfiguration" component={EditSettingScreen} />
+    <OnboardingStack.Screen name="Mnemonic" component={MnemonicScreen} />
   </OnboardingStack.Navigator>
 );
 
@@ -181,7 +186,7 @@ const AppContent = () => {
       />
       <Tab.Screen
         name="Settings"
-        component={SettingsStack}
+        component={SettingsStackNav}
         options={{
           tabBarIcon: ({ focused }) => {
             if (isIos) {
