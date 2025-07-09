@@ -129,6 +129,8 @@
             export LC_ALL=en_US.UTF-8
             export LANG=en_US.UTF-8
 
+            unset SDKROOT
+
             if [ -f "${darwinDerivations.xcode-wrapper pkgs}/bin/env.sh" ]; then
               source "${darwinDerivations.xcode-wrapper pkgs}/bin/env.sh"
             fi
@@ -138,7 +140,6 @@
 
             echo "iOS development environment:"
             echo "DEVELOPER_DIR: $DEVELOPER_DIR"
-            echo "SDKROOT: $SDKROOT"
             xcodebuild -version
           '';
 
