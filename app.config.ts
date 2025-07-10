@@ -11,11 +11,6 @@ const config: { expo: ExpoConfig } = {
     experiments: {
       reactCompiler: true,
     },
-    splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#000000",
-    },
     plugins: [
       [
         "react-native-edge-to-edge",
