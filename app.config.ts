@@ -11,11 +11,6 @@ const config: { expo: ExpoConfig } = {
     experiments: {
       reactCompiler: true,
     },
-    splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#000000",
-    },
     plugins: [
       [
         "react-native-edge-to-edge",
@@ -60,8 +55,10 @@ const config: { expo: ExpoConfig } = {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/All_Files/android/mipmap-xxxhdpi/app_icon.png",
-        backgroundColor: "#000000",
+        foregroundImage:
+          "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",
+        backgroundImage:
+          "./assets/All_Files/android/Android_Adaptive/android_adaptive_background.png",
       },
       edgeToEdgeEnabled: true,
       package: "com.anonymous.noah",
