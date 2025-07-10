@@ -37,20 +37,39 @@ const config: { expo: ExpoConfig } = {
           },
         },
       ],
+      [
+        "react-native-vision-camera",
+        {
+          cameraPermissionText: "$(PRODUCT_NAME) needs access to your Camera.",
+        },
+      ],
     ],
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.noah",
-      icon: "./assets/appstore.png",
+      splash: {
+        image: "./assets/All_Files/splash_screens/splash_screen_ios.png",
+        resizeMode: "contain",
+        backgroundColor: "#000000",
+      },
+      icon: {
+        dark: "./assets/All_Files/light_dark_tinted/icon_dark_mode_ios.png",
+        light: "./assets/All_Files/light_dark_tinted/icon_light_mode_ios.png",
+        tinted: "./assets/All_Files/light_dark_tinted/icon_clear_tinted_ios.png",
+      },
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/playstore.png",
+        foregroundImage: "./assets/All_Files/android/mipmap-xxxhdpi/app_icon.png",
         backgroundColor: "#000000",
       },
-      icon: "./assets/playstore.png",
       edgeToEdgeEnabled: true,
       package: "com.anonymous.noah",
+      splash: {
+        image: "./assets/All_Files/splash_screens/splash_screen_android.png",
+        resizeMode: "contain",
+        backgroundColor: "#000000",
+      },
     },
     androidStatusBar: {
       barStyle: "light-content",
