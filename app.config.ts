@@ -57,8 +57,7 @@ const config: { expo: ExpoConfig } = {
       adaptiveIcon: {
         foregroundImage:
           "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",
-        backgroundImage:
-          "./assets/All_Files/android/Android_Adaptive/android_adaptive_background.png",
+        backgroundColor: "#000000",
       },
       edgeToEdgeEnabled: true,
       package: "com.anonymous.noah",
