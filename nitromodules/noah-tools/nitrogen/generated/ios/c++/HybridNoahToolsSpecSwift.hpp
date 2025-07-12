@@ -15,6 +15,8 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
 
 #include <string>
+#include <NitroModules/Promise.hpp>
+#include <vector>
 
 #include "NoahTools-Swift-Cxx-Umbrella.hpp"
 
@@ -57,6 +59,14 @@ namespace margelo::nitro::noahtools {
     // Methods
     inline std::string getAppVariant() override {
       auto __result = _swiftPart.getAppVariant();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() override {
+      auto __result = _swiftPart.getAppLogs();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

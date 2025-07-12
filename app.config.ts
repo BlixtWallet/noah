@@ -13,6 +13,19 @@ const config: { expo: ExpoConfig } = {
     },
     plugins: [
       [
+        "react-native-share",
+        {
+          ios: ["fb", "instagram", "twitter", "tiktoksharesdk"],
+          android: [
+            "com.facebook.katana",
+            "com.instagram.android",
+            "com.twitter.android",
+            "com.zhiliaoapp.musically",
+          ],
+          enableBase64ShareAndroid: true,
+        },
+      ],
+      [
         "react-native-edge-to-edge",
         {
           android: {

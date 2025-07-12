@@ -17,10 +17,14 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
 // Include C++ defined types
 #include "HybridNoahToolsSpec.hpp"
+#include <NitroModules/Promise.hpp>
+#include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
+#include <functional>
 #include <memory>
 #include <string>
+#include <vector>
 
 /**
  * Contains specialized versions of C++ templated types so they can be accessed from Swift,
@@ -28,6 +32,73 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
  */
 namespace margelo::nitro::noahtools::bridge::swift {
 
+  // pragma MARK: std::vector<std::string>
+  /**
+   * Specialized version of `std::vector<std::string>`.
+   */
+  using std__vector_std__string_ = std::vector<std::string>;
+  inline std::vector<std::string> create_std__vector_std__string_(size_t size) {
+    std::vector<std::string> vector;
+    vector.reserve(size);
+    return vector;
+  }
+  
+  // pragma MARK: std::shared_ptr<Promise<std::vector<std::string>>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<std::vector<std::string>>>`.
+   */
+  using std__shared_ptr_Promise_std__vector_std__string___ = std::shared_ptr<Promise<std::vector<std::string>>>;
+  inline std::shared_ptr<Promise<std::vector<std::string>>> create_std__shared_ptr_Promise_std__vector_std__string___() {
+    return Promise<std::vector<std::string>>::create();
+  }
+  inline PromiseHolder<std::vector<std::string>> wrap_std__shared_ptr_Promise_std__vector_std__string___(std::shared_ptr<Promise<std::vector<std::string>>> promise) {
+    return PromiseHolder<std::vector<std::string>>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void(const std::vector<std::string>& /* result */)>
+  /**
+   * Specialized version of `std::function<void(const std::vector<std::string>&)>`.
+   */
+  using Func_void_std__vector_std__string_ = std::function<void(const std::vector<std::string>& /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(const std::vector<std::string>& / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_std__vector_std__string__Wrapper final {
+  public:
+    explicit Func_void_std__vector_std__string__Wrapper(std::function<void(const std::vector<std::string>& /* result */)>&& func): _function(std::make_shared<std::function<void(const std::vector<std::string>& /* result */)>>(std::move(func))) {}
+    inline void call(std::vector<std::string> result) const {
+      _function->operator()(result);
+    }
+  private:
+    std::shared_ptr<std::function<void(const std::vector<std::string>& /* result */)>> _function;
+  };
+  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* _Nonnull swiftClosureWrapper);
+  inline Func_void_std__vector_std__string__Wrapper wrap_Func_void_std__vector_std__string_(Func_void_std__vector_std__string_ value) {
+    return Func_void_std__vector_std__string__Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::function<void(const std::exception_ptr& /* error */)>
+  /**
+   * Specialized version of `std::function<void(const std::exception_ptr&)>`.
+   */
+  using Func_void_std__exception_ptr = std::function<void(const std::exception_ptr& /* error */)>;
+  /**
+   * Wrapper class for a `std::function<void(const std::exception_ptr& / * error * /)>`, this can be used from Swift.
+   */
+  class Func_void_std__exception_ptr_Wrapper final {
+  public:
+    explicit Func_void_std__exception_ptr_Wrapper(std::function<void(const std::exception_ptr& /* error */)>&& func): _function(std::make_shared<std::function<void(const std::exception_ptr& /* error */)>>(std::move(func))) {}
+    inline void call(std::exception_ptr error) const {
+      _function->operator()(error);
+    }
+  private:
+    std::shared_ptr<std::function<void(const std::exception_ptr& /* error */)>> _function;
+  };
+  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* _Nonnull swiftClosureWrapper);
+  inline Func_void_std__exception_ptr_Wrapper wrap_Func_void_std__exception_ptr(Func_void_std__exception_ptr value) {
+    return Func_void_std__exception_ptr_Wrapper(std::move(value));
+  }
+  
   // pragma MARK: std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>
   /**
    * Specialized version of `std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>`.
@@ -47,6 +118,15 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   inline Result_std__string_ create_Result_std__string_(const std::exception_ptr& error) {
     return Result<std::string>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<std::vector<std::string>>>>
+  using Result_std__shared_ptr_Promise_std__vector_std__string____ = Result<std::shared_ptr<Promise<std::vector<std::string>>>>;
+  inline Result_std__shared_ptr_Promise_std__vector_std__string____ create_Result_std__shared_ptr_Promise_std__vector_std__string____(const std::shared_ptr<Promise<std::vector<std::string>>>& value) {
+    return Result<std::shared_ptr<Promise<std::vector<std::string>>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_std__vector_std__string____ create_Result_std__shared_ptr_Promise_std__vector_std__string____(const std::exception_ptr& error) {
+    return Result<std::shared_ptr<Promise<std::vector<std::string>>>>::withError(error);
   }
 
 } // namespace margelo::nitro::noahtools::bridge::swift

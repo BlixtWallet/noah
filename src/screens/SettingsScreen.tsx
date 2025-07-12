@@ -26,7 +26,7 @@ import { useDeleteWallet } from "../hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type Setting = {
-  id: keyof WalletConfig | "showMnemonic";
+  id: keyof WalletConfig | "showMnemonic" | "showLogs";
   title: string;
   value?: string;
   isPressable: boolean;
@@ -44,6 +44,8 @@ const SettingsScreen = () => {
 
     if (item.id === "showMnemonic") {
       navigation.navigate("Mnemonic", { fromOnboarding: false });
+    } else if (item.id === "showLogs") {
+      navigation.navigate("Logs");
     } else {
       navigation.navigate("EditConfiguration", {
         item: item as { id: keyof WalletConfig; title: string; value?: string },
@@ -86,6 +88,7 @@ const SettingsScreen = () => {
 
   if (isInitialized) {
     data.push({ id: "showMnemonic", title: "Show Mnemonic", isPressable: true });
+    data.push({ id: "showLogs", title: "Show Logs", isPressable: true });
   }
 
   return (

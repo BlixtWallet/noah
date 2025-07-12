@@ -6,3 +6,7 @@ const NoahToolsHybridObject = NitroModules.createHybridObject<NoahTools>("NoahTo
 export function getAppVariant(): "mainnet" | "signet" | "regtest" {
   return NoahToolsHybridObject.getAppVariant() as "mainnet" | "signet" | "regtest";
 }
+
+export function getAppLogs(): Promise<string[]> {
+  return NoahToolsHybridObject.getAppLogs();
+}

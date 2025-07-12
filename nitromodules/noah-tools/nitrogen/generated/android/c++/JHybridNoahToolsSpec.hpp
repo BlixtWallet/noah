@@ -52,6 +52,7 @@ namespace margelo::nitro::noahtools {
   public:
     // Methods
     std::string getAppVariant() override;
+    std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() override;
 
   private:
     friend HybridBase;

@@ -15,6 +15,7 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
 
   // Methods
   func getAppVariant() throws -> String
+  func getAppLogs() throws -> Promise<[String]>
 }
 
 /// See ``HybridNoahToolsSpec``

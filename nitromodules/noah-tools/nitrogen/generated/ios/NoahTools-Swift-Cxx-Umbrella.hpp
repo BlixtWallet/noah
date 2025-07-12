@@ -13,10 +13,12 @@ namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
 
 // Include C++ defined types
 #include "HybridNoahToolsSpec.hpp"
+#include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <memory>
 #include <string>
+#include <vector>
 
 // C++ helpers for Swift
 #include "NoahTools-Swift-Cxx-Bridge.hpp"

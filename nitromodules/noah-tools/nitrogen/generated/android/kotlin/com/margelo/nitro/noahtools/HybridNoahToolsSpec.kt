@@ -43,6 +43,10 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun getAppVariant(): String
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getAppLogs(): Promise<Array<String>>
 
   private external fun initHybrid(): HybridData
 

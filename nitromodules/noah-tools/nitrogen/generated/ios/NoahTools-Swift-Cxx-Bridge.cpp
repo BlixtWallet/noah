@@ -13,6 +13,22 @@
 
 namespace margelo::nitro::noahtools::bridge::swift {
 
+  // pragma MARK: std::function<void(const std::vector<std::string>& /* result */)>
+  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* _Nonnull swiftClosureWrapper) {
+    auto swiftClosure = NoahTools::Func_void_std__vector_std__string_::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const std::vector<std::string>& result) mutable -> void {
+      swiftClosure.call(result);
+    };
+  }
+  
+  // pragma MARK: std::function<void(const std::exception_ptr& /* error */)>
+  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* _Nonnull swiftClosureWrapper) {
+    auto swiftClosure = NoahTools::Func_void_std__exception_ptr::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const std::exception_ptr& error) mutable -> void {
+      swiftClosure.call(error);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>
   std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec> create_std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_(void* _Nonnull swiftUnsafePointer) {
     NoahTools::HybridNoahToolsSpec_cxx swiftPart = NoahTools::HybridNoahToolsSpec_cxx::fromUnsafe(swiftUnsafePointer);

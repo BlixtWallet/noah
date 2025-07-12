@@ -14,6 +14,7 @@ import SettingsScreen from "~/screens/SettingsScreen";
 import EditSettingScreen from "~/screens/EditSettingScreen";
 import BoardArkScreen from "~/screens/BoardArkScreen";
 import MnemonicScreen from "~/screens/MnemonicScreen";
+import LogScreen from "~/screens/LogScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { COLORS } from "~/lib/constants";
@@ -24,6 +25,7 @@ import AppServices from "~/AppServices";
 export type SettingsStackParamList = {
   SettingsList: undefined;
   Mnemonic: { fromOnboarding: boolean };
+  Logs: undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -49,6 +51,7 @@ const SettingsStackNav = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="SettingsList" component={SettingsScreen} />
     <Stack.Screen name="Mnemonic" component={MnemonicScreen} />
+    <Stack.Screen name="Logs" component={LogScreen} />
   </Stack.Navigator>
 );
 

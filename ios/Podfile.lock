@@ -72,7 +72,7 @@ PODS:
   - hermes-engine (0.79.4):
     - hermes-engine/Pre-built (= 0.79.4)
   - hermes-engine/Pre-built (0.79.4)
-  - NitroArk (0.0.26):
+  - NitroArk (0.0.27):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2192,6 +2192,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNShare (12.1.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNSVG (15.12.0):
     - DoubleConversion
     - glog
@@ -2349,6 +2373,7 @@ DEPENDENCIES:
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNShare (from `../node_modules/react-native-share`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - SDWebImage
   - SDWebImageSVGCoder
@@ -2544,6 +2569,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNShare:
+    :path: "../node_modules/react-native-share"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   VisionCamera:
@@ -2567,7 +2594,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 8b5a5eb386b990287d072fd7b6f6ebd9544dd251
-  NitroArk: 22ec709f2dd728f08b24be15fb0a66d4dd18c2bc
+  NitroArk: aee01f4471b6c11fab9b8663c4666a4d98ab0214
   NitroModules: f36b94e48ff1705fc6b84bc1953f40e2da4196c2
   NoahTools: 12a4e8705c339d40f7218c725de658f4a62ef646
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
@@ -2642,6 +2669,7 @@ SPEC CHECKSUMS:
   RNKeychain: 943b4dbceef4b3a310c9122c99d1e5b0bd66b9f3
   RNReanimated: 2313402fe27fecb7237619e9c6fcee3177f08a65
   RNScreens: 482e9707f9826230810c92e765751af53826d509
+  RNShare: 27d19f1913a5f341e1e91496e8848e42bd6e0329
   RNSVG: 8a1054afe490b5d63b9792d7ae3c1fde8c05cdd0
   SDWebImage: f29024626962457f3470184232766516dee8dfea
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
