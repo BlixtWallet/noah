@@ -37,7 +37,9 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
 
         var line: String?
         while (bufferedReader.readLine().also { line = it } != null) {
-          if (line!!.contains(pid) && (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS"))) {
+          if (line!!.contains(pid) &&
+              (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
+              !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
             logcat.addLast(line!!)
             if (logcat.size > 1000) {
               logcat.removeFirst()  // Keep only last 1000
