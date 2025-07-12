@@ -11,6 +11,11 @@ const config: { expo: ExpoConfig } = {
     experiments: {
       reactCompiler: true,
     },
+    extra: {
+      eas: {
+        projectId: "6e79dffb-dcd4-4f3d-b596-638b16377eb0",
+      },
+    },
     plugins: [
       [
         "react-native-share",
@@ -83,7 +88,6 @@ const config: { expo: ExpoConfig } = {
       favicon: "./assets/favicon.png",
       bundler: "metro",
     },
-    extra: {},
   },
 };
 
