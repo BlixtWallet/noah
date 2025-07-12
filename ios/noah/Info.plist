@@ -37,10 +37,9 @@
     <string>1</string>
     <key>LSApplicationQueriesSchemes</key>
     <array>
-      <string>fb</string>
-      <string>instagram</string>
-      <string>twitter</string>
-      <string>tiktoksharesdk</string>
+      <string>whatsapp</string>
+      <string>telegram</string>
+      <string>signal</string>
     </array>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>

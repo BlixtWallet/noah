@@ -45,18 +45,18 @@ const LogScreen = () => {
   }, []);
 
   const handleShare = async () => {
-    try {
-      const path = `${RNFS.CachesDirectoryPath}/noah_logs.txt`;
+    const path = `${RNFS.CachesDirectoryPath}/noah_logs.txt`;
+    const url = PLATFORM === "android" ? `file://${path}` : path;
 
+    try {
       await RNFS.writeFile(path, logs.join("\n"), "utf8");
 
-      const url = PLATFORM === "android" ? `file://${path}` : path;
       console.log("Sharing URL:", url); // Debug log
 
       const options = {
         title: "Share your file",
         message: "Check out this file!",
-        url: `file://${url}`,
+        url,
         type: "text/plain",
       };
 
@@ -66,7 +66,7 @@ const LogScreen = () => {
       await RNFS.unlink(path);
       console.log("File shared and deleted successfully");
     } catch (error) {
-      console.error("Failed to share logs:", error);
+      console.log("Failed to share logs:", error);
     }
   };
 

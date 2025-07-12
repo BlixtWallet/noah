@@ -10,6 +10,9 @@
     <package android:name="com.instagram.android"/>
     <package android:name="com.twitter.android"/>
     <package android:name="com.zhiliaoapp.musically"/>
+    <package android:name="com.whatsapp"/>
+    <package android:name="org.telegram.messenger"/>
+    <package android:name="org.thoughtcrime.securesms"/>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
       <category android:name="android.intent.category.BROWSABLE"/>

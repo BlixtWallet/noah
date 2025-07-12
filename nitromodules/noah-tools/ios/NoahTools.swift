@@ -42,7 +42,7 @@ class NoahTools: HybridNoahToolsSpec {
       let rawEntries = try store.getEntries(at: position, matching: predicate)
       let filteredEntries = rawEntries.compactMap { $0 as? OSLogEntryLog }
       
-      let formattedEntries = filteredEntries.map { "[\($0.date.formatted())] [\($0.category)] \($0.composedMessage)" }
+      let formattedEntries = filteredEntries.map { "[\($0.date.formatted())] [\($0.category)]\n  ➡️ \($0.composedMessage)" }
       
       return formattedEntries
     }

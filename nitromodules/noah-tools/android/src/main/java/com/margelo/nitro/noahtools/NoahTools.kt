@@ -56,17 +56,15 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
 
   // Optional: Parse and format logcat line to match iOS style (e.g., "[timestamp] [tag] message")
   private fun formatLogLine(line: String): String {
-    // Simple regex to extract parts (adjust based on your log format)
-    val pattern = Pattern.compile("(\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+\\d+\\s+(\\d+)\\s+(\\w)\\s+(\\w+)\\s+:\\s+(.*)")
+    // Regex to extract timestamp from the beginning of the log line
+    val pattern = Pattern.compile("^(\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(.*)")
     val matcher = pattern.matcher(line)
     if (matcher.find()) {
       val timestamp = matcher.group(1)
-      // val pid = matcher.group(2)  // Unused
-      val level = matcher.group(3)  // e.g., I for Info, D for Debug
-      val tag = matcher.group(4)    // e.g., category/tag like "bark_cpp"
-      val message = matcher.group(5)
-      return "[$timestamp] [$tag/$level] $message"
+      val restOfLine = matcher.group(2)
+      return "[$timestamp]\n  ➡️ $restOfLine"
     }
-    return line  // Fallback to raw line if parsing fails
+    // Fallback for lines that don't start with a timestamp (should be rare)
+    return "➡️ $line"
   }
 }
