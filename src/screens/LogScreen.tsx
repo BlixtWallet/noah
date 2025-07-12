@@ -55,7 +55,7 @@ const LogScreen = () => {
 
       const options = {
         title: "Share your file",
-        message: "Check out this file!",
+        message: "Noah App Logs",
         url,
         type: "text/plain",
       };

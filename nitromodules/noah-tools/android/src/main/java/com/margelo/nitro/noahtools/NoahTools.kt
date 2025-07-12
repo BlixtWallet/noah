@@ -7,7 +7,6 @@ import com.margelo.nitro.core.Promise
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.ArrayDeque
-import java.util.regex.Pattern
 
 class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsSpec() {
 
@@ -39,8 +38,7 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         var line: String?
         while (bufferedReader.readLine().also { line = it } != null) {
           if (line!!.contains(pid) && (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS"))) {
-            val formatted = formatLogLine(line!!)  // Optional: Format like iOS
-            logcat.addLast(formatted)
+            logcat.addLast(line!!)
             if (logcat.size > 1000) {
               logcat.removeFirst()  // Keep only last 1000
             }
@@ -54,17 +52,4 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
     }
   }
 
-  // Optional: Parse and format logcat line to match iOS style (e.g., "[timestamp] [tag] message")
-  private fun formatLogLine(line: String): String {
-    // Regex to extract timestamp from the beginning of the log line
-    val pattern = Pattern.compile("^(\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(.*)")
-    val matcher = pattern.matcher(line)
-    if (matcher.find()) {
-      val timestamp = matcher.group(1)
-      val restOfLine = matcher.group(2)
-      return "[$timestamp]\n  ➡️ $restOfLine"
-    }
-    // Fallback for lines that don't start with a timestamp (should be rare)
-    return "➡️ $line"
-  }
 }
