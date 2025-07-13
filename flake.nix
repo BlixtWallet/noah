@@ -53,7 +53,7 @@
         xcode-wrapper =
           pkgs:
           pkgs.stdenv.mkDerivation {
-            name = "xcode-wrapper-16.2.0";
+            name = "xcode-wrapper-16.4.0";
             buildInputs = [ pkgs.darwin.cctools ];
             buildCommand = ''
               mkdir -p $out/bin
@@ -93,8 +93,8 @@
 
               if [ -d "/Applications/Xcode.app" ]; then
                 DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
-              elif [ -d "/Applications/Xcode-16.2.0.app" ]; then
-                DEVELOPER_DIR="/Applications/Xcode-16.2.0.app/Contents/Developer"
+              elif [ -d "/Applications/Xcode-16.4.0.app" ]; then
+                DEVELOPER_DIR="/Applications/Xcode-16.4.0.app/Contents/Developer"
               else
                 echo "Error: Xcode not found"
                 exit 1

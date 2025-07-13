@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, ScrollView, Pressable, ActivityIndicator, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -18,6 +18,7 @@ const LogScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +44,14 @@ const LogScreen = () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isLoading && logs.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [logs, isLoading]);
 
   const handleShare = async () => {
     const path = `${RNFS.CachesDirectoryPath}/noah_logs.txt`;
@@ -94,17 +103,28 @@ const LogScreen = () => {
           </View>
         ) : (
           <ScrollView
+            ref={scrollViewRef}
             className="flex-1 bg-card rounded-lg p-2"
             contentContainerStyle={{ paddingBottom: bottomTabBarHeight }}
           >
             {logs.length > 0 ? (
-              <TextInput
-                editable={false}
-                multiline
-                value={logs.join("\n")}
-                className="text-sm text-white font-mono"
-                selectionColor={COLORS.BITCOIN_ORANGE}
-              />
+              PLATFORM === "ios" ? (
+                <TextInput
+                  editable={false}
+                  multiline
+                  value={logs.join("\n")}
+                  className="text-sm text-white font-mono"
+                  selectionColor={COLORS.BITCOIN_ORANGE}
+                />
+              ) : (
+                <Text
+                  selectable
+                  selectionColor={COLORS.BITCOIN_ORANGE}
+                  className="text-sm text-white font-mono"
+                >
+                  {logs.join("\n\n")}
+                </Text>
+              )
             ) : (
               <Text className="text-center text-muted-foreground">No logs found.</Text>
             )}

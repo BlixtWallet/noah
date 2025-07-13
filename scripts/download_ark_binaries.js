@@ -61,6 +61,48 @@ function download(url, dest) {
   });
 }
 
+async function setupIos() {
+  // --- iOS Setup ---
+  console.log("\n--- Starting iOS Setup ---");
+  if (fs.existsSync(xcFrameworkDestPath)) {
+    console.log(`Removing existing framework at ${xcFrameworkDestPath}`);
+    fs.rmSync(xcFrameworkDestPath, { recursive: true, force: true });
+  }
+  console.log(`Downloading iOS framework from ${XC_FRAMEWORK_URL}...`);
+  await download(XC_FRAMEWORK_URL, xcFrameworkZipPath);
+  console.log("iOS download complete.");
+  console.log(`Unzipping ${path.basename(xcFrameworkZipPath)}...`);
+  execSync(`unzip -o "${xcFrameworkZipPath}" -d "${tempDir}"`);
+  console.log("iOS unzip complete.");
+  if (!fs.existsSync(unzippedFrameworkPath)) {
+    throw new Error(`Expected framework not found at ${unzippedFrameworkPath}`);
+  }
+  console.log(`Moving Ark.xcframework to ${nitroArkPath}`);
+  fs.renameSync(unzippedFrameworkPath, xcFrameworkDestPath);
+  console.log("--- iOS Setup Complete ---\n");
+}
+
+async function setupAndroid() {
+  // --- Android Setup ---
+  console.log("--- Starting Android Setup ---");
+  if (fs.existsSync(jniLibsDestPath)) {
+    console.log(`Removing existing jniLibs at ${jniLibsDestPath}`);
+    fs.rmSync(jniLibsDestPath, { recursive: true, force: true });
+  }
+  console.log(`Downloading Android binaries from ${JNI_LIBS_ZIP_URL}...`);
+  await download(JNI_LIBS_ZIP_URL, jniLibsZipPath);
+  console.log("Android download complete.");
+  console.log(`Unzipping ${path.basename(jniLibsZipPath)}...`);
+  execSync(`unzip -o "${jniLibsZipPath}" -d "${tempDir}"`);
+  console.log("Android unzip complete.");
+  if (!fs.existsSync(unzippedJniLibsPath)) {
+    throw new Error(`Expected jniLibs not found at ${unzippedJniLibsPath}`);
+  }
+  console.log(`Moving jniLibs to ${path.dirname(jniLibsDestPath)}`);
+  fs.renameSync(unzippedJniLibsPath, jniLibsDestPath);
+  console.log("--- Android Setup Complete ---\n");
+}
+
 /**
  * Main function to run the postinstall steps.
  */
@@ -77,43 +119,7 @@ async function main() {
   fs.mkdirSync(tempDir, { recursive: true });
 
   try {
-    // --- iOS Setup ---
-    console.log("\n--- Starting iOS Setup ---");
-    if (fs.existsSync(xcFrameworkDestPath)) {
-      console.log(`Removing existing framework at ${xcFrameworkDestPath}`);
-      fs.rmSync(xcFrameworkDestPath, { recursive: true, force: true });
-    }
-    console.log(`Downloading iOS framework from ${XC_FRAMEWORK_URL}...`);
-    await download(XC_FRAMEWORK_URL, xcFrameworkZipPath);
-    console.log("Download complete.");
-    console.log(`Unzipping ${path.basename(xcFrameworkZipPath)}...`);
-    execSync(`unzip -o "${xcFrameworkZipPath}" -d "${tempDir}"`);
-    console.log("Unzip complete.");
-    if (!fs.existsSync(unzippedFrameworkPath)) {
-      throw new Error(`Expected framework not found at ${unzippedFrameworkPath}`);
-    }
-    console.log(`Moving Ark.xcframework to ${nitroArkPath}`);
-    fs.renameSync(unzippedFrameworkPath, xcFrameworkDestPath);
-    console.log("--- iOS Setup Complete ---\n");
-
-    // --- Android Setup ---
-    console.log("--- Starting Android Setup ---");
-    if (fs.existsSync(jniLibsDestPath)) {
-      console.log(`Removing existing jniLibs at ${jniLibsDestPath}`);
-      fs.rmSync(jniLibsDestPath, { recursive: true, force: true });
-    }
-    console.log(`Downloading Android binaries from ${JNI_LIBS_ZIP_URL}...`);
-    await download(JNI_LIBS_ZIP_URL, jniLibsZipPath);
-    console.log("Download complete.");
-    console.log(`Unzipping ${path.basename(jniLibsZipPath)}...`);
-    execSync(`unzip -o "${jniLibsZipPath}" -d "${tempDir}"`);
-    console.log("Unzip complete.");
-    if (!fs.existsSync(unzippedJniLibsPath)) {
-      throw new Error(`Expected jniLibs not found at ${unzippedJniLibsPath}`);
-    }
-    console.log(`Moving jniLibs to ${path.dirname(jniLibsDestPath)}`);
-    fs.renameSync(unzippedJniLibsPath, jniLibsDestPath);
-    console.log("--- Android Setup Complete ---\n");
+    await Promise.all([setupIos(), setupAndroid()]);
 
     console.log("Postinstall script for react-native-nitro-ark finished successfully!");
   } catch (error) {
