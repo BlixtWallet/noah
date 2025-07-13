@@ -112,7 +112,7 @@ const LogScreen = () => {
                 <TextInput
                   editable={false}
                   multiline
-                  value={logs.join("\n")}
+                  value={logs.join("\n\n")}
                   className="text-sm text-white font-mono"
                   selectionColor={COLORS.BITCOIN_ORANGE}
                 />
