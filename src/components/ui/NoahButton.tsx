@@ -2,7 +2,7 @@ import React from "react";
 import { ActivityIndicator, ViewStyle } from "react-native";
 import { Text } from "./text";
 import { Button, type ButtonProps } from "./button";
-import { COLORS } from "../../lib/constants";
+import { COLORS } from "../../lib/styleConstants";
 
 interface NoahButtonProps extends Omit<ButtonProps, "style"> {
   children: React.ReactNode;

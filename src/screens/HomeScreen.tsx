@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../componen
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { COLORS } from "../lib/constants";
+import { COLORS } from "../lib/styleConstants";
 import { useBalance } from "../hooks/useWallet";
 
 import Animated, {

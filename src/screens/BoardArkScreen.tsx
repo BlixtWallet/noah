@@ -17,7 +17,7 @@ import { useBalance } from "../hooks/useWallet";
 import { useBoardArk } from "../hooks/usePayments";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { cn } from "../lib/utils";
-import { COLORS } from "../lib/constants";
+import { COLORS } from "../lib/styleConstants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";

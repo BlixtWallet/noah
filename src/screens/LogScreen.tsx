@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
+import { View, ScrollView, Pressable, ActivityIndicator, TextInput } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { getAppLogs } from "noah-tools";
-import { COLORS } from "~/lib/constants";
+import { COLORS } from "~/lib/styleConstants";
 import { Button } from "~/components/ui/button";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import * as RNFS from "@dr.pogodin/react-native-fs";
@@ -98,11 +98,13 @@ const LogScreen = () => {
             contentContainerStyle={{ paddingBottom: bottomTabBarHeight }}
           >
             {logs.length > 0 ? (
-              logs.map((log, index) => (
-                <Text key={index} className="text-xs text-white font-mono">
-                  {log}
-                </Text>
-              ))
+              <TextInput
+                editable={false}
+                multiline
+                value={logs.join("\n")}
+                className="text-sm text-white font-mono"
+                selectionColor={COLORS.BITCOIN_ORANGE}
+              />
             ) : (
               <Text className="text-center text-muted-foreground">No logs found.</Text>
             )}

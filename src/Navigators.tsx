@@ -17,7 +17,7 @@ import MnemonicScreen from "~/screens/MnemonicScreen";
 import LogScreen from "~/screens/LogScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
-import { COLORS } from "~/lib/constants";
+import { COLORS } from "~/lib/styleConstants";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
 

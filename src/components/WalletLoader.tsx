@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { View, ActivityIndicator, Text } from "react-native";
 import { useWalletStore } from "../store/walletStore";
 import { useLoadWallet, useCloseWallet } from "../hooks/useWallet";
-import { COLORS } from "../lib/constants";
+import { COLORS } from "../lib/styleConstants";
 
 interface WalletLoaderProps {
   children: React.ReactNode;

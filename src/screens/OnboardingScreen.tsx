@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "../Navigators";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
-import { COLORS } from "../lib/constants";
+import { COLORS } from "../lib/styleConstants";
 import { useCreateWallet } from "../hooks/useWallet";
 
 const OnboardingScreen = () => {

@@ -14,7 +14,7 @@ import { getMnemonic } from "../lib/paymentsApi";
 import { useWalletStore } from "../store/walletStore";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
-import { COLORS } from "~/lib/constants";
+import { COLORS } from "~/lib/styleConstants";
 
 type MnemonicScreenRouteProp = RouteProp<
   OnboardingStackParamList & SettingsStackParamList,
