@@ -3,10 +3,11 @@ const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
 
-const NITRO_ARK_VERSION = "v0.0.27";
+const NITRO_ARK_VERSION = "v0.0.29";
 
 // --- Configuration ---
 const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
+const XC_FRAMEWORK_CXX_BRIDGE_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/ArkCxxBridge.xcframework.zip`;
 const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
 
 const projectRoot = process.cwd();
@@ -16,8 +17,15 @@ const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
 // iOS paths
 const xcFrameworkZipPath = path.join(tempDir, "Ark.xcframework.zip");
 const xcFrameworkDestPath = path.join(nitroArkPath, "Ark.xcframework");
+const xcFrameworkCxxBridgeZipPath = path.join(tempDir, "ArkCxxBridge.xcframework.zip");
+const xcFrameworkCxxBrigeDestPath = path.join(nitroArkPath, "ArkCxxBridge.xcframework");
 const unzippedFrameworkContainer = path.join(tempDir, "target");
 const unzippedFrameworkPath = path.join(unzippedFrameworkContainer, "Ark.xcframework");
+const unzippedFrameworkCxxBrigeContainer = path.join(tempDir, "target");
+const unzippedCxxBridgeFrameworkPath = path.join(
+  unzippedFrameworkContainer,
+  "ArkCxxBridge.xcframework",
+);
 
 // Android paths
 const jniLibsZipPath = path.join(tempDir, "jniLibs.zip");
@@ -79,6 +87,19 @@ async function setupIos() {
   }
   console.log(`Moving Ark.xcframework to ${nitroArkPath}`);
   fs.renameSync(unzippedFrameworkPath, xcFrameworkDestPath);
+
+  console.log(`Downloading iOS CxxBridge framework from ${XC_FRAMEWORK_CXX_BRIDGE_URL}...`);
+  await download(XC_FRAMEWORK_CXX_BRIDGE_URL, xcFrameworkCxxBridgeZipPath);
+  console.log("iOS CxxBridge download complete.");
+  console.log(`Unzipping ${path.basename(xcFrameworkCxxBridgeZipPath)}...`);
+  execSync(`unzip -o "${xcFrameworkCxxBridgeZipPath}" -d "${tempDir}"`);
+  console.log("iOS CxxBridge unzip complete.");
+  if (!fs.existsSync(unzippedFrameworkCxxBrigeContainer)) {
+    throw new Error(`Expected framework not found at ${unzippedFrameworkCxxBrigeContainer}`);
+  }
+  console.log(`Moving ArkCxxBridge.xcframework to ${nitroArkPath}`);
+  fs.renameSync(unzippedCxxBridgeFrameworkPath, xcFrameworkCxxBrigeDestPath);
+
   console.log("--- iOS Setup Complete ---\n");
 }
 
