@@ -81,7 +81,7 @@ const config: { expo: ExpoConfig } = {
         resizeMode: "contain",
         backgroundColor: "#000000",
       },
-      googleServicesFile: "./android/app/google-services.json",
+      // googleServicesFile: "./android/app/google-services.json", // TODO(hsjoberg): What is the purpose of this field?
     },
     androidStatusBar: {
       barStyle: "light-content",
