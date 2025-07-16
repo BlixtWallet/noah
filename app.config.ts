@@ -2,8 +2,9 @@ import { ExpoConfig } from "expo/config";
 
 const config: { expo: ExpoConfig } = {
   expo: {
+    owner: "noah-wallet",
     name: "Noah",
-    slug: "noah",
+    slug: "noahs-ark-wallet",
     version: "1.0.0",
     orientation: "portrait",
     userInterfaceStyle: "dark",
@@ -51,6 +52,7 @@ const config: { expo: ExpoConfig } = {
           cameraPermissionText: "$(PRODUCT_NAME) needs access to your Camera.",
         },
       ],
+      "expo-notifications",
     ],
     ios: {
       supportsTablet: true,
@@ -79,6 +81,7 @@ const config: { expo: ExpoConfig } = {
         resizeMode: "contain",
         backgroundColor: "#000000",
       },
+      googleServicesFile: "./android/app/google-services.json",
     },
     androidStatusBar: {
       barStyle: "light-content",
