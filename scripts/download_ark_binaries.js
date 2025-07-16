@@ -88,6 +88,10 @@ async function setupIos() {
   console.log(`Moving Ark.xcframework to ${nitroArkPath}`);
   fs.renameSync(unzippedFrameworkPath, xcFrameworkDestPath);
 
+  if (fs.existsSync(xcFrameworkCxxBrigeDestPath)) {
+    console.log(`Removing existing framework at ${xcFrameworkCxxBrigeDestPath}`);
+    fs.rmSync(xcFrameworkCxxBrigeDestPath, { recursive: true, force: true });
+  }
   console.log(`Downloading iOS CxxBridge framework from ${XC_FRAMEWORK_CXX_BRIDGE_URL}...`);
   await download(XC_FRAMEWORK_CXX_BRIDGE_URL, xcFrameworkCxxBridgeZipPath);
   console.log("iOS CxxBridge download complete.");
