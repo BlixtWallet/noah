@@ -52,7 +52,6 @@ const config: { expo: ExpoConfig } = {
           cameraPermissionText: "$(PRODUCT_NAME) needs access to your Camera.",
         },
       ],
-      "expo-notifications",
     ],
     ios: {
       supportsTablet: true,
