@@ -5,9 +5,11 @@ import { useAlert } from "~/contexts/AlertProvider";
 import { useWalletStore } from "../store/walletStore";
 import {
   createWallet as createWalletAction,
-  fetchBalance as fetchBalanceAction,
+  fetchOnchainBalance,
+  fetchOffchainBalance,
   deleteWallet as deleteWalletAction,
   loadWallet as loadWalletAction,
+  sync as syncAction,
 } from "../lib/walletApi";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 import type { OnboardingStackParamList } from "../Navigators";
@@ -50,7 +52,13 @@ export function useBalance() {
 
   return useQuery({
     queryKey: ["balance"],
-    queryFn: () => fetchBalanceAction(false),
+    queryFn: async () => {
+      const [onchain, offchain] = await Promise.all([
+        fetchOnchainBalance(),
+        fetchOffchainBalance(),
+      ]);
+      return { onchain, offchain };
+    },
     enabled: isInitialized,
     retry: false,
   });
@@ -67,6 +75,17 @@ export function useCloseWallet() {
     },
     onSuccess: () => {
       setWalletUnloaded();
+    },
+  });
+}
+
+export function useSync() {
+  const { showAlert } = useAlert();
+
+  return useMutation({
+    mutationFn: syncAction,
+    onError: (error: Error) => {
+      showAlert({ title: "Failed to sync wallet", description: error.message });
     },
   });
 }

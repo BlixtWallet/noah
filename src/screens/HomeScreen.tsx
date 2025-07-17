@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
-import { useBalance } from "../hooks/useWallet";
+import { useBalance, useSync } from "../hooks/useWallet";
 
 import Animated, {
   FadeInDown,
@@ -25,13 +25,15 @@ import { useBtcToUsdRate } from "~/hooks/useMarketData";
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { data: balance, isFetching, refetch, error } = useBalance();
+  const { mutateAsync: sync, isPending: isSyncing } = useSync();
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const bottomTabBarHeight = useBottomTabBarHeight();
 
   const onRefresh = useCallback(async () => {
+    await sync();
     await refetch();
-  }, [refetch]);
+  }, [sync, refetch]);
 
   const totalBalance = balance ? balance.onchain + balance.offchain : 0;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
@@ -57,7 +59,7 @@ const HomeScreen = () => {
         refreshControl={
           !balance ? undefined : (
             <RefreshControl
-              refreshing={isFetching}
+              refreshing={isFetching || isSyncing}
               onRefresh={onRefresh}
               tintColor={COLORS.BITCOIN_ORANGE}
               colors={[COLORS.BITCOIN_ORANGE]}

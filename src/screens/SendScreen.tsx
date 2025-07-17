@@ -72,32 +72,34 @@ const SendScreen = () => {
 
   useEffect(() => {
     if (result) {
-      if (destinationType === "onchain" && typeof result === "string") {
-        setParsedResult({
-          success: true,
-          amount_sat: parseInt(amount, 10) || 0,
-          destination_pubkey: destination,
-          txid: result,
-          type: "bitcoin",
-        });
-      } else {
-        try {
-          setParsedResult(JSON.parse(result));
-        } catch (e) {
-          console.error("Failed to parse send result", e);
+      try {
+        if (destinationType === "lightning") {
           setParsedResult({
-            success: false,
-            amount_sat: 0,
-            destination_pubkey: "",
-            type: "error",
+            success: true,
+            amount_sat: parseInt(amount, 10) || 0,
+            destination_pubkey: destination,
+            txid: result,
+            type: "lightning",
           });
+        } else {
+          const parsed = JSON.parse(result);
+          setParsedResult(parsed);
         }
+      } catch (e) {
+        console.error("Failed to parse send result", e);
+        setParsedResult({
+          success: false,
+          amount_sat: 0,
+          destination_pubkey: "",
+          type: "error",
+        });
       }
     }
   }, [result, destinationType, amount, destination]);
 
   const handleSend = () => {
     let amountSat: number | null = parseInt(amount, 10);
+
     if (!isValidDestination(destination)) {
       showAlert({
         title: "Invalid Destination",
@@ -117,7 +119,11 @@ const SendScreen = () => {
     const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
 
     console.log("send details", cleanedDestination, amountSat, comment);
-    send({ destination: cleanedDestination, amountSat, comment: comment || null });
+    send({
+      destination: cleanedDestination,
+      amountSat,
+      comment: comment || null,
+    });
   };
 
   const handleDone = () => {

@@ -1,7 +1,9 @@
 import {
   createMnemonic,
   loadWallet as loadWalletNitro,
-  getBalance as getBalanceNitro,
+  onchainBalance as onchainBalanceNitro,
+  offchainBalance as offchainBalanceNitro,
+  sync as syncNitro,
   closeWallet as closeWalletNitro,
   isWalletLoaded,
 } from "react-native-nitro-ark";
@@ -74,20 +76,20 @@ export const loadWallet = async () => {
   return true;
 };
 
-export const fetchBalance = async (no_sync: boolean) => {
-  const credentials = await Keychain.getGenericPassword({
-    service: MNEMONIC_KEYCHAIN_SERVICE,
-  });
-
-  if (!credentials) {
-    // This is not an error, it just means the wallet is not created yet.
-    return null;
-  }
-
-  const newBalance = await getBalanceNitro(no_sync);
-
-  console.log("fetchBalance result", newBalance, no_sync);
+export const fetchOnchainBalance = async () => {
+  const newBalance = await onchainBalanceNitro();
+  console.log("fetchOnchainBalance result", newBalance);
   return newBalance;
+};
+
+export const fetchOffchainBalance = async () => {
+  const newBalance = await offchainBalanceNitro();
+  console.log("fetchOffchainBalance result", newBalance);
+  return newBalance;
+};
+
+export const sync = async () => {
+  await syncNitro();
 };
 
 export const deleteWallet = async () => {

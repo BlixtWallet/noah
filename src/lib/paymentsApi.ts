@@ -2,7 +2,8 @@ import {
   getVtxoPubkey as getVtxoPubkeyNitro,
   getOnchainAddress as getOnchainAddressNitro,
   boardAmount as boardAmountNitro,
-  send as sendNitro,
+  sendArkoorPayment as sendArkoorPaymentNitro,
+  sendBolt11Payment as sendBolt11PaymentNitro,
   sendOnchain as sendOnchainNitro,
   bolt11Invoice,
 } from "react-native-nitro-ark";
@@ -58,10 +59,9 @@ export const generateLightningInvoice = async (amountSat: number): Promise<strin
   }
 };
 
-export const boardArk = async (amountSat: number, noSync = false): Promise<string> => {
+export const boardArk = async (amountSat: number): Promise<string> => {
   try {
-    // The last parameter `no_sync` is set to false to ensure the wallet syncs after boarding.
-    const txid = await boardAmountNitro(amountSat, noSync);
+    const txid = await boardAmountNitro(amountSat);
     return txid;
   } catch (error) {
     console.error("Failed to board funds:", error);
@@ -71,25 +71,32 @@ export const boardArk = async (amountSat: number, noSync = false): Promise<strin
   }
 };
 
-export const send = async ({
-  destination,
-  amountSat,
-  comment,
-  noSync = false,
-}: {
-  destination: string;
-  amountSat: number | null;
-  comment: string | null;
-  noSync?: boolean;
-}): Promise<string> => {
+export const sendArkoorPayment = async (
+  destination: string,
+  amountSat: number,
+): Promise<string> => {
   try {
-    // The last parameter `no_sync` is set to false to ensure the wallet syncs after sending.
-    const result = await sendNitro(destination, amountSat, comment, noSync);
+    const result = await sendArkoorPaymentNitro(destination, amountSat);
     return result;
   } catch (error) {
-    console.error("Failed to send funds:", error);
+    console.error("Failed to send arkoor payment:", error);
     throw new Error(
-      `Failed to send funds: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to send arkoor payment: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+};
+
+export const sendBolt11Payment = async (
+  destination: string,
+  amountSat: number,
+): Promise<string> => {
+  try {
+    const result = await sendBolt11PaymentNitro(destination, amountSat);
+    return result;
+  } catch (error) {
+    console.error("Failed to send bolt11 payment:", error);
+    throw new Error(
+      `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 };
@@ -97,19 +104,12 @@ export const send = async ({
 export const sendOnchain = async ({
   destination,
   amountSat,
-  noSync = false,
 }: {
   destination: string;
-  amountSat: number | null;
-  comment: string | null;
-  noSync?: boolean;
+  amountSat: number;
 }): Promise<string> => {
   try {
-    if (amountSat === null) {
-      throw new Error("Amount is required to send onchain funds");
-    }
-    // The last parameter `no_sync` is set to false to ensure the wallet syncs after sending.
-    const result = await sendOnchainNitro(destination, amountSat, noSync);
+    const result = await sendOnchainNitro(destination, amountSat);
     console.log("Onchain send result:", result);
     return result;
   } catch (error) {

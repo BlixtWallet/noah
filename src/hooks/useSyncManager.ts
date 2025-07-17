@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppState, AppStateStatus } from "react-native";
 import { useWalletStore } from "../store/walletStore";
-import { fetchBalance } from "../lib/walletApi";
+import { sync } from "../lib/walletApi";
 
 import logger from "~/lib/log";
 const log = logger("useSyncManager");
@@ -18,18 +18,16 @@ export function useSyncManager(intervalMs: number = 30000) {
 
   log.i("Starting useSyncManager");
 
-  const syncBalance = useCallback(async () => {
+  const syncWallet = useCallback(async () => {
     if (!isInitialized || !isWalletLoaded || !isActiveRef.current) {
       return;
     }
 
-    log.i("syncBalance");
+    log.i("syncWallet");
 
     try {
-      const balance = await fetchBalance(false);
-      if (balance !== null) {
-        queryClient.setQueryData(["balance"], balance);
-      }
+      await sync();
+      await queryClient.invalidateQueries({ queryKey: ["balance"] });
     } catch (error) {
       log.e("background sync failed:", [error]);
     }
@@ -41,7 +39,7 @@ export function useSyncManager(intervalMs: number = 30000) {
     }
 
     // Start periodic sync
-    intervalRef.current = setInterval(syncBalance, intervalMs);
+    intervalRef.current = setInterval(syncWallet, intervalMs);
 
     // Handle app state changes
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
@@ -51,12 +49,12 @@ export function useSyncManager(intervalMs: number = 30000) {
       if (nextAppState === "active") {
         log.i("app became active");
         // Sync immediately when app becomes active
-        syncBalance();
+        syncWallet();
         // Restart interval
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
         }
-        intervalRef.current = setInterval(syncBalance, intervalMs);
+        intervalRef.current = setInterval(syncWallet, intervalMs);
       } else if (nextAppState === "background") {
         log.i("app entered background");
         // Pause syncing when app is backgrounded
@@ -75,7 +73,7 @@ export function useSyncManager(intervalMs: number = 30000) {
       }
       subscription.remove();
     };
-  }, [isInitialized, isWalletLoaded, intervalMs, syncBalance]);
+  }, [isInitialized, isWalletLoaded, intervalMs, syncWallet]);
 
   return true;
 }

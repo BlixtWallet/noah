@@ -4,9 +4,10 @@ import {
   generateVtxoPubkey,
   generateOnchainAddress,
   boardArk,
-  send,
   generateLightningInvoice,
   sendOnchain,
+  sendArkoorPayment,
+  sendBolt11Payment,
 } from "../lib/paymentsApi";
 import { DestinationTypes } from "~/lib/sendUtils";
 
@@ -63,7 +64,32 @@ export function useSend(destinationType: DestinationTypes) {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: destinationType === "onchain" ? sendOnchain : send,
+    mutationFn: (variables: {
+      destination: string;
+      amountSat: number | null;
+      comment: string | null;
+    }) => {
+      const { destination, amountSat } = variables;
+      if (amountSat === null && destinationType !== "lightning") {
+        return Promise.reject(new Error("Amount is required"));
+      }
+      if (destinationType === "onchain") {
+        if (amountSat === null) {
+          return Promise.reject(new Error("Amount is required for onchain payments"));
+        }
+        return sendOnchain({ destination, amountSat });
+      }
+      if (destinationType === "ark") {
+        if (amountSat === null) {
+          return Promise.reject(new Error("Amount is required for Ark payments"));
+        }
+        return sendArkoorPayment(destination, amountSat);
+      }
+      if (destinationType === "lightning") {
+        return sendBolt11Payment(destination, amountSat);
+      }
+      return Promise.reject(new Error("Invalid destination type"));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
