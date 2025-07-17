@@ -66,21 +66,21 @@ export function useSend(destinationType: DestinationTypes) {
   return useMutation({
     mutationFn: (variables: {
       destination: string;
-      amountSat: number | null;
+      amountSat: number | undefined;
       comment: string | null;
     }) => {
       const { destination, amountSat } = variables;
-      if (amountSat === null && destinationType !== "lightning") {
+      if (amountSat === undefined && destinationType !== "lightning") {
         return Promise.reject(new Error("Amount is required"));
       }
       if (destinationType === "onchain") {
-        if (amountSat === null) {
+        if (amountSat === undefined) {
           return Promise.reject(new Error("Amount is required for onchain payments"));
         }
         return sendOnchain({ destination, amountSat });
       }
       if (destinationType === "ark") {
-        if (amountSat === null) {
+        if (amountSat === undefined) {
           return Promise.reject(new Error("Amount is required for Ark payments"));
         }
         return sendArkoorPayment(destination, amountSat);

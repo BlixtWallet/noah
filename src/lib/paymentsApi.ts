@@ -88,7 +88,7 @@ export const sendArkoorPayment = async (
 
 export const sendBolt11Payment = async (
   destination: string,
-  amountSat: number,
+  amountSat: number | undefined,
 ): Promise<string> => {
   try {
     const result = await sendBolt11PaymentNitro(destination, amountSat);

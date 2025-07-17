@@ -98,7 +98,7 @@ const SendScreen = () => {
   }, [result, destinationType, amount, destination]);
 
   const handleSend = () => {
-    let amountSat: number | null = parseInt(amount, 10);
+    let amountSat: number | undefined = parseInt(amount, 10);
 
     if (!isValidDestination(destination)) {
       showAlert({
@@ -113,7 +113,7 @@ const SendScreen = () => {
     }
 
     if (destinationType === "lightning" && amountSat !== 0) {
-      amountSat = null;
+      amountSat = undefined;
     }
 
     const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
