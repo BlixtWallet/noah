@@ -3,6 +3,7 @@ import { Text, View, Button, Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
+import { PLATFORM } from "~/constants";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -72,8 +73,8 @@ async function registerForPushNotificationsAsync() {
       handleRegistrationError("Project ID not found");
     }
     try {
-      const fcm = await Notifications.getDevicePushTokenAsync();
-      console.log("fcm", fcm);
+      const nativePushToken = await Notifications.getDevicePushTokenAsync();
+      console.log(PLATFORM === "android" ? "fcm" : "apns", nativePushToken);
 
       const pushTokenString = (
         await Notifications.getExpoPushTokenAsync({
