@@ -6,23 +6,42 @@ import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import { PLATFORM } from "~/constants";
 
+import { getMnemonic } from "~/lib/paymentsApi";
+
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error, executionInfo }) => {
-    console.log("data", data);
-    console.log("error", error);
-    console.log("executionInfo", executionInfo);
+    try {
+      console.log("[Background Job] data", data);
+      console.log("[Background Job] error", error);
+      console.log("[Background Job] executionInfo", executionInfo);
 
-    console.log("Received a notification task payload!");
-    const isNotificationResponse = "actionIdentifier" in data;
-    if (isNotificationResponse) {
-      // Do something with the notification response from user
-      console.log("user pressed notification");
-    } else {
-      // Do something with the data from notification that was received
-      console.log("data notification");
+      console.log("[Background Job] Received a notification task payload!");
+      const isNotificationResponse = "actionIdentifier" in data;
+
+      if (data && (data as any).data.body === "{}") {
+        console.log("[Background Job] data.data.body === '{}'");
+        return;
+      }
+
+      if (isNotificationResponse) {
+        // Do something with the notification response from user
+        console.log("[Background Job] user pressed notification");
+      } else {
+        // Do something with the data from notification that was received
+        console.log("[Background Job] data notification");
+
+        const startTime = Date.now();
+        while (true) {
+          await getMnemonic();
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          console.log(`[Background Job] Active for ${elapsed} seconds`);
+        }
+      }
+    } catch (e) {
+      console.error("[Background Job] error", e);
     }
   },
 );
@@ -44,7 +63,7 @@ async function sendPushNotification(expoPushToken: string) {
     sound: "default",
     title: "Original Title",
     body: "And here is the body!",
-    data: { someData: "goes here" },
+    // data: { someData: "goes here" },
   };
   console.log("message", message);
 
