@@ -21,8 +21,13 @@ const config: { expo: ExpoConfig } = {
       [
         "react-native-share",
         {
-          ios: ["whatsapp", "telegram", "signal"],
-          android: ["com.whatsapp", "org.telegram.messenger", "org.thoughtcrime.securesms"],
+          ios: ["whatsapp", "telegram", "signal", "tiktok"],
+          android: [
+            "com.whatsapp",
+            "org.telegram.messenger",
+            "org.thoughtcrime.securesms",
+            "com.zhiliaoapp.musically",
+          ],
           enableBase64ShareAndroid: true,
         },
       ],
