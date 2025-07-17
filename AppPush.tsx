@@ -1,9 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Text, View, Button, Platform } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import { PLATFORM } from "~/constants";
+
+const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
+
+TaskManager.defineTask<Notifications.NotificationTaskPayload>(
+  BACKGROUND_NOTIFICATION_TASK,
+  async ({ data, error, executionInfo }) => {
+    console.log("data", data);
+    console.log("error", error);
+    console.log("executionInfo", executionInfo);
+
+    console.log("Received a notification task payload!");
+    const isNotificationResponse = "actionIdentifier" in data;
+    if (isNotificationResponse) {
+      // Do something with the notification response from user
+      console.log("user pressed notification");
+    } else {
+      // Do something with the data from notification that was received
+      console.log("data notification");
+    }
+  },
+);
+
+Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
