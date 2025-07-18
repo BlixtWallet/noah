@@ -72,14 +72,14 @@ const SendScreen = () => {
 
   useEffect(() => {
     if (result) {
-      if (destinationType === "lightning") {
+      if (destinationType === "lightning" || destinationType === "lnurl") {
         const satoshis = parseInt(amount, 10) || 0;
         setParsedResult({
           success: true,
           amount_sat: satoshis,
           destination_pubkey: destination,
           txid: result,
-          type: "lightning",
+          type: destinationType,
         });
       } else {
         try {
@@ -104,7 +104,8 @@ const SendScreen = () => {
     if (!isValidDestination(destination)) {
       showAlert({
         title: "Invalid Destination",
-        description: "Please enter a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
+        description:
+          "Please enter a valid Bitcoin address, BOLT11 invoice, Lightning Address, or Ark public key.",
       });
       return;
     }
@@ -153,7 +154,7 @@ const SendScreen = () => {
           showAlert({
             title: "Invalid QR Code",
             description:
-              "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, or Ark public key.",
+              "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, Lightning Address, or Ark public key.",
           });
         }
       }
@@ -276,7 +277,7 @@ const SendScreen = () => {
               <Input
                 value={destination}
                 onChangeText={setDestination}
-                placeholder="Lightning / Onchain / Ark"
+                placeholder="Lightning / Onchain / Ark / LN Address"
                 className="border-border bg-card p-4 rounded-lg text-foreground mb-2"
               />
             </View>

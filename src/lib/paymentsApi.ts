@@ -5,6 +5,7 @@ import {
   sendArkoorPayment as sendArkoorPaymentNitro,
   sendBolt11Payment as sendBolt11PaymentNitro,
   sendOnchain as sendOnchainNitro,
+  sendLnaddr as sendLnaddrNitro,
   bolt11Invoice,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
@@ -116,6 +117,24 @@ export const sendOnchain = async ({
     console.error("Failed to send onchain funds:", error);
     throw new Error(
       `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+};
+
+export const sendLnaddr = async (
+  addr: string,
+  amountSat: number,
+  comment: string,
+): Promise<string> => {
+  try {
+    const result = await sendLnaddrNitro(addr, amountSat, comment);
+    return result;
+  } catch (error) {
+    console.error("Failed to send to lightning address:", error);
+    throw new Error(
+      `Failed to send to lightning address: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
 };

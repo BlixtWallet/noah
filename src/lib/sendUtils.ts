@@ -1,6 +1,12 @@
-import { decodeBolt11, isArkPublicKey, isValidBitcoinAddress, isValidBolt11 } from "../constants";
+import {
+  decodeBolt11,
+  isArkPublicKey,
+  isValidBitcoinAddress,
+  isValidBolt11,
+  isLightningAddress,
+} from "../constants";
 
-export type DestinationTypes = "onchain" | "lightning" | "ark" | null;
+export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | null;
 
 export type ParsedDestination = {
   destinationType: DestinationTypes;
@@ -12,14 +18,22 @@ export type ParsedDestination = {
 export const isValidDestination = (dest: string): boolean => {
   const cleanedDest = dest.replace(/^(bitcoin:|lightning:)/i, "");
   return (
-    isArkPublicKey(cleanedDest) || isValidBitcoinAddress(cleanedDest) || isValidBolt11(cleanedDest)
+    isArkPublicKey(cleanedDest) ||
+    isValidBitcoinAddress(cleanedDest) ||
+    isValidBolt11(cleanedDest) ||
+    isLightningAddress(cleanedDest)
   );
 };
 
 export const parseDestination = (destination: string): ParsedDestination => {
   const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
 
-  if (isValidBolt11(cleanedDestination)) {
+  if (isLightningAddress(cleanedDestination)) {
+    return {
+      destinationType: "lnurl",
+      isAmountEditable: true,
+    };
+  } else if (isValidBolt11(cleanedDestination)) {
     try {
       const decoded = decodeBolt11(cleanedDestination);
       if (decoded === null) {

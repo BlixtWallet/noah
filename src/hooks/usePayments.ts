@@ -8,6 +8,7 @@ import {
   sendOnchain,
   sendArkoorPayment,
   sendBolt11Payment,
+  sendLnaddr,
 } from "../lib/paymentsApi";
 import { DestinationTypes } from "~/lib/sendUtils";
 
@@ -87,6 +88,12 @@ export function useSend(destinationType: DestinationTypes) {
       }
       if (destinationType === "lightning") {
         return sendBolt11Payment(destination, amountSat);
+      }
+      if (destinationType === "lnurl") {
+        if (amountSat === undefined) {
+          return Promise.reject(new Error("Amount is required for LNURL payments"));
+        }
+        return sendLnaddr(destination, amountSat, variables.comment || "");
       }
       return Promise.reject(new Error("Invalid destination type"));
     },
