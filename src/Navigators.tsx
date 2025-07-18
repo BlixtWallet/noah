@@ -38,6 +38,7 @@ export type OnboardingStackParamList = {
 export type HomeStackParamList = {
   HomeStack: undefined;
   BoardArk: undefined;
+  Send: { destination: string };
 };
 
 const Tab = createNativeBottomTabNavigator();
@@ -59,6 +60,7 @@ const HomeStackScreen = () => (
   <HomeStack.Navigator>
     <HomeStack.Screen name="HomeStack" component={HomeScreen} options={{ headerShown: false }} />
     <HomeStack.Screen name="BoardArk" component={BoardArkScreen} options={{ headerShown: false }} />
+    <HomeStack.Screen name="Send" component={SendScreen} options={{ headerShown: false }} />
   </HomeStack.Navigator>
 );
 

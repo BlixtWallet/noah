@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
-import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
+import type { RouteProp } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
@@ -28,8 +29,11 @@ type SendResult = {
   type: string;
 };
 
+type SendScreenRouteProp = RouteProp<{ params: { destination?: string } }, "params">;
+
 const SendScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<SendScreenRouteProp>();
   const { showAlert } = useAlert();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
@@ -38,6 +42,12 @@ const SendScreen = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [parsedResult, setParsedResult] = useState<SendResult | null>(null);
   const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
+
+  useEffect(() => {
+    if (route.params?.destination) {
+      setDestination(route.params.destination);
+    }
+  }, [route.params]);
 
   useEffect(() => {
     if (destination) {
@@ -267,7 +277,7 @@ const SendScreen = () => {
               <Text className="text-2xl font-bold text-foreground">Send</Text>
             </View>
             <Pressable onPress={handleScanPress}>
-              <Icon name="qr-code-outline" size={28} color="white" />
+              <Icon name="scan" size={28} color="white" />
             </Pressable>
           </View>
 
