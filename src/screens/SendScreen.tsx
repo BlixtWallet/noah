@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, StyleSheet, Keyboard, TouchableWithoutFeedback } from "react-native";
-import { useIsFocused, useNavigation, useRoute } from "@react-navigation/native";
+import { View, Pressable, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -12,14 +12,9 @@ import { useSend } from "../hooks/usePayments";
 import { useAlert } from "~/contexts/AlertProvider";
 import SuccessAnimation from "../components/SuccessAnimation";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import {
-  Camera,
-  useCameraDevice,
-  useCodeScanner,
-  useCameraPermission,
-} from "react-native-vision-camera";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
+import { QRCodeScanner } from "~/components/QRCodeScanner";
 
 type SendResult = {
   amount_sat: number;
@@ -39,7 +34,6 @@ const SendScreen = () => {
   const [amount, setAmount] = useState("");
   const [isAmountEditable, setIsAmountEditable] = useState(true);
   const [comment, setComment] = useState("");
-  const [showCamera, setShowCamera] = useState(false);
   const [parsedResult, setParsedResult] = useState<SendResult | null>(null);
   const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
 
@@ -146,44 +140,11 @@ const SendScreen = () => {
     setComment("");
   };
 
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice("back");
-  const isFocused = useIsFocused();
-
-  const codeScanner = useCodeScanner({
-    codeTypes: ["qr", "ean-13"],
-    onCodeScanned: (codes) => {
-      if (codes.length > 0 && codes[0].value) {
-        const scannedValue = codes[0].value;
-        // TODO: This can be improved to parse different QR code types (BIP21, LNURL, etc.)
-        if (isValidDestination(scannedValue)) {
-          setDestination(scannedValue);
-          setShowCamera(false);
-        } else {
-          setShowCamera(false);
-          showAlert({
-            title: "Invalid QR Code",
-            description:
-              "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, Lightning Address, or Ark public key.",
-          });
-        }
-      }
+  const { showCamera, setShowCamera, handleScanPress, codeScanner } = useQRCodeScanner({
+    onScan: (value) => {
+      setDestination(value);
     },
   });
-
-  const handleScanPress = async () => {
-    if (!hasPermission) {
-      const permissionGranted = await requestPermission();
-      if (!permissionGranted) {
-        showAlert({
-          title: "Permission required",
-          description: "Camera permission is required to scan QR codes.",
-        });
-        return;
-      }
-    }
-    setShowCamera(true);
-  };
 
   const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -238,31 +199,7 @@ const SendScreen = () => {
   }
 
   if (showCamera) {
-    if (!device) {
-      return (
-        <NoahSafeAreaView className="flex-1 bg-background justify-center items-center p-4">
-          <Text className="text-lg text-center">No camera device found.</Text>
-          <Button onPress={() => setShowCamera(false)} className="mt-4">
-            <Text>Back</Text>
-          </Button>
-        </NoahSafeAreaView>
-      );
-    }
-    return (
-      <View style={StyleSheet.absoluteFill}>
-        <Camera
-          style={StyleSheet.absoluteFill}
-          device={device}
-          isActive={isFocused && showCamera}
-          codeScanner={codeScanner}
-        />
-        <SafeAreaView>
-          <Pressable onPress={() => setShowCamera(false)} className="m-4 self-start">
-            <Icon name="close-circle" size={32} color="white" />
-          </Pressable>
-        </SafeAreaView>
-      </View>
-    );
+    return <QRCodeScanner codeScanner={codeScanner} onClose={() => setShowCamera(false)} />;
   }
 
   return (
