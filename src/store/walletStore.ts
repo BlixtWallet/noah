@@ -68,7 +68,7 @@ export const useWalletStore = create<WalletState>()(
       ...initialState,
       finishOnboarding: () => set({ isInitialized: true, isWalletLoaded: true }),
       setWalletLoaded: () => set({ isWalletLoaded: true }),
-      setWalletUnloaded: () => set({ isWalletLoaded: true }),
+      setWalletUnloaded: () => set({ isWalletLoaded: false }),
       setConfig: (config) => set({ config }),
       reset: () => set(initialState),
     }),
