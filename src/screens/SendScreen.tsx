@@ -72,27 +72,28 @@ const SendScreen = () => {
 
   useEffect(() => {
     if (result) {
-      try {
-        if (destinationType === "lightning") {
-          setParsedResult({
-            success: true,
-            amount_sat: parseInt(amount, 10) || 0,
-            destination_pubkey: destination,
-            txid: result,
-            type: "lightning",
-          });
-        } else {
+      if (destinationType === "lightning") {
+        const satoshis = parseInt(amount, 10) || 0;
+        setParsedResult({
+          success: true,
+          amount_sat: satoshis,
+          destination_pubkey: destination,
+          txid: result,
+          type: "lightning",
+        });
+      } else {
+        try {
           const parsed = JSON.parse(result);
           setParsedResult(parsed);
+        } catch (e) {
+          console.error("Failed to parse send result", e);
+          setParsedResult({
+            success: false,
+            amount_sat: 0,
+            destination_pubkey: "",
+            type: "error",
+          });
         }
-      } catch (e) {
-        console.error("Failed to parse send result", e);
-        setParsedResult({
-          success: false,
-          amount_sat: 0,
-          destination_pubkey: "",
-          type: "error",
-        });
       }
     }
   }, [result, destinationType, amount, destination]);

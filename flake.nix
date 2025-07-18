@@ -36,14 +36,11 @@
         android-nixpkgs.sdk.${system} (
           sdkPkgs: with sdkPkgs; [
             cmdline-tools-latest
-            build-tools-34-0-0
             build-tools-35-0-0
             platform-tools
-            platforms-android-34
             platforms-android-35
             ndk-27-1-12297006
             ndk-27-0-12077973
-            ndk-26-1-10909125
             cmake-3-22-1
           ]
         );
