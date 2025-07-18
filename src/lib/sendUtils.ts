@@ -3,7 +3,7 @@ import {
   isArkPublicKey,
   isValidBitcoinAddress,
   isValidBolt11,
-  isLightningAddress,
+  isValidLightningAddress,
 } from "../constants";
 
 export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | null;
@@ -21,14 +21,14 @@ export const isValidDestination = (dest: string): boolean => {
     isArkPublicKey(cleanedDest) ||
     isValidBitcoinAddress(cleanedDest) ||
     isValidBolt11(cleanedDest) ||
-    isLightningAddress(cleanedDest)
+    isValidLightningAddress(cleanedDest)
   );
 };
 
 export const parseDestination = (destination: string): ParsedDestination => {
   const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
 
-  if (isLightningAddress(cleanedDestination)) {
+  if (isValidLightningAddress(cleanedDestination)) {
     return {
       destinationType: "lnurl",
       isAmountEditable: true,

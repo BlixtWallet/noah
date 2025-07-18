@@ -8,10 +8,7 @@ import { Platform } from "react-native";
 const isEmail = (n: string): boolean => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(n);
 const isOnion = (n: string): boolean => /.onion$/.test(n);
 const isUsername = (n: string): boolean => /^[a-z0-9_.]*$/.test(n);
-const join = (arr: string[]): string => arr.join("");
 const parseEmail = (email: string): string[] => email.split("@");
-const sslProtocol = "https://";
-const urlString = "/.well-known/lnurlp/";
 
 export const PLATFORM = Platform.OS;
 
@@ -133,28 +130,20 @@ export const msatToSatoshi = (msat: number) => msat / 1000;
 export const coingeckoEndpoint =
   "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
 
-export const isLightningAddress = (address: string): boolean => {
-  return isEmail(address);
-};
-
-export const parseLightningAddress = ({ url }: { url: string }): { url: string } => {
-  if (!url) {
-    throw new Error("ExpectedLnurlOrLightningAddressToParse");
+export const isValidLightningAddress = (url: string): boolean => {
+  if (!isEmail(url)) {
+    return false;
   }
 
-  if (!!isEmail(url)) {
-    const [username, domain] = parseEmail(url);
+  const [username, domain] = parseEmail(url);
 
-    if (!isUsername(username)) {
-      throw new Error("ExpectedValidUsernameInLightningAddress");
-    }
-
-    if (!!isOnion(domain)) {
-      throw new Error("LnurlOnionUrlsCurrentlyUnsupported");
-    }
-
-    return { url: join([sslProtocol, domain, urlString, username]) };
+  if (!isUsername(username)) {
+    return false;
   }
 
-  throw new Error("ExpectedLightningAddress");
+  if (!!isOnion(domain)) {
+    return false;
+  }
+
+  return true;
 };

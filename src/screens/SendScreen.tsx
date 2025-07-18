@@ -226,6 +226,9 @@ const SendScreen = () => {
                 onChangeText={setDestination}
                 placeholder="Lightning / Onchain / Ark / LN Address"
                 className="border-border bg-card p-4 rounded-lg text-foreground mb-2"
+                keyboardType="email-address"
+                autoCorrect={false}
+                autoCapitalize="none"
               />
             </View>
             <View>
