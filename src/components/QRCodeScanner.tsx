@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
 import { Camera, useCameraDevice } from "react-native-vision-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { NoahSafeAreaView } from "./NoahSafeAreaView";
@@ -29,14 +29,23 @@ export const QRCodeScanner = ({ codeScanner, onClose }: QRCodeScannerProps) => {
   }
 
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <View className="flex-1">
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={isFocused}
         codeScanner={codeScanner}
       />
-      <SafeAreaView>
+      <View className="flex-1 bg-transparent">
+        <View className="flex-1 bg-black/60" />
+        <View className="flex-row h-[250px]">
+          <View className="flex-1 bg-black/60" />
+          <View className="w-[250px] h-[250px] border-2 border-white rounded-lg" />
+          <View className="flex-1 bg-black/60" />
+        </View>
+        <View className="flex-1 bg-black/60" />
+      </View>
+      <SafeAreaView className="absolute top-0 left-0 right-0">
         <Pressable onPress={onClose} className="m-4 self-start">
           <Icon name="close-circle" size={32} color="white" />
         </Pressable>
