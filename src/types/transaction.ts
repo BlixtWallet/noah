@@ -6,7 +6,7 @@ export type Transaction = {
   amount: number;
   date: string;
   description?: string;
-  isOutgoing: boolean;
+  direction: "incoming" | "outgoing";
 };
 
 export type { PaymentTypes };

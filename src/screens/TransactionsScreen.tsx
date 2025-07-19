@@ -5,13 +5,11 @@ import { LegendList } from "@legendapp/list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
-import { useNavigation } from "@react-navigation/native";
 import { type Transaction, type PaymentTypes } from "../types/transaction";
 import { Label } from "~/components/ui/label";
 
 const TransactionsScreen = () => {
   const { transactions } = useTransactionStore();
-  const navigation = useNavigation();
   const [filter, setFilter] = useState<PaymentTypes | "all">("all");
 
   const filteredTransactions =
@@ -57,7 +55,6 @@ const TransactionsScreen = () => {
         </View>
         <LegendList
           data={filteredTransactions}
-          style={{ flex: 1 }}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => {
@@ -66,12 +63,13 @@ const TransactionsScreen = () => {
               className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
             >
               <View className="flex-row items-center">
-                <Icon
-                  name={getIconForType(item.type)}
-                  size={24}
-                  color={item.isOutgoing ? "red" : "green"}
-                  className="mr-4"
-                />
+                <View className="mr-4">
+                  <Icon
+                    name={getIconForType(item.type)}
+                    size={24}
+                    color={item.direction === "outgoing" ? "red" : "green"}
+                  />
+                </View>
                 <View>
                   <Label className="text-foreground text-lg">{item.type}</Label>
                   <Text className="text-muted-foreground text-base mt-1">
@@ -81,10 +79,10 @@ const TransactionsScreen = () => {
               </View>
               <Text
                 className={`text-lg font-bold ${
-                  item.isOutgoing ? "text-red-500" : "text-green-500"
+                  item.direction === "outgoing" ? "text-red-500" : "text-green-500"
                 }`}
               >
-                {item.isOutgoing ? "-" : "+"} {item.amount} sats
+                {item.direction === "outgoing" ? "-" : "+"} {item.amount} sats
               </Text>
             </Pressable>
           )}

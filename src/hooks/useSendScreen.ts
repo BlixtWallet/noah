@@ -90,7 +90,7 @@ export const useSendScreen = () => {
             amount_sat: onchainRes.amount_sat,
             destination: onchainRes.destination_address,
             txid: onchainRes.txid,
-            type: "On-chain",
+            type: res.payment_type,
           };
         }
         case "Arkoor": {
@@ -99,7 +99,7 @@ export const useSendScreen = () => {
             success: true,
             amount_sat: arkoorRes.amount_sat,
             destination: arkoorRes.destination_pubkey,
-            type: "Ark",
+            type: res.payment_type,
           };
         }
         case "Lnurl": {
@@ -109,7 +109,7 @@ export const useSendScreen = () => {
             amount_sat: satoshis,
             destination: lnurlRes.lnurl,
             preimage: lnurlRes.preimage,
-            type: "Lightning Address",
+            type: res.payment_type,
           };
         }
         case "Bolt11": {
@@ -119,7 +119,7 @@ export const useSendScreen = () => {
             amount_sat: satoshis,
             destination: bolt11Res.bolt11_invoice,
             preimage: bolt11Res.preimage,
-            type: "Lightning",
+            type: res.payment_type,
           };
         }
         default:
@@ -146,7 +146,7 @@ export const useSendScreen = () => {
           type: result.payment_type,
           amount: displayResult.amount_sat,
           date: new Date().toISOString(),
-          isOutgoing: true,
+          direction: "outgoing",
           description: comment,
         });
       }
