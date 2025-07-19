@@ -9,6 +9,12 @@ import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
 import { parseDestination, isValidDestination, type DestinationTypes } from "../lib/sendUtils";
 import { useSend } from "../hooks/usePayments";
+import {
+  type ArkoorPaymentResult,
+  type Bolt11PaymentResult,
+  type LnurlPaymentResult,
+  type OnchainPaymentResult,
+} from "../lib/paymentsApi";
 import { useAlert } from "~/contexts/AlertProvider";
 import SuccessAnimation from "../components/SuccessAnimation";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -16,10 +22,11 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
 
-type SendResult = {
+type DisplayResult = {
   amount_sat: number;
-  destination_pubkey: string;
+  destination: string;
   txid?: string;
+  preimage?: string;
   success: boolean;
   type: string;
 };
@@ -34,7 +41,7 @@ const SendScreen = () => {
   const [amount, setAmount] = useState("");
   const [isAmountEditable, setIsAmountEditable] = useState(true);
   const [comment, setComment] = useState("");
-  const [parsedResult, setParsedResult] = useState<SendResult | null>(null);
+  const [parsedResult, setParsedResult] = useState<DisplayResult | null>(null);
   const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
 
   useEffect(() => {
@@ -75,32 +82,66 @@ const SendScreen = () => {
   } = useSend(destinationType);
 
   useEffect(() => {
-    if (result) {
-      if (destinationType === "lightning" || destinationType === "lnurl") {
-        const satoshis = parseInt(amount, 10) || 0;
-        setParsedResult({
-          success: true,
-          amount_sat: satoshis,
-          destination_pubkey: destination,
-          txid: result,
-          type: destinationType,
-        });
-      } else {
-        try {
-          const parsed = JSON.parse(result);
-          setParsedResult(parsed);
-        } catch (e) {
-          console.error("Failed to parse send result", e);
-          setParsedResult({
-            success: false,
-            amount_sat: 0,
-            destination_pubkey: "",
-            type: "error",
-          });
-        }
-      }
+    if (!result) {
+      return;
     }
-  }, [result, destinationType, amount, destination]);
+
+    const satoshis = parseInt(amount, 10) || 0;
+    let displayResult: DisplayResult | null = null;
+
+    if (result.payment_type === "Onchain") {
+      const res = result as OnchainPaymentResult;
+      displayResult = {
+        success: true,
+        amount_sat: res.amount_sat,
+        destination: res.destination_address,
+        txid: res.txid,
+        type: "On-chain",
+      };
+    } else if (result.payment_type === "Arkoor") {
+      const res = result as ArkoorPaymentResult;
+      displayResult = {
+        success: true,
+        amount_sat: res.amount_sat,
+        destination: res.destination_pubkey,
+        type: "Ark",
+      };
+    } else if (result.payment_type === "Lnurl") {
+      const res = result as LnurlPaymentResult;
+      displayResult = {
+        success: true,
+        amount_sat: satoshis,
+        destination: res.lnurl,
+        preimage: res.preimage,
+        type: "Lightning Address",
+      };
+    } else if (result.payment_type === "Bolt11") {
+      const res = result as Bolt11PaymentResult;
+      displayResult = {
+        success: true,
+        amount_sat: satoshis,
+        destination: res.bolt11_invoice,
+        preimage: res.preimage,
+        type: "Lightning",
+      };
+    }
+
+    if (displayResult) {
+      setParsedResult(displayResult);
+    } else {
+      console.error("Could not process the transaction result. Unknown result type:", result);
+      showAlert({
+        title: "Error",
+        description: "Could not process the transaction result. Unknown result type.",
+      });
+      setParsedResult({
+        success: false,
+        amount_sat: 0,
+        destination: "",
+        type: "error",
+      });
+    }
+  }, [result, amount, showAlert]);
 
   const handleSend = () => {
     let amountSat: number | undefined = parseInt(amount, 10);
@@ -174,7 +215,7 @@ const SendScreen = () => {
                 ellipsizeMode="middle"
                 numberOfLines={1}
               >
-                {parsedResult.destination_pubkey}
+                {parsedResult.destination}
               </Text>
             </View>
             {parsedResult.txid && (
@@ -186,6 +227,18 @@ const SendScreen = () => {
                   numberOfLines={1}
                 >
                   {parsedResult.txid}
+                </Text>
+              </View>
+            )}
+            {parsedResult.preimage && (
+              <View className="mt-2">
+                <Text className="text-muted-foreground">Preimage:</Text>
+                <Text
+                  className="text-foreground font-semibold"
+                  ellipsizeMode="middle"
+                  numberOfLines={1}
+                >
+                  {parsedResult.preimage}
                 </Text>
               </View>
             )}

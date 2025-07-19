@@ -57,7 +57,7 @@ usage() {
 # Clones the repository and checks out the correct tag.
 setup_environment() {
     local repo_url="https://codeberg.org/ark-bitcoin/bark.git"
-    local repo_tag="aspd-0.0.0-alpha.17"
+    local repo_tag="bark-0.0.0-alpha.17"
 
     if ! command -v git &> /dev/null; then
         echo "Error: 'git' is not installed. Please install it to continue." >&2
@@ -72,6 +72,8 @@ setup_environment() {
 
     echo "Cloning repository '$repo_url' into './$REPO_DIR'..."
     git clone --branch "$repo_tag" "$repo_url" "$REPO_DIR"
+
+    dcr pull
 
     echo "✅ Setup complete. You can now run management commands."
 }
@@ -104,7 +106,7 @@ create_bark_wallet() {
         --bitcoind-user second \
         --bitcoind-pass ark \
         --force \
-        --fallback-fee-rate 100000
+        --fallback-fee-rate 10000
     echo "✅ Bark wallet created. You can now use './ark-dev.sh bark <command>'."
 }
 
@@ -146,7 +148,7 @@ fund_aspd() {
 
     echo "🔍 Getting ASPD wallet address..."
     local aspd_address
-    aspd_address=$(dcr exec "$ASPD_SERVICE" aspd rpc wallet | jq -r '.rounds.address')
+    aspd_address=$(dcr exec "$ASPD_SERVICE" "$ASPD_SERVICE" rpc wallet | jq -r '.rounds.address')
 
     if [[ -z "$aspd_address" || "$aspd_address" == "null" ]]; then
         echo "Error: Could not retrieve ASPD wallet address. Is the aspd container running?" >&2
@@ -224,7 +226,7 @@ case "$COMMAND" in
 
     aspd)
         echo "Running command on aspd: $@"
-        dcr exec "$ASPD_SERVICE" "$@"
+        dcr exec "$ASPD_SERVICE" "$ASPD_SERVICE" "$@"
         ;;
 
     bark)

@@ -7,9 +7,15 @@ import {
   sendOnchain as sendOnchainNitro,
   sendLnaddr as sendLnaddrNitro,
   bolt11Invoice,
+  type ArkoorPaymentResult,
+  type OnchainPaymentResult,
+  type Bolt11PaymentResult,
+  type LnurlPaymentResult,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "../config";
+
+export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 
@@ -75,7 +81,7 @@ export const boardArk = async (amountSat: number): Promise<string> => {
 export const sendArkoorPayment = async (
   destination: string,
   amountSat: number,
-): Promise<string> => {
+): Promise<ArkoorPaymentResult> => {
   try {
     const result = await sendArkoorPaymentNitro(destination, amountSat);
     return result;
@@ -90,7 +96,7 @@ export const sendArkoorPayment = async (
 export const sendBolt11Payment = async (
   destination: string,
   amountSat: number | undefined,
-): Promise<string> => {
+): Promise<Bolt11PaymentResult> => {
   try {
     const result = await sendBolt11PaymentNitro(destination, amountSat);
     return result;
@@ -108,7 +114,7 @@ export const sendOnchain = async ({
 }: {
   destination: string;
   amountSat: number;
-}): Promise<string> => {
+}): Promise<OnchainPaymentResult> => {
   try {
     const result = await sendOnchainNitro(destination, amountSat);
     console.log("Onchain send result:", result);
@@ -125,7 +131,7 @@ export const sendLnaddr = async (
   addr: string,
   amountSat: number,
   comment: string,
-): Promise<string> => {
+): Promise<LnurlPaymentResult> => {
   try {
     const result = await sendLnaddrNitro(addr, amountSat, comment);
     return result;
