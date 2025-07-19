@@ -7,6 +7,9 @@ export type Transaction = {
   date: string;
   description?: string;
   direction: "incoming" | "outgoing";
+  txid?: string;
+  preimage?: string;
+  destination?: string;
 };
 
 export type { PaymentTypes };

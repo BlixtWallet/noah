@@ -148,6 +148,9 @@ export const useSendScreen = () => {
           date: new Date().toISOString(),
           direction: "outgoing",
           description: comment,
+          txid: displayResult.txid,
+          preimage: displayResult.preimage,
+          destination: displayResult.destination,
         });
       }
       setParsedResult(displayResult);
