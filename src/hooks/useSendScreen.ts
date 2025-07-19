@@ -12,6 +12,7 @@ import {
   type PaymentResult,
 } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
+import { useTransactionStore } from "~/store/transactionStore";
 
 type DisplayResult = {
   amount_sat: number;
@@ -27,6 +28,7 @@ type SendScreenRouteProp = RouteProp<{ params: { destination?: string } }, "para
 export const useSendScreen = () => {
   const route = useRoute<SendScreenRouteProp>();
   const { showAlert } = useAlert();
+  const { addTransaction } = useTransactionStore();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [isAmountEditable, setIsAmountEditable] = useState(true);
@@ -138,9 +140,19 @@ export const useSendScreen = () => {
     displayResult = processResult(result);
 
     if (displayResult) {
+      if (displayResult.success) {
+        addTransaction({
+          id: displayResult.txid || displayResult.preimage || Math.random().toString(),
+          type: result.payment_type,
+          amount: displayResult.amount_sat,
+          date: new Date().toISOString(),
+          isOutgoing: true,
+          description: comment,
+        });
+      }
       setParsedResult(displayResult);
     }
-  }, [result, amount, showAlert]);
+  }, [result, amount, showAlert, addTransaction, destinationType, comment]);
 
   const handleSend = () => {
     let amountSat: number | undefined = parseInt(amount, 10);
