@@ -15,18 +15,12 @@ export const useQRCodeScanner = ({ onScan }: QRCodeScannerOptions) => {
   const codeScanner = useCodeScanner({
     codeTypes: ["qr", "ean-13"],
     onCodeScanned: (codes) => {
+      console.log("Scanned codes:", codes);
       if (codes.length > 0 && codes[0].value) {
         const scannedValue = codes[0].value;
         if (isValidDestination(scannedValue)) {
           onScan(scannedValue);
           setShowCamera(false);
-        } else {
-          setShowCamera(false);
-          showAlert({
-            title: "Invalid QR Code",
-            description:
-              "The scanned QR code does not contain a valid Bitcoin address, BOLT11 invoice, Lightning Address, or Ark public key.",
-          });
         }
       }
     },

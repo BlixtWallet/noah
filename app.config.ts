@@ -49,6 +49,7 @@ const config: { expo: ExpoConfig } = {
         "react-native-vision-camera",
         {
           cameraPermissionText: "$(PRODUCT_NAME) needs access to your Camera.",
+          enableCodeScanner: true,
         },
       ],
     ],
