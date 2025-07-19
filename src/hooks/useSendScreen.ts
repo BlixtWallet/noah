@@ -12,6 +12,7 @@ import {
   type PaymentResult,
 } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
+import { useTransactionStore } from "~/store/transactionStore";
 
 type DisplayResult = {
   amount_sat: number;
@@ -27,6 +28,7 @@ type SendScreenRouteProp = RouteProp<{ params: { destination?: string } }, "para
 export const useSendScreen = () => {
   const route = useRoute<SendScreenRouteProp>();
   const { showAlert } = useAlert();
+  const { addTransaction } = useTransactionStore();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [isAmountEditable, setIsAmountEditable] = useState(true);
@@ -88,7 +90,7 @@ export const useSendScreen = () => {
             amount_sat: onchainRes.amount_sat,
             destination: onchainRes.destination_address,
             txid: onchainRes.txid,
-            type: "On-chain",
+            type: res.payment_type,
           };
         }
         case "Arkoor": {
@@ -97,7 +99,7 @@ export const useSendScreen = () => {
             success: true,
             amount_sat: arkoorRes.amount_sat,
             destination: arkoorRes.destination_pubkey,
-            type: "Ark",
+            type: res.payment_type,
           };
         }
         case "Lnurl": {
@@ -107,7 +109,7 @@ export const useSendScreen = () => {
             amount_sat: satoshis,
             destination: lnurlRes.lnurl,
             preimage: lnurlRes.preimage,
-            type: "Lightning Address",
+            type: res.payment_type,
           };
         }
         case "Bolt11": {
@@ -117,7 +119,7 @@ export const useSendScreen = () => {
             amount_sat: satoshis,
             destination: bolt11Res.bolt11_invoice,
             preimage: bolt11Res.preimage,
-            type: "Lightning",
+            type: res.payment_type,
           };
         }
         default:
@@ -138,9 +140,22 @@ export const useSendScreen = () => {
     displayResult = processResult(result);
 
     if (displayResult) {
+      if (displayResult.success) {
+        addTransaction({
+          id: displayResult.txid || displayResult.preimage || Math.random().toString(),
+          type: result.payment_type,
+          amount: displayResult.amount_sat,
+          date: new Date().toISOString(),
+          direction: "outgoing",
+          description: comment,
+          txid: displayResult.txid,
+          preimage: displayResult.preimage,
+          destination: displayResult.destination,
+        });
+      }
       setParsedResult(displayResult);
     }
-  }, [result, amount, showAlert]);
+  }, [result, amount, showAlert, addTransaction, destinationType, comment]);
 
   const handleSend = () => {
     let amountSat: number | undefined = parseInt(amount, 10);

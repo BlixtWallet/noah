@@ -15,6 +15,7 @@ import EditSettingScreen from "~/screens/EditSettingScreen";
 import BoardArkScreen from "~/screens/BoardArkScreen";
 import MnemonicScreen from "~/screens/MnemonicScreen";
 import LogScreen from "~/screens/LogScreen";
+import TransactionsScreen from "~/screens/TransactionsScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { COLORS } from "~/lib/styleConstants";
@@ -138,6 +139,19 @@ const AppTabs = () => {
               return { sfSymbol: focused ? "arrow.up.right" : "arrow.up.right" };
             }
             const iconName = focused ? "arrow-up" : "arrow-up-outline";
+            return Icon.getImageSourceSync(iconName, 24)!;
+          },
+        }}
+      />
+      <Tab.Screen
+        name="Transactions"
+        component={TransactionsScreen}
+        options={{
+          tabBarIcon: ({ focused }) => {
+            if (isIos) {
+              return { sfSymbol: focused ? "list.bullet" : "list.dash" };
+            }
+            const iconName = focused ? "list" : "list-outline";
             return Icon.getImageSourceSync(iconName, 24)!;
           },
         }}
