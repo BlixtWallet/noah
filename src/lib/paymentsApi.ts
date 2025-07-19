@@ -17,6 +17,12 @@ import { APP_VARIANT } from "../config";
 
 export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
 
+export type PaymentResult =
+  | ArkoorPaymentResult
+  | OnchainPaymentResult
+  | Bolt11PaymentResult
+  | LnurlPaymentResult;
+
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 
 export const getMnemonic = async (): Promise<string> => {
