@@ -99,5 +99,5 @@ jobs:
       - name: Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun ios:prebuild"
 
-      - name: Build iOS signet app
-        run: nix develop .# --command bash -c "bun build:ios:signet:release"
+      - name: Build iOS regtest app
+        run: nix develop .# --command bash -c "bun build:ios:regtest:release"

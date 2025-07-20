@@ -128,9 +128,21 @@ const ReceiveScreen = () => {
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem label={receiveTypeDisplay.ark} value="ark" />
-                <SelectItem label={receiveTypeDisplay.lightning} value="lightning" />
-                <SelectItem label={receiveTypeDisplay.onchain} value="onchain" />
+                <SelectItem
+                  label={receiveTypeDisplay.ark}
+                  testID={receiveTypeDisplay.ark}
+                  value="ark"
+                />
+                <SelectItem
+                  label={receiveTypeDisplay.lightning}
+                  testID={receiveTypeDisplay.lightning}
+                  value="lightning"
+                />
+                <SelectItem
+                  label={receiveTypeDisplay.onchain}
+                  testID={receiveTypeDisplay.onchain}
+                  value="onchain"
+                />
               </SelectContent>
             </Select>
           </View>

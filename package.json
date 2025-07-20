@@ -33,6 +33,7 @@
     "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator -quiet",
     "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator -quiet",
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet",
+    "build:ios:app": "xcrun xcodebuild -scheme Noah-Regtest -workspace ios/noah.xcworkspace -configuration Release -sdk iphonesimulator -derivedDataPath ios/build/ -destination 'generic/platform=iOS Simulator' -quiet",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "android": "expo run:android",
     "ios": "expo run:ios"

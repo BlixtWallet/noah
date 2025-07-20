@@ -114,6 +114,7 @@
           basePackages = with pkgs; [
             bun
             androidSdk
+            maestro
           ];
 
           darwinPackages = with pkgs; [

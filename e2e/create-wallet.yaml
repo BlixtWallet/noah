@@ -1,0 +1,15 @@
+appId: com.anonymous.noah.regtest
+---
+- launchApp:
+    clearState: true
+- tapOn: Create Wallet
+- assertTrue:
+    condition: "document.querySelector('selector-for-words').innerText.split(' ').length === 12"
+    label: 'Verify there are 12 words on the screen'
+- tapOn: I Have Saved It, Continue
+- assertVisible: Home
+- assertVisible: $0.00 0 sats
+- tapOn: arrow.down.left
+- tapOn: Select receive type...
+- tapOn:
+    id: Ark
