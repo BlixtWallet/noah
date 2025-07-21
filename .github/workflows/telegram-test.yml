@@ -1,0 +1,40 @@
+name: Local Telegram Bot API Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send_large_file_via_local_api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start local Telegram Bot API server
+        run: |
+          docker run -d --name local-bot-api \
+            -p 8081:8081 \
+            -v ${{ github.workspace }}:/data \
+            -e TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }} \
+            -e TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }} \
+            aiogram/telegram-bot-api:latest --local
+
+      - name: Wait for Bot API server to be ready
+        run: |
+          echo "Waiting 5 seconds for the local Bot API server to initialize..."
+          sleep 5
+
+      - name: Send APK using local Bot API server
+        run: |
+          curl -s -X POST "http://localhost:8081/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+          -d chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
+          -d message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
+          -d document="file:///data/noah.apk" \
+          -d caption="Test upload of 150MB APK using a local Bot API server. Commit: ${{ github.sha }}"
+
+      - name: Stop and remove local Bot API server
+        if: always()
+        run: |
+          echo "Stopping and removing the Docker container..."
+          docker stop local-bot-api
+          docker rm local-bot-api
