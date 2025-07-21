@@ -12,7 +12,7 @@ on:
 
 jobs:
   send_test_file:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Create a test file
         run: echo "This is a test file from GitHub Actions." > test-file.txt
