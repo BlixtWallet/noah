@@ -72,7 +72,7 @@ PODS:
   - hermes-engine (0.79.5):
     - hermes-engine/Pre-built (= 0.79.5)
   - hermes-engine/Pre-built (0.79.5)
-  - NitroArk (0.0.37):
+  - NitroArk (0.0.38):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -97,7 +97,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - NitroModules (0.26.3):
+  - NitroModules (0.26.4):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2594,8 +2594,8 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: f03b0e06d3882d71e67e45b073bb827da1a21aae
-  NitroArk: 354c7b027904724609ad18903c73cfae63abba05
-  NitroModules: f36b94e48ff1705fc6b84bc1953f40e2da4196c2
+  NitroArk: 5b0af4cf8914033b414e93182c1117550440c297
+  NitroModules: 763fe03c46a734a615e648ff2c77158cd26d8f89
   NoahTools: 12a4e8705c339d40f7218c725de658f4a62ef646
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: 5f638f65935e273753b1f31a365db6a8d6dc53b5

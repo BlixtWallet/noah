@@ -13,6 +13,7 @@ import {
 } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { useTransactionStore } from "~/store/transactionStore";
+import uuid from "react-native-uuid";
 
 type DisplayResult = {
   amount_sat: number;
@@ -142,7 +143,7 @@ export const useSendScreen = () => {
     if (displayResult) {
       if (displayResult.success) {
         addTransaction({
-          id: displayResult.txid || displayResult.preimage || Math.random().toString(),
+          id: displayResult.txid || displayResult.preimage || uuid.v4().toString(),
           type: result.payment_type,
           amount: displayResult.amount_sat,
           date: new Date().toISOString(),

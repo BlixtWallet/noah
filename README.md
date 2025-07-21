@@ -139,7 +139,12 @@ For development and testing, you can run a local Ark stack (bitcoind, aspd, bark
     - Fund the ASPD: `./scripts/ark-dev.sh fund-aspd 1`
 
 4.  **Stop the services**
+
     ```bash
+    # Stop services
+    ./scripts/ark-dev.sh stop
+
+    # Stop and delete volumes
     ./scripts/ark-dev.sh down
     ```
 

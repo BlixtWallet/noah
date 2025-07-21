@@ -13,6 +13,7 @@ import { useBalance, useSync } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
+import { APP_VARIANT } from "~/config";
 
 import Animated, {
   FadeInDown,
@@ -66,7 +67,13 @@ const HomeScreen = () => {
       }}
     >
       <View className="flex-row items-center justify-between p-4">
-        <Text className="text-2xl font-bold text-foreground">Home</Text>
+        <View className="flex-row items-center">
+          {APP_VARIANT !== "mainnet" && (
+            <View className="ml-2 rounded-md bg-yellow-400 px-2 py-1">
+              <Text className="text-xs font-bold uppercase text-black">{APP_VARIANT}</Text>
+            </View>
+          )}
+        </View>
         <Pressable onPress={handleScanPress}>
           <Icon name="scan" size={28} color="white" />
         </Pressable>

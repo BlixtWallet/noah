@@ -103,17 +103,27 @@
 
       };
 
+      bark-wrapper = pkgs:
+        pkgs.stdenv.mkDerivation {
+          name = "bark-wrapper";
+          src = ./.;
+          buildInputs = [ pkgs.makeWrapper ];
+          installPhase = ''
+            mkdir -p $out/bin
+            makeWrapper $src/scripts/ark-dev.sh $out/bin/bark
+          '';
+        };
+
       # System-specific shell configuration
       mkShellFor =
         system:
         let
           pkgs = pkgsFor system;
           androidSdk = androidSdkFor system;
-          scripts = darwinDerivations.scripts pkgs;
-
           basePackages = with pkgs; [
             bun
             androidSdk
+            (bark-wrapper pkgs)
           ];
 
           darwinPackages = with pkgs; [
