@@ -1,0 +1,21 @@
+name: Telegram Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send_test_file:
+    runs-on: self-hosted
+    steps:
+      - name: Create a test file
+        run: echo "This is a test file from GitHub Actions." > test-file.txt
+
+      - name: Send test file to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          document: ./test-file.txt
+          message: |
+            This is a test message.
+            If you receive the file, the integration is working!
