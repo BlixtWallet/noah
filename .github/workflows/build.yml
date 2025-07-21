@@ -83,6 +83,17 @@ jobs:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
 
+      - name: Send APK to Telegram
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          document: ${{ steps.rename_apk.outputs.new_path }}
+          message: |
+            New Noah build is available!
+            ${{ github.event.head_commit.message }}
+
   ios_build:
     runs-on: self-hosted
     needs: lint
