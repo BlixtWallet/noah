@@ -134,8 +134,8 @@ jobs:
       - name: Send APK using local Bot API server
         run: |
           curl -s -X POST "http://localhost:8081/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
-          -F chat_id="-1001238453697" \
-          -F message_thread_id="481333" \
+          -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
+          -F message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
           -F document=@"${{ needs.android_build.outputs.apk_filename }}" \
           -F caption="New Noah build is available! Commit: ${{ github.sha }}"
 
