@@ -49,6 +49,9 @@ jobs:
   android_build:
     runs-on: self-hosted
     needs: lint
+    outputs:
+      artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
+      apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,10 +74,12 @@ jobs:
           apk_path="android/app/build/outputs/apk/signet/release/app-signet-release.apk"
           timestamp=$(date +'%Y-%m-%d-%H-%M')
           new_apk_name="noah-android-apk-${timestamp}"
-          new_apk_path="android/app/build/outputs/apk/signet/release/${new_apk_name}.apk"
+          apk_filename="${new_apk_name}.apk"
+          new_apk_path="android/app/build/outputs/apk/signet/release/${apk_filename}"
           mv "${apk_path}" "${new_apk_path}"
           echo "new_path=${new_apk_path}" >> $GITHUB_OUTPUT
           echo "artifact_name=${new_apk_name}" >> $GITHUB_OUTPUT
+          echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Upload Android APK
@@ -82,17 +87,6 @@ jobs:
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
-
-      - name: Send APK to Telegram
-        if: success()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          document: ${{ steps.rename_apk.outputs.new_path }}
-          message: |
-            New Noah build is available!
-            ${{ github.event.head_commit.message }}
 
   ios_build:
     runs-on: self-hosted
@@ -112,3 +106,23 @@ jobs:
 
       - name: Build iOS signet app
         run: nix develop .# --command bash -c "bun build:ios:signet:release"
+
+  send_telegram_notification:
+    runs-on: ubuntu-latest
+    needs: android_build
+    if: success()
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.android_build.outputs.artifact_name }}
+
+      - name: Send APK to Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          document: ./${{ needs.android_build.outputs.apk_filename }}
+          message: |
+            New Noah build is available!
+            ${{ github.event.head_commit.message }}
