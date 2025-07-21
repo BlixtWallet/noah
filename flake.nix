@@ -34,7 +34,12 @@
       androidSdkFor =
         system:
         android-nixpkgs.sdk.${system} (
-          sdkPkgs: with sdkPkgs; [
+          sdkPkgs:
+          let
+            pkgs = pkgsFor system;
+          in
+          with sdkPkgs;
+          [
             cmdline-tools-latest
             build-tools-35-0-0
             platform-tools
@@ -42,7 +47,12 @@
             ndk-27-1-12297006
             ndk-27-0-12077973
             cmake-3-22-1
-          ]
+            emulator
+          ] ++ (if pkgs.stdenv.isAarch64 then [
+            system-images-android-34-google-apis-arm64-v8a
+          ] else [
+            system-images-android-34-google-apis-x86-64
+          ])
         );
 
       # macOS-specific derivations

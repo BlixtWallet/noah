@@ -52,6 +52,7 @@ const config: { expo: ExpoConfig } = {
           enableCodeScanner: true,
         },
       ],
+      "@config-plugins/detox",
     ],
     ios: {
       supportsTablet: true,

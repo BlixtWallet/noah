@@ -14,7 +14,9 @@ const OnboardingScreen = () => {
 
   return (
     <View className="flex-1 items-center justify-center bg-background p-5">
-      <Text className="text-3xl font-bold mb-4 text-center">Welcome to Noah</Text>
+      <Text className="text-3xl font-bold mb-4 text-center" id="welcome">
+        Welcome to Noah
+      </Text>
       <Text className="text-lg text-muted-foreground mb-10 text-center">
         Tap to create a wallet with default settings. Press and hold to customize.
       </Text>

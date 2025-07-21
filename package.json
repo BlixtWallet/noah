@@ -35,7 +35,8 @@
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "detox:android": "detox test --configuration android.emu.regtest.debug"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.9.2",
@@ -68,6 +69,7 @@
     "expo-constants": "~17.1.7",
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.10",
+    "jest": "^29",
     "light-bolt11-decoder": "^3.2.0",
     "lucide-react-native": "^0.525.0",
     "nativewind": "^4.1.23",
@@ -93,18 +95,23 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@config-plugins/detox": "^11.0.0",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.0.10",
+    "detox": "^20.40.2",
     "eas-cli": "^16.15.0",
     "eslint": "^9.29.0",
     "eslint-config-expo": "^9.2.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-detox": "^1.0.0",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.1",
     "husky": "^9.1.7",
     "prettier": "^3.6.1",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17",
+    "ts-jest": "^29.4.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1"
   },

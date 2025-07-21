@@ -40,6 +40,9 @@
 		C39DD7512E0C9DF1000CB6A9 /* signet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */; };
 		C39DD7522E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */; };
 		C39DD7532E0C9DF1000CB6A9 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */; };
+		C3D2EDFD2E2EA911009C1B24 /* Detox.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C3D2EDFC2E2EA911009C1B24 /* Detox.xcconfig */; };
+		C3D2EDFE2E2EA911009C1B24 /* Detox.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C3D2EDFC2E2EA911009C1B24 /* Detox.xcconfig */; };
+		C3D2EDFF2E2EA911009C1B24 /* Detox.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C3D2EDFC2E2EA911009C1B24 /* Detox.xcconfig */; };
 		CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
@@ -72,6 +75,7 @@
 		C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = regtest.xcconfig; path = Config/regtest.xcconfig; sourceTree = "<group>"; };
 		C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Config/Release.xcconfig; sourceTree = "<group>"; };
 		C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = signet.xcconfig; path = Config/signet.xcconfig; sourceTree = "<group>"; };
+		C3D2EDFC2E2EA911009C1B24 /* Detox.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Detox.xcconfig; sourceTree = "<group>"; };
 		D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah.release.xcconfig"; sourceTree = "<group>"; };
 		D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Signet.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet.release.xcconfig"; sourceTree = "<group>"; };
 		DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah-common-Noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -185,6 +189,7 @@
 				C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */,
 				C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */,
 				C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */,
+				C3D2EDFC2E2EA911009C1B24 /* Detox.xcconfig */,
 				C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */,
 				C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */,
 				13B07FAE1A68108700A75B9A /* noah */,
@@ -344,6 +349,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				C39DD7452E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */,
+				C3D2EDFE2E2EA911009C1B24 /* Detox.xcconfig in Resources */,
 				C39DD7462E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */,
 				C39DD7472E0C9DF1000CB6A9 /* signet.xcconfig in Resources */,
 				C39DD7482E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */,
@@ -360,6 +366,7 @@
 				C39DD70B2E0C95AF000CB6A9 /* Expo.plist in Resources */,
 				C39DD70C2E0C95AF000CB6A9 /* Images.xcassets in Resources */,
 				C39DD74A2E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */,
+				C3D2EDFD2E2EA911009C1B24 /* Detox.xcconfig in Resources */,
 				C39DD74B2E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */,
 				C39DD74C2E0C9DF1000CB6A9 /* signet.xcconfig in Resources */,
 				C39DD74D2E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */,
@@ -376,6 +383,7 @@
 				C39DD7202E0C973E000CB6A9 /* Expo.plist in Resources */,
 				C39DD7212E0C973E000CB6A9 /* Images.xcassets in Resources */,
 				C39DD74F2E0C9DF1000CB6A9 /* regtest.xcconfig in Resources */,
+				C3D2EDFF2E2EA911009C1B24 /* Detox.xcconfig in Resources */,
 				C39DD7502E0C9DF1000CB6A9 /* Debug.xcconfig in Resources */,
 				C39DD7512E0C9DF1000CB6A9 /* signet.xcconfig in Resources */,
 				C39DD7522E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */,
@@ -894,10 +902,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -952,10 +957,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -1103,6 +1105,184 @@
 			};
 			name = Release;
 		};
+		C3D2EE002E2EA96D009C1B24 /* Debug copy */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C3D2EDFC2E2EA911009C1B24 /* Detox.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
+				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "$(inherited)  ";
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				USE_HERMES = true;
+			};
+			name = "Debug copy";
+		};
+		C3D2EE012E2EA96D009C1B24 /* Debug copy */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 64D19819C1ACCADE9D4115DF /* Pods-noah-common-noah.release.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = mainnet;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah;
+				PRODUCT_NAME = "Noah";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug copy";
+		};
+		C3D2EE022E2EA96D009C1B24 /* Debug copy */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4E07CF47789E44CB2CEDF091 /* Pods-noah-common-Noah-Signet.debug.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = signet;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.signet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug copy";
+		};
+		C3D2EE032E2EA96D009C1B24 /* Debug copy */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E9866157C0A7235063C7E870 /* Pods-noah-common-Noah-Regtest.debug.xcconfig */;
+			buildSettings = {
+				APP_VARIANT = regtest;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SD8W85HK3U;
+				ENABLE_BITCODE = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"FB_SONARKIT_ENABLED=1",
+				);
+				INFOPLIST_FILE = noah/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.regtest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "noah/noah-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = "Debug copy";
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1110,6 +1290,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
+				C3D2EE012E2EA96D009C1B24 /* Debug copy */,
 				13B07F951A680F5B00A75B9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -1119,6 +1300,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
+				C3D2EE002E2EA96D009C1B24 /* Debug copy */,
 				83CBBA211A601CBA00E9B192 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -1128,6 +1310,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C39DD7132E0C95AF000CB6A9 /* Debug */,
+				C3D2EE022E2EA96D009C1B24 /* Debug copy */,
 				C39DD7142E0C95AF000CB6A9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -1137,6 +1320,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C39DD7282E0C973E000CB6A9 /* Debug */,
+				C3D2EE032E2EA96D009C1B24 /* Debug copy */,
 				C39DD7292E0C973E000CB6A9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;

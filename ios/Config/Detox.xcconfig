@@ -1,0 +1,5 @@
+#include? "tmp.xcconfig"
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) DETOX=1
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) DETOX
+OTHER_SWIFT_FLAGS = $(inherited) -D DETOX
