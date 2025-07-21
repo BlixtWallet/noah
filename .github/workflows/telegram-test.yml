@@ -1,7 +1,14 @@
 name: Telegram Test
 
 on:
-  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - "README.md"
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "README.md"
 
 jobs:
   send_test_file:
