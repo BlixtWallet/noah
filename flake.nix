@@ -91,7 +91,7 @@
               if [ -d "/Applications/Xcode.app" ]; then
                 DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
               elif [ -d "/Applications/Xcode-16.4.0.app" ]; then
-                DEVELOPER_DIR="/Applications/Xcode-16.4.0.app/Contents/Developer"
+              DEVELOPER_DIR="/Applications/Xcode-16.4.0.app/Contents/Developer"
               else
                 echo "Error: Xcode not found"
                 exit 1
@@ -135,6 +135,7 @@
           darwinHook = ''
             export LC_ALL=en_US.UTF-8
             export LANG=en_US.UTF-8
+            export JAVA_HOME="${pkgs.jdk17.home}"
 
             unset SDKROOT
 
@@ -153,6 +154,7 @@
           linuxHook = ''
             export LC_ALL=en_US.UTF-8
             export LANG=en_US.UTF-8
+            export JAVA_HOME="${pkgs.jdk17.home}"
           '';
 
         in
