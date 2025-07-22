@@ -11,7 +11,7 @@ on:
 
 jobs:
   check_if_release_commit:
-    runs-on: self-hosted
+    runs-on: ubuntu-self-hosted
     outputs:
       is_release: ${{ steps.check_tag.outputs.is_release }}
     steps:
@@ -33,7 +33,7 @@ jobs:
         shell: bash
 
   lint:
-    runs-on: self-hosted
+    runs-on: ubuntu-self-hosted
     needs: check_if_release_commit
     if: needs.check_if_release_commit.outputs.is_release == 'false'
     steps:
@@ -47,7 +47,7 @@ jobs:
         run: nix develop .# --command bash -c "bun lint"
 
   android_build:
-    runs-on: self-hosted
+    runs-on: ubuntu-self-hosted
     needs: lint
     outputs:
       artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
