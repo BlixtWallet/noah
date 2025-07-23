@@ -20,6 +20,9 @@ import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
+import { ArkIcon } from "~/lib/icons/Ark";
+import { LightningIcon } from "~/lib/icons/Lightning";
+import { OnchainIcon } from "~/lib/icons/Onchain";
 
 type ReceiveType = "ark" | "onchain" | "lightning";
 
@@ -27,6 +30,12 @@ const receiveTypeDisplay: Record<ReceiveType, string> = {
   ark: "Ark",
   onchain: "On-chain",
   lightning: "Lightning",
+};
+
+const receiveTypeDescription: Record<ReceiveType, string> = {
+  ark: "Instant, low-fee Ark payments",
+  onchain: "Standard Bitcoin transaction",
+  lightning: "Fast payments via Lightning Network",
 };
 
 const ReceiveScreen = () => {
@@ -90,7 +99,7 @@ const ReceiveScreen = () => {
   const handleCopyToClipboard = (value: string) => {
     Clipboard.setString(value);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 1000);
   };
 
   const currentSelectValue = receiveType
@@ -128,9 +137,24 @@ const ReceiveScreen = () => {
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem label={receiveTypeDisplay.ark} value="ark" />
-                <SelectItem label={receiveTypeDisplay.lightning} value="lightning" />
-                <SelectItem label={receiveTypeDisplay.onchain} value="onchain" />
+                <SelectItem
+                  label={receiveTypeDisplay.ark}
+                  value="ark"
+                  icon={<ArkIcon className="w-4 h-4 mr-2 text-foreground" />}
+                  description={receiveTypeDescription.ark}
+                />
+                <SelectItem
+                  label={receiveTypeDisplay.lightning}
+                  value="lightning"
+                  icon={<LightningIcon className="w-4 h-4 mr-2 text-foreground" />}
+                  description={receiveTypeDescription.lightning}
+                />
+                <SelectItem
+                  label={receiveTypeDisplay.onchain}
+                  value="onchain"
+                  icon={<OnchainIcon className="w-4 h-4 mr-2 text-foreground" />}
+                  description={receiveTypeDescription.onchain}
+                />
               </SelectContent>
             </Select>
           </View>

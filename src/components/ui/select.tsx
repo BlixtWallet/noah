@@ -1,6 +1,6 @@
 import * as SelectPrimitive from "@rn-primitives/select";
 import * as React from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View, Text } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Check } from "~/lib/icons/Check";
 import { ChevronDown } from "~/lib/icons/ChevronDown";
@@ -142,9 +142,13 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  icon,
+  description,
   ...props
 }: SelectPrimitive.ItemProps & {
   ref?: React.RefObject<SelectPrimitive.ItemRef>;
+  icon?: React.ReactNode;
+  description?: string;
 }) {
   return (
     <SelectPrimitive.Item
@@ -160,7 +164,11 @@ function SelectItem({
           <Check size={16} strokeWidth={3} className="text-popover-foreground" />
         </SelectPrimitive.ItemIndicator>
       </View>
-      <SelectPrimitive.ItemText className='text-sm native:text-lg text-popover-foreground native:text-base web:group-focus:text-accent-foreground' />
+      {icon}
+      <View>
+        <SelectPrimitive.ItemText className="text-sm native:text-lg text-popover-foreground web:group-focus:text-accent-foreground" />
+        {description && <Text className="text-xs text-muted-foreground">{description}</Text>}
+      </View>
     </SelectPrimitive.Item>
   );
 }
