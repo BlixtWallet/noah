@@ -147,3 +147,33 @@ export const isValidLightningAddress = (url: string): boolean => {
 
   return true;
 };
+
+export const BITCOIN_FACTS = [
+  "There can only ever be 21 million bitcoin.",
+  "Fix the money, fix the world.",
+  "Money for everyone, by everyone.",
+  "A global network of computers keeps it secure.",
+  "Send money to anyone, anywhere, anytime.",
+  "No one can freeze your funds.",
+  "It's open for anyone to use.",
+  "A 'satoshi' is its smallest unit.",
+  "It's freedom in your pocket.",
+  "Hope for a fairer financial system.",
+  "Taxation is theft.",
+  "Power back to the people.",
+  "A peaceful, voluntary revolution.",
+  "Be your own bank.",
+  "The network has run nonstop for over a decade.",
+  "The first real-world purchase was for two pizzas.",
+  "A powerful tool for savers.",
+  "Built to last for the long run.",
+  "The future of money is here.",
+  "Not your keys, not your coins.",
+  "Stay humble, stack sats.",
+  "In code we trust.",
+  "Governments can print money, but not Bitcoin.",
+  "The sound of freedom is the whirring of miners.",
+  "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks.",
+  "Vires in numeris. (Strength in numbers)",
+  "\"If you don't believe it or don't get it, I don't have time to try to convince you, sorry.\" - Satoshi Nakamoto",
+];

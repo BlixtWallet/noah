@@ -7,13 +7,14 @@ import { Text } from "../components/ui/text";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
 import { useBalance, useSync } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
 import { APP_VARIANT } from "~/config";
+import { BITCOIN_FACTS, PLATFORM } from "~/constants";
 
 import Animated, {
   FadeInDown,
@@ -23,7 +24,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
-import { PLATFORM } from "~/constants";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 
 const HomeScreen = () => {
@@ -32,12 +32,23 @@ const HomeScreen = () => {
   const { mutateAsync: sync, isPending: isSyncing } = useSync();
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
+  const [fact, setFact] = useState("");
   const bottomTabBarHeight = useBottomTabBarHeight();
+
+  const getRandomFact = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * BITCOIN_FACTS.length);
+    setFact(BITCOIN_FACTS[randomIndex]);
+  }, []);
+
+  useEffect(() => {
+    getRandomFact();
+  }, [getRandomFact]);
 
   const onRefresh = useCallback(async () => {
     await sync();
     await refetch();
-  }, [sync, refetch]);
+    getRandomFact();
+  }, [sync, refetch, getRandomFact]);
 
   const totalBalance = balance ? balance.onchain + balance.offchain : 0;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
@@ -155,6 +166,9 @@ const HomeScreen = () => {
               </NoahButton>
             </>
           )}
+        </View>
+        <View className="p-4 items-center justify-center mb-16">
+          <Text className="text-muted-foreground text-center text-xs">{fact}</Text>
         </View>
       </ScrollView>
     </NoahSafeAreaView>
