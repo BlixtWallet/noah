@@ -96,7 +96,7 @@ const TransactionsScreen = () => {
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
           </Pressable>
-          <Text className="text-2xl font-bold text-foreground">Receive Funds</Text>
+          <Text className="text-2xl font-bold text-foreground">Transactions</Text>
         </View>
         <View className="flex-row justify-around mb-4">
           {(["all", "Bolt11", "Arkoor", "Lnurl", "Onchain"] as const).map((f) => (

@@ -78,15 +78,18 @@ const HomeScreen = () => {
       }}
     >
       <View className="flex-row items-center justify-between p-4">
-        <View className="flex-row items-center">
+        <Pressable onPress={handleScanPress}>
+          <Icon name="scan" size={28} color="white" />
+        </Pressable>
+        <View className="flex-1 items-center">
           {APP_VARIANT !== "mainnet" && (
-            <View className="ml-2 rounded-md bg-yellow-400 px-2 py-1">
+            <View className="rounded-md bg-yellow-400 px-2 py-1">
               <Text className="text-xs font-bold uppercase text-black">{APP_VARIANT}</Text>
             </View>
           )}
         </View>
-        <Pressable onPress={handleScanPress}>
-          <Icon name="scan" size={28} color="white" />
+        <Pressable onPress={() => navigation.navigate("Transactions")}>
+          <Icon name="list" size={28} color="white" />
         </Pressable>
       </View>
       <ScrollView

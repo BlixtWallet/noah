@@ -12,3 +12,4 @@
 // You can add other settings that should apply to ALL debug builds here.
 // For example, to speed up local builds:
 ONLY_ACTIVE_ARCH = YES
+  

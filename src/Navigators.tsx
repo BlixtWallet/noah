@@ -40,6 +40,7 @@ export type HomeStackParamList = {
   HomeStack: undefined;
   BoardArk: undefined;
   Send: { destination: string };
+  Transactions: undefined;
 };
 
 const Tab = createNativeBottomTabNavigator();
@@ -62,6 +63,11 @@ const HomeStackScreen = () => (
     <HomeStack.Screen name="HomeStack" component={HomeScreen} options={{ headerShown: false }} />
     <HomeStack.Screen name="BoardArk" component={BoardArkScreen} options={{ headerShown: false }} />
     <HomeStack.Screen name="Send" component={SendScreen} options={{ headerShown: false }} />
+    <HomeStack.Screen
+      name="Transactions"
+      component={TransactionsScreen}
+      options={{ headerShown: false }}
+    />
   </HomeStack.Navigator>
 );
 
@@ -139,19 +145,6 @@ const AppTabs = () => {
               return { sfSymbol: focused ? "arrow.up.right" : "arrow.up.right" };
             }
             const iconName = focused ? "arrow-up" : "arrow-up-outline";
-            return Icon.getImageSourceSync(iconName, 24)!;
-          },
-        }}
-      />
-      <Tab.Screen
-        name="Transactions"
-        component={TransactionsScreen}
-        options={{
-          tabBarIcon: ({ focused }) => {
-            if (isIos) {
-              return { sfSymbol: focused ? "list.bullet" : "list.dash" };
-            }
-            const iconName = focused ? "list" : "list-outline";
             return Icon.getImageSourceSync(iconName, 24)!;
           },
         }}
