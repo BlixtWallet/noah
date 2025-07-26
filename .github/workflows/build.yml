@@ -66,6 +66,8 @@ jobs:
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
       - name: Build signet Android app
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: nix develop .# --command bash -c "bun build:android:ci"
 
       - name: Rename APK with timestamp

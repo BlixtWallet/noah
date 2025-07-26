@@ -47,3 +47,7 @@ temp_ark_downloads
 
 # Bark
 bark/
+
+.env.local
+android/sentry.properties
+ios/sentry.properties
