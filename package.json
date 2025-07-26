@@ -57,6 +57,7 @@
     "@rn-primitives/select": "^1.2.0",
     "@rn-primitives/separator": "^1.2.0",
     "@rn-primitives/slot": "^1.2.0",
+    "@sentry/react-native": "^6.18.1",
     "@tanstack/react-query": "^5.81.2",
     "babel-plugin-react-compiler": "^19.0.0-beta-af1b7da-20250417",
     "bitcoin-address-validation": "^3.0.0",
