@@ -65,9 +65,12 @@ jobs:
       - name: Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
-      - name: Build signet Android app
+      - name: Create sentry.properties
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./scripts/create_sentry_properties.sh
+
+      - name: Build signet Android app
         run: nix develop .# --command bash -c "bun build:android:ci"
 
       - name: Rename APK with timestamp
@@ -105,6 +108,11 @@ jobs:
 
       - name: Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun ios:prebuild"
+
+      - name: Create sentry.properties
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./scripts/create_sentry_properties.sh
 
       - name: Build iOS signet app
         run: nix develop .# --command bash -c "bun build:ios:signet:release"
