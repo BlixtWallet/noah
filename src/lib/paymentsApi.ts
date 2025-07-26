@@ -14,6 +14,7 @@ import {
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "../config";
+import { captureException } from "@sentry/react-native";
 
 export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
 
@@ -78,6 +79,9 @@ export const boardArk = async (amountSat: number): Promise<string> => {
     return txid;
   } catch (error) {
     console.error("Failed to board funds:", error);
+    captureException(
+      new Error(`Failed to board funds: ${error instanceof Error ? error.message : String(error)}`),
+    );
     throw new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -93,6 +97,11 @@ export const sendArkoorPayment = async (
     return result;
   } catch (error) {
     console.error("Failed to send arkoor payment:", error);
+    captureException(
+      new Error(
+        `Failed to send arkoor payment: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     throw new Error(
       `Failed to send arkoor payment: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -108,6 +117,11 @@ export const sendBolt11Payment = async (
     return result;
   } catch (error) {
     console.error("Failed to send bolt11 payment:", error);
+    captureException(
+      new Error(
+        `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     throw new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -127,6 +141,11 @@ export const sendOnchain = async ({
     return result;
   } catch (error) {
     console.error("Failed to send onchain funds:", error);
+    captureException(
+      new Error(
+        `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     throw new Error(
       `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -143,6 +162,11 @@ export const sendLnaddr = async (
     return result;
   } catch (error) {
     console.error("Failed to send to lightning address:", error);
+    captureException(
+      new Error(
+        `Failed to send to lightning address: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+    );
     throw new Error(
       `Failed to send to lightning address: ${
         error instanceof Error ? error.message : String(error)
