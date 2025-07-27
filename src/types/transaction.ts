@@ -10,6 +10,7 @@ export type Transaction = {
   txid?: string;
   preimage?: string;
   destination?: string;
+  btcPrice?: number;
 };
 
 export type { PaymentTypes };

@@ -24,12 +24,30 @@ import type { OnboardingStackParamList, SettingsStackParamList } from "../Naviga
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import Clipboard from "@react-native-clipboard/clipboard";
 
 type Setting = {
-  id: keyof WalletConfig | "showMnemonic" | "showLogs";
+  id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey";
   title: string;
   value?: string;
   isPressable: boolean;
+};
+
+const CopyableSettingRow = ({ label, value }: { label: string; value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const onCopy = () => {
+    Clipboard.setString(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1000);
+  };
+
+  return (
+    <Pressable onPress={onCopy} className="p-4 border-b border-border bg-card rounded-lg mb-2">
+      <Label className="text-foreground text-lg">{label}</Label>
+      <Text className={`text-base mt-1 text-muted-foreground`}>{copied ? "Copied!" : value}</Text>
+    </Pressable>
+  );
 };
 
 const SettingsScreen = () => {
@@ -53,38 +71,50 @@ const SettingsScreen = () => {
     }
   };
 
-  const data: Setting[] =
-    APP_VARIANT === "regtest"
-      ? [
-          {
-            id: "bitcoind",
-            title: "Bitcoind RPC",
-            value: config.bitcoind,
-            isPressable: !isInitialized,
-          },
-          { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
-          {
-            id: "bitcoind_user",
-            title: "RPC User",
-            value: config.bitcoind_user,
-            isPressable: !isInitialized,
-          },
-          {
-            id: "bitcoind_pass",
-            title: "RPC Pass",
-            value: config.bitcoind_pass,
-            isPressable: !isInitialized,
-          },
-        ]
-      : [
-          {
-            id: "esplora",
-            title: "Esplora URL",
-            value: config.esplora,
-            isPressable: !isInitialized,
-          },
-          { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
-        ];
+  const data: Setting[] = [];
+
+  if (isInitialized && config.staticVtxoPubkey) {
+    data.push({
+      id: "staticVtxoPubkey",
+      title: "Public Key",
+      value: config.staticVtxoPubkey,
+      isPressable: false,
+    });
+  }
+
+  if (APP_VARIANT === "regtest") {
+    data.push(
+      {
+        id: "bitcoind",
+        title: "Bitcoind RPC",
+        value: config.bitcoind,
+        isPressable: !isInitialized,
+      },
+      { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
+      {
+        id: "bitcoind_user",
+        title: "RPC User",
+        value: config.bitcoind_user,
+        isPressable: !isInitialized,
+      },
+      {
+        id: "bitcoind_pass",
+        title: "RPC Pass",
+        value: config.bitcoind_pass,
+        isPressable: !isInitialized,
+      },
+    );
+  } else {
+    data.push(
+      {
+        id: "esplora",
+        title: "Esplora URL",
+        value: config.esplora,
+        isPressable: !isInitialized,
+      },
+      { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
+    );
+  }
 
   if (isInitialized) {
     data.push({ id: "showMnemonic", title: "Show Mnemonic", isPressable: true });
@@ -102,21 +132,28 @@ const SettingsScreen = () => {
         </View>
         <LegendList
           data={data}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handlePress(item)}
-              disabled={!item.isPressable}
-              className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
-            >
-              <View>
-                <Label className="text-foreground text-lg">{item.title}</Label>
-                {item.value && (
-                  <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
+          renderItem={({ item }) => {
+            if (item.id === "staticVtxoPubkey") {
+              return <CopyableSettingRow label={item.title} value={item.value!} />;
+            }
+            return (
+              <Pressable
+                onPress={() => handlePress(item)}
+                disabled={!item.isPressable}
+                className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
+              >
+                <View>
+                  <Label className="text-foreground text-lg">{item.title}</Label>
+                  {item.value && (
+                    <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
+                  )}
+                </View>
+                {item.isPressable && (
+                  <Icon name="chevron-forward-outline" size={24} color="white" />
                 )}
-              </View>
-              {item.isPressable && <Icon name="chevron-forward-outline" size={24} color="white" />}
-            </Pressable>
-          )}
+              </Pressable>
+            );
+          }}
           keyExtractor={(item) => item.id}
           recycleItems
         />

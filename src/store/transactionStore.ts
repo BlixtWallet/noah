@@ -23,6 +23,7 @@ const zustandStorage = createJSONStorage(() => ({
 interface TransactionState {
   transactions: Transaction[];
   addTransaction: (transaction: Transaction) => void;
+  reset: () => void;
 }
 
 export const useTransactionStore = create<TransactionState>()(
@@ -33,6 +34,7 @@ export const useTransactionStore = create<TransactionState>()(
         set((state) => ({
           transactions: [transaction, ...state.transactions],
         })),
+      reset: () => set({ transactions: [] }),
     }),
     {
       name: "transaction-storage",

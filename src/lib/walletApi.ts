@@ -10,6 +10,8 @@ import {
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useWalletStore } from "../store/walletStore";
+import { generateVtxoPubkey } from "./paymentsApi";
+import { useTransactionStore } from "../store/transactionStore";
 import { ARK_DATA_PATH } from "../constants";
 import { APP_VARIANT } from "../config";
 
@@ -46,14 +48,30 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
           },
         };
 
+  if (await isWalletLoaded()) {
+    console.log("Wallet is already loaded, closing it before creating a new one");
+    await closeWalletNitro();
+  }
+
   await loadWalletNitro(ARK_DATA_PATH, {
     ...creationConfig,
     mnemonic,
   });
 
+  console.log("Wallet created successfully with mnemonic");
+
   await Keychain.setGenericPassword(USERNAME, mnemonic, {
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
+
+  console.log("Mnemonic saved to keychain");
+
+  // TODO: This is a workaround for a bug in the ark library.
+  // The first time we generate a pubkey, the index should be undefined.
+  // After that, we can use index 0 to get the static pubkey.
+  await generateVtxoPubkey(undefined);
+  const pubkey = await generateVtxoPubkey(0);
+  useWalletStore.getState().setStaticVtxoPubkey(pubkey);
 };
 
 export const createWallet = async () => {
@@ -94,11 +112,6 @@ export const sync = async () => {
 
 export const deleteWallet = async () => {
   try {
-    // Close the wallet if open
-    if (!isWalletLoaded()) {
-      await closeWalletNitro();
-    }
-
     // Delete the wallet data directory
     const dataDirExists = await RNFS.exists(ARK_DATA_PATH);
     if (dataDirExists) {
@@ -107,6 +120,8 @@ export const deleteWallet = async () => {
 
     // Remove the mnemonic from keychain
     await Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE });
+    useWalletStore.getState().reset();
+    useTransactionStore.getState().reset();
   } catch (error) {
     console.error("Failed to delete wallet:", error);
     throw new Error(

@@ -20,7 +20,7 @@ export function useGenerateVtxoPubkey() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: generateVtxoPubkey,
+    mutationFn: async (index?: number) => await generateVtxoPubkey(index),
     onError: (error: Error) => {
       showAlert({ title: "Vtxo Pubkey Generation Failed", description: error.message });
     },

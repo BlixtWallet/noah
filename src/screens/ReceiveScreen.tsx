@@ -88,7 +88,7 @@ const ReceiveScreen = () => {
 
   const handleGenerate = () => {
     if (receiveType === "ark") {
-      generateVtxoPubkey();
+      generateVtxoPubkey(undefined);
     } else if (receiveType === "onchain") {
       generateOnchainAddress();
     } else if (receiveType === "lightning") {

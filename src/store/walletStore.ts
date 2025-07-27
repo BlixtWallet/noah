@@ -25,21 +25,30 @@ export type WalletConfig = {
   esplora?: string;
   bitcoind_user?: string;
   bitcoind_pass?: string;
+  staticVtxoPubkey: string;
 };
 
-const initialConfig = () => {
+const initialConfig = (): WalletConfig => {
+  const baseConfig: WalletConfig = {
+    staticVtxoPubkey: "",
+  };
+
   if (!ACTIVE_WALLET_CONFIG.config) {
-    return {};
+    return baseConfig;
   }
+
   if (APP_VARIANT === "regtest") {
     return {
+      ...baseConfig,
       bitcoind: ACTIVE_WALLET_CONFIG.config.bitcoind,
       asp: ACTIVE_WALLET_CONFIG.config.asp,
       bitcoind_user: ACTIVE_WALLET_CONFIG.config.bitcoind_user,
       bitcoind_pass: ACTIVE_WALLET_CONFIG.config.bitcoind_pass,
     };
   }
+
   return {
+    ...baseConfig,
     esplora: ACTIVE_WALLET_CONFIG.config.esplora,
     asp: ACTIVE_WALLET_CONFIG.config.asp,
   };
@@ -53,6 +62,7 @@ interface WalletState {
   setWalletLoaded: () => void;
   setWalletUnloaded: () => void;
   setConfig: (config: WalletConfig) => void;
+  setStaticVtxoPubkey: (pubkey: string) => void;
   reset: () => void;
 }
 
@@ -70,6 +80,8 @@ export const useWalletStore = create<WalletState>()(
       setWalletLoaded: () => set({ isWalletLoaded: true }),
       setWalletUnloaded: () => set({ isWalletLoaded: false }),
       setConfig: (config) => set({ config }),
+      setStaticVtxoPubkey: (pubkey) =>
+        set((state) => ({ config: { ...state.config, staticVtxoPubkey: pubkey } })),
       reset: () => set(initialState),
     }),
     {

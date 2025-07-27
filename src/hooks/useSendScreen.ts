@@ -13,6 +13,7 @@ import {
 } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { useTransactionStore } from "~/store/transactionStore";
+import { useBtcToUsdRate } from "./useMarketData";
 import uuid from "react-native-uuid";
 
 type DisplayResult = {
@@ -30,6 +31,7 @@ export const useSendScreen = () => {
   const route = useRoute<SendScreenRouteProp>();
   const { showAlert } = useAlert();
   const { addTransaction } = useTransactionStore();
+  const { data: btcPrice } = useBtcToUsdRate();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
   const [isAmountEditable, setIsAmountEditable] = useState(true);
@@ -152,11 +154,12 @@ export const useSendScreen = () => {
           txid: displayResult.txid,
           preimage: displayResult.preimage,
           destination: displayResult.destination,
+          btcPrice: btcPrice,
         });
       }
       setParsedResult(displayResult);
     }
-  }, [result, amount, showAlert, addTransaction, destinationType, comment]);
+  }, [result, amount, showAlert, addTransaction, destinationType, comment, btcPrice]);
 
   const handleSend = () => {
     let amountSat: number | undefined = parseInt(amount, 10);

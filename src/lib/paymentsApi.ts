@@ -37,9 +37,9 @@ export const getMnemonic = async (): Promise<string> => {
   return credentials.password;
 };
 
-export const generateVtxoPubkey = async (): Promise<string> => {
+export const generateVtxoPubkey = async (index?: number): Promise<string> => {
   try {
-    const pubkey = await getVtxoPubkeyNitro();
+    const pubkey = await getVtxoPubkeyNitro(index);
     return pubkey;
   } catch (error) {
     console.error("Failed to generate VTXO pubkey:", error);

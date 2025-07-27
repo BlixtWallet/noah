@@ -16,11 +16,13 @@ import BoardArkScreen from "~/screens/BoardArkScreen";
 import MnemonicScreen from "~/screens/MnemonicScreen";
 import LogScreen from "~/screens/LogScreen";
 import TransactionsScreen from "~/screens/TransactionsScreen";
+import TransactionDetailScreen from "~/screens/TransactionDetailScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { COLORS } from "~/lib/styleConstants";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
+import { Transaction } from "~/types/transaction";
 
 // Param list types
 export type SettingsStackParamList = {
@@ -41,6 +43,7 @@ export type HomeStackParamList = {
   BoardArk: undefined;
   Send: { destination: string };
   Transactions: undefined;
+  TransactionDetail: { transaction: Transaction };
 };
 
 const Tab = createNativeBottomTabNavigator();
@@ -66,6 +69,11 @@ const HomeStackScreen = () => (
     <HomeStack.Screen
       name="Transactions"
       component={TransactionsScreen}
+      options={{ headerShown: false }}
+    />
+    <HomeStack.Screen
+      name="TransactionDetail"
+      component={TransactionDetailScreen}
       options={{ headerShown: false }}
     />
   </HomeStack.Navigator>
