@@ -145,7 +145,7 @@ export const useSendScreen = () => {
     if (displayResult) {
       if (displayResult.success) {
         addTransaction({
-          id: displayResult.txid || displayResult.preimage || uuid.v4().toString(),
+          id: uuid.v4().toString(),
           type: result.payment_type,
           amount: displayResult.amount_sat,
           date: new Date().toISOString(),
