@@ -1472,7 +1472,7 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
-  - react-native-bottom-tabs (0.9.2):
+  - react-native-bottom-tabs (0.10.0-canary-20250719100729):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2658,7 +2658,7 @@ SPEC CHECKSUMS:
   React-logger: 85fa3509931497c72ccd2547fcc91e7299d8591e
   React-Mapbuffer: 96a2f2a176268581733be182fa6eebab1c0193be
   React-microtasksnativemodule: bda561d2648e1e52bd9e5a87f8889836bdbde2e2
-  react-native-bottom-tabs: f4b56d387c519c9c6f1ac59dbab8cf753865502d
+  react-native-bottom-tabs: 120db53e3993c60443d54beb87da0e5586182812
   react-native-mmkv: fb6fdab2e83b892959e32586b7814078fe6c1a6a
   react-native-safe-area-context: 562163222d999b79a51577eda2ea8ad2c32b4d06
   react-native-vector-icons: 08bea1bdc17252ec9dde643d94750f961bccc8b8

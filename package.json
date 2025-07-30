@@ -75,7 +75,7 @@
     "noah-tools": "file:./nitromodules/noah-tools",
     "react": "19.0.0",
     "react-native": "0.79.5",
-    "react-native-bottom-tabs": "^0.9.2",
+    "react-native-bottom-tabs": "0.10.0-canary-20250719100729",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^3.3.0",
