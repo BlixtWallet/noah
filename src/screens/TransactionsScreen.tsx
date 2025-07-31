@@ -1,6 +1,8 @@
 import { View, Pressable } from "react-native";
 import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Share from "react-native-share";
+import * as RNFS from "@dr.pogodin/react-native-fs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +60,54 @@ const TransactionsScreen = () => {
     return DeleteAction;
   };
 
+  const exportToCSV = async () => {
+    const csvHeader =
+      "Payment ID,Date,Type,Direction,Amount (sats),BTC Price,Transaction ID,Destination\n";
+    const csvRows = filteredTransactions
+      .map((transaction) => {
+        const date = new Date(transaction.date).toISOString().split("T")[0];
+        const type =
+          transaction.type === "Bolt11" || transaction.type === "Lnurl"
+            ? "Lightning"
+            : transaction.type;
+        const direction = transaction.direction === "outgoing" ? "Outgoing" : "Incoming";
+        const amount =
+          transaction.direction === "outgoing" ? -transaction.amount : transaction.amount;
+        const id = transaction.id;
+        const btcPrice = transaction.btcPrice;
+        const txid = transaction.txid || "";
+        const destination = transaction.destination;
+
+        return `${id},${date},${type},${direction},${amount},${btcPrice},${txid},${destination}`;
+      })
+      .join("\n");
+
+    const csvContent = csvHeader + csvRows;
+    const filename = `noah_transactions_${new Date().toISOString().split("T")[0]}.csv`;
+    const filePath = `${RNFS.CachesDirectoryPath}/${filename}`;
+
+    try {
+      await RNFS.writeFile(filePath, csvContent, "utf8");
+
+      await Share.open({
+        title: "Export Transactions",
+        url: `file://${filePath}`,
+        type: "text/csv",
+        filename: filename,
+        subject: "Noah Wallet Transaction Export",
+      });
+
+      await RNFS.unlink(filePath);
+    } catch (error) {
+      if (error && typeof error === "object" && "message" in error) {
+        const errorMessage = (error as Error).message;
+        if (!errorMessage.includes("User did not share")) {
+          console.error("Error sharing CSV:", error);
+        }
+      }
+    }
+  };
+
   const onCancelDelete = () => {
     if (selectedTransactionId && swipeableRefs.current[selectedTransactionId]) {
       swipeableRefs.current[selectedTransactionId].close();
@@ -113,11 +163,16 @@ const TransactionsScreen = () => {
           </AlertDialogContent>
         </AlertDialog>
         <View className="p-4 flex-1">
-          <View className="flex-row items-center mb-8">
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
+          <View className="flex-row items-center justify-between mb-8">
+            <View className="flex-row items-center">
+              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+                <Icon name="arrow-back-outline" size={24} color="white" />
+              </Pressable>
+              <Text className="text-2xl font-bold text-foreground">Transactions</Text>
+            </View>
+            <Pressable onPress={exportToCSV} className="p-2">
+              <Icon name="download-outline" size={24} color="white" />
             </Pressable>
-            <Text className="text-2xl font-bold text-foreground">Transactions</Text>
           </View>
           <View className="flex-row justify-around mb-4">
             {(["all", "Lightning", "Arkoor", "Onchain"] as const).map((f) => (

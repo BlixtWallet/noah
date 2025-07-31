@@ -75,7 +75,12 @@ const LogScreen = () => {
       await RNFS.unlink(path);
       console.log("File shared and deleted successfully");
     } catch (error) {
-      console.log("Failed to share logs:", error);
+      if (error && typeof error === "object" && "message" in error) {
+        const errorMessage = (error as Error).message;
+        if (!errorMessage.includes("User did not share")) {
+          console.error("Error sharing Logs:", error);
+        }
+      }
     }
   };
 
