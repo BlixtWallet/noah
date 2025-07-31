@@ -183,14 +183,15 @@ const SettingsScreen = () => {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <AlertDialogFooter>
-                  <AlertDialogCancel>
+                <AlertDialogFooter className="flex-row space-x-2">
+                  <AlertDialogCancel className="flex-1">
                     <Text>Cancel</Text>
                   </AlertDialogCancel>
                   <AlertDialogAction
                     variant="destructive"
                     disabled={confirmText.toLowerCase() !== "delete"}
                     onPress={() => deleteWalletMutation.mutate()}
+                    className="flex-1"
                   >
                     <Text>Delete</Text>
                   </AlertDialogAction>
