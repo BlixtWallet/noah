@@ -41,8 +41,8 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
               (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
               !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
             logcat.addLast(line!!)
-            if (logcat.size > 1000) {
-              logcat.removeFirst()  // Keep only last 1000
+            if (logcat.size > 2000) {
+              logcat.removeFirst()  // Keep only last 2000
             }
           }
         }
