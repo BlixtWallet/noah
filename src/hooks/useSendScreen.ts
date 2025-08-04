@@ -6,7 +6,7 @@ import { parseDestination, isValidDestination, type DestinationTypes } from "../
 import { useSend } from "../hooks/usePayments";
 import {
   type ArkoorPaymentResult,
-  type Bolt11PaymentResult,
+  type LightningPaymentResult,
   type LnurlPaymentResult,
   type OnchainPaymentResult,
   type PaymentResult,
@@ -116,7 +116,7 @@ export const useSendScreen = () => {
           };
         }
         case "Bolt11": {
-          const bolt11Res = res as Bolt11PaymentResult;
+          const bolt11Res = res as LightningPaymentResult;
           return {
             success: true,
             amount_sat: satoshis,

@@ -57,7 +57,7 @@ usage() {
 # Clones the repository and checks out the correct tag.
 setup_environment() {
     local repo_url="https://codeberg.org/ark-bitcoin/bark.git"
-    local repo_tag="bark-0.0.0-alpha.17"
+    local repo_tag="bark-0.0.0-alpha.18"
 
     if ! command -v git &> /dev/null; then
         echo "Error: 'git' is not installed. Please install it to continue." >&2

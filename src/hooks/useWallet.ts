@@ -10,6 +10,7 @@ import {
   deleteWallet as deleteWalletAction,
   loadWallet as loadWalletAction,
   sync as syncAction,
+  onchainSync as onchainSyncAction,
 } from "../lib/walletApi";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 import type { OnboardingStackParamList } from "../Navigators";
@@ -79,11 +80,34 @@ export function useCloseWallet() {
   });
 }
 
-export function useSync() {
+export const useBalanceSync = () => {
+  const { showAlert } = useAlert();
+
+  return useMutation({
+    mutationFn: async () => await Promise.allSettled([syncAction(), onchainSyncAction()]),
+
+    onError: (error: Error) => {
+      showAlert({ title: "Failed to sync wallet balance", description: error.message });
+    },
+  });
+};
+
+export function useOffchainSync() {
   const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: syncAction,
+    onError: (error: Error) => {
+      showAlert({ title: "Failed to sync wallet", description: error.message });
+    },
+  });
+}
+
+export function useOnchainSync() {
+  const { showAlert } = useAlert();
+
+  return useMutation({
+    mutationFn: onchainSyncAction,
     onError: (error: Error) => {
       showAlert({ title: "Failed to sync wallet", description: error.message });
     },

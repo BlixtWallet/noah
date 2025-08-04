@@ -1,26 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAlert } from "~/contexts/AlertProvider";
 import {
-  generateVtxoPubkey,
-  generateOnchainAddress,
+  newAddress,
+  onchainAddress,
   boardArk,
-  generateLightningInvoice,
-  sendOnchain,
+  bolt11Invoice,
+  onchainSend,
   sendArkoorPayment,
-  sendBolt11Payment,
+  sendLightningPayment,
   sendLnaddr,
   type ArkoorPaymentResult,
-  type Bolt11PaymentResult,
+  type LightningPaymentResult,
   type LnurlPaymentResult,
   type OnchainPaymentResult,
 } from "../lib/paymentsApi";
 import { type DestinationTypes } from "~/lib/sendUtils";
 
-export function useGenerateVtxoPubkey() {
+export function useGenerateOffchainAddress() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: async (index?: number) => await generateVtxoPubkey(index),
+    mutationFn: async () => (await newAddress()).address,
     onError: (error: Error) => {
       showAlert({ title: "Vtxo Pubkey Generation Failed", description: error.message });
     },
@@ -31,7 +31,7 @@ export function useGenerateOnchainAddress() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: generateOnchainAddress,
+    mutationFn: onchainAddress,
     onError: (error: Error) => {
       showAlert({ title: "On-chain Address Generation Failed", description: error.message });
     },
@@ -42,7 +42,7 @@ export function useGenerateLightningInvoice() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: generateLightningInvoice,
+    mutationFn: bolt11Invoice,
     onError: (error: Error) => {
       showAlert({ title: "Lightning Invoice Generation Failed", description: error.message });
     },
@@ -72,7 +72,7 @@ type SendVariables = {
 
 type SendResult =
   | ArkoorPaymentResult
-  | Bolt11PaymentResult
+  | LightningPaymentResult
   | LnurlPaymentResult
   | OnchainPaymentResult;
 
@@ -92,14 +92,14 @@ export function useSend(destinationType: DestinationTypes) {
           if (amountSat === undefined) {
             return Promise.reject(new Error("Amount is required for onchain payments"));
           }
-          return sendOnchain({ destination, amountSat });
+          return onchainSend({ destination, amountSat });
         case "ark":
           if (amountSat === undefined) {
             return Promise.reject(new Error("Amount is required for Ark payments"));
           }
           return sendArkoorPayment(destination, amountSat);
         case "lightning":
-          return sendBolt11Payment(destination, amountSat);
+          return sendLightningPayment(destination, amountSat);
         case "lnurl":
           if (amountSat === undefined) {
             return Promise.reject(new Error("Amount is required for LNURL payments"));

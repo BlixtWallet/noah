@@ -72,7 +72,7 @@ PODS:
   - hermes-engine (0.79.5):
     - hermes-engine/Pre-built (= 0.79.5)
   - hermes-engine/Pre-built (0.79.5)
-  - NitroArk (0.0.38):
+  - NitroArk (0.0.41):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1993,6 +1993,30 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - RNGestureHandler (2.24.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNKeychain (10.0.0):
     - DoubleConversion
     - glog
@@ -2396,6 +2420,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "ReactNativeFs (from `../node_modules/@dr.pogodin/react-native-fs`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
+  - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -2591,6 +2616,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@dr.pogodin/react-native-fs"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
+  RNGestureHandler:
+    :path: "../node_modules/react-native-gesture-handler"
   RNKeychain:
     :path: "../node_modules/react-native-keychain"
   RNReanimated:
@@ -2624,7 +2651,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: f03b0e06d3882d71e67e45b073bb827da1a21aae
-  NitroArk: 5b0af4cf8914033b414e93182c1117550440c297
+  NitroArk: 64ada08740807df52afbc802fa527a74b5ad10a9
   NitroModules: 763fe03c46a734a615e648ff2c77158cd26d8f89
   NoahTools: 12a4e8705c339d40f7218c725de658f4a62ef646
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
@@ -2696,6 +2723,7 @@ SPEC CHECKSUMS:
   ReactCommon: 1ab5451fc5da87c4cc4c3046e19a8054624ca763
   ReactNativeFs: e1f061c6717096975fa266006bca04ea0851a8e7
   RNCClipboard: ea6045252d5c0753cf17f62290f647dc0096f6ac
+  RNGestureHandler: 7d0931a61d7ba0259f32db0ba7d0963c3ed15d2b
   RNKeychain: 943b4dbceef4b3a310c9122c99d1e5b0bd66b9f3
   RNReanimated: 2313402fe27fecb7237619e9c6fcee3177f08a65
   RNScreens: 482e9707f9826230810c92e765751af53826d509

@@ -13,7 +13,7 @@ import {
 import {
   useGenerateLightningInvoice,
   useGenerateOnchainAddress,
-  useGenerateVtxoPubkey,
+  useGenerateOffchainAddress,
 } from "../hooks/usePayments";
 import Clipboard from "@react-native-clipboard/clipboard";
 import QRCode from "react-native-qrcode-svg";
@@ -45,11 +45,11 @@ const ReceiveScreen = () => {
   const [copied, setCopied] = useState(false);
 
   const {
-    mutate: generateVtxoPubkey,
+    mutate: generateOffchainAddress,
     data: vtxoPubkey,
     isPending: isGeneratingVtxo,
     reset: resetVtxo,
-  } = useGenerateVtxoPubkey();
+  } = useGenerateOffchainAddress();
 
   const {
     mutate: generateOnchainAddress,
@@ -88,7 +88,7 @@ const ReceiveScreen = () => {
 
   const handleGenerate = () => {
     if (receiveType === "ark") {
-      generateVtxoPubkey(undefined);
+      generateOffchainAddress();
     } else if (receiveType === "onchain") {
       generateOnchainAddress();
     } else if (receiveType === "lightning") {

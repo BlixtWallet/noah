@@ -4,16 +4,17 @@ import {
   onchainBalance as onchainBalanceNitro,
   offchainBalance as offchainBalanceNitro,
   sync as syncNitro,
+  onchainSync as onchainSyncNitro,
   closeWallet as closeWalletNitro,
   isWalletLoaded,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useWalletStore } from "../store/walletStore";
-import { generateVtxoPubkey } from "./paymentsApi";
 import { useTransactionStore } from "../store/transactionStore";
 import { ARK_DATA_PATH } from "../constants";
 import { APP_VARIANT } from "../config";
+import { deriveStoreNextKeypair, peakKeyPair } from "./paymentsApi";
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 const USERNAME = "noah";
@@ -66,11 +67,10 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
 
   console.log("Mnemonic saved to keychain");
 
-  // TODO: This is a workaround for a bug in the ark library.
   // The first time we generate a pubkey, the index should be undefined.
   // After that, we can use index 0 to get the static pubkey.
-  await generateVtxoPubkey(undefined);
-  const pubkey = await generateVtxoPubkey(0);
+  await deriveStoreNextKeypair();
+  const pubkey = await peakKeyPair(0);
   useWalletStore.getState().setStaticVtxoPubkey(pubkey);
 };
 
@@ -108,6 +108,10 @@ export const fetchOffchainBalance = async () => {
 
 export const sync = async () => {
   await syncNitro();
+};
+
+export const onchainSync = async () => {
+  await onchainSyncNitro();
 };
 
 export const deleteWallet = async () => {

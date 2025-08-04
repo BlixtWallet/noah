@@ -1,27 +1,35 @@
 import {
-  getVtxoPubkey as getVtxoPubkeyNitro,
-  getOnchainAddress as getOnchainAddressNitro,
   boardAmount as boardAmountNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
-  sendBolt11Payment as sendBolt11PaymentNitro,
-  sendOnchain as sendOnchainNitro,
   sendLnaddr as sendLnaddrNitro,
-  bolt11Invoice,
+  bolt11Invoice as bolt11InvoiceNitro,
   type ArkoorPaymentResult,
   type OnchainPaymentResult,
-  type Bolt11PaymentResult,
+  type LightningPaymentResult,
   type LnurlPaymentResult,
+  newAddress as newAddressNitro,
+  onchainAddress as onchainAddressNitro,
+  sendLightningPayment as sendLightningPaymentNitro,
+  onchainSend as onchainSendNitro,
+  peakKeyPair as peakKeyPairNitro,
+  deriveStoreNextKeypair as deriveStoreNextKeypairNitro,
+  NewAddressResult,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "../config";
 import { captureException } from "@sentry/react-native";
 
-export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
+export type {
+  ArkoorPaymentResult,
+  OnchainPaymentResult,
+  LightningPaymentResult,
+  LnurlPaymentResult,
+};
 
 export type PaymentResult =
   | ArkoorPaymentResult
   | OnchainPaymentResult
-  | Bolt11PaymentResult
+  | LightningPaymentResult
   | LnurlPaymentResult;
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
@@ -37,10 +45,10 @@ export const getMnemonic = async (): Promise<string> => {
   return credentials.password;
 };
 
-export const generateVtxoPubkey = async (index?: number): Promise<string> => {
+export const newAddress = async (): Promise<NewAddressResult> => {
   try {
-    const pubkey = await getVtxoPubkeyNitro(index);
-    return pubkey;
+    const address = await newAddressNitro();
+    return address;
   } catch (error) {
     console.error("Failed to generate VTXO pubkey:", error);
     throw new Error(
@@ -49,9 +57,33 @@ export const generateVtxoPubkey = async (index?: number): Promise<string> => {
   }
 };
 
-export const generateOnchainAddress = async (): Promise<string> => {
+export const peakKeyPair = async (index: number): Promise<string> => {
   try {
-    const address = await getOnchainAddressNitro();
+    const keypair = await peakKeyPairNitro(index);
+    return keypair;
+  } catch (error) {
+    console.error("Failed to peak keypair:", error);
+    throw new Error(
+      `Failed to peak keypair: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+};
+
+export const deriveStoreNextKeypair = async (): Promise<string> => {
+  try {
+    const keypair = await deriveStoreNextKeypairNitro();
+    return keypair;
+  } catch (error) {
+    console.error("Failed to derive next keypair:", error);
+    throw new Error(
+      `Failed to derive next keypair: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+};
+
+export const onchainAddress = async (): Promise<string> => {
+  try {
+    const address = await onchainAddressNitro();
     return address;
   } catch (error) {
     console.error("Failed to generate onchain address:", error);
@@ -61,9 +93,9 @@ export const generateOnchainAddress = async (): Promise<string> => {
   }
 };
 
-export const generateLightningInvoice = async (amountSat: number): Promise<string> => {
+export const bolt11Invoice = async (amountSat: number): Promise<string> => {
   try {
-    const invoice = await bolt11Invoice(amountSat);
+    const invoice = await bolt11InvoiceNitro(amountSat);
     return invoice;
   } catch (error) {
     console.error("Failed to generate lightning invoice:", error);
@@ -108,12 +140,12 @@ export const sendArkoorPayment = async (
   }
 };
 
-export const sendBolt11Payment = async (
+export const sendLightningPayment = async (
   destination: string,
   amountSat: number | undefined,
-): Promise<Bolt11PaymentResult> => {
+): Promise<LightningPaymentResult> => {
   try {
-    const result = await sendBolt11PaymentNitro(destination, amountSat);
+    const result = await sendLightningPaymentNitro(destination, amountSat);
     return result;
   } catch (error) {
     console.error("Failed to send bolt11 payment:", error);
@@ -128,7 +160,7 @@ export const sendBolt11Payment = async (
   }
 };
 
-export const sendOnchain = async ({
+export const onchainSend = async ({
   destination,
   amountSat,
 }: {
@@ -136,7 +168,7 @@ export const sendOnchain = async ({
   amountSat: number;
 }): Promise<OnchainPaymentResult> => {
   try {
-    const result = await sendOnchainNitro(destination, amountSat);
+    const result = await onchainSendNitro(destination, amountSat);
     console.log("Onchain send result:", result);
     return result;
   } catch (error) {

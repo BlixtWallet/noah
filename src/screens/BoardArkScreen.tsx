@@ -92,7 +92,7 @@ const BoardArkScreen = () => {
     }
   }, [boardResult]);
 
-  const onchainBalance = balance?.onchain ?? 0;
+  const onchainBalance = balance?.onchain.confirmed ?? 0;
 
   const handleBoard = () => {
     const amountSat = parseInt(amount, 10);

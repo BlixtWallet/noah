@@ -1,6 +1,7 @@
 import {
   decodeBolt11,
   isArkPublicKey,
+  isValidArkAddress,
   isValidBitcoinAddress,
   isValidBolt11,
   isValidLightningAddress,
@@ -21,7 +22,8 @@ export const isValidDestination = (dest: string): boolean => {
     isArkPublicKey(cleanedDest) ||
     isValidBitcoinAddress(cleanedDest) ||
     isValidBolt11(cleanedDest) ||
-    isValidLightningAddress(cleanedDest)
+    isValidLightningAddress(cleanedDest) ||
+    isValidArkAddress(cleanedDest)
   );
 };
 
@@ -85,6 +87,11 @@ export const parseDestination = (destination: string): ParsedDestination => {
       isAmountEditable: true,
     };
   } else if (isArkPublicKey(cleanedDestination)) {
+    return {
+      destinationType: "ark",
+      isAmountEditable: true,
+    };
+  } else if (isValidArkAddress(cleanedDestination)) {
     return {
       destinationType: "ark",
       isAmountEditable: true,

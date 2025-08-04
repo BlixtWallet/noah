@@ -148,6 +148,19 @@ export const isValidLightningAddress = (url: string): boolean => {
   return true;
 };
 
+const getArkHrp = (): "ark" | "tark" => {
+  switch (APP_VARIANT) {
+    case "mainnet":
+      return "ark";
+    case "signet":
+    case "regtest":
+    default:
+      return "tark";
+  }
+};
+
+export const isValidArkAddress = (address: string) => address.startsWith(getArkHrp());
+
 export const BITCOIN_FACTS = [
   "There can only ever be 21 million bitcoin.",
   "Fix the money, fix the world.",

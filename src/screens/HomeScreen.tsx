@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
-import { useBalance, useSync } from "../hooks/useWallet";
+import { useBalance, useBalanceSync } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
@@ -29,7 +29,7 @@ import { useBtcToUsdRate } from "~/hooks/useMarketData";
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { data: balance, isFetching, refetch, error } = useBalance();
-  const { mutateAsync: sync, isPending: isSyncing } = useSync();
+  const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const [fact, setFact] = useState("");
@@ -45,12 +45,23 @@ const HomeScreen = () => {
   }, [getRandomFact]);
 
   const onRefresh = useCallback(async () => {
-    await sync();
+    await balanceSync();
     await refetch();
     getRandomFact();
-  }, [sync, refetch, getRandomFact]);
+  }, [balanceSync, refetch, getRandomFact]);
 
-  const totalBalance = balance ? balance.onchain + balance.offchain : 0;
+  const onchainBalance = balance
+    ? balance.onchain.confirmed +
+      balance.onchain.immature +
+      balance.onchain.trusted_pending +
+      balance.onchain.untrusted_pending
+    : 0;
+  const offchainBalance = balance
+    ? balance.offchain.pending_exit +
+      balance.offchain.pending_lightning_send +
+      balance.offchain.spendable
+    : 0;
+  const totalBalance = onchainBalance + offchainBalance;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
   const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -151,14 +162,65 @@ const HomeScreen = () => {
                 <CollapsibleContent>
                   <Animated.View entering={FadeInDown} exiting={FadeOutDown}>
                     <View className="p-4 rounded-lg bg-card mt-4 min-w-[300px]">
-                      <Text className="text-lg font-bold mb-2">Balance Details</Text>
-                      <View className="flex-row justify-between">
-                        <Text>Onchain:</Text>
-                        <Text>{(balance?.onchain ?? 0).toLocaleString()} sats</Text>
+                      <Text className="text-lg font-bold mb-4 text-center">Balance Details</Text>
+
+                      <View className="mb-4">
+                        <View className="flex-row justify-between items-center mb-2">
+                          <Text className="text-md font-bold">Onchain</Text>
+                          <Text className="text-md font-bold">
+                            {onchainBalance.toLocaleString()} sats
+                          </Text>
+                        </View>
+                        <View className="pl-4 space-y-1">
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Confirmed</Text>
+                            <Text>{(balance?.onchain.confirmed ?? 0).toLocaleString()} sats</Text>
+                          </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Trusted Pending</Text>
+                            <Text>
+                              {(balance?.onchain.trusted_pending ?? 0).toLocaleString()} sats
+                            </Text>
+                          </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Untrusted Pending</Text>
+                            <Text>
+                              {(balance?.onchain.untrusted_pending ?? 0).toLocaleString()} sats
+                            </Text>
+                          </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Immature</Text>
+                            <Text>{(balance?.onchain.immature ?? 0).toLocaleString()} sats</Text>
+                          </View>
+                        </View>
                       </View>
-                      <View className="flex-row justify-between mt-1">
-                        <Text>Offchain:</Text>
-                        <Text>{(balance?.offchain ?? 0).toLocaleString()} sats</Text>
+
+                      <View>
+                        <View className="flex-row justify-between items-center mb-2">
+                          <Text className="text-md font-bold">Offchain</Text>
+                          <Text className="text-md font-bold">
+                            {offchainBalance.toLocaleString()} sats
+                          </Text>
+                        </View>
+                        <View className="pl-4 space-y-1">
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Spendable</Text>
+                            <Text>{(balance?.offchain.spendable ?? 0).toLocaleString()} sats</Text>
+                          </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Pending Send</Text>
+                            <Text>
+                              {(balance?.offchain.pending_lightning_send ?? 0).toLocaleString()}{" "}
+                              sats
+                            </Text>
+                          </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Pending Exit</Text>
+                            <Text>
+                              {(balance?.offchain.pending_exit ?? 0).toLocaleString()} sats
+                            </Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
                   </Animated.View>
