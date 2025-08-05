@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppState, AppStateStatus } from "react-native";
 import { useWalletStore } from "../store/walletStore";
-import { sync } from "../lib/walletApi";
+import { onchainSync, sync } from "../lib/walletApi";
 
 import logger from "~/lib/log";
+import { syncArkReceives } from "~/lib/syncTransactions";
 const log = logger("useSyncManager");
 
 // Provisional hook to sync balance in the background
@@ -26,7 +27,8 @@ export function useSyncManager(intervalMs: number = 30000) {
     log.i("syncWallet");
 
     try {
-      await sync();
+      await syncArkReceives();
+      await Promise.allSettled([sync(), onchainSync()]);
       await queryClient.invalidateQueries({ queryKey: ["balance"] });
     } catch (error) {
       log.e("background sync failed:", [error]);

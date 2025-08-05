@@ -25,6 +25,7 @@ interface TransactionState {
   addTransaction: (transaction: Transaction) => void;
   removeTransaction: (id: string) => void;
   reset: () => void;
+  deleteAllTransactions: () => void;
 }
 
 export const useTransactionStore = create<TransactionState>()(
@@ -40,6 +41,7 @@ export const useTransactionStore = create<TransactionState>()(
           transactions: state.transactions.filter((transaction) => transaction.id !== id),
         })),
       reset: () => set({ transactions: [] }),
+      deleteAllTransactions: () => set({ transactions: [] }),
     }),
     {
       name: "transaction-storage",

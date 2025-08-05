@@ -27,7 +27,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 const TransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
-  const { transactions, removeTransaction } = useTransactionStore();
+  const { transactions, removeTransaction, deleteAllTransactions } = useTransactionStore();
   const [filter, setFilter] = useState<PaymentTypes | "all" | "Lightning">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
@@ -44,6 +44,10 @@ const TransactionsScreen = () => {
       setSelectedTransactionId(null);
       setDialogOpen(false);
     }
+  };
+
+  const resetTransactions = () => {
+    deleteAllTransactions();
   };
 
   const renderRightActions = (itemId: string) => {
@@ -172,6 +176,9 @@ const TransactionsScreen = () => {
             </View>
             <Pressable onPress={exportToCSV} className="p-2">
               <Icon name="download-outline" size={24} color="white" />
+            </Pressable>
+            <Pressable onPress={resetTransactions} className="p-2">
+              <Icon name="trash" size={24} color="white" />
             </Pressable>
           </View>
           <View className="flex-row justify-around mb-4">
