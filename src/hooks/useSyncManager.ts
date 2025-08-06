@@ -27,8 +27,8 @@ export function useSyncManager(intervalMs: number = 30000) {
     log.i("syncWallet");
 
     try {
-      await syncArkReceives();
       await Promise.allSettled([sync(), onchainSync()]);
+      await syncArkReceives();
       await queryClient.invalidateQueries({ queryKey: ["balance"] });
     } catch (error) {
       log.e("background sync failed:", [error]);

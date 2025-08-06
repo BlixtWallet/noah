@@ -1,34 +1,43 @@
-import TurboSqlite from "react-native-turbo-sqlite";
 import { ARK_DATA_PATH } from "../constants";
 import { useTransactionStore } from "../store/transactionStore";
 import type { Transaction } from "../types/transaction";
 import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import logger from "~/lib/log";
-const db = TurboSqlite.openDatabase(`${ARK_DATA_PATH}/db.sqlite`);
+import * as SQLite from "expo-sqlite";
 
 const log = logger("useSyncManager");
 
+type ReceivedVtxos = {
+  id: string;
+  amount_sat: number;
+  created_at: number;
+};
+
 export const syncArkReceives = async () => {
+  const db = await SQLite.openDatabaseAsync("db.sqlite", { useNewConnection: true }, ARK_DATA_PATH);
   const { addTransaction } = useTransactionStore.getState();
 
   try {
-    const receivedTxs = db.executeSql("SELECT id, amount_sat, created_at FROM bark_vtxo", []);
+    const rows = await db.getAllAsync<ReceivedVtxos>(
+      `SELECT id, amount_sat, created_at FROM bark_vtxo;`,
+    );
 
-    if (receivedTxs && receivedTxs.rows && receivedTxs.rows.length > 0) {
-      for (const tx of receivedTxs.rows) {
-        const currentTransactions = useTransactionStore.getState().transactions;
-        const existingTx = currentTransactions.find((t) => t.txid === tx.id);
+    if (rows && rows.length > 0) {
+      const currentTransactions = useTransactionStore.getState().transactions;
+
+      for (const tx of rows) {
+        const existingTx = currentTransactions.find((t) => t.txid === (tx.id as string));
 
         if (!existingTx) {
-          log.d(`Syncing new Ark transaction from sqlite: ${tx.id}`, [tx]);
+          log.d(`Syncing new Ark transaction from sqlite: ${tx.id as string}`, [tx]);
 
-          const btcPrice = await getHistoricalBtcToUsdRate(tx.created_at);
+          const btcPrice = await getHistoricalBtcToUsdRate(String(tx.created_at));
           const newTransaction: Transaction = {
             id: uuid.v4().toString(),
-            txid: tx.id,
-            amount: tx.amount_sat,
-            date: new Date(tx.created_at).toISOString(),
+            txid: tx.id as string,
+            amount: tx.amount_sat as number,
+            date: new Date(tx.created_at as number).toISOString(),
             direction: "incoming",
             type: "Arkoor",
             btcPrice: btcPrice,
@@ -39,7 +48,11 @@ export const syncArkReceives = async () => {
         }
       }
     }
+
+    log.d("Successfully synced Ark transactions from SQLite");
+    db.closeSync();
   } catch (error) {
+    db.closeSync();
     console.error("Failed to sync transactions from SQLite:", error);
   }
 };
