@@ -6,6 +6,8 @@ import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import logger from "~/lib/log";
 import * as SQLite from "expo-sqlite";
 
+const txIdFromOutpoint = (outpoint: string): string => outpoint.split(":")[0];
+
 const log = logger("useSyncManager");
 
 type ReceivedVtxos = {
@@ -20,17 +22,21 @@ export const syncArkReceives = async () => {
 
   try {
     const rows = await db.getAllAsync<ReceivedVtxos>(
-      `SELECT id, amount_sat, created_at FROM bark_vtxo;`,
+      `SELECT id, amount_sat, created_at FROM bark_vtxo WHERE received_in NOT IN (SELECT DISTINCT spent_in FROM bark_vtxo WHERE spent_in IS NOT NULL);`,
     );
 
     if (rows && rows.length > 0) {
-      const currentTransactions = useTransactionStore.getState().transactions;
+      const currentTransactions = useTransactionStore
+        .getState()
+        .transactions.filter((tx) => tx.type === "Arkoor");
 
       for (const tx of rows) {
-        const existingTx = currentTransactions.find((t) => t.txid === (tx.id as string));
+        const existingTx = currentTransactions.find(
+          (t) => t.txid && txIdFromOutpoint(t.txid) === txIdFromOutpoint(tx.id),
+        );
 
         if (!existingTx) {
-          log.d(`Syncing new Ark transaction from sqlite: ${tx.id as string}`, [tx]);
+          log.d(`Syncing new Ark transaction from sqlite: ${tx.id}`, [tx]);
 
           const btcPrice = await getHistoricalBtcToUsdRate(String(tx.created_at));
           const newTransaction: Transaction = {
