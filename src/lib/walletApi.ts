@@ -7,6 +7,7 @@ import {
   onchainSync as onchainSyncNitro,
   closeWallet as closeWalletNitro,
   isWalletLoaded,
+  maintenance as maintenanceNitro,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
@@ -112,6 +113,10 @@ export const sync = async () => {
 
 export const onchainSync = async () => {
   await onchainSyncNitro();
+};
+
+export const maintanance = async () => {
+  await maintenanceNitro();
 };
 
 export const deleteWallet = async () => {
