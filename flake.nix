@@ -110,7 +110,8 @@
 
       };
 
-      bark-wrapper = pkgs:
+      bark-wrapper =
+        pkgs:
         pkgs.stdenv.mkDerivation {
           name = "bark-wrapper";
           src = ./.;
@@ -130,6 +131,7 @@
           basePackages = with pkgs; [
             bun
             androidSdk
+            bacon
             (bark-wrapper pkgs)
           ];
 
