@@ -8,6 +8,9 @@ on:
       - master
     paths-ignore:
       - "README.md"
+      - "server"
+      - Cargo.toml
+      - Cargo.lock
 
 jobs:
   check_if_release_commit:

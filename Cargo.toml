@@ -1,0 +1,4 @@
+# Make a workspace for the server
+[workspace]
+members = ["server"]
+resolver = "2"
