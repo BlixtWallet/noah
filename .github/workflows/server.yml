@@ -23,6 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check formatting
-        run: nix develop .# --command bash -c "cargo fmt --check"
+        run: nix develop .#server --command bash -c "cargo fmt --check"
       - name: Build
-        run: nix develop .# --command bash -c "cargo build --release"
+        run: nix develop .#server --command bash -c "cargo build --release"
