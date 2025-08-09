@@ -6,11 +6,6 @@
       url = "github:tadfisher/android-nixpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -18,7 +13,6 @@
       self,
       nixpkgs,
       android-nixpkgs,
-      rust-overlay,
     }:
     let
       systems = [
@@ -35,7 +29,6 @@
             allowUnfree = true;
             android_sdk.accept_license = true;
           };
-          overlays = [ rust-overlay.overlays.default ];
         };
 
       androidSdkFor =
@@ -117,8 +110,7 @@
 
       };
 
-      bark-wrapper =
-        pkgs:
+      bark-wrapper = pkgs:
         pkgs.stdenv.mkDerivation {
           name = "bark-wrapper";
           src = ./.;
@@ -138,13 +130,7 @@
           basePackages = with pkgs; [
             bun
             androidSdk
-            bacon
             (bark-wrapper pkgs)
-            (pkgs.rust-bin.stable."1.88.0".default.override {
-              extensions = [ "rust-src" "rust-analyzer" ];
-            })
-            pkgs.cargo
-            pkgs.clippy
           ];
 
           darwinPackages = with pkgs; [
