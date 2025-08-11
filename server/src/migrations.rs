@@ -57,7 +57,7 @@ pub async fn migrate(conn: &libsql::Connection) -> anyhow::Result<()> {
         match rows.next().await? {
             // `MAX(version)` on an empty table returns a row with a NULL value.
             // We handle this by trying to get an i32 and defaulting to 0 if it's NULL or fails.
-            Some(row) => row.get(0).unwrap_or(0),
+            Some(row) => row.get::<Option<i32>>(0)?.unwrap_or(0),
             // This case should ideally not happen if the table exists, but as a fallback,
             // we assume no migrations have run.
             None => 0,

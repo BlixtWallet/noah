@@ -3,6 +3,5 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  },
-  "cmake.sourceDirectory": "/Users/niteshchowdharybalusu/Documents/noah/nitromodules/noah-tools/android"
+  }
 }

@@ -180,7 +180,8 @@ export const stringToUint8Array = (str: string) => {
 };
 
 export const hexToUint8Array = (hexString: string) => {
-  return new Uint8Array(hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+  const matches = hexString.match(/.{1,2}/g);
+  return new Uint8Array(matches ? matches.map((byte) => parseInt(byte, 16)) : []);
 };
 
 export const bytesToHexString = (bytes: Uint8Array<ArrayBufferLike>): string => {

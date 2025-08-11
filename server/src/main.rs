@@ -1,3 +1,4 @@
+use anyhow::Context;
 use axum::{Router, routing::get};
 mod v0;
 use std::{
@@ -38,9 +39,9 @@ async fn main() -> anyhow::Result<()> {
         .parse::<u16>()?;
 
     let turso_url =
-        std::env::var("TURSO_URL").expect("TURSO_URL must be set in the environment variables");
+        std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
     let turso_api_key = std::env::var("TURSO_API_KEY")
-        .expect("TURSO_API_KEY must be set in the environment variables");
+        .context("TURSO_API_KEY must be set in the environment variables")?;
 
     let db = libsql::Builder::new_remote(turso_url, turso_api_key)
         .build()
