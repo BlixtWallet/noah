@@ -1,7 +1,4 @@
-use axum::{
-    Router,
-    routing::{get, post},
-};
+use axum::{Router, routing::get};
 mod v0;
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -11,7 +8,7 @@ use std::{
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::v0::api_v0::{health_check, register};
+use crate::v0::api_v0::{get_k1, health_check, register};
 
 mod migrations;
 
@@ -57,7 +54,8 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/health", get(health_check))
-        .route("/register", post(register))
+        .route("/getK1", get(get_k1))
+        .route("/register", get(register))
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());
 

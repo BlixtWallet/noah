@@ -74,7 +74,7 @@ PODS:
   - hermes-engine (0.79.5):
     - hermes-engine/Pre-built (= 0.79.5)
   - hermes-engine/Pre-built (0.79.5)
-  - NitroArk (0.0.42):
+  - NitroArk (0.0.45):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -99,7 +99,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - NitroModules (0.26.4):
+  - NitroModules (0.27.5):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1474,7 +1474,7 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
-  - react-native-bottom-tabs (0.10.0-canary-20250719100729):
+  - react-native-bottom-tabs (0.10.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2657,8 +2657,8 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: f03b0e06d3882d71e67e45b073bb827da1a21aae
-  NitroArk: 4ae4465bb4e9affbb5f9f4b22d52dc64311804d8
-  NitroModules: 763fe03c46a734a615e648ff2c77158cd26d8f89
+  NitroArk: 9b695e14cb637989ec860184a194f7d0cc8cf373
+  NitroModules: a7e9f0ec0d3dc12336219696e0155a496fcd5e74
   NoahTools: 12a4e8705c339d40f7218c725de658f4a62ef646
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: 5f638f65935e273753b1f31a365db6a8d6dc53b5
@@ -2691,7 +2691,7 @@ SPEC CHECKSUMS:
   React-logger: 85fa3509931497c72ccd2547fcc91e7299d8591e
   React-Mapbuffer: 96a2f2a176268581733be182fa6eebab1c0193be
   React-microtasksnativemodule: bda561d2648e1e52bd9e5a87f8889836bdbde2e2
-  react-native-bottom-tabs: 120db53e3993c60443d54beb87da0e5586182812
+  react-native-bottom-tabs: b935660f2eabf9ecb2a72d83e7f0b5a3da15da4d
   react-native-mmkv: fb6fdab2e83b892959e32586b7814078fe6c1a6a
   react-native-safe-area-context: 562163222d999b79a51577eda2ea8ad2c32b4d06
   react-native-vector-icons: 08bea1bdc17252ec9dde643d94750f961bccc8b8

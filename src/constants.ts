@@ -29,13 +29,13 @@ const getArkDataPath = (): string => {
 export const getServerEndpoint = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
-      return "localhost:3000";
+      return "http://localhost:3000";
     case "signet":
-      return "signet.noah";
+      return "https://signet.noah";
     case "mainnet":
-      return "mainnet.noah";
+      return "https://mainnet.noah";
     default:
-      return "signet.noah";
+      return "https://signet.noah";
   }
 };
 
