@@ -1,0 +1,20 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.4", features = ["json"] }
+anyhow = "1.0.99"
+tokio = { version = "1.47.1", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tower-http = { version = "0.6.6", features = ["trace"] }
+dotenv = "0.15.0"
+libsql = "0.9.20"
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.18.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
+hex = "0.4.3"
+rand = "0.9.2"
+bitcoin = "0.32.7"

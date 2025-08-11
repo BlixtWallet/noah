@@ -39,7 +39,7 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
-    "@bottom-tabs/react-navigation": "^0.9.2",
+    "@bottom-tabs/react-navigation": "^0.10.0",
     "@dr.pogodin/react-native-fs": "^2.33.1",
     "@legendapp/list": "^1.1.4",
     "@react-native-clipboard/clipboard": "^1.16.3",
@@ -77,13 +77,13 @@
     "noah-tools": "file:./nitromodules/noah-tools",
     "react": "19.0.0",
     "react-native": "0.79.5",
-    "react-native-bottom-tabs": "0.10.0-canary-20250719100729",
+    "react-native-bottom-tabs": "^0.10.0",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^3.3.0",
-    "react-native-nitro-ark": "^0.0.42",
-    "react-native-nitro-modules": "0.26.4",
+    "react-native-nitro-ark": "^0.0.45",
+    "react-native-nitro-modules": "0.27.5",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
@@ -98,6 +98,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "@types/secp256k1": "^4.0.6",
     "eas-cli": "^16.15.0",
     "eslint": "^9.29.0",
     "eslint-config-expo": "^9.2.0",

@@ -51,3 +51,8 @@ bark/
 .env.local
 android/sentry.properties
 ios/sentry.properties
+
+# Server gitignore
+target/
+server/target/
+.env

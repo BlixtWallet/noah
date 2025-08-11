@@ -1,0 +1,28 @@
+name: Server CI
+
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+  push:
+    branches:
+      - master
+    paths:
+      - "server/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+jobs:
+  build:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: ./server
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: nix develop .#server --command bash -c "cargo fmt --check"
+      - name: Build
+        run: nix develop .#server --command bash -c "cargo build --release"

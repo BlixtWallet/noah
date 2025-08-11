@@ -14,6 +14,7 @@ import {
   peakKeyPair as peakKeyPairNitro,
   deriveStoreNextKeypair as deriveStoreNextKeypairNitro,
   NewAddressResult,
+  KeyPairResult,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "../config";
@@ -57,7 +58,7 @@ export const newAddress = async (): Promise<NewAddressResult> => {
   }
 };
 
-export const peakKeyPair = async (index: number): Promise<string> => {
+export const peakKeyPair = async (index: number): Promise<KeyPairResult> => {
   try {
     const keypair = await peakKeyPairNitro(index);
     return keypair;
@@ -69,7 +70,7 @@ export const peakKeyPair = async (index: number): Promise<string> => {
   }
 };
 
-export const deriveStoreNextKeypair = async (): Promise<string> => {
+export const deriveStoreNextKeypair = async (): Promise<KeyPairResult> => {
   try {
     const keypair = await deriveStoreNextKeypairNitro();
     return keypair;
