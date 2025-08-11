@@ -3,7 +3,7 @@ on:
   pull_request:
     paths-ignore:
       - "README.md"
-      - "server"
+      - "server/**"
       - Cargo.toml
       - Cargo.lock
 
