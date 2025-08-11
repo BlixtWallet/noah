@@ -6,7 +6,9 @@ import {
   sync as syncNitro,
   onchainSync as onchainSyncNitro,
   closeWallet as closeWalletNitro,
-  isWalletLoaded,
+  isWalletLoaded as isWalletLoadedNitro,
+  signMessage as signMessageNitro,
+  verifyMessage as verifyMessageNitro,
   maintenance as maintenanceNitro,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
@@ -50,7 +52,7 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
           },
         };
 
-  if (await isWalletLoaded()) {
+  if (await isWalletLoadedNitro()) {
     console.log("Wallet is already loaded, closing it before creating a new one");
     await closeWalletNitro();
   }
@@ -71,8 +73,8 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
   // The first time we generate a pubkey, the index should be undefined.
   // After that, we can use index 0 to get the static pubkey.
   await deriveStoreNextKeypair();
-  const pubkey = await peakKeyPair(0);
-  useWalletStore.getState().setStaticVtxoPubkey(pubkey);
+  const keypair = await peakKeyPair(0);
+  useWalletStore.getState().setStaticVtxoPubkey(keypair.public_key);
 };
 
 export const createWallet = async () => {
@@ -109,6 +111,16 @@ export const fetchOffchainBalance = async () => {
 
 export const sync = async () => {
   await syncNitro();
+};
+
+export const signMessage = async (message: string, index: number) => {
+  const signature = await signMessageNitro(message, index);
+  return signature;
+};
+
+export const verifyMessage = async (message: string, signature: string, publicKey: string) => {
+  const isValid = await verifyMessageNitro(message, signature, publicKey);
+  return isValid;
 };
 
 export const onchainSync = async () => {

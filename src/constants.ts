@@ -26,6 +26,19 @@ const getArkDataPath = (): string => {
   }
 };
 
+export const getServerEndpoint = (): string => {
+  switch (APP_VARIANT) {
+    case "regtest":
+      return "localhost:3000";
+    case "signet":
+      return "signet.noah";
+    case "mainnet":
+      return "mainnet.noah";
+    default:
+      return "signet.noah";
+  }
+};
+
 export const ARK_DATA_PATH = getArkDataPath();
 
 type WalletCreationOptions = Omit<BarkCreateOpts, "mnemonic">;
@@ -161,6 +174,23 @@ const getArkHrp = (): "ark" | "tark" => {
 };
 
 export const isValidArkAddress = (address: string) => address.startsWith(getArkHrp());
+
+export const stringToUint8Array = (str: string) => {
+  return Uint8Array.from(str, (x) => x.charCodeAt(0));
+};
+
+export const hexToUint8Array = (hexString: string) => {
+  return new Uint8Array(hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)));
+};
+
+export const bytesToHexString = (bytes: Uint8Array<ArrayBufferLike>): string => {
+  return bytes.reduce(function (memo, i) {
+    return memo + ("0" + i.toString(16)).slice(-2); //pad with leading 0 if <16
+  }, "");
+};
+
+export const getDomainFromURL = (url: string) =>
+  url.replace("http://", "").replace("https://", "").split(/[/?#]/)[0];
 
 export const BITCOIN_FACTS = [
   "There can only ever be 21 million bitcoin.",

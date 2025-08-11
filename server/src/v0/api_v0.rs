@@ -1,5 +1,6 @@
 use axum::{Json, extract::State, http::StatusCode};
 use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::AppState;
 
@@ -13,9 +14,10 @@ pub async fn register(
     Json(payload): Json<RegisterPayload>,
 ) -> Result<StatusCode, StatusCode> {
     let conn = &state.conn;
+    let id = Uuid::new_v4().to_string();
     conn.execute(
-        "INSERT INTO users (pubkey) VALUES (?)",
-        libsql::params![payload.pubkey],
+        "INSERT INTO users (id, pubkey) VALUES (?, ?)",
+        libsql::params![id, payload.pubkey],
     )
     .await
     .map_err(|e| {
