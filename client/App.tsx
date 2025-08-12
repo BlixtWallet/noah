@@ -20,7 +20,7 @@ Sentry.init({
   // spotlight: __DEV__,
 });
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 export default Sentry.wrap(function App() {
   return (
