@@ -20,5 +20,7 @@ FROM debian:buster-slim AS runtime
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/server /usr/local/bin/
 
+EXPOSE 3000
+
 # Set the startup command
 CMD ["server"]
