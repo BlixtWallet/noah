@@ -23,7 +23,8 @@ export const useServerRegistration = () => {
         const { k1, tag } = await response.json();
 
         if (tag !== "login") {
-          throw new Error("Invalid tag from server");
+          log.w("Invalid tag from server");
+          return;
         }
 
         const lnurl = `${serverEndpoint}/v0/register?k1=${k1}&tag=login`;
