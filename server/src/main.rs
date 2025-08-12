@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
             let data = PushNotificationData {
                 title: None,
                 body: None,
-                data: "{}".to_string(),
+                data: r#"{"type": "background-sync"}"#.to_string().to_string(),
                 priority: "high".to_string(),
             };
 
