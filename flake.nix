@@ -193,7 +193,7 @@
             cargo
             clippy
             pkg-config
-            libssl-dev
+            openssl
           ];
         };
     in
