@@ -4,8 +4,10 @@ on:
   pull_request:
     paths:
       - "server/**"
+      - "scripts/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - ".github/workflows/server.yml"
   push:
     branches:
       - master

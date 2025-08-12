@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - "client/**"
+      - "scripts/**"
+      - ".github/workflows/pull-request.yml"
+      - "package.json"
+      - "bun.lock"
 
 jobs:
   check_if_release_commit:
