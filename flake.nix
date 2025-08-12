@@ -192,6 +192,8 @@
             })
             cargo
             clippy
+            pkg-config
+            libssl-dev
           ];
         };
     in
