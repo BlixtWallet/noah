@@ -43,9 +43,17 @@ pub async fn register(
 
     let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
 
+    tracing::debug!(
+        "Registering user with pubkey: {} and k1: {}",
+        payload.key,
+        payload.k1
+    );
+
     if !is_valid {
         return Err(ApiError::InvalidSignature);
     }
+
+    tracing::debug!("Registration for pubkey: {} is valid", payload.key);
 
     conn.execute(
         "INSERT INTO users (pubkey) VALUES (?)",

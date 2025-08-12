@@ -7,7 +7,8 @@ use crate::{AppState, errors::ApiError};
 
 #[derive(Serialize, Clone, Debug)]
 pub struct PushNotificationData {
-    pub body: String,
+    pub title: Option<String>,
+    pub body: Option<String>,
     pub data: String,
     pub priority: String,
 }
@@ -37,8 +38,17 @@ pub async fn send_push_notification(
         return Ok(());
     }
 
-    let expo_push_message = ExpoPushMessage::builder(push_tokens)
-        .body(data.body)
+    let mut builder = ExpoPushMessage::builder(push_tokens.clone());
+
+    if let Some(title) = data.title {
+        builder = builder.title(title);
+    }
+
+    if let Some(body) = data.body {
+        builder = builder.body(body);
+    }
+
+    let expo_push_message = builder
         .data(&data.data)
         .map_err(|e| ApiError::SerializeErr(e.to_string()))?
         .priority(data.priority)

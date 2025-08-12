@@ -19,16 +19,15 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   async ({ data, error, executionInfo }) => {
     try {
       log.d("[Background Job] data", [data]);
-      log.d("[Background Job] error", [error]);
-      log.d("[Background Job] executionInfo", [executionInfo]);
 
-      log.d("[Background Job] Received a notification task payload!");
       const isNotificationResponse = "actionIdentifier" in data;
 
-      if (data && (data as any).data.body === "{}") {
-        log.d("[Background Job] data.data.body === '{}'");
-        return;
-      }
+      log.d("[Background Job] isNotificationResponse", [isNotificationResponse]);
+
+      // if (data && (data as any).data.body === "{}") {
+      //   log.d("[Background Job] data.data.body === '{}'");
+      //   return;
+      // }
 
       if (isNotificationResponse) {
         // Do something with the notification response from user
@@ -71,9 +70,9 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (Device.isDevice) {
-    log.d("Device is device");
+    log.v("Device is device");
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    log.d("existingStatus", [existingStatus]);
+    log.v("existingStatus", [existingStatus]);
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();

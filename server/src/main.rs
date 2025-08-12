@@ -48,6 +48,15 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()?;
 
+    let background_sync_interval = std::env::var("BACKGROUND_SYNC_INTERVAL")
+        .unwrap_or_else(|_| "3600".to_string())
+        .parse::<u64>()?;
+
+    tracing::debug!(
+        "Background sync interval: {} seconds",
+        background_sync_interval
+    );
+
     let turso_url =
         std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
     let turso_api_key = std::env::var("TURSO_API_KEY")
@@ -68,16 +77,17 @@ async fn main() -> anyhow::Result<()> {
 
     let push_app_state = app_state.clone();
     tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_secs(background_sync_interval));
         loop {
             interval.tick().await;
             let data = PushNotificationData {
-                body: "Syncing with Ark Server".to_string(),
+                title: None,
+                body: None,
                 data: "{}".to_string(),
                 priority: "high".to_string(),
             };
 
-            tracing::debug!("Sending push notification with data: {:?}", data);
             if let Err(e) = send_push_notification(State(push_app_state.clone()), data).await {
                 tracing::error!("Failed to send push notification: {}", e);
             }
