@@ -52,6 +52,7 @@ const config: { expo: ExpoConfig } = {
           enableCodeScanner: true,
         },
       ],
+      "expo-notifications",
     ],
     ios: {
       supportsTablet: true,

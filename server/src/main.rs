@@ -48,6 +48,9 @@ async fn main() -> anyhow::Result<()> {
     let turso_api_key = std::env::var("TURSO_API_KEY")
         .context("TURSO_API_KEY must be set in the environment variables")?;
 
+    let _ = std::env::var("EXPO_ACCESS_TOKEN")
+        .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
+
     let db = libsql::Builder::new_remote(turso_url, turso_api_key)
         .build()
         .await?;
