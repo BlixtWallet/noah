@@ -1,75 +1,13 @@
-use axum::response::{IntoResponse, Response};
 use axum::{
     Json,
     extract::{Query, State},
     http::StatusCode,
 };
-use bitcoin::secp256k1;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::str::{self, FromStr};
 
-use crate::AppState;
-
-pub enum AppError {
-    SignatureParse(secp256k1::Error),
-    PublicKeyParse(secp256k1::Error),
-    Verification(anyhow::Error),
-    InvalidSignature,
-    Database(libsql::Error),
-}
-
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        let (status, reason) = match self {
-            AppError::SignatureParse(e) => {
-                tracing::warn!("Failed to parse signature: {}", e);
-                (
-                    StatusCode::BAD_REQUEST,
-                    "Failed to parse signature".to_string(),
-                )
-            }
-            AppError::PublicKeyParse(e) => {
-                tracing::warn!("Failed to parse public key: {}", e);
-                (
-                    StatusCode::BAD_REQUEST,
-                    "Failed to parse public key".to_string(),
-                )
-            }
-            AppError::Verification(e) => {
-                tracing::warn!("Failed to verify message: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to verify message".to_string(),
-                )
-            }
-            AppError::InvalidSignature => {
-                (StatusCode::UNAUTHORIZED, "Invalid signature".to_string())
-            }
-            AppError::Database(e) => {
-                tracing::error!("Database error: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Database error".to_string(),
-                )
-            }
-        };
-
-        let body = Json(LNUrlAuthResponse {
-            status: "ERROR".to_string(),
-            event: None,
-            reason: Some(reason),
-        });
-
-        (status, body).into_response()
-    }
-}
-
-impl From<libsql::Error> for AppError {
-    fn from(e: libsql::Error) -> Self {
-        AppError::Database(e)
-    }
-}
+use crate::{AppState, errors::ApiError};
 
 #[derive(Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -96,21 +34,17 @@ pub struct RegisterPayload {
 pub async fn register(
     State(state): State<AppState>,
     Query(payload): Query<RegisterPayload>,
-) -> Result<Json<LNUrlAuthResponse>, AppError> {
+) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
     let conn = &state.conn;
 
-    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)
-        .map_err(AppError::SignatureParse)?;
+    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
 
-    let public_key =
-        bitcoin::secp256k1::PublicKey::from_str(&payload.key).map_err(AppError::PublicKeyParse)?;
+    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.key)?;
 
-    let is_valid = verify_message(&payload.k1, signature, &public_key)
-        .await
-        .map_err(AppError::Verification)?;
+    let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
 
     if !is_valid {
-        return Err(AppError::InvalidSignature);
+        return Err(ApiError::InvalidSignature);
     }
 
     conn.execute(
@@ -151,7 +85,7 @@ pub struct GetK1 {
     pub tag: String,
 }
 
-pub async fn get_k1(State(state): State<AppState>) -> Result<Json<GetK1>, StatusCode> {
+pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
     let conn = &state.conn;
     let mut k1_bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut k1_bytes);

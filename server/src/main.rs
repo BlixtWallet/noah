@@ -9,9 +9,14 @@ use std::{
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::v0::api_v0::{get_k1, health_check, register};
+use crate::{
+    push::{register_push_token, send_push_notification},
+    v0::api_v0::{get_k1, health_check, register},
+};
 
+mod errors;
 mod migrations;
+mod push;
 
 type AppState = Arc<DbConnection>;
 
@@ -56,7 +61,9 @@ async fn main() -> anyhow::Result<()> {
     let v0_router = Router::new()
         .route("/health", get(health_check))
         .route("/getk1", get(get_k1))
-        .route("/register", get(register));
+        .route("/register", get(register))
+        .route("/register_push_token", get(register_push_token))
+        .route("/send_push_notification", get(send_push_notification));
 
     let app = Router::new()
         .nest("/v0", v0_router)

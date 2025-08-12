@@ -34,6 +34,21 @@ const MIGRATIONS: &[&str] = &[
         DELETE FROM k1_values WHERE k1 IN (SELECT k1 FROM k1_values ORDER BY created_at ASC LIMIT (SELECT COUNT(*) - 100 FROM k1_values));
     END;
     "#,
+    r#"
+    CREATE TABLE push_tokens (
+        pubkey TEXT PRIMARY KEY,
+        push_token TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TRIGGER update_push_tokens_updated_at
+    AFTER UPDATE ON push_tokens
+    FOR EACH ROW
+    BEGIN
+        UPDATE push_tokens SET updated_at = CURRENT_TIMESTAMP WHERE pubkey = OLD.pubkey;
+    END;
+    "#,
 ];
 
 /// Applies all pending migrations to the database.
