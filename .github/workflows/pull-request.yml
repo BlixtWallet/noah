@@ -6,6 +6,7 @@ on:
       - "server/**"
       - Cargo.toml
       - Cargo.lock
+      - Dockerfile
 
 jobs:
   check_if_release_commit:
