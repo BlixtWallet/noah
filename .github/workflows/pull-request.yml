@@ -1,12 +1,8 @@
 name: CI Pull Request
 on:
   pull_request:
-    paths-ignore:
-      - "README.md"
-      - "server/**"
-      - Cargo.toml
-      - Cargo.lock
-      - Dockerfile
+    paths:
+      - "client/**"
 
 jobs:
   check_if_release_commit:
@@ -43,7 +39,7 @@ jobs:
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
       - name: Lint code
-        run: nix develop .# --command bash -c "bun lint"
+        run: nix develop .# --command bash -c "bun client lint"
 
   android_build:
     runs-on: self-hosted
@@ -70,7 +66,7 @@ jobs:
         run: ./scripts/create_sentry_properties.sh
 
       - name: Build signet Android app
-        run: nix develop .# --command bash -c "bun build:android:ci"
+        run: nix develop .# --command bash -c "bun client build:android:ci"
 
       - name: Rename APK with timestamp
         id: rename_apk
@@ -106,7 +102,7 @@ jobs:
       #   uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun ios:prebuild"
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun client ios:prebuild"
 
       - name: Create sentry.properties
         env:

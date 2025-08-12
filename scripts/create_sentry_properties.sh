@@ -17,9 +17,9 @@ defaults.project=react-native
 defaults.url=https://sentry.io/"
 
 # Create the file in the android directory
-echo "$CONTENT" > android/sentry.properties
+echo "$CONTENT" > client/android/sentry.properties
 
 # Create the file in the ios directory
-echo "$CONTENT" > ios/sentry.properties
+echo "$CONTENT" > client/ios/sentry.properties
 
 echo "sentry.properties created successfully for Android and iOS."

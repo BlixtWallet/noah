@@ -2,10 +2,10 @@ import React from "react";
 import { View, Pressable, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Text } from "../components/ui/text";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import { NoahButton } from "../components/ui/NoahButton";
+import { Text } from "./ui/text";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { NoahButton } from "./ui/NoahButton";
 
 type SendFormProps = {
   destination: string;

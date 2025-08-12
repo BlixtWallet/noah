@@ -3,7 +3,7 @@ import { useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { useAlert } from "~/contexts/AlertProvider";
 import { parseDestination, isValidDestination, type DestinationTypes } from "../lib/sendUtils";
-import { useSend } from "../hooks/usePayments";
+import { useSend } from "./usePayments";
 import {
   type ArkoorPaymentResult,
   type LightningPaymentResult,
