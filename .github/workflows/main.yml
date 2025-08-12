@@ -73,11 +73,11 @@ jobs:
       - name: Rename APK with timestamp
         id: rename_apk
         run: |
-          apk_path="android/app/build/outputs/apk/signet/release/app-signet-release.apk"
+          apk_path="client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
           timestamp=$(date +'%Y-%m-%d-%H-%M')
           new_apk_name="noah-android-apk-${timestamp}"
           apk_filename="${new_apk_name}.apk"
-          new_apk_path="android/app/build/outputs/apk/signet/release/${apk_filename}"
+          new_apk_path="client/android/app/build/outputs/apk/signet/release/${apk_filename}"
           mv "${apk_path}" "${new_apk_path}"
           echo "new_path=${new_apk_path}" >> $GITHUB_OUTPUT
           echo "artifact_name=${new_apk_name}" >> $GITHUB_OUTPUT
