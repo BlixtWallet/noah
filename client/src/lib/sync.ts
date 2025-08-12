@@ -1,4 +1,4 @@
-import { queryClient } from "App";
+import { queryClient } from "~/queryClient";
 import { useWalletStore } from "~/store/walletStore";
 import { onchainSync, sync } from "~/lib/walletApi";
 import { syncArkReceives } from "~/lib/syncTransactions";

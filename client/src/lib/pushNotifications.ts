@@ -3,9 +3,14 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
-import { PLATFORM } from "~/constants";
+import { PLATFORM, getServerEndpoint } from "~/constants";
+import { peakKeyPair } from "./paymentsApi";
+import { signMessage } from "./walletApi";
+import logger from "~/lib/log";
 
 import { syncWallet } from "~/lib/sync";
+
+const log = logger("pushNotifications");
 
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 
@@ -13,28 +18,28 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error, executionInfo }) => {
     try {
-      console.log("[Background Job] data", data);
-      console.log("[Background Job] error", error);
-      console.log("[Background Job] executionInfo", executionInfo);
+      log.d("[Background Job] data", [data]);
+      log.d("[Background Job] error", [error]);
+      log.d("[Background Job] executionInfo", [executionInfo]);
 
-      console.log("[Background Job] Received a notification task payload!");
+      log.d("[Background Job] Received a notification task payload!");
       const isNotificationResponse = "actionIdentifier" in data;
 
       if (data && (data as any).data.body === "{}") {
-        console.log("[Background Job] data.data.body === '{}'");
+        log.d("[Background Job] data.data.body === '{}'");
         return;
       }
 
       if (isNotificationResponse) {
         // Do something with the notification response from user
-        console.log("[Background Job] user pressed notification");
+        log.d("[Background Job] user pressed notification");
       } else {
         // Do something with the data from notification that was received
-        console.log("[Background Job] data notification");
+        log.d("[Background Job] data notification");
         await syncWallet();
       }
     } catch (e) {
-      console.error("[Background Job] error", e);
+      log.e("[Background Job] error", [e]);
     }
   },
 );
@@ -66,13 +71,13 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (Device.isDevice) {
-    console.log("Device is device");
+    log.d("Device is device");
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    console.log("existingStatus", existingStatus);
+    log.d("existingStatus", [existingStatus]);
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
-      console.log("status", status);
+      log.d("status", [status]);
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
@@ -86,19 +91,53 @@ export async function registerForPushNotificationsAsync() {
     }
     try {
       const nativePushToken = await Notifications.getDevicePushTokenAsync();
-      console.log(PLATFORM === "android" ? "fcm" : "apns", nativePushToken);
+      log.d(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken]);
 
       const pushTokenString = (
         await Notifications.getExpoPushTokenAsync({
           projectId,
         })
       ).data;
-      console.log(pushTokenString);
+      log.d("push token string is ", [pushTokenString]);
       return pushTokenString;
     } catch (e: unknown) {
       handleRegistrationError(`${e}`);
     }
   } else {
     handleRegistrationError("Must use physical device for push notifications");
+  }
+}
+
+export async function registerPushTokenWithServer(pushToken: string) {
+  const serverEndpoint = getServerEndpoint();
+  const getK1Url = `${serverEndpoint}/v0/getk1`;
+  const response = await fetch(getK1Url);
+  const { k1, tag } = await response.json();
+
+  if (tag !== "login") {
+    throw new Error("Invalid tag from server");
+  }
+
+  const index = 0;
+  const { public_key: pubkey } = await peakKeyPair(index);
+  const signature = await signMessage(k1, index);
+
+  const registerUrl = `${serverEndpoint}/v0/register_push_token`;
+  const registrationResponse = await fetch(registerUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      push_token: pushToken,
+      pubkey,
+      sig: signature,
+      k1,
+    }),
+  });
+
+  if (!registrationResponse.ok) {
+    const errorBody = await registrationResponse.text();
+    throw new Error(`Failed to register push token: ${registrationResponse.status} ${errorBody}`);
   }
 }

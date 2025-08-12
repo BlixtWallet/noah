@@ -7,7 +7,7 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::str::{self, FromStr};
 
-use crate::{AppState, errors::ApiError};
+use crate::{AppState, errors::ApiError, utils::verify_message};
 
 #[derive(Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -105,15 +105,4 @@ pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>
         k1,
         tag: "login".to_string(),
     }))
-}
-
-pub async fn verify_message(
-    message: &str,
-    signature: bitcoin::secp256k1::ecdsa::Signature,
-    public_key: &bitcoin::secp256k1::PublicKey,
-) -> anyhow::Result<bool> {
-    let hash = bitcoin::sign_message::signed_msg_hash(message);
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..])?;
-    Ok(secp.verify_ecdsa(&msg, &signature, &public_key).is_ok())
 }

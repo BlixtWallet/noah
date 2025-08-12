@@ -1,5 +1,9 @@
 use anyhow::Context;
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    extract::State,
+    routing::{get, post},
+};
 mod v0;
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -17,6 +21,7 @@ use crate::{
 mod errors;
 mod migrations;
 mod push;
+mod utils;
 
 type AppState = Arc<DbConnection>;
 
@@ -61,12 +66,22 @@ async fn main() -> anyhow::Result<()> {
 
     let app_state = Arc::new(DbConnection { conn });
 
+    let push_app_state = app_state.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+        loop {
+            interval.tick().await;
+            if let Err(e) = send_push_notification(State(push_app_state.clone())).await {
+                tracing::error!("Failed to send push notification: {}", e);
+            }
+        }
+    });
+
     let v0_router = Router::new()
         .route("/health", get(health_check))
         .route("/getk1", get(get_k1))
         .route("/register", get(register))
-        .route("/register_push_token", get(register_push_token))
-        .route("/send_push_notification", get(send_push_notification));
+        .route("/register_push_token", post(register_push_token));
 
     let app = Router::new()
         .nest("/v0", v0_router)

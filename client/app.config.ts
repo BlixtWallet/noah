@@ -3,7 +3,7 @@ import { ExpoConfig } from "expo/config";
 const config: { expo: ExpoConfig } = {
   expo: {
     name: "Noah",
-    slug: "noah",
+    slug: "noahs-ark-wallet",
     version: "1.0.0",
     orientation: "portrait",
     userInterfaceStyle: "dark",

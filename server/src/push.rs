@@ -2,23 +2,57 @@ use anyhow::Context;
 use axum::{Json, extract::State};
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-use crate::{AppState, errors::ApiError};
+use crate::{AppState, errors::ApiError, utils::verify_message};
 
 #[derive(Deserialize)]
 pub struct RegisterPushToken {
     pub push_token: String,
     pub pubkey: String,
+    pub sig: String,
+    pub k1: String,
 }
 
 pub async fn register_push_token(
     State(app_state): State<AppState>,
     Json(payload): Json<RegisterPushToken>,
 ) -> Result<(), ApiError> {
+    tracing::debug!(
+        "Received push token registration request: {:?}",
+        payload.pubkey
+    );
+
+    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
+    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.pubkey)?;
+
+    let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
+
+    if !is_valid {
+        return Err(ApiError::InvalidSignature);
+    }
+
+    tracing::debug!(
+        "Push token registration for pubkey: {} is valid",
+        payload.pubkey
+    );
+
+    let mut rows = app_state
+        .conn
+        .query(
+            "SELECT pubkey FROM users WHERE pubkey = ?",
+            libsql::params![payload.pubkey.clone()],
+        )
+        .await?;
+
+    if rows.next().await?.is_none() {
+        return Err(ApiError::InvalidArgument("User not registered".to_string()));
+    }
+
     app_state
         .conn
         .execute(
-            "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?)",
+            "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
             libsql::params![payload.pubkey, payload.push_token],
         )
         .await?;
