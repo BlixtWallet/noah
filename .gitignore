@@ -49,8 +49,8 @@ temp_ark_downloads
 bark/
 
 .env.local
-android/sentry.properties
-ios/sentry.properties
+sentry.properties
+sentry.properties
 
 # Server gitignore
 target/

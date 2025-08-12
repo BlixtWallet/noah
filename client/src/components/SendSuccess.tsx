@@ -1,9 +1,9 @@
 import React from "react";
 import { View } from "react-native";
-import { Text } from "../components/ui/text";
-import { NoahButton } from "../components/ui/NoahButton";
-import SuccessAnimation from "../components/SuccessAnimation";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Text } from "./ui/text";
+import { NoahButton } from "./ui/NoahButton";
+import SuccessAnimation from "./SuccessAnimation";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 
 type ParsedResult = {

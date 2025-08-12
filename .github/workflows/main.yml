@@ -3,12 +3,8 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - "README.md"
-      - "server/**"
-      - Cargo.toml
-      - Cargo.lock
-      - Dockerfile
+    paths:
+      - "client/**"
 
 jobs:
   check_if_release_commit:
@@ -72,16 +68,16 @@ jobs:
         run: ./scripts/create_sentry_properties.sh
 
       - name: Build signet Android app
-        run: nix develop .# --command bash -c "bun build:android:ci"
+        run: nix develop .# --command bash -c "bun client build:android:ci"
 
       - name: Rename APK with timestamp
         id: rename_apk
         run: |
-          apk_path="android/app/build/outputs/apk/signet/release/app-signet-release.apk"
+          apk_path="client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
           timestamp=$(date +'%Y-%m-%d-%H-%M')
           new_apk_name="noah-android-apk-${timestamp}"
           apk_filename="${new_apk_name}.apk"
-          new_apk_path="android/app/build/outputs/apk/signet/release/${apk_filename}"
+          new_apk_path="client/android/app/build/outputs/apk/signet/release/${apk_filename}"
           mv "${apk_path}" "${new_apk_path}"
           echo "new_path=${new_apk_path}" >> $GITHUB_OUTPUT
           echo "artifact_name=${new_apk_name}" >> $GITHUB_OUTPUT
@@ -108,7 +104,7 @@ jobs:
       #   uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun ios:prebuild"
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun client ios:prebuild"
 
       - name: Create sentry.properties
         env:
@@ -116,7 +112,7 @@ jobs:
         run: ./scripts/create_sentry_properties.sh
 
       - name: Build iOS signet app
-        run: nix develop .# --command bash -c "bun build:ios:signet:release"
+        run: nix develop .# --command bash -c "bun client build:ios:signet:release"
 
   send_telegram_notification:
     runs-on: ubuntu-latest

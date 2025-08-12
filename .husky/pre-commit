@@ -1,2 +1,2 @@
-bun run lint
+bun client lint
 cargo fmt --check
