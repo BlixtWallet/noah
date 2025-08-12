@@ -57,6 +57,9 @@ const config: { expo: ExpoConfig } = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.noah",
+      infoPlist: {
+        UIBackgroundModes: ["remote-notification", "fetch"],
+      },
       splash: {
         image: "./assets/All_Files/splash_screens/splash_screen_ios.png",
         resizeMode: "contain",

@@ -1,4 +1,5 @@
 import { registerRootComponent } from "expo";
+import "~/lib/pushNotifications";
 import App from "./App";
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);

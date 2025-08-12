@@ -14,8 +14,8 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    push::{register_push_token, send_push_notification},
-    v0::api_v0::{get_k1, health_check, register},
+    push::{PushNotificationData, send_push_notification},
+    v0::api_v0::{get_k1, health_check, register, register_push_token},
 };
 
 mod errors;
@@ -71,7 +71,14 @@ async fn main() -> anyhow::Result<()> {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
         loop {
             interval.tick().await;
-            if let Err(e) = send_push_notification(State(push_app_state.clone())).await {
+            let data = PushNotificationData {
+                body: "Syncing with Ark Server".to_string(),
+                data: "{}".to_string(),
+                priority: "high".to_string(),
+            };
+
+            tracing::debug!("Sending push notification with data: {:?}", data);
+            if let Err(e) = send_push_notification(State(push_app_state.clone()), data).await {
                 tracing::error!("Failed to send push notification: {}", e);
             }
         }
