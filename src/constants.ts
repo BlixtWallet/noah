@@ -31,11 +31,11 @@ export const getServerEndpoint = (): string => {
     case "regtest":
       return "http://localhost:3000";
     case "signet":
-      return "https://signet.noah";
+      return "https://noah.noderunner.wtf";
     case "mainnet":
-      return "https://mainnet.noah";
+      return "https://noah.noderunner.wtf";
     default:
-      return "https://signet.noah";
+      return "https://noah.noderunner.wtf";
   }
 };
 

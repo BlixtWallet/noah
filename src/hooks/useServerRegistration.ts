@@ -18,7 +18,7 @@ export const useServerRegistration = () => {
 
       try {
         const serverEndpoint = getServerEndpoint();
-        const getK1Url = `${serverEndpoint}/getK1`;
+        const getK1Url = `${serverEndpoint}/v0/getk1`;
         const response = await fetch(getK1Url);
         const { k1, tag } = await response.json();
 
@@ -26,7 +26,7 @@ export const useServerRegistration = () => {
           throw new Error("Invalid tag from server");
         }
 
-        const lnurl = `${serverEndpoint}/register?k1=${k1}&tag=login`;
+        const lnurl = `${serverEndpoint}/v0/register?k1=${k1}&tag=login`;
         const success = await lnurlAuth(lnurl);
 
         if (success) {

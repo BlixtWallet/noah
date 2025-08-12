@@ -53,10 +53,13 @@ async fn main() -> anyhow::Result<()> {
 
     let app_state = Arc::new(DbConnection { conn });
 
-    let app = Router::new()
+    let v0_router = Router::new()
         .route("/health", get(health_check))
-        .route("/getK1", get(get_k1))
-        .route("/register", get(register))
+        .route("/getk1", get(get_k1))
+        .route("/register", get(register));
+
+    let app = Router::new()
+        .nest("/v0", v0_router)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());
 
