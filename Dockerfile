@@ -15,7 +15,7 @@ COPY ./server/src/ ./server/src
 RUN cargo build --release --manifest-path ./server/Cargo.toml
 
 # Stage 2: Create the runtime image
-FROM debian:buster-slim AS runtime
+FROM debian:bookworm-slim AS runtime
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/server /usr/local/bin/
