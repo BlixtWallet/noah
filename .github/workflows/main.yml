@@ -41,7 +41,7 @@ jobs:
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
       - name: Lint code
-        run: nix develop .# --command bash -c "bun lint"
+        run: nix develop .# --command bash -c "bun client lint"
 
   android_build:
     runs-on: self-hosted
