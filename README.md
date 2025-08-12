@@ -29,10 +29,11 @@ Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protoc
 - **Local Storage**: MMKV
 - **Native Modules**: Nitro (Ark)
 - **Development Environment**: Nix
+- **Server**: Rust
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started with the app
 
 You can set up the development environment using Nix (recommended) or by manually installing the dependencies.
 
@@ -75,7 +76,7 @@ This project uses [Nix](https://nixos.org/) to provide a reproducible developmen
 4.  **Install iOS Dependencies (for macOS users)**
     This step links the native iOS libraries.
     ```bash
-    bun ios:prebuild
+    bun client ios:prebuild
     ```
 
 Now the project is ready to run.
@@ -103,7 +104,7 @@ Once your environment is set up, follow these steps:
 
 3.  **Install iOS Dependencies (for macOS users)**
     ```bash
-    bun ios:prebuild
+    bun client ios:prebuild
     ```
 
 ---
@@ -161,13 +162,13 @@ Please see the `scripts` section in the [`package.json`](./package.json) file fo
 **Example (running on Android Regtest):**
 
 ```bash
-bun run android:regtest:debug
+bun client android:regtest:debug
 ```
 
 **Example (running on iOS Regtest):**
 
 ```bash
-bun run ios:regtest:debug
+bun client ios:regtest:debug
 ```
 
 ---
@@ -179,6 +180,14 @@ You can create production-ready application binaries using the build scripts.
 Please see the `scripts` section in the [`package.json`](./package.json) file for commands starting with `build:`.
 
 **Note on Code Signing:** For production builds, you will need to configure your own signing keys. Refer to the official React Native and Expo documentation for code signing on [Android](https://reactnative.dev/docs/signed-apk-android) and iOS.
+
+## 📡 Running the server
+
+- Important note: Right now the server uses `Turso sqlite` as a remote database, so you will need an API_KEY from Turso, the goal is to move to a local sqlite with syncing to Turso eventually.
+- If you're using Nix, simply run `bacon` to start a hot reloading Rust.
+- If you are not using Nix, then `cargo install bacon` for hot reloading and then run `bacon`.
+- If you just want to run the server `cargo run` or `cargo run --release`.
+- For release builds, run `cargo build --release`.
 
 ---
 
