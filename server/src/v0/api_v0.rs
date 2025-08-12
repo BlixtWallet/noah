@@ -7,7 +7,7 @@ use axum::{
 use bitcoin::secp256k1;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::str::{self, FromStr};
 
 use crate::AppState;
 
@@ -132,8 +132,17 @@ pub async fn register(
     }))
 }
 
-pub async fn health_check() -> StatusCode {
-    StatusCode::OK
+#[derive(Serialize)]
+pub struct HealthCheckResponse {
+    status: String,
+    message: String,
+}
+
+pub async fn health_check() -> Result<Json<HealthCheckResponse>, StatusCode> {
+    Ok(Json(HealthCheckResponse {
+        status: "OK".to_string(),
+        message: "Server is running".to_string(),
+    }))
 }
 
 #[derive(Serialize)]
