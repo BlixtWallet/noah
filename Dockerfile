@@ -18,7 +18,7 @@ RUN cargo build --release --manifest-path ./server/Cargo.toml
 FROM debian:bookworm-slim AS runtime
 
 # Install CA certificates for TLS
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/server /usr/local/bin/
