@@ -9,7 +9,7 @@ import { loadWallet, signMessage } from "./walletApi";
 import logger from "~/lib/log";
 
 import { syncWallet } from "~/lib/sync";
-import { captureException, captureMessage } from "@sentry/react-native";
+import { captureException, logger as sentryLogger } from "@sentry/react-native";
 import { isWalletLoaded } from "react-native-nitro-ark";
 
 const log = logger("pushNotifications");
@@ -48,9 +48,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         await syncWallet();
         const { public_key: pubkey } = await peakKeyPair(0);
 
-        captureMessage(
+        sentryLogger.info(
           `Background notification task executed and wallet synced for pubkey: ${pubkey}`,
-          "info",
         );
       }
     } catch (e) {
