@@ -69,14 +69,6 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: ./scripts/create_sentry_properties.sh
 
-      - name: Decode google-services.json
-        env:
-          GOOGLE_SERVICES_JSON_SIGNET: ${{ secrets.GOOGLE_SERVICES_JSON_SIGNET }}
-        run: |
-          echo "Creating google-services.json for Signet"
-          mkdir -p client/android/app/src/signet
-          echo $GOOGLE_SERVICES_JSON_SIGNET | base64 --decode > client/android/app/src/signet/google-services.json
-
       - name: Build signet Android app
         run: nix develop .# --command bash -c "bun client build:android:ci"
 
