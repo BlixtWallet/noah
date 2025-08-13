@@ -57,3 +57,4 @@ target/
 server/target/
 .env
 # Google services file
+google-services.json
