@@ -1,75 +1,13 @@
-use axum::response::{IntoResponse, Response};
 use axum::{
     Json,
     extract::{Query, State},
     http::StatusCode,
 };
-use bitcoin::secp256k1;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::str::{self, FromStr};
 
-use crate::AppState;
-
-pub enum AppError {
-    SignatureParse(secp256k1::Error),
-    PublicKeyParse(secp256k1::Error),
-    Verification(anyhow::Error),
-    InvalidSignature,
-    Database(libsql::Error),
-}
-
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        let (status, reason) = match self {
-            AppError::SignatureParse(e) => {
-                tracing::warn!("Failed to parse signature: {}", e);
-                (
-                    StatusCode::BAD_REQUEST,
-                    "Failed to parse signature".to_string(),
-                )
-            }
-            AppError::PublicKeyParse(e) => {
-                tracing::warn!("Failed to parse public key: {}", e);
-                (
-                    StatusCode::BAD_REQUEST,
-                    "Failed to parse public key".to_string(),
-                )
-            }
-            AppError::Verification(e) => {
-                tracing::warn!("Failed to verify message: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to verify message".to_string(),
-                )
-            }
-            AppError::InvalidSignature => {
-                (StatusCode::UNAUTHORIZED, "Invalid signature".to_string())
-            }
-            AppError::Database(e) => {
-                tracing::error!("Database error: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Database error".to_string(),
-                )
-            }
-        };
-
-        let body = Json(LNUrlAuthResponse {
-            status: "ERROR".to_string(),
-            event: None,
-            reason: Some(reason),
-        });
-
-        (status, body).into_response()
-    }
-}
-
-impl From<libsql::Error> for AppError {
-    fn from(e: libsql::Error) -> Self {
-        AppError::Database(e)
-    }
-}
+use crate::{AppState, errors::ApiError, utils::verify_message};
 
 #[derive(Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -96,22 +34,26 @@ pub struct RegisterPayload {
 pub async fn register(
     State(state): State<AppState>,
     Query(payload): Query<RegisterPayload>,
-) -> Result<Json<LNUrlAuthResponse>, AppError> {
+) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
     let conn = &state.conn;
 
-    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)
-        .map_err(AppError::SignatureParse)?;
+    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
 
-    let public_key =
-        bitcoin::secp256k1::PublicKey::from_str(&payload.key).map_err(AppError::PublicKeyParse)?;
+    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.key)?;
 
-    let is_valid = verify_message(&payload.k1, signature, &public_key)
-        .await
-        .map_err(AppError::Verification)?;
+    let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
+
+    tracing::debug!(
+        "Registering user with pubkey: {} and k1: {}",
+        payload.key,
+        payload.k1
+    );
 
     if !is_valid {
-        return Err(AppError::InvalidSignature);
+        return Err(ApiError::InvalidSignature);
     }
+
+    tracing::debug!("Registration for pubkey: {} is valid", payload.key);
 
     conn.execute(
         "INSERT INTO users (pubkey) VALUES (?)",
@@ -151,7 +93,7 @@ pub struct GetK1 {
     pub tag: String,
 }
 
-pub async fn get_k1(State(state): State<AppState>) -> Result<Json<GetK1>, StatusCode> {
+pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
     let conn = &state.conn;
     let mut k1_bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut k1_bytes);
@@ -173,13 +115,56 @@ pub async fn get_k1(State(state): State<AppState>) -> Result<Json<GetK1>, Status
     }))
 }
 
-pub async fn verify_message(
-    message: &str,
-    signature: bitcoin::secp256k1::ecdsa::Signature,
-    public_key: &bitcoin::secp256k1::PublicKey,
-) -> anyhow::Result<bool> {
-    let hash = bitcoin::sign_message::signed_msg_hash(message);
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..])?;
-    Ok(secp.verify_ecdsa(&msg, &signature, &public_key).is_ok())
+#[derive(Deserialize)]
+pub struct RegisterPushToken {
+    pub push_token: String,
+    pub pubkey: String,
+    pub sig: String,
+    pub k1: String,
+}
+
+pub async fn register_push_token(
+    State(app_state): State<AppState>,
+    Json(payload): Json<RegisterPushToken>,
+) -> Result<(), ApiError> {
+    tracing::debug!(
+        "Received push token registration request: {:?}",
+        payload.pubkey
+    );
+
+    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
+    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.pubkey)?;
+
+    let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
+
+    if !is_valid {
+        return Err(ApiError::InvalidSignature);
+    }
+
+    tracing::debug!(
+        "Push token registration for pubkey: {} is valid",
+        payload.pubkey
+    );
+
+    let mut rows = app_state
+        .conn
+        .query(
+            "SELECT pubkey FROM users WHERE pubkey = ?",
+            libsql::params![payload.pubkey.clone()],
+        )
+        .await?;
+
+    if rows.next().await?.is_none() {
+        return Err(ApiError::InvalidArgument("User not registered".to_string()));
+    }
+
+    app_state
+        .conn
+        .execute(
+            "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
+            libsql::params![payload.pubkey, payload.push_token],
+        )
+        .await?;
+
+    Ok(())
 }

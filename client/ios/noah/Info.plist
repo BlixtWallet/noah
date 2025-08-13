@@ -54,6 +54,11 @@
     </dict>
     <key>NSCameraUsageDescription</key>
     <string>$(PRODUCT_NAME) needs access to your Camera.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+      <string>remote-notification</string>
+      <string>fetch</string>
+    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>

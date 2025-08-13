@@ -1,39 +1,17 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { useWalletStore } from "../store/walletStore";
-import { onchainSync, sync } from "../lib/walletApi";
-
+import { syncWallet } from "../lib/sync";
 import logger from "~/lib/log";
-import { syncArkReceives } from "~/lib/syncTransactions";
+
 const log = logger("useSyncManager");
 
-// Provisional hook to sync balance in the background
-// In Blixt we used to do these things with easy-peasy state manager, but that
-// does not work well with React Query
 export function useSyncManager(intervalMs: number = 30000) {
-  const queryClient = useQueryClient();
   const { isInitialized, isWalletLoaded } = useWalletStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isActiveRef = useRef(true);
 
   log.i("Starting useSyncManager");
-
-  const syncWallet = useCallback(async () => {
-    if (!isInitialized || !isWalletLoaded || !isActiveRef.current) {
-      return;
-    }
-
-    log.i("syncWallet");
-
-    try {
-      await Promise.allSettled([sync(), onchainSync()]);
-      await syncArkReceives();
-      await queryClient.invalidateQueries({ queryKey: ["balance"] });
-    } catch (error) {
-      log.e("background sync failed:", [error]);
-    }
-  }, [isInitialized, isWalletLoaded, queryClient]);
 
   useEffect(() => {
     if (!isInitialized || !isWalletLoaded) {
@@ -75,7 +53,7 @@ export function useSyncManager(intervalMs: number = 30000) {
       }
       subscription.remove();
     };
-  }, [isInitialized, isWalletLoaded, intervalMs, syncWallet]);
+  }, [isInitialized, isWalletLoaded, intervalMs]);
 
   return true;
 }

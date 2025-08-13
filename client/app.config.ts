@@ -3,7 +3,7 @@ import { ExpoConfig } from "expo/config";
 const config: { expo: ExpoConfig } = {
   expo: {
     name: "Noah",
-    slug: "noah",
+    slug: "noahs-ark-wallet",
     version: "1.0.0",
     orientation: "portrait",
     userInterfaceStyle: "dark",
@@ -52,10 +52,14 @@ const config: { expo: ExpoConfig } = {
           enableCodeScanner: true,
         },
       ],
+      "expo-notifications",
     ],
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.noah",
+      infoPlist: {
+        UIBackgroundModes: ["remote-notification", "fetch"],
+      },
       splash: {
         image: "./assets/All_Files/splash_screens/splash_screen_ios.png",
         resizeMode: "contain",

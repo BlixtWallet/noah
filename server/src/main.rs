@@ -1,5 +1,9 @@
 use anyhow::Context;
-use axum::{Router, routing::get};
+use axum::{
+    Router,
+    extract::State,
+    routing::{get, post},
+};
 mod v0;
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -9,9 +13,15 @@ use std::{
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::v0::api_v0::{get_k1, health_check, register};
+use crate::{
+    push::{PushNotificationData, send_push_notification},
+    v0::api_v0::{get_k1, health_check, register, register_push_token},
+};
 
+mod errors;
 mod migrations;
+mod push;
+mod utils;
 
 type AppState = Arc<DbConnection>;
 
@@ -38,10 +48,22 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()?;
 
+    let background_sync_interval = std::env::var("BACKGROUND_SYNC_INTERVAL")
+        .unwrap_or_else(|_| "3600".to_string())
+        .parse::<u64>()?;
+
+    tracing::debug!(
+        "Background sync interval: {} seconds",
+        background_sync_interval
+    );
+
     let turso_url =
         std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
     let turso_api_key = std::env::var("TURSO_API_KEY")
         .context("TURSO_API_KEY must be set in the environment variables")?;
+
+    let _ = std::env::var("EXPO_ACCESS_TOKEN")
+        .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
 
     let db = libsql::Builder::new_remote(turso_url, turso_api_key)
         .build()
@@ -53,10 +75,30 @@ async fn main() -> anyhow::Result<()> {
 
     let app_state = Arc::new(DbConnection { conn });
 
+    let push_app_state = app_state.clone();
+    tokio::spawn(async move {
+        let mut interval =
+            tokio::time::interval(std::time::Duration::from_secs(background_sync_interval));
+        loop {
+            interval.tick().await;
+            let data = PushNotificationData {
+                title: None,
+                body: None,
+                data: r#"{"type": "background-sync"}"#.to_string().to_string(),
+                priority: "high".to_string(),
+            };
+
+            if let Err(e) = send_push_notification(State(push_app_state.clone()), data).await {
+                tracing::error!("Failed to send push notification: {}", e);
+            }
+        }
+    });
+
     let v0_router = Router::new()
         .route("/health", get(health_check))
         .route("/getk1", get(get_k1))
-        .route("/register", get(register));
+        .route("/register", get(register))
+        .route("/register_push_token", post(register_push_token));
 
     let app = Router::new()
         .nest("/v0", v0_router)
