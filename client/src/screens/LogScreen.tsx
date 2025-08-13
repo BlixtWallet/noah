@@ -60,8 +60,6 @@ const LogScreen = () => {
     try {
       await RNFS.writeFile(path, logs.join("\n"), "utf8");
 
-      console.log("Sharing URL:", url); // Debug log
-
       const options = {
         title: "Share your file",
         message: "Noah App Logs",
@@ -73,7 +71,6 @@ const LogScreen = () => {
 
       // Clean up: Delete the temporary file after sharing
       await RNFS.unlink(path);
-      console.log("File shared and deleted successfully");
     } catch (error) {
       if (error && typeof error === "object" && "message" in error) {
         const errorMessage = (error as Error).message;

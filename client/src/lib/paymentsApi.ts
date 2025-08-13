@@ -170,10 +170,8 @@ export const onchainSend = async ({
 }): Promise<OnchainPaymentResult> => {
   try {
     const result = await onchainSendNitro(destination, amountSat);
-    console.log("Onchain send result:", result);
     return result;
   } catch (error) {
-    console.error("Failed to send onchain funds:", error);
     captureException(
       new Error(
         `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,

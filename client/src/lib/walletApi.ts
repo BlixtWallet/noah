@@ -53,7 +53,6 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
         };
 
   if (await isWalletLoadedNitro()) {
-    console.log("Wallet is already loaded, closing it before creating a new one");
     await closeWalletNitro();
   }
 
@@ -62,13 +61,9 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
     mnemonic,
   });
 
-  console.log("Wallet created successfully with mnemonic");
-
   await Keychain.setGenericPassword(USERNAME, mnemonic, {
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
-
-  console.log("Mnemonic saved to keychain");
 
   // The first time we generate a pubkey, the index should be undefined.
   // After that, we can use index 0 to get the static pubkey.
@@ -99,13 +94,11 @@ export const loadWallet = async () => {
 
 export const fetchOnchainBalance = async () => {
   const newBalance = await onchainBalanceNitro();
-  console.log("fetchOnchainBalance result", newBalance);
   return newBalance;
 };
 
 export const fetchOffchainBalance = async () => {
   const newBalance = await offchainBalanceNitro();
-  console.log("fetchOffchainBalance result", newBalance);
   return newBalance;
 };
 

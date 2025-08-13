@@ -88,17 +88,13 @@ export const PRODUCTION_CONFIG: WalletCreationOptions = {
 const getActiveWalletConfig = (): WalletCreationOptions => {
   switch (APP_VARIANT) {
     case "regtest":
-      console.log("Using regtest configuration");
       return REGTEST_CONFIG;
     case "signet":
-      console.log("Using signet configuration");
       return SIGNET_CONFIG;
     case "mainnet":
-      console.log("Using production configuration");
       return PRODUCTION_CONFIG;
     default:
       // Default to signet for development builds that aren't launched via a profile
-      console.log("No app variant set, defaulting to signet configuration");
       return SIGNET_CONFIG;
   }
 };

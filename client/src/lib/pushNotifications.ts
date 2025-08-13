@@ -33,7 +33,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
       if (isNotificationResponse) {
         // Do something with the notification response from user
-        log.d("[Background Job] user pressed notification");
       } else {
         // Do something with the data from notification that was received
         log.d("[Background Job] loading wallet in background");
@@ -48,9 +47,9 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         await syncWallet();
         const { public_key: pubkey } = await peakKeyPair(0);
 
-        sentryLogger.info(
-          `Background notification task executed and wallet synced for pubkey: ${pubkey}`,
-        );
+        log.d("[Background Job] wallet synced in background", [pubkey]);
+
+        sentryLogger.info("Background notification task executed and wallet synced", { pubkey });
       }
     } catch (e) {
       captureException(
