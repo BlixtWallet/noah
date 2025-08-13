@@ -4,13 +4,11 @@ import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import { PLATFORM, getServerEndpoint } from "~/constants";
-import { peakKeyPair } from "./paymentsApi";
-import { loadWallet, signMessage } from "./walletApi";
 import logger from "~/lib/log";
-
-import { syncWallet } from "~/lib/sync";
-import { captureException, logger as sentryLogger } from "@sentry/react-native";
-import { isWalletLoaded } from "react-native-nitro-ark";
+import { captureException } from "@sentry/react-native";
+import { backgroundSync, maintenance } from "./tasks";
+import { peakKeyPair } from "./paymentsApi";
+import { signMessage } from "./walletApi";
 
 const log = logger("pushNotifications");
 
@@ -22,39 +20,27 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
     try {
       log.d("[Background Job] data", [data]);
 
-      const isNotificationResponse = "actionIdentifier" in data;
+      if (error) {
+        log.e("[Background Job] error", [error]);
+        captureException(error);
+        return;
+      }
 
-      log.d("[Background Job] isNotificationResponse", [isNotificationResponse]);
+      const notificationData = (data as any)?.notification?.request?.content?.data;
+      if (!notificationData) {
+        log.w("[Background Job] No data received");
+        return;
+      }
 
-      // if (data && (data as any).data.body === "{}") {
-      //   log.d("[Background Job] data.data.body === '{}'");
-      //   return;
-      // }
-
-      if (isNotificationResponse) {
-        // Do something with the notification response from user
-      } else {
-        // Do something with the data from notification that was received
-        log.d("[Background Job] loading wallet in background");
-        const isLoaded = await isWalletLoaded();
-        log.d("[Background Job] isWalletLoaded", [isLoaded]);
-        if (!isLoaded) {
-          log.d("[Background Job] wallet not loaded, loading now");
-          await loadWallet();
-        }
-
-        log.d("[Background Job] syncing wallet in background");
-        await syncWallet();
-        const { public_key: pubkey } = await peakKeyPair(0);
-
-        log.d("[Background Job] wallet synced in background", [pubkey]);
-
-        sentryLogger.info("Background notification task executed and wallet synced", { pubkey });
+      if (notificationData.type === "background-sync") {
+        await backgroundSync();
+      } else if (notificationData.type === "maintenance") {
+        await maintenance();
       }
     } catch (e) {
       captureException(
         new Error(
-          `Failed to background sync: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to handle background notification: ${e instanceof Error ? e.message : String(e)}`,
         ),
       );
       log.e("[Background Job] error", [e]);
