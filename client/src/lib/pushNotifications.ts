@@ -9,6 +9,7 @@ import { loadWallet, signMessage } from "./walletApi";
 import logger from "~/lib/log";
 
 import { syncWallet } from "~/lib/sync";
+import { captureEvent, captureException } from "@sentry/react-native";
 
 const log = logger("pushNotifications");
 
@@ -38,8 +39,20 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         await loadWallet();
         log.d("[Background Job] syncing wallet in background");
         await syncWallet();
+        const { public_key: pubkey } = await peakKeyPair(0);
+
+        captureEvent({
+          message: `Background notification task executed and wallet synced for pubkey: ${pubkey}`,
+          level: "info",
+          timestamp: Date.now(),
+        });
       }
     } catch (e) {
+      captureException(
+        new Error(
+          `Failed to background sync: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
       log.e("[Background Job] error", [e]);
     }
   },
