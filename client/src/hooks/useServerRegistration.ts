@@ -11,10 +11,10 @@ export const useServerRegistration = () => {
 
   useEffect(() => {
     const register = async () => {
-      if (isRegisteredWithServer) {
-        log.d("Already registered with server");
-        return;
-      }
+      // if (isRegisteredWithServer) {
+      //   log.d("Already registered with server");
+      //   return;
+      // }
 
       try {
         const serverEndpoint = getServerEndpoint();

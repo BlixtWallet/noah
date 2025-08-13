@@ -35,14 +35,19 @@ async fn maintenance(app_state: AppState) {
 pub fn cron_scheduler(app_state: AppState) -> anyhow::Result<Scheduler> {
     let mut sched = Scheduler::utc();
 
+    let background_sync_cron =
+        std::env::var("BACKGROUND_SYNC_CRON").unwrap_or_else(|_| "0 0 */2 * * *".to_string());
+    let maintenance_cron =
+        std::env::var("MAINTENANCE_CRON").unwrap_or_else(|_| "0 0 0 */1 * *".to_string());
+
     let bg_sync_app_state = app_state.clone();
-    sched.add(Job::new("0 0 * * * *", move || {
+    sched.add(Job::new(&background_sync_cron, move || {
         let app_state = bg_sync_app_state.clone();
         background_sync(app_state)
     }));
 
     let maintenance_app_state = app_state.clone();
-    sched.add(Job::new("0 0 0 * * *", move || {
+    sched.add(Job::new(&maintenance_cron, move || {
         let app_state = maintenance_app_state.clone();
         maintenance(app_state)
     }));

@@ -3,7 +3,8 @@ use axum::{
     Router,
     routing::{get, post},
 };
-mod v0;
+mod api_v0;
+use dashmap::DashMap;
 use std::{
     net::{Ipv4Addr, SocketAddr},
     str::FromStr,
@@ -13,8 +14,8 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
+    api_v0::{get_k1, health_check, register, register_push_token},
     cron::cron_scheduler,
-    v0::api_v0::{get_k1, health_check, register, register_push_token},
 };
 
 mod cron;
@@ -28,6 +29,7 @@ type AppState = Arc<DbConnection>;
 #[derive(Clone)]
 struct DbConnection {
     conn: libsql::Connection,
+    k1_values: Arc<DashMap<String, ()>>,
 }
 
 #[tokio::main]
@@ -64,7 +66,10 @@ async fn main() -> anyhow::Result<()> {
 
     migrations::migrate(&conn).await?;
 
-    let app_state = Arc::new(DbConnection { conn });
+    let app_state = Arc::new(DbConnection {
+        conn,
+        k1_values: Arc::new(DashMap::new()),
+    });
 
     let _cron_handle = cron_scheduler(app_state.clone())?;
 

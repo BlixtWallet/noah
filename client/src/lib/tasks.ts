@@ -1,21 +1,24 @@
 import { syncWallet } from "~/lib/sync";
 import { captureException, logger as sentryLogger } from "@sentry/react-native";
 import { isWalletLoaded } from "react-native-nitro-ark";
-import { loadWallet } from "./walletApi";
+import { loadWallet, maintanance } from "./walletApi";
 import logger from "~/lib/log";
 import { peakKeyPair } from "./paymentsApi";
 
 const log = logger("tasks");
 
+async function loadWalletIfNeeded() {
+  const isLoaded = await isWalletLoaded();
+  log.d("[Background Job] isWalletLoaded", [isLoaded]);
+  if (!isLoaded) {
+    log.d("[Background Job] wallet not loaded, loading now");
+    await loadWallet();
+  }
+}
+
 export async function backgroundSync() {
   try {
-    log.d("[Background Job] loading wallet in background");
-    const isLoaded = await isWalletLoaded();
-    log.d("[Background Job] isWalletLoaded", [isLoaded]);
-    if (!isLoaded) {
-      log.d("[Background Job] wallet not loaded, loading now");
-      await loadWallet();
-    }
+    await loadWalletIfNeeded();
 
     log.d("[Background Job] syncing wallet in background");
     await syncWallet();
@@ -34,5 +37,8 @@ export async function backgroundSync() {
 
 export async function maintenance() {
   log.d("[Maintenance Job] running");
-  // Add maintenance logic here in the future
+  await loadWalletIfNeeded();
+
+  await maintanance();
+  log.d("[Maintenance Job] completed");
 }

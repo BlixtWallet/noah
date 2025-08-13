@@ -37,6 +37,10 @@ pub async fn register(
 ) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
     let conn = &state.conn;
 
+    if !state.k1_values.contains_key(&payload.k1) {
+        return Err(ApiError::InvalidArgument("Invalid k1".to_string()));
+    }
+
     let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
 
     let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.key)?;
@@ -55,17 +59,29 @@ pub async fn register(
 
     tracing::debug!("Registration for pubkey: {} is valid", payload.key);
 
+    let mut rows = conn
+        .query(
+            "SELECT pubkey FROM users WHERE pubkey = ?",
+            libsql::params![payload.key.clone()],
+        )
+        .await?;
+
+    if rows.next().await?.is_some() {
+        tracing::debug!("User with pubkey: {} already registered", payload.key);
+        return Ok(Json(LNUrlAuthResponse {
+            status: "OK".to_string(),
+            event: None,
+            reason: Some("User already registered".to_string()),
+        }));
+    }
+
     conn.execute(
         "INSERT INTO users (pubkey) VALUES (?)",
         libsql::params![payload.key],
     )
     .await?;
 
-    conn.execute(
-        "DELETE FROM k1_values WHERE k1 = ?",
-        libsql::params![payload.k1],
-    )
-    .await?;
+    state.k1_values.remove(&payload.k1);
 
     Ok(Json(LNUrlAuthResponse {
         status: "OK".to_string(),
@@ -94,20 +110,25 @@ pub struct GetK1 {
 }
 
 pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
-    let conn = &state.conn;
     let mut k1_bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut k1_bytes);
     let k1 = hex::encode(k1_bytes);
 
-    conn.execute(
-        "INSERT INTO k1_values (k1) VALUES (?)",
-        libsql::params![k1.clone()],
-    )
-    .await
-    .map_err(|e| {
-        tracing::error!("GetK1: failed to insert k1: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    state.k1_values.insert(k1.clone(), ());
+
+    // Keep the map size around 100
+    if state.k1_values.len() > 110 {
+        let keys_to_remove: Vec<String> = state
+            .k1_values
+            .iter()
+            .take(10)
+            .map(|entry| entry.key().clone())
+            .collect();
+
+        for key in keys_to_remove {
+            state.k1_values.remove(&key);
+        }
+    }
 
     Ok(Json(GetK1 {
         k1,

@@ -18,17 +18,18 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error, executionInfo }) => {
     try {
-      log.d("[Background Job] data", [data]);
-
       if (error) {
         log.e("[Background Job] error", [error]);
         captureException(error);
         return;
       }
 
-      const notificationData = (data as any)?.notification?.request?.content?.data;
-      if (!notificationData) {
-        log.w("[Background Job] No data received");
+      const notificationData = (data as any)?.data?.body;
+
+      log.d("[Background Job] notificationData", [notificationData]);
+
+      if (!notificationData || !notificationData.type) {
+        log.w("[Background Job] No data or type received", [notificationData]);
         return;
       }
 
