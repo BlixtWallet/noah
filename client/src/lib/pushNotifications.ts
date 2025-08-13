@@ -34,7 +34,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         log.d("[Background Job] user pressed notification");
       } else {
         // Do something with the data from notification that was received
-        log.d("[Background Job] data notification");
+        log.d("[Background Job] syncing wallet in background");
         await syncWallet();
       }
     } catch (e) {

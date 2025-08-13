@@ -61,5 +61,10 @@ pub async fn send_push_notification(
         .await
         .map_err(|e| ApiError::ServerErr(e.to_string()))?;
 
+    tracing::debug!(
+        "send_push_notification: Sent push notification to tokens: {:?}",
+        push_tokens
+    );
+
     Ok(())
 }
