@@ -9,7 +9,8 @@ import { loadWallet, signMessage } from "./walletApi";
 import logger from "~/lib/log";
 
 import { syncWallet } from "~/lib/sync";
-import { captureEvent, captureException } from "@sentry/react-native";
+import { captureException, captureMessage } from "@sentry/react-native";
+import { isWalletLoaded } from "react-native-nitro-ark";
 
 const log = logger("pushNotifications");
 
@@ -36,16 +37,21 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
       } else {
         // Do something with the data from notification that was received
         log.d("[Background Job] loading wallet in background");
-        await loadWallet();
+        const isLoaded = await isWalletLoaded();
+        log.d("[Background Job] isWalletLoaded", [isLoaded]);
+        if (!isLoaded) {
+          log.d("[Background Job] wallet not loaded, loading now");
+          await loadWallet();
+        }
+
         log.d("[Background Job] syncing wallet in background");
         await syncWallet();
         const { public_key: pubkey } = await peakKeyPair(0);
 
-        captureEvent({
-          message: `Background notification task executed and wallet synced for pubkey: ${pubkey}`,
-          level: "info",
-          timestamp: Date.now(),
-        });
+        captureMessage(
+          `Background notification task executed and wallet synced for pubkey: ${pubkey}`,
+          "info",
+        );
       }
     } catch (e) {
       captureException(
