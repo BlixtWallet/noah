@@ -5,7 +5,7 @@ import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import { PLATFORM, getServerEndpoint } from "~/constants";
 import { peakKeyPair } from "./paymentsApi";
-import { signMessage } from "./walletApi";
+import { loadWallet, signMessage } from "./walletApi";
 import logger from "~/lib/log";
 
 import { syncWallet } from "~/lib/sync";
@@ -34,6 +34,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         log.d("[Background Job] user pressed notification");
       } else {
         // Do something with the data from notification that was received
+        log.d("[Background Job] loading wallet in background");
+        await loadWallet();
         log.d("[Background Job] syncing wallet in background");
         await syncWallet();
       }
