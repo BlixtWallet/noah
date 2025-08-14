@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAlert } from "~/contexts/AlertProvider";
+import { useServerStore } from "../store/serverStore";
 import { useWalletStore } from "../store/walletStore";
 import {
   createWallet as createWalletAction,
@@ -14,6 +15,7 @@ import {
 } from "../lib/walletApi";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 import type { OnboardingStackParamList } from "../Navigators";
+import { queryClient } from "~/queryClient";
 
 export function useCreateWallet() {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
@@ -116,13 +118,14 @@ export function useOnchainSync() {
 
 export function useDeleteWallet() {
   const { reset } = useWalletStore();
-  const queryClient = useQueryClient();
+  const { resetRegistration } = useServerStore();
   const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: deleteWalletAction,
     onSuccess: () => {
       reset();
+      resetRegistration();
       queryClient.clear();
     },
     onError: (error: Error) => {

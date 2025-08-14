@@ -8,15 +8,14 @@ import logger from "~/lib/log";
 
 const log = logger("usePushNotifications");
 
-export const usePushNotifications = () => {
+export const usePushNotifications = (isReady: boolean) => {
   const { isRegisteredWithServer } = useServerStore();
 
   useEffect(() => {
     const register = async () => {
-      // if (!isRegisteredWithServer) {
-      //   log.d("Not registered with server, skipping push notification registration");
-      //   return;
-      // }
+      if (!isReady || !isRegisteredWithServer) {
+        return;
+      }
 
       try {
         const token = await registerForPushNotificationsAsync();
@@ -30,5 +29,5 @@ export const usePushNotifications = () => {
     };
 
     register();
-  }, [isRegisteredWithServer]);
+  }, [isRegisteredWithServer, isReady]);
 };

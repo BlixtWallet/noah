@@ -6,15 +6,14 @@ import logger from "~/lib/log";
 
 const log = logger("useServerRegistration");
 
-export const useServerRegistration = () => {
+export const useServerRegistration = (isReady: boolean) => {
   const { isRegisteredWithServer, setRegisteredWithServer } = useServerStore();
 
   useEffect(() => {
     const register = async () => {
-      // if (isRegisteredWithServer) {
-      //   log.d("Already registered with server");
-      //   return;
-      // }
+      if (!isReady || isRegisteredWithServer) {
+        return;
+      }
 
       try {
         const serverEndpoint = getServerEndpoint();
@@ -40,5 +39,5 @@ export const useServerRegistration = () => {
     };
 
     register();
-  }, [isRegisteredWithServer, setRegisteredWithServer]);
+  }, [isRegisteredWithServer, setRegisteredWithServer, isReady]);
 };

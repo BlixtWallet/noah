@@ -1,5 +1,6 @@
-import { Pressable, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
+import { useServerStore } from "../store/serverStore";
 import { APP_VARIANT } from "../config";
 import {
   AlertDialog,
@@ -18,7 +19,6 @@ import { Label } from "../components/ui/label";
 import { Text } from "../components/ui/text";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { LegendList } from "@legendapp/list";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -27,7 +27,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
 
 type Setting = {
-  id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey";
+  id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
   title: string;
   value?: string;
   isPressable: boolean;
@@ -53,6 +53,7 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const { config, isInitialized } = useWalletStore();
+  const { resetRegistration } = useServerStore();
   const deleteWalletMutation = useDeleteWallet();
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
@@ -64,6 +65,9 @@ const SettingsScreen = () => {
       navigation.navigate("Mnemonic", { fromOnboarding: false });
     } else if (item.id === "showLogs") {
       navigation.navigate("Logs");
+    } else if (item.id === "resetRegistration") {
+      resetRegistration();
+      // TODO: Add toast notification
     } else {
       navigation.navigate("EditConfiguration", {
         item: item as { id: keyof WalletConfig; title: string; value?: string },
@@ -119,25 +123,30 @@ const SettingsScreen = () => {
   if (isInitialized) {
     data.push({ id: "showMnemonic", title: "Show Mnemonic", isPressable: true });
     data.push({ id: "showLogs", title: "Show Logs", isPressable: true });
+    data.push({
+      id: "resetRegistration",
+      title: "Reset Server Registration",
+      isPressable: true,
+    });
   }
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
-      <View className="p-4">
+      <View className="p-4 flex-1">
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
-        <LegendList
-          data={data}
-          renderItem={({ item }) => {
+        <ScrollView className="flex-1 mb-16">
+          {data.map((item) => {
             if (item.id === "staticVtxoPubkey") {
-              return <CopyableSettingRow label={item.title} value={item.value!} />;
+              return <CopyableSettingRow key={item.id} label={item.title} value={item.value!} />;
             }
             return (
               <Pressable
+                key={item.id}
                 onPress={() => handlePress(item)}
                 disabled={!item.isPressable}
                 className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
@@ -153,53 +162,50 @@ const SettingsScreen = () => {
                 )}
               </Pressable>
             );
-          }}
-          keyExtractor={(item) => item.id}
-          recycleItems
-        />
-
-        {isInitialized && (
-          <View className="mt-8">
-            <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
-            <AlertDialog onOpenChange={() => setConfirmText("")}>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Text>Delete Wallet</Text>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {`This action is irreversible. To confirm, please type "delete" in the box
-                      below.`}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <Input
-                  value={confirmText}
-                  onChangeText={setConfirmText}
-                  placeholder='Type "delete" to confirm'
-                  className="h-12"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <AlertDialogFooter className="flex-row space-x-2">
-                  <AlertDialogCancel className="flex-1">
-                    <Text>Cancel</Text>
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    variant="destructive"
-                    disabled={confirmText.toLowerCase() !== "delete"}
-                    onPress={() => deleteWalletMutation.mutate()}
-                    className="flex-1"
-                  >
-                    <Text>Delete</Text>
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </View>
-        )}
+          })}
+          {isInitialized && (
+            <View className="mt-4">
+              <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
+              <AlertDialog onOpenChange={() => setConfirmText("")}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <Text>Delete Wallet</Text>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {`This action is irreversible. To confirm, please type "delete" in the box
+below.`}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    value={confirmText}
+                    onChangeText={setConfirmText}
+                    placeholder='Type "delete" to confirm'
+                    className="h-12"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <AlertDialogFooter className="flex-row space-x-2">
+                    <AlertDialogCancel className="flex-1">
+                      <Text>Cancel</Text>
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      disabled={confirmText.toLowerCase() !== "delete"}
+                      onPress={() => deleteWalletMutation.mutate()}
+                      className="flex-1"
+                    >
+                      <Text>Delete</Text>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </View>
+          )}
+        </ScrollView>
       </View>
     </NoahSafeAreaView>
   );

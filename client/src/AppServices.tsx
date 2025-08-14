@@ -1,13 +1,19 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { useSyncManager } from "~/hooks/useSyncManager";
 import { useServerRegistration } from "~/hooks/useServerRegistration";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
 
 const AppServices = memo(() => {
+  const [isReady, setIsReady] = useState(false);
+
   // Initialize all app-level services here
   useSyncManager(30_000);
-  useServerRegistration();
-  usePushNotifications();
+  useServerRegistration(isReady);
+  usePushNotifications(isReady);
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
 
   return null;
 });

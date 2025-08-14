@@ -12,6 +12,20 @@ const parseEmail = (email: string): string[] => email.split("@");
 
 export const PLATFORM = Platform.OS;
 
+const REGTEST_URL = !!process.env.EXPO_PUBLIC_REGTEST_URL
+  ? process.env.EXPO_PUBLIC_REGTEST_URL
+  : PLATFORM === "android"
+    ? "10.0.2.2"
+    : "localhost";
+
+const REGTEST_SERVER_URL = !!process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
+  ? process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
+  : PLATFORM === "android"
+    ? "http://10.0.2.2:3000"
+    : "http://localhost:3000";
+
+console.log("regtest url is ", REGTEST_URL, REGTEST_SERVER_URL);
+
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
@@ -29,7 +43,7 @@ const getArkDataPath = (): string => {
 export const getServerEndpoint = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
-      return "http://localhost:3000";
+      return REGTEST_SERVER_URL;
     case "signet":
       return "https://noah.noderunner.wtf";
     case "mainnet":
@@ -60,8 +74,8 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   signet: false,
   bitcoin: false,
   config: {
-    bitcoind: PLATFORM === "android" ? "http://10.0.2.2:18443" : "http://localhost:18443",
-    asp: PLATFORM === "android" ? "http://10.0.2.2:3535" : "http://localhost:3535",
+    bitcoind: `http://${REGTEST_URL}:18443`,
+    asp: `http://${REGTEST_URL}:3535`,
     bitcoind_user: "second",
     bitcoind_pass: "ark",
     vtxo_refresh_expiry_threshold: 288,

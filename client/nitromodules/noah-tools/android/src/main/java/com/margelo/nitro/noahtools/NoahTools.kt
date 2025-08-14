@@ -28,7 +28,7 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
 
   override fun getAppLogs(): Promise<Array<String>> {
     return Promise.async {
-      val logcat = ArrayDeque<String>(1000)  // Deque for efficient last-N lines
+      val logcat = ArrayDeque<String>(2000)  // Deque for efficient last-N lines
       val pid = Process.myPid().toString()  // Current process PID for filtering
       try {
         // Exec logcat to dump all logs with timestamps (-d = dump and exit, -v threadtime = format with time/thread)

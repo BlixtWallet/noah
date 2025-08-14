@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useAlert } from "~/contexts/AlertProvider";
 import {
   newAddress,
@@ -15,6 +15,7 @@ import {
   type OnchainPaymentResult,
 } from "../lib/paymentsApi";
 import { type DestinationTypes } from "~/lib/sendUtils";
+import { queryClient } from "~/queryClient";
 
 export function useGenerateOffchainAddress() {
   const { showAlert } = useAlert();
@@ -50,7 +51,6 @@ export function useGenerateLightningInvoice() {
 }
 
 export function useBoardArk() {
-  const queryClient = useQueryClient();
   const { showAlert } = useAlert();
 
   return useMutation({
@@ -77,7 +77,6 @@ type SendResult =
   | OnchainPaymentResult;
 
 export function useSend(destinationType: DestinationTypes) {
-  const queryClient = useQueryClient();
   const { showAlert } = useAlert();
 
   return useMutation<SendResult, Error, SendVariables>({
