@@ -11,6 +11,8 @@ pub struct PushNotificationData {
     pub body: Option<String>,
     pub data: String,
     pub priority: String,
+    // This is iOS only which makes the app wake up to do things
+    pub content_available: bool,
 }
 
 pub async fn send_push_notification(
@@ -52,7 +54,7 @@ pub async fn send_push_notification(
         .data(&data.data)
         .map_err(|e| ApiError::SerializeErr(e.to_string()))?
         .priority(data.priority)
-        .content_available(true)
+        .content_available(data.content_available)
         .mutable_content(false)
         .build()
         .map_err(|e| ApiError::ServerErr(e.to_string()))?;

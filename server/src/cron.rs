@@ -8,6 +8,7 @@ async fn background_sync(app_state: AppState) {
         body: None,
         data: r#"{"type": "background-sync"}"#.to_string(),
         priority: "high".to_string(),
+        content_available: true,
     };
 
     if let Err(e) = send_push_notification(State(app_state.clone()), data).await {
@@ -25,6 +26,7 @@ async fn maintenance(app_state: AppState) {
         body: None,
         data: r#"{"type": "maintenance"}"#.to_string(),
         priority: "high".to_string(),
+        content_available: true,
     };
 
     if let Err(e) = send_push_notification(State(app_state.clone()), data).await {
