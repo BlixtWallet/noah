@@ -8,15 +8,7 @@ on:
       - "server/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - ".github/workflows/**"
-
-  pull_request:
-    paths:
-      - "server/**"
-      - "scripts/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/**"
+      - ".github/workflows/server-push.yml"
 
 jobs:
   build-and-push:
@@ -42,6 +34,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ghcr.io/blixtwallet/noah-server:latest
