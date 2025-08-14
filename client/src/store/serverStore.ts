@@ -22,6 +22,7 @@ const zustandStorage: StateStorage = {
 interface ServerState {
   isRegisteredWithServer: boolean;
   setRegisteredWithServer: (isRegistered: boolean) => void;
+  resetRegistration: () => void;
 }
 
 export const useServerStore = create<ServerState>()(
@@ -29,6 +30,7 @@ export const useServerStore = create<ServerState>()(
     (set) => ({
       isRegisteredWithServer: false,
       setRegisteredWithServer: (isRegistered) => set({ isRegisteredWithServer: isRegistered }),
+      resetRegistration: () => set({ isRegisteredWithServer: false }),
     }),
     {
       name: "server-storage",

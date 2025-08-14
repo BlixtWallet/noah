@@ -21,8 +21,8 @@ async fn background_sync(app_state: AppState) {
 async fn maintenance(app_state: AppState) {
     tracing::info!("Maintenance task running");
     let data = crate::push::PushNotificationData {
-        title: Some("Maintenance".to_string()),
-        body: Some("Running daily maintenance".to_string()),
+        title: None,
+        body: None,
         data: r#"{"type": "maintenance"}"#.to_string(),
         priority: "high".to_string(),
     };
