@@ -3,7 +3,6 @@ use axum::{
     extract::{Query, State},
     http::StatusCode,
 };
-use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::str::{self, FromStr};
 
@@ -109,20 +108,32 @@ pub struct GetK1 {
     pub tag: String,
 }
 
+use std::time::SystemTime;
+
+const MAX_K1_VALUES: usize = 110;
+const K1_VALUES_TO_REMOVE: usize = 10;
+
+use rand::RngCore;
+
 pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
     let mut k1_bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut k1_bytes);
     let k1 = hex::encode(k1_bytes);
 
-    state.k1_values.insert(k1.clone(), ());
+    state.k1_values.insert(k1.clone(), SystemTime::now());
 
     // Keep the map size around 100
-    if state.k1_values.len() > 110 {
-        let keys_to_remove: Vec<String> = state
+    if state.k1_values.len() > MAX_K1_VALUES {
+        let mut entries: Vec<_> = state
             .k1_values
             .iter()
-            .take(10)
-            .map(|entry| entry.key().clone())
+            .map(|e| (e.key().clone(), *e.value()))
+            .collect();
+        entries.sort_by_key(|&(_, time)| time);
+        let keys_to_remove: Vec<String> = entries
+            .iter()
+            .take(K1_VALUES_TO_REMOVE)
+            .map(|(key, _)| key.clone())
             .collect();
 
         for key in keys_to_remove {

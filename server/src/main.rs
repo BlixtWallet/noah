@@ -24,12 +24,14 @@ mod migrations;
 mod push;
 mod utils;
 
+use std::time::SystemTime;
+
 type AppState = Arc<DbConnection>;
 
 #[derive(Clone)]
-struct DbConnection {
-    conn: libsql::Connection,
-    k1_values: Arc<DashMap<String, ()>>,
+pub struct DbConnection {
+    pub conn: libsql::Connection,
+    pub k1_values: Arc<DashMap<String, SystemTime>>,
 }
 
 #[tokio::main]
@@ -71,7 +73,9 @@ async fn main() -> anyhow::Result<()> {
         k1_values: Arc::new(DashMap::new()),
     });
 
-    let _cron_handle = cron_scheduler(app_state.clone())?;
+    let cron_handle = cron_scheduler(app_state.clone()).await?;
+
+    cron_handle.start().await?;
 
     let v0_router = Router::new()
         .route("/health", get(health_check))

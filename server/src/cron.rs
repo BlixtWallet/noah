@@ -1,6 +1,6 @@
 use crate::{AppState, push::send_push_notification};
 use axum::extract::State;
-use tokio_cron::{Job, Scheduler};
+use tokio_cron_scheduler::{Job, JobScheduler};
 
 async fn background_sync(app_state: AppState) {
     let data = crate::push::PushNotificationData {
@@ -32,25 +32,27 @@ async fn maintenance(app_state: AppState) {
     }
 }
 
-pub fn cron_scheduler(app_state: AppState) -> anyhow::Result<Scheduler> {
-    let mut sched = Scheduler::utc();
+pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler> {
+    let sched = JobScheduler::new().await?;
 
     let background_sync_cron =
-        std::env::var("BACKGROUND_SYNC_CRON").unwrap_or_else(|_| "0 0 */2 * * *".to_string());
+        std::env::var("BACKGROUND_SYNC_CRON").unwrap_or_else(|_| "every 2 hours".to_string());
     let maintenance_cron =
-        std::env::var("MAINTENANCE_CRON").unwrap_or_else(|_| "0 0 0 */1 * *".to_string());
+        std::env::var("MAINTENANCE_CRON").unwrap_or_else(|_| "every 12 hours".to_string());
 
     let bg_sync_app_state = app_state.clone();
-    sched.add(Job::new(&background_sync_cron, move || {
+    let bg_job = Job::new_async(&background_sync_cron, move |_, _| {
         let app_state = bg_sync_app_state.clone();
-        background_sync(app_state)
-    }));
+        Box::pin(background_sync(app_state))
+    })?;
+    sched.add(bg_job).await?;
 
     let maintenance_app_state = app_state.clone();
-    sched.add(Job::new(&maintenance_cron, move || {
+    let maintenance_job = Job::new_async(&maintenance_cron, move |_, _| {
         let app_state = maintenance_app_state.clone();
-        maintenance(app_state)
-    }));
+        Box::pin(maintenance(app_state))
+    })?;
+    sched.add(maintenance_job).await?;
 
     Ok(sched)
 }
