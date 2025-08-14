@@ -13,10 +13,10 @@ export const usePushNotifications = () => {
 
   useEffect(() => {
     const register = async () => {
-      if (!isRegisteredWithServer) {
-        log.d("Not registered with server, skipping push notification registration");
-        return;
-      }
+      // if (!isRegisteredWithServer) {
+      //   log.d("Not registered with server, skipping push notification registration");
+      //   return;
+      // }
 
       try {
         const token = await registerForPushNotificationsAsync();

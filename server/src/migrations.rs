@@ -22,19 +22,6 @@ const MIGRATIONS: &[&str] = &[
     // To add a new migration, add a new raw string literal here.
     // e.g. r#"ALTER TABLE users ADD COLUMN email TEXT;"#,
     r#"
-    CREATE TABLE k1_values (
-        k1 TEXT PRIMARY KEY,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TRIGGER limit_k1_values
-    AFTER INSERT ON k1_values
-    WHEN (SELECT COUNT(*) FROM k1_values) > 100
-    BEGIN
-        DELETE FROM k1_values WHERE k1 IN (SELECT k1 FROM k1_values ORDER BY created_at ASC LIMIT (SELECT COUNT(*) - 100 FROM k1_values));
-    END;
-    "#,
-    r#"
     CREATE TABLE push_tokens (
         pubkey TEXT PRIMARY KEY,
         push_token TEXT NOT NULL,

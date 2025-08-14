@@ -1,6 +1,7 @@
 import {
   createMnemonic,
   loadWallet as loadWalletNitro,
+  createWallet as createWalletNitro,
   onchainBalance as onchainBalanceNitro,
   offchainBalance as offchainBalanceNitro,
   sync as syncNitro,
@@ -56,7 +57,7 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
     await closeWalletNitro();
   }
 
-  await loadWalletNitro(ARK_DATA_PATH, {
+  await createWalletNitro(ARK_DATA_PATH, {
     ...creationConfig,
     mnemonic,
   });
@@ -64,6 +65,9 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
   await Keychain.setGenericPassword(USERNAME, mnemonic, {
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
+
+  // After creating the wallet, load wallet into memory.
+  await loadWalletNitro(ARK_DATA_PATH, mnemonic);
 
   // The first time we generate a pubkey, the index should be undefined.
   // After that, we can use index 0 to get the static pubkey.
@@ -78,18 +82,26 @@ export const createWallet = async () => {
   await createWalletFromMnemonic(mnemonic);
 };
 
-export const loadWallet = async () => {
+const loadWallet = async () => {
   const credentials = await Keychain.getGenericPassword({
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
 
-  if (!credentials) {
-    // This is not an error, it just means the wallet is not created yet.
-    return false;
+  if (!credentials || !credentials.password) {
+    throw new Error("No wallet found. Please create a wallet first.");
   }
 
-  await createWalletFromMnemonic(credentials.password);
+  await loadWalletNitro(ARK_DATA_PATH, credentials.password);
   return true;
+};
+
+export const loadWalletIfNeeded = async () => {
+  const isLoaded = await isWalletLoadedNitro();
+  if (isLoaded) {
+    return true;
+  }
+
+  return await loadWallet();
 };
 
 export const fetchOnchainBalance = async () => {

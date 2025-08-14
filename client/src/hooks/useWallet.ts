@@ -8,7 +8,7 @@ import {
   fetchOnchainBalance,
   fetchOffchainBalance,
   deleteWallet as deleteWalletAction,
-  loadWallet as loadWalletAction,
+  loadWalletIfNeeded as loadWalletAction,
   sync as syncAction,
   onchainSync as onchainSyncAction,
 } from "../lib/walletApi";
