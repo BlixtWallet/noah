@@ -44,4 +44,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/BlixtWallet/noah-server:latest
+          tags: ghcr.io/blixtwallet/noah-server:latest
