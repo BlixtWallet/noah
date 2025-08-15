@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post},
 };
 mod gated_api_v0;
+mod private_api_v0;
 mod public_api_v0;
 use dashmap::DashMap;
 use std::{
@@ -17,7 +18,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     cron::cron_scheduler,
     gated_api_v0::{register, register_push_token, submit_invoice},
-    public_api_v0::{get_k1, health_check, lnurlp_request},
+    private_api_v0::health_check,
+    public_api_v0::{get_k1, lnurlp_request},
 };
 
 mod cron;
@@ -55,6 +57,9 @@ async fn main() -> anyhow::Result<()> {
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()?;
+    let private_port = std::env::var("PRIVATE_PORT")
+        .unwrap_or_else(|_| "3099".to_string())
+        .parse::<u16>()?;
 
     let lnurl_domain = std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
 
@@ -86,7 +91,6 @@ async fn main() -> anyhow::Result<()> {
     cron_handle.start().await?;
 
     let v0_router = Router::new()
-        .route("/health", get(health_check))
         .route("/getk1", get(get_k1))
         .route("/register", get(register))
         .route("/register_push_token", post(register_push_token))
@@ -103,6 +107,18 @@ async fn main() -> anyhow::Result<()> {
     let addr = SocketAddr::from((host, port));
     tracing::debug!("server started listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
+
+    let private_addr = SocketAddr::from((host, private_port));
+    let private_router = Router::new()
+        .route("/health", get(health_check))
+        .layer(TraceLayer::new_for_http());
+    tracing::debug!("private server started listening on {}", private_addr);
+    let private_listener = tokio::net::TcpListener::bind(private_addr).await?;
+
+    tokio::spawn(async move {
+        axum::serve(private_listener, private_router).await.unwrap();
+    });
+
     axum::serve(listener, app).await?;
 
     Ok(())
