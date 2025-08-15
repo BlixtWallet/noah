@@ -3,7 +3,8 @@ use axum::{
     Router,
     routing::{get, post},
 };
-mod api_v0;
+mod gated_api_v0;
+mod public_api_v0;
 use dashmap::DashMap;
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -14,8 +15,9 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    api_v0::{get_k1, health_check, lnurlp_request, register, register_push_token, submit_invoice},
     cron::cron_scheduler,
+    gated_api_v0::{register, register_push_token, submit_invoice},
+    public_api_v0::{get_k1, health_check, lnurlp_request},
 };
 
 mod cron;
