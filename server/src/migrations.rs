@@ -8,6 +8,7 @@ const MIGRATIONS: &[&str] = &[
     r#"
     CREATE TABLE users (
         pubkey TEXT PRIMARY KEY,
+        lightning_address TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );

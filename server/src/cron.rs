@@ -11,7 +11,7 @@ async fn background_sync(app_state: AppState) {
         content_available: true,
     };
 
-    if let Err(e) = send_push_notification(State(app_state.clone()), data).await {
+    if let Err(e) = send_push_notification(app_state.clone(), data, None).await {
         tracing::error!(
             "Failed to send push notification for background sync: {}",
             e
@@ -29,7 +29,7 @@ async fn maintenance(app_state: AppState) {
         content_available: true,
     };
 
-    if let Err(e) = send_push_notification(State(app_state.clone()), data).await {
+    if let Err(e) = send_push_notification(app_state.clone(), data, None).await {
         tracing::error!("Failed to send push notification for maintenance: {}", e);
     }
 }

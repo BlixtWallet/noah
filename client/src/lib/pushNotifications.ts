@@ -6,7 +6,7 @@ import Constants from "expo-constants";
 import { PLATFORM, getServerEndpoint } from "~/constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { backgroundSync, maintenance } from "./tasks";
+import { backgroundSync, maintenance, submitInvoice } from "./tasks";
 import { peakKeyPair } from "./paymentsApi";
 import { signMessage } from "./walletApi";
 
@@ -37,6 +37,13 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         await backgroundSync();
       } else if (notificationData.type === "maintenance") {
         await maintenance();
+      } else if (notificationData.type === "lightning-invoice-request") {
+        log.d("Received lightning invoice request", [notificationData]);
+        // TODO: Prompt user to generate and submit invoice for the given amount
+        const amountMsat = parseInt(notificationData.amount);
+        log.d(`Request for ${amountMsat} msats`);
+        // This is where you would generate a real invoice
+        await submitInvoice(notificationData.request_id, amountMsat);
       }
     } catch (e) {
       captureException(

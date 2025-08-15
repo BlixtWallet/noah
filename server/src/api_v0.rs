@@ -4,9 +4,15 @@ use axum::{
     http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
+use serde_json;
 use std::str::{self, FromStr};
 
-use crate::{AppState, errors::ApiError, utils::verify_message};
+use crate::{
+    AppState,
+    errors::ApiError,
+    push::{PushNotificationData, send_push_notification},
+    utils::verify_message,
+};
 
 #[derive(Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -198,5 +204,138 @@ pub async fn register_push_token(
         )
         .await?;
 
+    Ok(())
+}
+
+use axum::extract::Path;
+use std::time::Duration;
+use tokio::{sync::oneshot, time::timeout};
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LnurlpFirstResponse {
+    callback: String,
+    max_sendable: u64,
+    min_sendable: u64,
+    metadata: String,
+    tag: String,
+    comment_allowed: u16,
+}
+
+#[derive(Serialize)]
+pub struct LnurlpSecondResponse {
+    pr: String,
+    routes: Vec<String>,
+}
+
+#[derive(Deserialize)]
+pub struct LnurlpRequestQuery {
+    amount: Option<u64>,
+}
+
+pub async fn lnurlp_request(
+    State(state): State<AppState>,
+    Path(username): Path<String>,
+    Query(query): Query<LnurlpRequestQuery>,
+) -> anyhow::Result<axum::response::Json<serde_json::Value>, ApiError> {
+    let domain = std::env::var("LN_ADDRESS_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+    let lightning_address = format!("{}@{}", username, domain);
+
+    tracing::debug!("Lightning address is {}", lightning_address);
+
+    let mut rows = state
+        .conn
+        .query(
+            "SELECT pubkey FROM users WHERE lightning_address = ?",
+            libsql::params![lightning_address.clone()],
+        )
+        .await?;
+
+    let pubkey = match rows.next().await? {
+        Some(row) => row.get::<String>(0)?,
+        None => return Err(ApiError::InvalidArgument("User not found".to_string())),
+    };
+
+    if query.amount.is_none() {
+        let metadata = serde_json::json!([
+            ["text/identifier", lightning_address],
+            [
+                "text/plain",
+                format!("Paying satoshis to {}", lightning_address)
+            ]
+        ])
+        .to_string();
+
+        let response = LnurlpFirstResponse {
+            callback: format!("https://{}/.well-known/lnurlp/{}", domain, username),
+            max_sendable: 100000000,
+            min_sendable: 1000,
+            metadata,
+            tag: "payRequest".to_string(),
+            comment_allowed: 280,
+        };
+        return Ok(Json(serde_json::to_value(response).unwrap()));
+    }
+
+    let amount = query.amount.unwrap();
+
+    let (tx, rx) = oneshot::channel();
+    let request_id = uuid::Uuid::new_v4().to_string();
+    state.invoice_requests.insert(request_id.clone(), tx);
+
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        let data = PushNotificationData {
+            title: Some("Lightning Invoice Request".to_string()),
+            body: Some(format!("Someone wants to pay you {} sats!", amount / 1000)),
+            data: format!(
+                r#"{{"type": "lightning-invoice-request", "request_id": "{}", "amount": {}}}"#,
+                request_id, amount
+            ),
+            priority: "high".to_string(),
+            content_available: true,
+        };
+        if let Err(e) = send_push_notification(state_clone, data, Some(pubkey)).await {
+            tracing::error!("Failed to send push notification: {}", e);
+        }
+    });
+
+    let invoice = timeout(Duration::from_secs(45), rx)
+        .await
+        .map_err(|_| ApiError::ServerErr("Request timed out".to_string()))?
+        .map_err(|_| ApiError::ServerErr("Failed to receive invoice".to_string()))?;
+
+    let response = LnurlpSecondResponse {
+        pr: invoice,
+        routes: vec![],
+    };
+    Ok(Json(serde_json::to_value(response).unwrap()))
+}
+
+#[derive(Deserialize)]
+pub struct SubmitInvoicePayload {
+    request_id: String,
+    invoice: String,
+    pubkey: String,
+    sig: String,
+}
+
+pub async fn submit_invoice(
+    State(state): State<AppState>,
+    Json(payload): Json<SubmitInvoicePayload>,
+) -> Result<(), ApiError> {
+    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
+    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.pubkey)?;
+
+    let is_valid = verify_message(&payload.request_id, signature, &public_key).await?;
+
+    if !is_valid {
+        return Err(ApiError::InvalidSignature);
+    }
+
+    if let Some((_, tx)) = state.invoice_requests.remove(&payload.request_id) {
+        tx.send(payload.invoice)
+            .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
+    }
     Ok(())
 }

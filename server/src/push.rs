@@ -16,8 +16,9 @@ pub struct PushNotificationData {
 }
 
 pub async fn send_push_notification(
-    State(app_state): State<AppState>,
+    app_state: AppState,
     data: PushNotificationData,
+    pubkey: Option<String>,
 ) -> anyhow::Result<(), ApiError> {
     let access_token = std::env::var("EXPO_ACCESS_TOKEN")
         .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
@@ -26,14 +27,27 @@ pub async fn send_push_notification(
         access_token: Some(access_token),
     });
 
-    let mut rows = app_state
-        .conn
-        .query("SELECT push_token FROM push_tokens", ())
-        .await?;
-
     let mut push_tokens = Vec::new();
-    while let Some(row) = rows.next().await? {
-        push_tokens.push(row.get::<String>(0)?);
+
+    if let Some(pubkey) = pubkey {
+        let mut rows = app_state
+            .conn
+            .query(
+                "SELECT push_token FROM push_tokens WHERE pubkey = ?",
+                libsql::params![pubkey],
+            )
+            .await?;
+        if let Some(row) = rows.next().await? {
+            push_tokens.push(row.get::<String>(0)?);
+        }
+    } else {
+        let mut rows = app_state
+            .conn
+            .query("SELECT push_token FROM push_tokens", ())
+            .await?;
+        while let Some(row) = rows.next().await? {
+            push_tokens.push(row.get::<String>(0)?);
+        }
     }
 
     if push_tokens.is_empty() {
