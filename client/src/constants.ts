@@ -24,8 +24,6 @@ const REGTEST_SERVER_URL = !!process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
     ? "http://10.0.2.2:3000"
     : "http://localhost:3000";
 
-console.log("regtest url is ", REGTEST_URL, REGTEST_SERVER_URL);
-
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {
     case "regtest":

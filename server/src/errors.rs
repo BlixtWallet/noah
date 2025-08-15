@@ -7,12 +7,8 @@ use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
-    #[error("Gzip error: {0}")]
-    GzipErr(String),
     #[error("Invalid argument: {0}")]
     InvalidArgument(String),
-    #[error("Deserialize error: {0}")]
-    DeserializeErr(String),
     #[error("Serialize error: {0}")]
     SerializeErr(String),
     #[error("Server error: {0}")]
@@ -38,9 +34,7 @@ pub struct ErrorResponse {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, reason) = match self {
-            ApiError::GzipErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ApiError::InvalidArgument(e) => (StatusCode::BAD_REQUEST, e.to_string()),
-            ApiError::DeserializeErr(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::SerializeErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ApiError::ServerErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ApiError::Database(e) => (

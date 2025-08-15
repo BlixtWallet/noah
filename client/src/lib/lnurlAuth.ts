@@ -48,8 +48,7 @@ export const lnurlAuth = async (lnUrlStr: string) => {
   if (action) {
     url.searchParams.append("action", action);
   }
-  log.d("url", [url]);
-  // 4 omitted
+
   const finalUrl = url.toString();
   log.d("Fetching URL:", [finalUrl]);
   const result = await fetch(finalUrl);

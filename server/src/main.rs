@@ -3,7 +3,8 @@ use axum::{
     Router,
     routing::{get, post},
 };
-mod api_v0;
+mod gated_api_v0;
+mod public_api_v0;
 use dashmap::DashMap;
 use std::{
     net::{Ipv4Addr, SocketAddr},
@@ -14,8 +15,9 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    api_v0::{get_k1, health_check, register, register_push_token},
     cron::cron_scheduler,
+    gated_api_v0::{register, register_push_token, submit_invoice},
+    public_api_v0::{get_k1, health_check, lnurlp_request},
 };
 
 mod cron;
@@ -26,12 +28,14 @@ mod utils;
 
 use std::time::SystemTime;
 
-type AppState = Arc<DbConnection>;
+type AppState = Arc<AppStruct>;
 
 #[derive(Clone)]
-pub struct DbConnection {
+pub struct AppStruct {
+    pub lnurl_domain: String,
     pub conn: libsql::Connection,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
+    pub invoice_requests: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
 }
 
 #[tokio::main]
@@ -52,6 +56,8 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()?;
 
+    let lnurl_domain = std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
+
     let turso_url =
         std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
     let turso_api_key = std::env::var("TURSO_API_KEY")
@@ -68,9 +74,11 @@ async fn main() -> anyhow::Result<()> {
 
     migrations::migrate(&conn).await?;
 
-    let app_state = Arc::new(DbConnection {
+    let app_state = Arc::new(AppStruct {
+        lnurl_domain,
         conn,
         k1_values: Arc::new(DashMap::new()),
+        invoice_requests: Arc::new(DashMap::new()),
     });
 
     let cron_handle = cron_scheduler(app_state.clone()).await?;
@@ -81,10 +89,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health_check))
         .route("/getk1", get(get_k1))
         .route("/register", get(register))
-        .route("/register_push_token", post(register_push_token));
+        .route("/register_push_token", post(register_push_token))
+        .route("/lnurlp/submit_invoice", post(submit_invoice));
+
+    let lnurl_router = Router::new().route("/.well-known/lnurlp/{username}", get(lnurlp_request));
 
     let app = Router::new()
         .nest("/v0", v0_router)
+        .merge(lnurl_router)
         .with_state(app_state)
         .layer(TraceLayer::new_for_http());
 
