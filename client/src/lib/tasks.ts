@@ -60,5 +60,5 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
     throw new Error(`Failed to submit invoice: ${response.status} ${errorBody}`);
   }
 
-  log.d("[Maintenance Job] completed");
+  log.d("[Submit Invoice Job] completed");
 }

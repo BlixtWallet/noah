@@ -113,8 +113,8 @@ pub async fn lnurlp_request(
     Path(username): Path<String>,
     Query(query): Query<LnurlpRequestQuery>,
 ) -> anyhow::Result<axum::response::Json<serde_json::Value>, ApiError> {
-    let domain = std::env::var("LN_ADDRESS_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
-    let lightning_address = format!("{}@{}", username, domain);
+    let lnurl_domain = &state.lnurl_domain;
+    let lightning_address = format!("{}@{}", username, lnurl_domain);
 
     tracing::debug!("Lightning address is {}", lightning_address);
 
@@ -142,14 +142,16 @@ pub async fn lnurlp_request(
         .to_string();
 
         let response = LnurlpDefaultResponse {
-            callback: format!("https://{}/.well-known/lnurlp/{}", domain, username),
+            callback: format!("https://{}/.well-known/lnurlp/{}", lnurl_domain, username),
             max_sendable: 100000000,
             min_sendable: 1000,
             metadata,
             tag: "payRequest".to_string(),
             comment_allowed: 280,
         };
-        return Ok(Json(serde_json::to_value(response).unwrap()));
+        return Ok(Json(
+            serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
+        ));
     }
 
     let amount = query.amount.unwrap();
@@ -184,7 +186,9 @@ pub async fn lnurlp_request(
         pr: invoice,
         routes: vec![],
     };
-    Ok(Json(serde_json::to_value(response).unwrap()))
+    Ok(Json(
+        serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
+    ))
 }
 
 /// Represents the response for a health check request.

@@ -51,7 +51,7 @@ pub async fn register(
     State(state): State<AppState>,
     Query(payload): Query<RegisterPayload>,
 ) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
-    let lnurl_domain = std::env::var("LNURL_DOMAIN").unwrap();
+    let lnurl_domain = &state.lnurl_domain;
 
     let conn = &state.conn;
 
@@ -70,12 +70,6 @@ pub async fn register(
         payload.key,
         payload.k1
     );
-
-    if !is_valid {
-        return Err(ApiError::InvalidSignature);
-    }
-
-    tracing::debug!("Registration for pubkey: {} is valid", payload.key);
 
     let mut rows = conn
         .query(

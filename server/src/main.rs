@@ -28,10 +28,11 @@ mod utils;
 
 use std::time::SystemTime;
 
-type AppState = Arc<DbConnection>;
+type AppState = Arc<AppStruct>;
 
 #[derive(Clone)]
-pub struct DbConnection {
+pub struct AppStruct {
+    pub lnurl_domain: String,
     pub conn: libsql::Connection,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
     pub invoice_requests: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
@@ -55,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()?;
 
-    let _lnurl_domain = std::env::var("LNURL_DOMAIN")?;
+    let lnurl_domain = std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
 
     let turso_url =
         std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
@@ -73,7 +74,8 @@ async fn main() -> anyhow::Result<()> {
 
     migrations::migrate(&conn).await?;
 
-    let app_state = Arc::new(DbConnection {
+    let app_state = Arc::new(AppStruct {
+        lnurl_domain,
         conn,
         k1_values: Arc::new(DashMap::new()),
         invoice_requests: Arc::new(DashMap::new()),
