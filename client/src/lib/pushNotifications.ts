@@ -130,7 +130,7 @@ export async function registerPushTokenWithServer(pushToken: string) {
   }
 
   const index = 0;
-  const { public_key: pubkey } = await peakKeyPair(index);
+  const { public_key: key } = await peakKeyPair(index);
   const signature = await signMessage(k1, index);
 
   const registerUrl = `${serverEndpoint}/v0/register_push_token`;
@@ -141,7 +141,7 @@ export async function registerPushTokenWithServer(pushToken: string) {
     },
     body: JSON.stringify({
       push_token: pushToken,
-      pubkey,
+      key,
       sig: signature,
       k1,
     }),

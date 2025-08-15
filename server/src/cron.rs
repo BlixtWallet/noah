@@ -1,5 +1,4 @@
 use crate::{AppState, push::send_push_notification};
-use axum::extract::State;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
 async fn background_sync(app_state: AppState) {

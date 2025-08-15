@@ -1,5 +1,4 @@
 use anyhow::Context;
-use axum::extract::State;
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
 use serde::Serialize;
 

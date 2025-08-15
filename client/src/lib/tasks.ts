@@ -35,7 +35,7 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
   const url = `${serverEndpoint}/v0/lnurlp/submit_invoice`;
 
   const index = 0;
-  const { public_key: pubkey } = await peakKeyPair(index);
+  const { public_key: key } = await peakKeyPair(index);
   const signature = await signMessage(requestId, index);
 
   const sats = amountMsat / 1000;
@@ -48,9 +48,9 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      request_id: requestId,
+      k1: requestId,
       invoice,
-      pubkey,
+      key,
       sig: signature,
     }),
   });

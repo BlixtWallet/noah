@@ -5,14 +5,18 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::str::{self, FromStr};
 
 use crate::{
     AppState,
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
-    utils::verify_message,
+    utils::verify_auth,
 };
+use axum::extract::Path;
+use rand::RngCore;
+use std::time::Duration;
+use std::time::SystemTime;
+use tokio::{sync::oneshot, time::timeout};
 
 #[derive(Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -46,11 +50,11 @@ pub async fn register(
         return Err(ApiError::InvalidArgument("Invalid k1".to_string()));
     }
 
-    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
+    let is_valid = verify_auth(payload.k1.clone(), payload.sig, payload.key.clone()).await?;
 
-    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.key)?;
-
-    let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
+    if !is_valid {
+        return Err(ApiError::InvalidSignature);
+    }
 
     tracing::debug!(
         "Registering user with pubkey: {} and k1: {}",
@@ -114,12 +118,8 @@ pub struct GetK1 {
     pub tag: String,
 }
 
-use std::time::SystemTime;
-
 const MAX_K1_VALUES: usize = 110;
 const K1_VALUES_TO_REMOVE: usize = 10;
-
-use rand::RngCore;
 
 pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
     let mut k1_bytes = [0u8; 32];
@@ -156,7 +156,7 @@ pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>
 #[derive(Deserialize)]
 pub struct RegisterPushToken {
     pub push_token: String,
-    pub pubkey: String,
+    pub key: String,
     pub sig: String,
     pub k1: String,
 }
@@ -167,13 +167,10 @@ pub async fn register_push_token(
 ) -> Result<(), ApiError> {
     tracing::debug!(
         "Received push token registration request: {:?}",
-        payload.pubkey
+        payload.key
     );
 
-    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
-    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.pubkey)?;
-
-    let is_valid = verify_message(&payload.k1, signature, &public_key).await?;
+    let is_valid = verify_auth(payload.k1, payload.sig, payload.key.clone()).await?;
 
     if !is_valid {
         return Err(ApiError::InvalidSignature);
@@ -181,14 +178,14 @@ pub async fn register_push_token(
 
     tracing::debug!(
         "Push token registration for pubkey: {} is valid",
-        payload.pubkey
+        payload.key
     );
 
     let mut rows = app_state
         .conn
         .query(
             "SELECT pubkey FROM users WHERE pubkey = ?",
-            libsql::params![payload.pubkey.clone()],
+            libsql::params![payload.key.clone()],
         )
         .await?;
 
@@ -200,16 +197,12 @@ pub async fn register_push_token(
         .conn
         .execute(
             "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
-            libsql::params![payload.pubkey, payload.push_token],
+            libsql::params![payload.key, payload.push_token],
         )
         .await?;
 
     Ok(())
 }
-
-use axum::extract::Path;
-use std::time::Duration;
-use tokio::{sync::oneshot, time::timeout};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -314,9 +307,9 @@ pub async fn lnurlp_request(
 
 #[derive(Deserialize)]
 pub struct SubmitInvoicePayload {
-    request_id: String,
+    k1: String,
     invoice: String,
-    pubkey: String,
+    key: String,
     sig: String,
 }
 
@@ -324,16 +317,13 @@ pub async fn submit_invoice(
     State(state): State<AppState>,
     Json(payload): Json<SubmitInvoicePayload>,
 ) -> Result<(), ApiError> {
-    let signature = bitcoin::secp256k1::ecdsa::Signature::from_str(&payload.sig)?;
-    let public_key = bitcoin::secp256k1::PublicKey::from_str(&payload.pubkey)?;
-
-    let is_valid = verify_message(&payload.request_id, signature, &public_key).await?;
+    let is_valid = verify_auth(payload.k1.clone(), payload.sig, payload.key).await?;
 
     if !is_valid {
         return Err(ApiError::InvalidSignature);
     }
 
-    if let Some((_, tx)) = state.invoice_requests.remove(&payload.request_id) {
+    if let Some((_, tx)) = state.invoice_requests.remove(&payload.k1) {
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
     }
