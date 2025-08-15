@@ -24,9 +24,15 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         return;
       }
 
-      const notificationData = (data as any)?.data?.body;
+      log.d("[Background Job] dataReceived", [data, typeof data]);
 
-      log.d("[Background Job] notificationData", [notificationData]);
+      let notificationData = (data as any)?.data?.body;
+
+      if (typeof notificationData === "string") {
+        notificationData = JSON.parse(notificationData);
+      }
+
+      log.d("[Background Job] notificationData", [notificationData, typeof notificationData]);
 
       if (!notificationData || !notificationData.type) {
         log.w("[Background Job] No data or type received", [notificationData]);
@@ -41,7 +47,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         log.d("Received lightning invoice request", [notificationData]);
         // TODO: Prompt user to generate and submit invoice for the given amount
         const amountMsat = parseInt(notificationData.amount);
-        log.d(`Request for ${amountMsat} msats`);
+
         // This is where you would generate a real invoice
         await submitInvoice(notificationData.request_id, amountMsat);
       }

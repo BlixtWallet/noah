@@ -163,8 +163,8 @@ pub async fn lnurlp_request(
     let state_clone = state.clone();
     tokio::spawn(async move {
         let data = PushNotificationData {
-            title: Some("Lightning Invoice Request".to_string()),
-            body: Some(format!("Someone wants to pay you {} sats!", amount / 1000)),
+            title: None,
+            body: None,
             data: format!(
                 r#"{{"type": "lightning-invoice-request", "request_id": "{}", "amount": {}}}"#,
                 request_id, amount
