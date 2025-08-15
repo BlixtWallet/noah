@@ -55,6 +55,8 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "3000".to_string())
         .parse::<u16>()?;
 
+    let _lnurl_domain = std::env::var("LNURL_DOMAIN")?;
+
     let turso_url =
         std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
     let turso_api_key = std::env::var("TURSO_API_KEY")

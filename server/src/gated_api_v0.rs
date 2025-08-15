@@ -2,9 +2,11 @@ use axum::{
     Json,
     extract::{Query, State},
 };
+use random_word::Lang;
 use serde::{Deserialize, Serialize};
 
 use crate::{AppState, errors::ApiError, utils::verify_auth};
+use rand::Rng;
 
 /// Represents events that can occur during LNURL-auth.
 #[derive(Serialize)]
@@ -36,6 +38,8 @@ pub struct RegisterPayload {
     pub sig: String,
     /// A unique, single-use secret for the authentication process.
     pub k1: String,
+    /// User chosen lightning address
+    pub ln_address: Option<String>,
 }
 
 /// Handles user registration via LNURL-auth.
@@ -47,6 +51,8 @@ pub async fn register(
     State(state): State<AppState>,
     Query(payload): Query<RegisterPayload>,
 ) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
+    let lnurl_domain = std::env::var("LNURL_DOMAIN").unwrap();
+
     let conn = &state.conn;
 
     if !state.k1_values.contains_key(&payload.k1) {
@@ -87,9 +93,14 @@ pub async fn register(
         }));
     }
 
+    let ln_address = payload.ln_address.unwrap_or_else(|| {
+        let number = rand::rng().random_range(0..1000);
+        format!("{}{}@{}", random_word::get(Lang::En), number, lnurl_domain)
+    });
+
     conn.execute(
-        "INSERT INTO users (pubkey) VALUES (?)",
-        libsql::params![payload.key],
+        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
+        libsql::params![payload.key, ln_address],
     )
     .await?;
 
