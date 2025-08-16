@@ -56,7 +56,7 @@ pub async fn register(
 
     let lnurl_domain = &state.lnurl_domain;
 
-    let conn = &state.conn;
+    let conn = state.db.connect()?;
 
     tracing::debug!(
         "Registering user with pubkey: {} and k1: {}",
@@ -136,8 +136,8 @@ pub async fn register_push_token(
         auth_payload.key
     );
 
-    let mut rows = app_state
-        .conn
+    let conn = app_state.db.connect()?;
+    let mut rows = conn
         .query(
             "SELECT pubkey FROM users WHERE pubkey = ?",
             libsql::params![auth_payload.key.clone()],
@@ -148,8 +148,8 @@ pub async fn register_push_token(
         return Err(ApiError::InvalidArgument("User not registered".to_string()));
     }
 
-    app_state
-        .conn
+    let conn = app_state.db.connect()?;
+    conn
         .execute(
             "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
             libsql::params![auth_payload.key, payload.push_token],
@@ -204,8 +204,8 @@ pub async fn get_user_info(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
 ) -> anyhow::Result<Json<UserInfoResponse>, ApiError> {
-    let mut rows = state
-        .conn
+    let conn = state.db.connect()?;
+    let mut rows = conn
         .query(
             "SELECT lightning_address FROM users WHERE pubkey = ?",
             libsql::params![auth_payload.key.clone()],
@@ -240,8 +240,8 @@ pub async fn update_ln_address(
         return Err(ApiError::InvalidArgument(e.to_string()));
     }
 
-    let mut rows = state
-        .conn
+    let conn = state.db.connect()?;
+    let mut rows = conn
         .query(
             "SELECT pubkey FROM users WHERE lightning_address = ?",
             libsql::params![payload.ln_address.clone()],
@@ -254,13 +254,12 @@ pub async fn update_ln_address(
         ));
     }
 
-    state
-        .conn
-        .execute(
-            "UPDATE users SET lightning_address = ? WHERE pubkey = ?",
-            libsql::params![payload.ln_address, auth_payload.key],
-        )
-        .await?;
+    let conn = state.db.connect()?;
+    conn.execute(
+        "UPDATE users SET lightning_address = ? WHERE pubkey = ?",
+        libsql::params![payload.ln_address, auth_payload.key],
+    )
+    .await?;
 
     Ok(())
 }

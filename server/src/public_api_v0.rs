@@ -118,8 +118,8 @@ pub async fn lnurlp_request(
 
     tracing::debug!("Lightning address is {}", lightning_address);
 
-    let mut rows = state
-        .conn
+    let conn = state.db.connect()?;
+    let mut rows = conn
         .query(
             "SELECT pubkey FROM users WHERE lightning_address = ?",
             libsql::params![lightning_address.clone()],

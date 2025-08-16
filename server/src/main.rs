@@ -38,7 +38,7 @@ type AppState = Arc<AppStruct>;
 #[derive(Clone)]
 pub struct AppStruct {
     pub lnurl_domain: String,
-    pub conn: libsql::Connection,
+    pub db: Arc<libsql::Database>,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
     pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
 }
@@ -77,14 +77,12 @@ async fn main() -> anyhow::Result<()> {
     let db = libsql::Builder::new_remote(turso_url, turso_api_key)
         .build()
         .await?;
-
     let conn = db.connect()?;
-
     migrations::migrate(&conn).await?;
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain,
-        conn,
+        db: Arc::new(db),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
     });

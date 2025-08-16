@@ -29,8 +29,8 @@ pub async fn send_push_notification(
     let mut push_tokens = Vec::new();
 
     if let Some(pubkey) = pubkey {
-        let mut rows = app_state
-            .conn
+        let conn = app_state.db.connect()?;
+        let mut rows = conn
             .query(
                 "SELECT push_token FROM push_tokens WHERE pubkey = ?",
                 libsql::params![pubkey],
@@ -40,10 +40,8 @@ pub async fn send_push_notification(
             push_tokens.push(row.get::<String>(0)?);
         }
     } else {
-        let mut rows = app_state
-            .conn
-            .query("SELECT push_token FROM push_tokens", ())
-            .await?;
+        let conn = app_state.db.connect()?;
+        let mut rows = conn.query("SELECT push_token FROM push_tokens", ()).await?;
         while let Some(row) = rows.next().await? {
             push_tokens.push(row.get::<String>(0)?);
         }
