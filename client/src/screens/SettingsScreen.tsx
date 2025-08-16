@@ -252,6 +252,7 @@ const SettingsScreen = () => {
                     deleteWalletMutation.mutate();
                   }
                 }}
+                isConfirmDisabled={confirmText.toLowerCase() !== "delete"}
               >
                 <Input
                   value={confirmText}

@@ -44,7 +44,7 @@ const updateLightningAddress = async (newAddress: string) => {
   if (!updateResponse.ok) {
     const errorBody = await updateResponse.text();
     log.w("Failed to update lightning address", [updateResponse.status, errorBody]);
-    throw new Error("Failed to update lightning address");
+    throw new Error(`Failed to update lightning address. Server responded with: ${errorBody}`);
   }
 
   return newAddress;
