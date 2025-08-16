@@ -50,7 +50,10 @@ const updateLightningAddress = async (newAddress: string) => {
   return newAddress;
 };
 
-export const useUpdateLightningAddress = () => {
+export const useUpdateLightningAddress = (callbacks?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) => {
   const { setLightningAddress } = useServerStore();
 
   return useMutation({
@@ -58,10 +61,11 @@ export const useUpdateLightningAddress = () => {
     onSuccess: (newAddress) => {
       setLightningAddress(newAddress);
       log.d("Successfully updated lightning address");
-      Alert.alert("Success", "Lightning address updated successfully.");
+      callbacks?.onSuccess?.();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       log.w("Failed to update lightning address", [error]);
+      callbacks?.onError?.(error);
       Alert.alert("Error", error.message);
     },
   });

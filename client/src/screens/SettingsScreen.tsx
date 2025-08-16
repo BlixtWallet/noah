@@ -49,8 +49,16 @@ const SettingsScreen = () => {
   const { lightningAddress, resetRegistration } = useServerStore();
   const [newLightningAddress, setNewLightningAddress] = useState("");
   const [showResetSuccess, setShowResetSuccess] = useState(false);
+  const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
-  const updateLightningAddressMutation = useUpdateLightningAddress();
+  const updateLightningAddressMutation = useUpdateLightningAddress({
+    onSuccess: () => {
+      setShowUpdateSuccess(true);
+      setTimeout(() => {
+        setShowUpdateSuccess(false);
+      }, 3000);
+    },
+  });
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -134,13 +142,19 @@ const SettingsScreen = () => {
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
+        {showResetSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>Server registration has been reset.</AlertDescription>
+          </Alert>
+        )}
+        {showUpdateSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>Lightning address has been updated.</AlertDescription>
+          </Alert>
+        )}
         <ScrollView className="flex-1 mb-16">
-          {showResetSuccess && (
-            <Alert icon={CheckCircle} className="mb-4">
-              <AlertTitle>Success!</AlertTitle>
-              <AlertDescription>Server registration has been reset.</AlertDescription>
-            </Alert>
-          )}
           {lightningAddress && (
             <CopyableSettingRow label="Lightning Address" value={lightningAddress} />
           )}
