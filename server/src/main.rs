@@ -1,6 +1,6 @@
 use anyhow::Context;
 use axum::{
-    Router,
+    Router, middleware,
     routing::{get, post},
 };
 mod gated_api_v0;
@@ -22,6 +22,7 @@ use crate::{
     public_api_v0::{get_k1, lnurlp_request},
 };
 
+mod app_middleware;
 mod cron;
 mod errors;
 mod migrations;
@@ -90,18 +91,25 @@ async fn main() -> anyhow::Result<()> {
 
     cron_handle.start().await?;
 
+    let auth_router = Router::new()
+        .route("/register", post(register))
+        .route("/register_push_token", post(register_push_token))
+        .route("/lnurlp/submit_invoice", post(submit_invoice))
+        .route_layer(middleware::from_fn_with_state(
+            app_state.clone(),
+            app_middleware::auth_middleware,
+        ));
+
     let v0_router = Router::new()
         .route("/getk1", get(get_k1))
-        .route("/register", get(register))
-        .route("/register_push_token", post(register_push_token))
-        .route("/lnurlp/submit_invoice", post(submit_invoice));
+        .merge(auth_router);
 
     let lnurl_router = Router::new().route("/.well-known/lnurlp/{username}", get(lnurlp_request));
 
     let app = Router::new()
         .nest("/v0", v0_router)
         .merge(lnurl_router)
-        .with_state(app_state)
+        .with_state(app_state.clone())
         .layer(TraceLayer::new_for_http());
 
     let addr = SocketAddr::from((host, port));

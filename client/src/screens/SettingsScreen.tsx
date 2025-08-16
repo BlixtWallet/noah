@@ -2,17 +2,6 @@ import { Pressable, ScrollView, View } from "react-native";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { useServerStore } from "../store/serverStore";
 import { APP_VARIANT } from "../config";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../components/ui/alert-dialog";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -25,6 +14,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
+import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 
 type Setting = {
   id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
@@ -66,8 +56,7 @@ const SettingsScreen = () => {
     } else if (item.id === "showLogs") {
       navigation.navigate("Logs");
     } else if (item.id === "resetRegistration") {
-      resetRegistration();
-      // TODO: Add toast notification
+      // This is handled by the AlertDialog now
     } else {
       navigation.navigate("EditConfiguration", {
         item: item as { id: keyof WalletConfig; title: string; value?: string },
@@ -144,6 +133,20 @@ const SettingsScreen = () => {
             if (item.id === "staticVtxoPubkey") {
               return <CopyableSettingRow key={item.id} label={item.title} value={item.value!} />;
             }
+            if (item.id === "resetRegistration") {
+              return (
+                <ConfirmationDialog
+                  key={item.id}
+                  trigger={<DangerZoneRow title={item.title} isPressable={item.isPressable} />}
+                  title="Reset Server Registration"
+                  description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
+                  onConfirm={() => {
+                    resetRegistration();
+                    // TODO: Add toast notification
+                  }}
+                />
+              );
+            }
             return (
               <Pressable
                 key={item.id}
@@ -166,43 +169,29 @@ const SettingsScreen = () => {
           {isInitialized && (
             <View className="mt-4">
               <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
-              <AlertDialog onOpenChange={() => setConfirmText("")}>
-                <AlertDialogTrigger asChild>
+              <ConfirmationDialog
+                trigger={
                   <Button variant="destructive">
                     <Text>Delete Wallet</Text>
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {`This action is irreversible. To confirm, please type "delete" in the box
-below.`}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <Input
-                    value={confirmText}
-                    onChangeText={setConfirmText}
-                    placeholder='Type "delete" to confirm'
-                    className="h-12"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <AlertDialogFooter className="flex-row space-x-2">
-                    <AlertDialogCancel className="flex-1">
-                      <Text>Cancel</Text>
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      disabled={confirmText.toLowerCase() !== "delete"}
-                      onPress={() => deleteWalletMutation.mutate()}
-                      className="flex-1"
-                    >
-                      <Text>Delete</Text>
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                }
+                title="Delete Wallet"
+                description={`This action is irreversible. To confirm, please type "delete" in the box below.`}
+                onConfirm={() => {
+                  if (confirmText.toLowerCase() === "delete") {
+                    deleteWalletMutation.mutate();
+                  }
+                }}
+              >
+                <Input
+                  value={confirmText}
+                  onChangeText={setConfirmText}
+                  placeholder='Type "delete" to confirm'
+                  className="h-12"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </ConfirmationDialog>
             </View>
           )}
         </ScrollView>

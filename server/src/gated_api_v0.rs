@@ -1,11 +1,8 @@
-use axum::{
-    Json,
-    extract::{Query, State},
-};
+use axum::{Extension, Json, extract::State};
 use random_word::Lang;
 use serde::{Deserialize, Serialize};
 
-use crate::{AppState, errors::ApiError, utils::verify_auth};
+use crate::{AppState, app_middleware::AuthPayload, errors::ApiError};
 use rand::Rng;
 
 /// Represents events that can occur during LNURL-auth.
@@ -34,8 +31,6 @@ pub struct LNUrlAuthResponse {
 pub struct RegisterPayload {
     /// The user's public key.
     pub key: String,
-    /// The signature proving ownership of the public key.
-    pub sig: String,
     /// A unique, single-use secret for the authentication process.
     pub k1: String,
     /// User chosen lightning address
@@ -49,26 +44,16 @@ pub struct RegisterPayload {
 /// the user in the database.
 pub async fn register(
     State(state): State<AppState>,
-    Query(payload): Query<RegisterPayload>,
+    Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
     let lnurl_domain = &state.lnurl_domain;
 
     let conn = &state.conn;
 
-    if !state.k1_values.contains_key(&payload.k1) {
-        return Err(ApiError::InvalidArgument("Invalid k1".to_string()));
-    }
-
-    let is_valid = verify_auth(payload.k1.clone(), payload.sig, payload.key.clone()).await?;
-
-    if !is_valid {
-        return Err(ApiError::InvalidSignature);
-    }
-
     tracing::debug!(
         "Registering user with pubkey: {} and k1: {}",
         payload.key,
-        payload.k1
+        payload.k1,
     );
 
     let mut rows = conn
@@ -112,12 +97,6 @@ pub async fn register(
 pub struct RegisterPushToken {
     /// The Expo push token for the user's device.
     pub push_token: String,
-    /// The user's public key.
-    pub key: String,
-    /// The signature for authentication.
-    pub sig: String,
-    /// The `k1` value for authentication.
-    pub k1: String,
 }
 
 /// Registers a push notification token for a user.
@@ -126,29 +105,19 @@ pub struct RegisterPushToken {
 /// the server to send push notifications to the user's device.
 pub async fn register_push_token(
     State(app_state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPushToken>,
 ) -> Result<(), ApiError> {
     tracing::debug!(
-        "Received push token registration request: {:?}",
-        payload.key
-    );
-
-    let is_valid = verify_auth(payload.k1, payload.sig, payload.key.clone()).await?;
-
-    if !is_valid {
-        return Err(ApiError::InvalidSignature);
-    }
-
-    tracing::debug!(
-        "Push token registration for pubkey: {} is valid",
-        payload.key
+        "Received push token registration request for pubkey: {}",
+        auth_payload.key
     );
 
     let mut rows = app_state
         .conn
         .query(
             "SELECT pubkey FROM users WHERE pubkey = ?",
-            libsql::params![payload.key.clone()],
+            libsql::params![auth_payload.key.clone()],
         )
         .await?;
 
@@ -160,7 +129,7 @@ pub async fn register_push_token(
         .conn
         .execute(
             "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
-            libsql::params![payload.key, payload.push_token],
+            libsql::params![auth_payload.key, payload.push_token],
         )
         .await?;
 
@@ -171,13 +140,9 @@ pub async fn register_push_token(
 #[derive(Deserialize)]
 pub struct SubmitInvoicePayload {
     /// The `k1` value that initiated the invoice request.
-    k1: String,
+    pub k1: String,
     /// The BOLT11 invoice to be paid.
-    invoice: String,
-    /// The user's public key for authentication.
-    key: String,
-    /// The signature for authentication.
-    sig: String,
+    pub invoice: String,
 }
 
 /// Receives and processes a BOLT11 invoice from a user's device.
@@ -186,13 +151,14 @@ pub struct SubmitInvoicePayload {
 /// this endpoint receives it and forwards it to the waiting payer.
 pub async fn submit_invoice(
     State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<SubmitInvoicePayload>,
 ) -> Result<(), ApiError> {
-    let is_valid = verify_auth(payload.k1.clone(), payload.sig, payload.key).await?;
-
-    if !is_valid {
-        return Err(ApiError::InvalidSignature);
-    }
+    tracing::debug!(
+        "Received submit invoice request for pubkey: {} and k1: {}",
+        auth_payload.key,
+        payload.k1
+    );
 
     if let Some((_, tx)) = state.invoice_requests.remove(&payload.k1) {
         tx.send(payload.invoice)

@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useServerStore } from "~/store/serverStore";
 import { getServerEndpoint } from "~/constants";
-import { lnurlAuth } from "~/lib/lnurlAuth";
+import { peakKeyPair } from "~/lib/paymentsApi";
+import { signMessage } from "~/lib/walletApi";
 import logger from "~/lib/log";
 
 const log = logger("useServerRegistration");
@@ -26,12 +27,29 @@ export const useServerRegistration = (isReady: boolean) => {
           return;
         }
 
-        const lnurl = `${serverEndpoint}/v0/register?k1=${k1}&tag=login`;
-        const success = await lnurlAuth(lnurl);
+        const index = 0;
+        const { public_key: key } = await peakKeyPair(index);
+        const sig = await signMessage(k1, index);
 
-        if (success) {
+        const registerUrl = `${serverEndpoint}/v0/register`;
+        const registerResponse = await fetch(registerUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            k1,
+            sig,
+            key,
+          }),
+        });
+
+        if (registerResponse.ok) {
           log.d("Successfully registered with server");
           setRegisteredWithServer(true);
+        } else {
+          const errorBody = await registerResponse.text();
+          log.w("Failed to register with server", [registerResponse.status, errorBody]);
         }
       } catch (error) {
         log.w("Failed to register with server", [error]);

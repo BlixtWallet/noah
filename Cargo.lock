@@ -2449,6 +2449,7 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum 0.8.4",
  "bitcoin",
  "chrono",
@@ -2456,6 +2457,7 @@ dependencies = [
  "dotenv",
  "expo_push_notification_client",
  "hex",
+ "http-body-util",
  "libsql",
  "rand 0.9.2",
  "random_word",
