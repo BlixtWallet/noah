@@ -48,11 +48,12 @@ pub async fn register(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
-    if let Some(ln_address) = &payload.ln_address {
+    if let Some(_ln_address) = &payload.ln_address {
         if let Err(e) = payload.validate() {
             return Err(ApiError::InvalidArgument(e.to_string()));
         }
     }
+
     let lnurl_domain = &state.lnurl_domain;
 
     let conn = &state.conn;
@@ -238,6 +239,7 @@ pub async fn update_ln_address(
     if let Err(e) = payload.validate() {
         return Err(ApiError::InvalidArgument(e.to_string()));
     }
+
     let mut rows = state
         .conn
         .query(

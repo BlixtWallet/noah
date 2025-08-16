@@ -208,8 +208,11 @@ const SettingsScreen = () => {
           {isInitialized && (
             <ConfirmationDialog
               trigger={
-                <Pressable className="p-4 border-b border-border bg-card rounded-lg mb-2">
-                  <Label className="text-foreground text-lg">Update Lightning Address</Label>
+                <Pressable className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2">
+                  <View>
+                    <Label className="text-foreground text-lg">Update Lightning Address</Label>
+                  </View>
+                  <Icon name="chevron-forward-outline" size={24} color="white" />
                 </Pressable>
               }
               title="Update Lightning Address"

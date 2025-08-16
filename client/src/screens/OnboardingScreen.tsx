@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -12,9 +12,11 @@ const OnboardingScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
   const { mutate: createWallet, isPending, isSuccess } = useCreateWallet();
 
-  if (!!isSuccess) {
-    navigation.navigate("Mnemonic", { fromOnboarding: true });
-  }
+  useEffect(() => {
+    if (isSuccess) {
+      navigation.navigate("Mnemonic", { fromOnboarding: true });
+    }
+  }, [isSuccess, navigation]);
 
   return (
     <View className="flex-1 items-center justify-center bg-background p-5">
