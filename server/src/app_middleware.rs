@@ -23,6 +23,7 @@ pub async fn auth_middleware(
     next: Next,
 ) -> Result<Response, impl IntoResponse> {
     let (parts, body) = request.into_parts();
+    tracing::info!("auth_middleware: request for uri: {}", parts.uri);
 
     let bytes = match body.collect().await {
         Ok(collected) => collected.to_bytes(),
@@ -32,7 +33,10 @@ pub async fn auth_middleware(
     };
 
     let payload: AuthPayload = match serde_json::from_slice(&bytes) {
-        Ok(p) => p,
+        Ok(p) => {
+            tracing::info!("auth_middleware: payload: {:?}", p);
+            p
+        }
         Err(_) => {
             return Err(
                 ApiError::InvalidArgument("Invalid or missing auth payload".to_string())

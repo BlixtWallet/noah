@@ -175,7 +175,7 @@ pub async fn submit_invoice(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<SubmitInvoicePayload>,
 ) -> Result<(), ApiError> {
-    tracing::debug!(
+    tracing::info!(
         "Received submit invoice request for pubkey: {} and k1: {}",
         auth_payload.key,
         auth_payload.k1
@@ -186,8 +186,13 @@ pub async fn submit_invoice(
 
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
+
+        Ok(())
+    } else {
+        Err(ApiError::InvalidArgument(
+            "Payment request transaction not found".to_string(),
+        ))
     }
-    Ok(())
 }
 
 /// Represents the response for a user's information.

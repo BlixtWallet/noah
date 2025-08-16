@@ -189,9 +189,13 @@ pub async fn lnurlp_request(
         }
     });
 
-    let invoice = timeout(Duration::from_secs(45), rx)
+    tracing::debug!("Waiting for invoice with a 180s timeout...");
+    let invoice = timeout(Duration::from_secs(180), rx)
         .await
-        .map_err(|_| ApiError::ServerErr("Request timed out".to_string()))?
+        .map_err(|_| {
+            tracing::error!("Invoice request timed out after 180s");
+            ApiError::ServerErr("Request timed out".to_string())
+        })?
         .map_err(|_| ApiError::ServerErr("Failed to receive invoice".to_string()))?;
 
     let response = LnurlpInvoiceResponse {
