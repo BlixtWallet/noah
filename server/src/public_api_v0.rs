@@ -26,6 +26,9 @@ pub struct GetK1 {
 
 const MAX_K1_VALUES: usize = 110;
 const K1_VALUES_TO_REMOVE: usize = 10;
+const LNURLP_MIN_SENDABLE: u64 = 330000;
+const LNURLP_MAX_SENDABLE: u64 = 100000000;
+const COMMENT_ALLOWED_SIZE: u16 = 280;
 
 /// Generates and returns a new `k1` value for an LNURL-auth flow.
 ///
@@ -143,11 +146,11 @@ pub async fn lnurlp_request(
 
         let response = LnurlpDefaultResponse {
             callback: format!("https://{}/.well-known/lnurlp/{}", lnurl_domain, username),
-            max_sendable: 100000000,
-            min_sendable: 1000,
+            min_sendable: LNURLP_MIN_SENDABLE,
+            max_sendable: LNURLP_MAX_SENDABLE,
             metadata,
             tag: "payRequest".to_string(),
-            comment_allowed: 280,
+            comment_allowed: COMMENT_ALLOWED_SIZE,
         };
         return Ok(Json(
             serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
@@ -155,6 +158,20 @@ pub async fn lnurlp_request(
     }
 
     let amount = query.amount.unwrap();
+
+    if amount < LNURLP_MIN_SENDABLE {
+        return Err(ApiError::InvalidArgument(format!(
+            "Minimum invoice request is {} mSats",
+            LNURLP_MIN_SENDABLE
+        )));
+    }
+
+    if amount > LNURLP_MAX_SENDABLE {
+        return Err(ApiError::InvalidArgument(format!(
+            "Maximum invoice request is {} mSats",
+            LNURLP_MAX_SENDABLE
+        )));
+    }
 
     let (tx, rx) = oneshot::channel();
 
