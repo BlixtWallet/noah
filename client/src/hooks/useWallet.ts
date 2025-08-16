@@ -1,6 +1,4 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAlert } from "~/contexts/AlertProvider";
 import { useServerStore } from "../store/serverStore";
 import { useWalletStore } from "../store/walletStore";
@@ -14,18 +12,14 @@ import {
   onchainSync as onchainSyncAction,
 } from "../lib/walletApi";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
-import type { OnboardingStackParamList } from "../Navigators";
 import { queryClient } from "~/queryClient";
 
 export function useCreateWallet() {
-  const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
   const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: createWalletAction,
-    onSuccess: () => {
-      navigation.navigate("Mnemonic", { fromOnboarding: true });
-    },
+
     onError: async (error: Error) => {
       await deleteWalletAction();
       showAlert({ title: "Creation Failed", description: error.message });

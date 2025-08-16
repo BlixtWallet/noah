@@ -2,17 +2,6 @@ import { Pressable, ScrollView, View } from "react-native";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { useServerStore } from "../store/serverStore";
 import { APP_VARIANT } from "../config";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../components/ui/alert-dialog";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -23,8 +12,12 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
+import { useUpdateLightningAddress } from "../hooks/useUpdateLightningAddress";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
+import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { CheckCircle } from "lucide-react-native";
 
 type Setting = {
   id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
@@ -53,8 +46,19 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const { config, isInitialized } = useWalletStore();
-  const { resetRegistration } = useServerStore();
+  const { lightningAddress, resetRegistration } = useServerStore();
+  const [newLightningAddress, setNewLightningAddress] = useState("");
+  const [showResetSuccess, setShowResetSuccess] = useState(false);
+  const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
+  const updateLightningAddressMutation = useUpdateLightningAddress({
+    onSuccess: () => {
+      setShowUpdateSuccess(true);
+      setTimeout(() => {
+        setShowUpdateSuccess(false);
+      }, 3000);
+    },
+  });
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -66,8 +70,7 @@ const SettingsScreen = () => {
     } else if (item.id === "showLogs") {
       navigation.navigate("Logs");
     } else if (item.id === "resetRegistration") {
-      resetRegistration();
-      // TODO: Add toast notification
+      // This is handled by the AlertDialog now
     } else {
       navigation.navigate("EditConfiguration", {
         item: item as { id: keyof WalletConfig; title: string; value?: string },
@@ -139,10 +142,49 @@ const SettingsScreen = () => {
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
+        {showResetSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>Server registration has been reset.</AlertDescription>
+          </Alert>
+        )}
+        {showUpdateSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Success!</AlertTitle>
+            <AlertDescription>Lightning address has been updated.</AlertDescription>
+          </Alert>
+        )}
         <ScrollView className="flex-1 mb-16">
+          {lightningAddress && (
+            <CopyableSettingRow label="Lightning Address" value={lightningAddress} />
+          )}
+
           {data.map((item) => {
             if (item.id === "staticVtxoPubkey") {
               return <CopyableSettingRow key={item.id} label={item.title} value={item.value!} />;
+            }
+            if (item.id === "resetRegistration") {
+              return (
+                <ConfirmationDialog
+                  key={item.id}
+                  trigger={
+                    <DangerZoneRow
+                      title={item.title}
+                      isPressable={item.isPressable}
+                      onPress={() => {}}
+                    />
+                  }
+                  title="Reset Server Registration"
+                  description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
+                  onConfirm={() => {
+                    resetRegistration();
+                    setShowResetSuccess(true);
+                    setTimeout(() => {
+                      setShowResetSuccess(false);
+                    }, 3000);
+                  }}
+                />
+              );
             }
             return (
               <Pressable
@@ -164,45 +206,63 @@ const SettingsScreen = () => {
             );
           })}
           {isInitialized && (
+            <ConfirmationDialog
+              trigger={
+                <Pressable className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2">
+                  <View>
+                    <Label className="text-foreground text-lg">Update Lightning Address</Label>
+                  </View>
+                  <Icon name="chevron-forward-outline" size={24} color="white" />
+                </Pressable>
+              }
+              title="Update Lightning Address"
+              description="Enter your new lightning address below."
+              onConfirm={() => {
+                if (newLightningAddress && newLightningAddress !== lightningAddress) {
+                  updateLightningAddressMutation.mutate(newLightningAddress);
+                }
+              }}
+              confirmText="Update"
+              confirmVariant="default"
+            >
+              <Input
+                value={newLightningAddress}
+                onChangeText={setNewLightningAddress}
+                placeholder="Enter new lightning address"
+                className="h-12 mt-2"
+                autoCapitalize="none"
+                autoCorrect={false}
+                inputMode="email"
+              />
+            </ConfirmationDialog>
+          )}
+          {isInitialized && (
             <View className="mt-4">
               <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
-              <AlertDialog onOpenChange={() => setConfirmText("")}>
-                <AlertDialogTrigger asChild>
+              <ConfirmationDialog
+                trigger={
                   <Button variant="destructive">
                     <Text>Delete Wallet</Text>
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Wallet</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {`This action is irreversible. To confirm, please type "delete" in the box
-below.`}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <Input
-                    value={confirmText}
-                    onChangeText={setConfirmText}
-                    placeholder='Type "delete" to confirm'
-                    className="h-12"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                  />
-                  <AlertDialogFooter className="flex-row space-x-2">
-                    <AlertDialogCancel className="flex-1">
-                      <Text>Cancel</Text>
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      disabled={confirmText.toLowerCase() !== "delete"}
-                      onPress={() => deleteWalletMutation.mutate()}
-                      className="flex-1"
-                    >
-                      <Text>Delete</Text>
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                }
+                title="Delete Wallet"
+                description={`This action is irreversible. To confirm, please type "delete" in the box below.`}
+                onConfirm={() => {
+                  if (confirmText.toLowerCase() === "delete") {
+                    deleteWalletMutation.mutate();
+                  }
+                }}
+                isConfirmDisabled={confirmText.toLowerCase() !== "delete"}
+              >
+                <Input
+                  value={confirmText}
+                  onChangeText={setConfirmText}
+                  placeholder='Type "delete" to confirm'
+                  className="h-12"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </ConfirmationDialog>
             </View>
           )}
         </ScrollView>

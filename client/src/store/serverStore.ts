@@ -21,7 +21,9 @@ const zustandStorage: StateStorage = {
 
 interface ServerState {
   isRegisteredWithServer: boolean;
-  setRegisteredWithServer: (isRegistered: boolean) => void;
+  lightningAddress: string | null;
+  setRegisteredWithServer: (isRegistered: boolean, lightningAddress: string) => void;
+  setLightningAddress: (lightningAddress: string) => void;
   resetRegistration: () => void;
 }
 
@@ -29,8 +31,11 @@ export const useServerStore = create<ServerState>()(
   persist(
     (set) => ({
       isRegisteredWithServer: false,
-      setRegisteredWithServer: (isRegistered) => set({ isRegisteredWithServer: isRegistered }),
-      resetRegistration: () => set({ isRegisteredWithServer: false }),
+      lightningAddress: null,
+      setRegisteredWithServer: (isRegistered, lightningAddress) =>
+        set({ isRegisteredWithServer: isRegistered, lightningAddress }),
+      setLightningAddress: (lightningAddress) => set({ lightningAddress }),
+      resetRegistration: () => set({ isRegisteredWithServer: false, lightningAddress: null }),
     }),
     {
       name: "server-storage",

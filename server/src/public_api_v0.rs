@@ -157,8 +157,20 @@ pub async fn lnurlp_request(
     let amount = query.amount.unwrap();
 
     let (tx, rx) = oneshot::channel();
+
+    // TODO Nitesh:
+    // This could be a retarded solution for now.
+    // We are using two separate states for request_id
+    // One is signed from server, the other to just manage channel requests
+    // Probably need a better solution
+
     let request_id = uuid::Uuid::new_v4().to_string();
-    state.invoice_requests.insert(request_id.clone(), tx);
+    state
+        .invoice_data_transmitters
+        .insert(request_id.clone(), tx);
+    state
+        .k1_values
+        .insert(request_id.clone(), SystemTime::now());
 
     let state_clone = state.clone();
     tokio::spawn(async move {
