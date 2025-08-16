@@ -29,10 +29,6 @@ pub struct LNUrlAuthResponse {
 /// Defines the payload for a user registration request.
 #[derive(Deserialize, Debug)]
 pub struct RegisterPayload {
-    /// The user's public key.
-    pub key: String,
-    /// A unique, single-use secret for the authentication process.
-    pub k1: String,
     /// User chosen lightning address
     pub ln_address: Option<String>,
 }
@@ -44,6 +40,7 @@ pub struct RegisterPayload {
 /// the user in the database.
 pub async fn register(
     State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
     let lnurl_domain = &state.lnurl_domain;
@@ -52,19 +49,19 @@ pub async fn register(
 
     tracing::debug!(
         "Registering user with pubkey: {} and k1: {}",
-        payload.key,
-        payload.k1,
+        auth_payload.key,
+        auth_payload.k1,
     );
 
     let mut rows = conn
         .query(
             "SELECT pubkey FROM users WHERE pubkey = ?",
-            libsql::params![payload.key.clone()],
+            libsql::params![auth_payload.key.clone()],
         )
         .await?;
 
     if rows.next().await?.is_some() {
-        tracing::debug!("User with pubkey: {} already registered", payload.key);
+        tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
         return Ok(Json(LNUrlAuthResponse {
             status: "OK".to_string(),
             event: None,
@@ -79,11 +76,11 @@ pub async fn register(
 
     conn.execute(
         "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![payload.key, ln_address],
+        libsql::params![auth_payload.key, ln_address],
     )
     .await?;
 
-    state.k1_values.remove(&payload.k1);
+    state.k1_values.remove(&auth_payload.k1);
 
     Ok(Json(LNUrlAuthResponse {
         status: "OK".to_string(),
@@ -139,8 +136,6 @@ pub async fn register_push_token(
 /// Defines the payload for submitting a BOLT11 invoice.
 #[derive(Deserialize)]
 pub struct SubmitInvoicePayload {
-    /// The `k1` value that initiated the invoice request.
-    pub k1: String,
     /// The BOLT11 invoice to be paid.
     pub invoice: String,
 }
@@ -157,10 +152,10 @@ pub async fn submit_invoice(
     tracing::debug!(
         "Received submit invoice request for pubkey: {} and k1: {}",
         auth_payload.key,
-        payload.k1
+        auth_payload.k1
     );
 
-    if let Some((_, tx)) = state.invoice_requests.remove(&payload.k1) {
+    if let Some((_, tx)) = state.invoice_requests.remove(&auth_payload.k1) {
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
     }
