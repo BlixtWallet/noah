@@ -19,12 +19,19 @@ type DangerZoneRowProps = {
   title: string;
   isPressable: boolean;
   variant?: "default" | "destructive";
+  onPress?: () => void;
 };
 
-export const DangerZoneRow = ({ title, isPressable, variant = "default" }: DangerZoneRowProps) => {
+export const DangerZoneRow = ({
+  title,
+  isPressable,
+  variant = "default",
+  onPress,
+}: DangerZoneRowProps) => {
   return (
     <Pressable
       disabled={!isPressable}
+      onPress={onPress}
       className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
     >
       <View>

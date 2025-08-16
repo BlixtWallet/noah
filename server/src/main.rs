@@ -38,7 +38,7 @@ pub struct AppStruct {
     pub lnurl_domain: String,
     pub conn: libsql::Connection,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
-    pub invoice_requests: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
+    pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
 }
 
 #[tokio::main]
@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         lnurl_domain,
         conn,
         k1_values: Arc::new(DashMap::new()),
-        invoice_requests: Arc::new(DashMap::new()),
+        invoice_data_transmitters: Arc::new(DashMap::new()),
     });
 
     let cron_handle = cron_scheduler(app_state.clone()).await?;

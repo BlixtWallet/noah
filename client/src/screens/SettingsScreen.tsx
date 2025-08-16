@@ -137,7 +137,13 @@ const SettingsScreen = () => {
               return (
                 <ConfirmationDialog
                   key={item.id}
-                  trigger={<DangerZoneRow title={item.title} isPressable={item.isPressable} />}
+                  trigger={
+                    <DangerZoneRow
+                      title={item.title}
+                      isPressable={item.isPressable}
+                      onPress={() => {}}
+                    />
+                  }
                   title="Reset Server Registration"
                   description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
                   onConfirm={() => {

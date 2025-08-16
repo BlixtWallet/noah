@@ -155,7 +155,9 @@ pub async fn submit_invoice(
         auth_payload.k1
     );
 
-    if let Some((_, tx)) = state.invoice_requests.remove(&auth_payload.k1) {
+    if let Some((_, tx)) = state.invoice_data_transmitters.remove(&auth_payload.k1) {
+        state.k1_values.remove(&auth_payload.k1);
+
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
     }
