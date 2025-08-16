@@ -45,8 +45,9 @@ export const useServerRegistration = (isReady: boolean) => {
         });
 
         if (registerResponse.ok) {
+          const { lightning_address } = await registerResponse.json();
           log.d("Successfully registered with server");
-          setRegisteredWithServer(true);
+          setRegisteredWithServer(true, lightning_address);
         } else {
           const errorBody = await registerResponse.text();
           log.w("Failed to register with server", [registerResponse.status, errorBody]);

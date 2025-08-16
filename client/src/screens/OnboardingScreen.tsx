@@ -10,7 +10,11 @@ import { useCreateWallet } from "../hooks/useWallet";
 
 const OnboardingScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
-  const { mutate: createWallet, isPending } = useCreateWallet();
+  const { mutate: createWallet, isPending, isSuccess } = useCreateWallet();
+
+  if (!!isSuccess) {
+    navigation.navigate("Mnemonic", { fromOnboarding: true });
+  }
 
   return (
     <View className="flex-1 items-center justify-center bg-background p-5">

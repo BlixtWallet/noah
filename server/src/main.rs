@@ -17,7 +17,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
     cron::cron_scheduler,
-    gated_api_v0::{register, register_push_token, submit_invoice},
+    gated_api_v0::{
+        get_user_info, register, register_push_token, submit_invoice, update_ln_address,
+    },
     private_api_v0::health_check,
     public_api_v0::{get_k1, lnurlp_request},
 };
@@ -95,6 +97,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/register", post(register))
         .route("/register_push_token", post(register_push_token))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
+        .route("/user_info", get(get_user_info))
+        .route("/update_ln_address", post(update_ln_address))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             app_middleware::auth_middleware,

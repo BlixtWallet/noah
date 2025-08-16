@@ -55,6 +55,9 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidSignature.into_response());
     }
 
+    // This is axum's way of inserting back the payload
+    // into the request so the handlers have access to it
+
     let mut parts = parts;
     parts.extensions.insert(payload);
     let request = Request::from_parts(parts, Body::from(bytes));

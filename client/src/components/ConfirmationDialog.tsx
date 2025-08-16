@@ -52,6 +52,8 @@ type ConfirmationDialogProps = {
   description: string;
   onConfirm: () => void;
   children?: React.ReactNode;
+  confirmText?: string;
+  confirmVariant?: "default" | "destructive";
 };
 
 export const ConfirmationDialog = ({
@@ -60,6 +62,8 @@ export const ConfirmationDialog = ({
   description,
   onConfirm,
   children,
+  confirmText = "Confirm",
+  confirmVariant = "destructive",
 }: ConfirmationDialogProps) => {
   return (
     <AlertDialog>
@@ -74,8 +78,8 @@ export const ConfirmationDialog = ({
           <AlertDialogCancel className="flex-1">
             <Text>Cancel</Text>
           </AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onPress={onConfirm} className="flex-1">
-            <Text>Confirm</Text>
+          <AlertDialogAction variant={confirmVariant} onPress={onConfirm} className="flex-1">
+            <Text>{confirmText}</Text>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

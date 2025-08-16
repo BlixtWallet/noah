@@ -12,9 +12,12 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
+import { useUpdateLightningAddress } from "../hooks/useUpdateLightningAddress";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { CheckCircle } from "lucide-react-native";
 
 type Setting = {
   id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
@@ -43,8 +46,11 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const { config, isInitialized } = useWalletStore();
-  const { resetRegistration } = useServerStore();
+  const { lightningAddress, resetRegistration } = useServerStore();
+  const [newLightningAddress, setNewLightningAddress] = useState("");
+  const [showResetSuccess, setShowResetSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
+  const updateLightningAddressMutation = useUpdateLightningAddress();
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -129,6 +135,16 @@ const SettingsScreen = () => {
           <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
         <ScrollView className="flex-1 mb-16">
+          {showResetSuccess && (
+            <Alert icon={CheckCircle} className="mb-4">
+              <AlertTitle>Success!</AlertTitle>
+              <AlertDescription>Server registration has been reset.</AlertDescription>
+            </Alert>
+          )}
+          {lightningAddress && (
+            <CopyableSettingRow label="Lightning Address" value={lightningAddress} />
+          )}
+
           {data.map((item) => {
             if (item.id === "staticVtxoPubkey") {
               return <CopyableSettingRow key={item.id} label={item.title} value={item.value!} />;
@@ -148,7 +164,10 @@ const SettingsScreen = () => {
                   description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
                   onConfirm={() => {
                     resetRegistration();
-                    // TODO: Add toast notification
+                    setShowResetSuccess(true);
+                    setTimeout(() => {
+                      setShowResetSuccess(false);
+                    }, 3000);
                   }}
                 />
               );
@@ -172,6 +191,34 @@ const SettingsScreen = () => {
               </Pressable>
             );
           })}
+          {isInitialized && (
+            <ConfirmationDialog
+              trigger={
+                <Pressable className="p-4 border-b border-border bg-card rounded-lg mb-2">
+                  <Label className="text-foreground text-lg">Update Lightning Address</Label>
+                </Pressable>
+              }
+              title="Update Lightning Address"
+              description="Enter your new lightning address below."
+              onConfirm={() => {
+                if (newLightningAddress && newLightningAddress !== lightningAddress) {
+                  updateLightningAddressMutation.mutate(newLightningAddress);
+                }
+              }}
+              confirmText="Update"
+              confirmVariant="default"
+            >
+              <Input
+                value={newLightningAddress}
+                onChangeText={setNewLightningAddress}
+                placeholder="Enter new lightning address"
+                className="h-12 mt-2"
+                autoCapitalize="none"
+                autoCorrect={false}
+                inputMode="email"
+              />
+            </ConfirmationDialog>
+          )}
           {isInitialized && (
             <View className="mt-4">
               <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
