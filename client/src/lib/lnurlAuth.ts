@@ -1,4 +1,4 @@
-import { err, ok, Result } from "neverthrow";
+import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 import { signMessage } from "./walletApi";
 import { peakKeyPair } from "./paymentsApi";
@@ -62,22 +62,21 @@ export const lnurlAuth = async (lnUrlStr: string): Promise<Result<boolean, Error
   const finalUrl = url.toString();
   log.d("Fetching URL:", [finalUrl]);
 
-  try {
-    const result = await fetch(finalUrl);
-    log.d("result", [JSON.stringify(result)]);
-
-    const response: ILNUrlAuthResponse | ILNUrlError = await result.json();
-    log.d("response", [response]);
-
-    if (isLNUrlPayResponseError(response)) {
-      return err(new Error(response.reason));
-    }
-
-    return ok(true);
-  } catch (e) {
-    log.d("", [e]);
-    return err(new Error("Unable to parse message from the server"));
-  }
+  return ResultAsync.fromPromise(fetch(finalUrl), (e) => e as Error)
+    .andThen((response) => {
+      log.d("result", [JSON.stringify(response)]);
+      return ResultAsync.fromPromise(
+        response.json() as Promise<ILNUrlAuthResponse | ILNUrlError>,
+        (e) => e as Error,
+      );
+    })
+    .andThen((response) => {
+      log.d("response", [response]);
+      if (isLNUrlPayResponseError(response)) {
+        return err(new Error(response.reason));
+      }
+      return ok(true);
+    });
 };
 
 const isLNUrlPayResponseError = (subject: any): subject is ILNUrlPayResponseError => {

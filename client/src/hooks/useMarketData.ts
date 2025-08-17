@@ -1,22 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
 import { mempoolPriceEndpoint, mempoolHistoricalPriceEndpoint } from "~/constants";
 
-import { err, ok, Result } from "neverthrow";
-export const getBtcToUsdRate = async (): Promise<Result<number, Error>> => {
-  try {
-    const response = await fetch(mempoolPriceEndpoint);
-    if (!response.ok) {
-      return err(new Error("Network response was not ok"));
-    }
-    const data = await response.json();
-    if (data.USD) {
-      return ok(data.USD);
-    }
-    return err(new Error("Invalid response from exchange rate API"));
-  } catch (error) {
-    console.error("Failed to fetch BTC to USD rate:", error);
-    return err(new Error("Failed to fetch exchange rate"));
-  }
+import { err, ok, ResultAsync } from "neverthrow";
+export const getBtcToUsdRate = (): ResultAsync<number, Error> => {
+  return ResultAsync.fromPromise(
+    fetch(mempoolPriceEndpoint),
+    (e) => new Error(`Failed to fetch BTC to USD rate: ${e}`),
+  )
+    .andThen((response) => {
+      if (!response.ok) {
+        return err(new Error("Network response was not ok"));
+      }
+      return ResultAsync.fromPromise(
+        response.json(),
+        (e) => new Error(`Failed to parse response: ${e}`),
+      );
+    })
+    .andThen((data) => {
+      const rate = (data as { USD?: number }).USD;
+      if (rate) {
+        return ok(rate);
+      }
+      return err(new Error("Invalid response from exchange rate API"));
+    });
 };
 
 export function useBtcToUsdRate() {
@@ -33,24 +39,32 @@ export function useBtcToUsdRate() {
   });
 }
 
-export const getHistoricalBtcToUsdRate = async (date: string): Promise<Result<number, Error>> => {
-  try {
-    const timestamp = Math.floor(new Date(date).getTime() / 1000);
-    const response = await fetch(
-      `${mempoolHistoricalPriceEndpoint}?currency=USD&timestamp=${timestamp}`,
-    );
-    if (!response.ok) {
-      return err(new Error("Network response was not ok"));
-    }
-    const data = await response.json();
-    if (data.prices && data.prices.length > 0 && data.prices[0].USD) {
-      return ok(data.prices[0].USD);
-    }
-    // If no price is available for that day, fetch the current price as a fallback.
-    return getBtcToUsdRate();
-  } catch (error) {
-    console.error("Failed to fetch historical BTC to USD rate:", error);
-    // Fallback to current price on error
-    return getBtcToUsdRate();
-  }
+export const getHistoricalBtcToUsdRate = (date: string): ResultAsync<number, Error> => {
+  const timestamp = Math.floor(new Date(date).getTime() / 1000);
+  return ResultAsync.fromPromise(
+    fetch(`${mempoolHistoricalPriceEndpoint}?currency=USD&timestamp=${timestamp}`),
+    (e) => new Error(`Failed to fetch historical BTC to USD rate: ${e}`),
+  )
+    .andThen((response) => {
+      if (!response.ok) {
+        return err(new Error("Network response was not ok"));
+      }
+      return ResultAsync.fromPromise(
+        response.json(),
+        (e) => new Error(`Failed to parse historical response: ${e}`),
+      );
+    })
+    .andThen((data) => {
+      const prices = (data as { prices?: { USD?: number }[] }).prices;
+      if (prices && prices.length > 0 && prices[0].USD) {
+        return ok(prices[0].USD);
+      }
+      // If no price is available for that day, fetch the current price as a fallback.
+      return getBtcToUsdRate();
+    })
+    .orElse((error) => {
+      console.error("Failed to fetch historical BTC to USD rate:", error);
+      // Fallback to current price on error
+      return getBtcToUsdRate();
+    });
 };

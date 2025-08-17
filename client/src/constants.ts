@@ -3,6 +3,7 @@ import * as RNFS from "@dr.pogodin/react-native-fs";
 import { APP_VARIANT } from "./config";
 import { decode } from "light-bolt11-decoder";
 import { validate, Network } from "bitcoin-address-validation";
+import { Result } from "neverthrow";
 import { Platform } from "react-native";
 
 const isEmail = (n: string): boolean => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(n);
@@ -142,21 +143,11 @@ export const isArkPublicKey = (n: string) => !!n && /^0[2-3][0-9A-F]{64}$/i.test
 export const isValidBitcoinAddress = (address: string) => validate(address, network());
 
 export const isValidBolt11 = (invoice: string) => {
-  try {
-    decode(invoice);
-    return true;
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-  } catch (_e: any) {
-    return false;
-  }
+  return Result.fromThrowable(decode)(invoice).isOk();
 };
 
 export const decodeBolt11 = (invoice: string) => {
-  try {
-    return decode(invoice);
-  } catch (error) {
-    return null;
-  }
+  return Result.fromThrowable(decode)(invoice).unwrapOr(null);
 };
 
 export const msatToSatoshi = (msat: number) => msat / 1000;
