@@ -36,49 +36,44 @@ export const parseDestination = (destination: string): ParsedDestination => {
       isAmountEditable: true,
     };
   } else if (isValidBolt11(cleanedDestination)) {
-    try {
-      const decoded = decodeBolt11(cleanedDestination);
-      if (decoded === null) {
-        throw new Error("Invalid invoice");
-      }
-
-      const msats = decoded.sections.find((n) => n.name === "amount")?.value;
-
-      if (msats === undefined) {
-        return {
-          destinationType: "lightning",
-          isAmountEditable: true,
-        };
-      }
-
-      if (Number(msats) > 0 && Number(msats) < 1000) {
-        return {
-          destinationType: "lightning",
-          isAmountEditable: true,
-          error: "Invoice amount is less than 1 satoshi.",
-        };
-      }
-
-      const sats = Number(msats) / 1000;
-
-      if (sats >= 1) {
-        return {
-          destinationType: "lightning",
-          amount: sats,
-          isAmountEditable: false,
-        };
-      } else {
-        return {
-          destinationType: "lightning",
-          isAmountEditable: true,
-        };
-      }
-    } catch (e) {
-      console.error("Failed to decode bolt11 invoice", e);
+    const decoded = decodeBolt11(cleanedDestination);
+    if (decoded === null) {
       return {
         destinationType: null,
         isAmountEditable: true,
         error: "Failed to decode bolt11 invoice",
+      };
+    }
+
+    const msats = decoded.sections.find((n) => n.name === "amount")?.value;
+
+    if (msats === undefined) {
+      return {
+        destinationType: "lightning",
+        isAmountEditable: true,
+      };
+    }
+
+    if (Number(msats) > 0 && Number(msats) < 1000) {
+      return {
+        destinationType: "lightning",
+        isAmountEditable: true,
+        error: "Invoice amount is less than 1 satoshi.",
+      };
+    }
+
+    const sats = Number(msats) / 1000;
+
+    if (sats >= 1) {
+      return {
+        destinationType: "lightning",
+        amount: sats,
+        isAmountEditable: false,
+      };
+    } else {
+      return {
+        destinationType: "lightning",
+        isAmountEditable: true,
       };
     }
   } else if (isValidBitcoinAddress(cleanedDestination)) {

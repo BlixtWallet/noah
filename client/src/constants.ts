@@ -51,6 +51,19 @@ export const getServerEndpoint = (): string => {
   }
 };
 
+export const getLnurlDomain = (): string => {
+  switch (APP_VARIANT) {
+    case "regtest":
+      return "localhost";
+    case "signet":
+      return "noah.noderunner.wtf";
+    case "mainnet":
+      return "noah.noderunner.wtf";
+    default:
+      return "noah.noderunner.wtf";
+  }
+};
+
 export const ARK_DATA_PATH = getArkDataPath();
 
 type WalletCreationOptions = Omit<BarkCreateOpts, "mnemonic">;

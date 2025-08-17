@@ -9,6 +9,7 @@ import { captureException } from "@sentry/react-native";
 import { backgroundSync, maintenance, submitInvoice } from "./tasks";
 import { peakKeyPair } from "./paymentsApi";
 import { signMessage } from "./walletApi";
+import { err, ok, Result } from "neverthrow";
 
 const log = logger("pushNotifications");
 
@@ -73,11 +74,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function handleRegistrationError(errorMessage: string) {
-  throw new Error(errorMessage);
-}
-
-export async function registerForPushNotificationsAsync() {
+export async function registerForPushNotificationsAsync(): Promise<Result<string, Error>> {
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -98,13 +95,12 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      handleRegistrationError("Permission not granted to get push token for push notification!");
-      return;
+      return err(new Error("Permission not granted to get push token for push notification!"));
     }
     const projectId =
       Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
     if (!projectId) {
-      handleRegistrationError("Project ID not found");
+      return err(new Error("Project ID not found"));
     }
     try {
       const nativePushToken = await Notifications.getDevicePushTokenAsync();
@@ -116,45 +112,61 @@ export async function registerForPushNotificationsAsync() {
         })
       ).data;
       log.d("push token string is ", [pushTokenString]);
-      return pushTokenString;
+      return ok(pushTokenString);
     } catch (e: unknown) {
-      handleRegistrationError(`${e}`);
+      return err(new Error(`${e}`));
     }
   } else {
-    handleRegistrationError("Must use physical device for push notifications");
+    return err(new Error("Must use physical device for push notifications"));
   }
 }
 
-export async function registerPushTokenWithServer(pushToken: string) {
-  const serverEndpoint = getServerEndpoint();
-  const getK1Url = `${serverEndpoint}/v0/getk1`;
-  const response = await fetch(getK1Url);
-  const { k1, tag } = await response.json();
+export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {
+  try {
+    const serverEndpoint = getServerEndpoint();
+    const getK1Url = `${serverEndpoint}/v0/getk1`;
+    const response = await fetch(getK1Url);
+    const { k1, tag } = await response.json();
 
-  if (tag !== "login") {
-    throw new Error("Invalid tag from server");
-  }
+    if (tag !== "login") {
+      return err(new Error("Invalid tag from server"));
+    }
 
-  const index = 0;
-  const { public_key: key } = await peakKeyPair(index);
-  const signature = await signMessage(k1, index);
+    const index = 0;
+    const keyPairResult = await peakKeyPair(index);
+    if (keyPairResult.isErr()) {
+      return err(keyPairResult.error);
+    }
+    const { public_key: key } = keyPairResult.value;
 
-  const registerUrl = `${serverEndpoint}/v0/register_push_token`;
-  const registrationResponse = await fetch(registerUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      push_token: pushToken,
-      key,
-      sig: signature,
-      k1,
-    }),
-  });
+    const signatureResult = await signMessage(k1, index);
+    if (signatureResult.isErr()) {
+      return err(signatureResult.error);
+    }
+    const signature = signatureResult.value;
 
-  if (!registrationResponse.ok) {
-    const errorBody = await registrationResponse.text();
-    throw new Error(`Failed to register push token: ${registrationResponse.status} ${errorBody}`);
+    const registerUrl = `${serverEndpoint}/v0/register_push_token`;
+    const registrationResponse = await fetch(registerUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        push_token: pushToken,
+        key,
+        sig: signature,
+        k1,
+      }),
+    });
+
+    if (!registrationResponse.ok) {
+      const errorBody = await registrationResponse.text();
+      return err(
+        new Error(`Failed to register push token: ${registrationResponse.status} ${errorBody}`),
+      );
+    }
+    return ok(undefined);
+  } catch (e) {
+    return err(e as Error);
   }
 }

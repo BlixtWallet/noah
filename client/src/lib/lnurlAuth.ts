@@ -1,3 +1,4 @@
+import { err, ok, Result } from "neverthrow";
 import logger from "~/lib/log";
 import { signMessage } from "./walletApi";
 import { peakKeyPair } from "./paymentsApi";
@@ -25,7 +26,7 @@ export interface ILNUrlAuthRequest {
   k1: string;
 }
 
-export const lnurlAuth = async (lnUrlStr: string) => {
+export const lnurlAuth = async (lnUrlStr: string): Promise<Result<boolean, Error>> => {
   // 0. Decode the LNURL
   const lnUrlObject = new URL(lnUrlStr);
 
@@ -35,12 +36,21 @@ export const lnurlAuth = async (lnUrlStr: string) => {
   const action = lnUrlObject.searchParams.get("action");
 
   if (!tag || !k1) {
-    throw new Error("Invalid LNURLAuth request");
+    return err(new Error("Invalid LNURLAuth request"));
   }
 
   const index = 0;
-  const { public_key: pubkey } = await peakKeyPair(index);
-  const signature = await signMessage(k1, index);
+  const keyPairResult = await peakKeyPair(index);
+  if (keyPairResult.isErr()) {
+    return err(keyPairResult.error);
+  }
+  const { public_key: pubkey } = keyPairResult.value;
+
+  const signatureResult = await signMessage(k1, index);
+  if (signatureResult.isErr()) {
+    return err(signatureResult.error);
+  }
+  const signature = signatureResult.value;
 
   const url = new URL(lnUrlStr);
   url.searchParams.append("sig", signature);
@@ -51,23 +61,23 @@ export const lnurlAuth = async (lnUrlStr: string) => {
 
   const finalUrl = url.toString();
   log.d("Fetching URL:", [finalUrl]);
-  const result = await fetch(finalUrl);
-  log.d("result", [JSON.stringify(result)]);
 
-  let response: ILNUrlAuthResponse | ILNUrlError;
   try {
-    response = await result.json();
+    const result = await fetch(finalUrl);
+    log.d("result", [JSON.stringify(result)]);
+
+    const response: ILNUrlAuthResponse | ILNUrlError = await result.json();
+    log.d("response", [response]);
+
+    if (isLNUrlPayResponseError(response)) {
+      return err(new Error(response.reason));
+    }
+
+    return ok(true);
   } catch (e) {
     log.d("", [e]);
-    throw new Error("Unable to parse message from the server");
+    return err(new Error("Unable to parse message from the server"));
   }
-  log.d("response", [response]);
-
-  if (isLNUrlPayResponseError(response)) {
-    throw new Error(response.reason);
-  }
-
-  return true;
 };
 
 const isLNUrlPayResponseError = (subject: any): subject is ILNUrlPayResponseError => {

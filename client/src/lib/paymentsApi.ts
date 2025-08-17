@@ -19,6 +19,7 @@ import {
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "../config";
 import { captureException } from "@sentry/react-native";
+import { err, ok, Result } from "neverthrow";
 
 export type {
   ArkoorPaymentResult,
@@ -35,129 +36,132 @@ export type PaymentResult =
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 
-export const getMnemonic = async (): Promise<string> => {
+export const getMnemonic = async (): Promise<Result<string, Error>> => {
   const credentials = await Keychain.getGenericPassword({
     service: MNEMONIC_KEYCHAIN_SERVICE,
   });
 
   if (!credentials) {
-    throw new Error("Mnemonic not found. Is the wallet initialized?");
+    return err(new Error("Mnemonic not found. Is the wallet initialized?"));
   }
-  return credentials.password;
+  return ok(credentials.password);
 };
 
-export const newAddress = async (): Promise<NewAddressResult> => {
+export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => {
   try {
     const address = await newAddressNitro();
-    return address;
+    return ok(address);
   } catch (error) {
     console.error("Failed to generate VTXO pubkey:", error);
-    throw new Error(
-      `Failed to generate VTXO pubkey: ${error instanceof Error ? error.message : String(error)}`,
+    return err(
+      new Error(
+        `Failed to generate VTXO pubkey: ${error instanceof Error ? error.message : String(error)}`,
+      ),
     );
   }
 };
 
-export const peakKeyPair = async (index: number): Promise<KeyPairResult> => {
+export const peakKeyPair = async (index: number): Promise<Result<KeyPairResult, Error>> => {
   try {
     const keypair = await peakKeyPairNitro(index);
-    return keypair;
+    return ok(keypair);
   } catch (error) {
     console.error("Failed to peak keypair:", error);
-    throw new Error(
-      `Failed to peak keypair: ${error instanceof Error ? error.message : String(error)}`,
+    return err(
+      new Error(
+        `Failed to peak keypair: ${error instanceof Error ? error.message : String(error)}`,
+      ),
     );
   }
 };
 
-export const deriveStoreNextKeypair = async (): Promise<KeyPairResult> => {
+export const deriveStoreNextKeypair = async (): Promise<Result<KeyPairResult, Error>> => {
   try {
     const keypair = await deriveStoreNextKeypairNitro();
-    return keypair;
+    return ok(keypair);
   } catch (error) {
     console.error("Failed to derive next keypair:", error);
-    throw new Error(
-      `Failed to derive next keypair: ${error instanceof Error ? error.message : String(error)}`,
+    return err(
+      new Error(
+        `Failed to derive next keypair: ${error instanceof Error ? error.message : String(error)}`,
+      ),
     );
   }
 };
 
-export const onchainAddress = async (): Promise<string> => {
+export const onchainAddress = async (): Promise<Result<string, Error>> => {
   try {
     const address = await onchainAddressNitro();
-    return address;
+    return ok(address);
   } catch (error) {
     console.error("Failed to generate onchain address:", error);
-    throw new Error(
-      `Failed to generate onchain address: ${error instanceof Error ? error.message : String(error)}`,
+    return err(
+      new Error(
+        `Failed to generate onchain address: ${error instanceof Error ? error.message : String(error)}`,
+      ),
     );
   }
 };
 
-export const bolt11Invoice = async (amountSat: number): Promise<string> => {
+export const bolt11Invoice = async (amountSat: number): Promise<Result<string, Error>> => {
   try {
     const invoice = await bolt11InvoiceNitro(amountSat);
-    return invoice;
+    return ok(invoice);
   } catch (error) {
     console.error("Failed to generate lightning invoice:", error);
-    throw new Error(
-      `Failed to generate lightning invoice: ${error instanceof Error ? error.message : String(error)}`,
+    return err(
+      new Error(
+        `Failed to generate lightning invoice: ${error instanceof Error ? error.message : String(error)}`,
+      ),
     );
   }
 };
 
-export const boardArk = async (amountSat: number): Promise<string> => {
+export const boardArk = async (amountSat: number): Promise<Result<string, Error>> => {
   try {
     const txid = await boardAmountNitro(amountSat);
-    return txid;
+    return ok(txid);
   } catch (error) {
     console.error("Failed to board funds:", error);
-    captureException(
-      new Error(`Failed to board funds: ${error instanceof Error ? error.message : String(error)}`),
-    );
-    throw new Error(
+    const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
     );
+    captureException(e);
+    return err(e);
   }
 };
 
 export const sendArkoorPayment = async (
   destination: string,
   amountSat: number,
-): Promise<ArkoorPaymentResult> => {
+): Promise<Result<ArkoorPaymentResult, Error>> => {
   try {
     const result = await sendArkoorPaymentNitro(destination, amountSat);
-    return result;
+    return ok(result);
   } catch (error) {
     console.error("Failed to send arkoor payment:", error);
-    captureException(
-      new Error(
-        `Failed to send arkoor payment: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-    );
-    throw new Error(
+    const e = new Error(
       `Failed to send arkoor payment: ${error instanceof Error ? error.message : String(error)}`,
     );
+    captureException(e);
+    return err(e);
   }
 };
 
 export const sendLightningPayment = async (
   destination: string,
   amountSat: number | undefined,
-): Promise<LightningPaymentResult> => {
+): Promise<Result<LightningPaymentResult, Error>> => {
   try {
     const result = await sendLightningPaymentNitro(destination, amountSat);
-    return result;
+    return ok(result);
   } catch (error) {
     console.error("Failed to send bolt11 payment:", error);
-    captureException(
-      new Error(
-        `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-    );
-    throw new Error(
+    const e = new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
     );
+    captureException(e);
+    return err(e);
   }
 };
 
@@ -167,19 +171,16 @@ export const onchainSend = async ({
 }: {
   destination: string;
   amountSat: number;
-}): Promise<OnchainPaymentResult> => {
+}): Promise<Result<OnchainPaymentResult, Error>> => {
   try {
     const result = await onchainSendNitro(destination, amountSat);
-    return result;
+    return ok(result);
   } catch (error) {
-    captureException(
-      new Error(
-        `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-    );
-    throw new Error(
+    const e = new Error(
       `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
     );
+    captureException(e);
+    return err(e);
   }
 };
 
@@ -187,21 +188,18 @@ export const sendLnaddr = async (
   addr: string,
   amountSat: number,
   comment: string,
-): Promise<LnurlPaymentResult> => {
+): Promise<Result<LnurlPaymentResult, Error>> => {
   try {
     const result = await sendLnaddrNitro(addr, amountSat, comment);
-    return result;
+    return ok(result);
   } catch (error) {
     console.error("Failed to send to lightning address:", error);
-    captureException(
-      new Error(
-        `Failed to send to lightning address: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-    );
-    throw new Error(
+    const e = new Error(
       `Failed to send to lightning address: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
+    captureException(e);
+    return err(e);
   }
 };

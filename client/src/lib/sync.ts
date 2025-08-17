@@ -15,11 +15,12 @@ export const syncWallet = async () => {
 
   log.i("syncWallet");
 
-  try {
-    await Promise.allSettled([sync(), onchainSync()]);
-    await syncArkReceives();
-    await queryClient.invalidateQueries({ queryKey: ["balance"] });
-  } catch (error) {
-    log.e("background sync failed:", [error]);
-  }
+  const results = await Promise.allSettled([sync(), onchainSync()]);
+  results.forEach((result) => {
+    if (result.status === "rejected") {
+      log.e("background sync failed:", [result.reason]);
+    }
+  });
+  await syncArkReceives();
+  await queryClient.invalidateQueries({ queryKey: ["balance"] });
 };

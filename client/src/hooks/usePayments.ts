@@ -21,7 +21,13 @@ export function useGenerateOffchainAddress() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: async () => (await newAddress()).address,
+    mutationFn: async () => {
+      const result = await newAddress();
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value.address;
+    },
     onError: (error: Error) => {
       showAlert({ title: "Vtxo Pubkey Generation Failed", description: error.message });
     },
@@ -32,7 +38,13 @@ export function useGenerateOnchainAddress() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: onchainAddress,
+    mutationFn: async () => {
+      const result = await onchainAddress();
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
     onError: (error: Error) => {
       showAlert({ title: "On-chain Address Generation Failed", description: error.message });
     },
@@ -43,7 +55,13 @@ export function useGenerateLightningInvoice() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: bolt11Invoice,
+    mutationFn: async (amount: number) => {
+      const result = await bolt11Invoice(amount);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
     onError: (error: Error) => {
       showAlert({ title: "Lightning Invoice Generation Failed", description: error.message });
     },
@@ -54,7 +72,13 @@ export function useBoardArk() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: boardArk,
+    mutationFn: async (amount: number) => {
+      const result = await boardArk(amount);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
@@ -80,33 +104,43 @@ export function useSend(destinationType: DestinationTypes) {
   const { showAlert } = useAlert();
 
   return useMutation<SendResult, Error, SendVariables>({
-    mutationFn: (variables) => {
+    mutationFn: async (variables) => {
       const { destination, amountSat, comment } = variables;
       if (amountSat === undefined && destinationType !== "lightning") {
-        return Promise.reject(new Error("Amount is required"));
+        throw new Error("Amount is required");
       }
 
+      let result;
       switch (destinationType) {
         case "onchain":
           if (amountSat === undefined) {
-            return Promise.reject(new Error("Amount is required for onchain payments"));
+            throw new Error("Amount is required for onchain payments");
           }
-          return onchainSend({ destination, amountSat });
+          result = await onchainSend({ destination, amountSat });
+          break;
         case "ark":
           if (amountSat === undefined) {
-            return Promise.reject(new Error("Amount is required for Ark payments"));
+            throw new Error("Amount is required for Ark payments");
           }
-          return sendArkoorPayment(destination, amountSat);
+          result = await sendArkoorPayment(destination, amountSat);
+          break;
         case "lightning":
-          return sendLightningPayment(destination, amountSat);
+          result = await sendLightningPayment(destination, amountSat);
+          break;
         case "lnurl":
           if (amountSat === undefined) {
-            return Promise.reject(new Error("Amount is required for LNURL payments"));
+            throw new Error("Amount is required for LNURL payments");
           }
-          return sendLnaddr(destination, amountSat, comment || "");
+          result = await sendLnaddr(destination, amountSat, comment || "");
+          break;
         default:
-          return Promise.reject(new Error("Invalid destination type"));
+          throw new Error("Invalid destination type");
       }
+
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });

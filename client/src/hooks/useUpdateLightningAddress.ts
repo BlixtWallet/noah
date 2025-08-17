@@ -6,6 +6,7 @@ import logger from "~/lib/log";
 import { useServerStore } from "~/store/serverStore";
 import { isValidEmail } from "~/lib/utils";
 import { Alert } from "react-native";
+import { ResultAsync } from "neverthrow";
 
 const log = logger("useUpdateLightningAddress");
 
@@ -16,30 +17,57 @@ const updateLightningAddress = async (newAddress: string) => {
 
   const serverEndpoint = getServerEndpoint();
   const getK1Url = `${serverEndpoint}/v0/getk1`;
-  const response = await fetch(getK1Url);
-  const { k1, tag } = await response.json();
+
+  const k1Result = await ResultAsync.fromPromise(
+    fetch(getK1Url).then((res) => res.json()),
+    (e) => e as Error,
+  );
+
+  if (k1Result.isErr()) {
+    throw k1Result.error;
+  }
+
+  const { k1, tag } = k1Result.value;
 
   if (tag !== "login") {
     throw new Error("Invalid tag from server");
   }
 
   const index = 0;
-  const { public_key: key } = await peakKeyPair(index);
-  const sig = await signMessage(k1, index);
+  const peakResult = await peakKeyPair(index);
+  if (peakResult.isErr()) {
+    throw peakResult.error;
+  }
+  const { public_key: key } = peakResult.value;
+
+  const sigResult = await signMessage(k1, index);
+  if (sigResult.isErr()) {
+    throw sigResult.error;
+  }
+  const sig = sigResult.value;
 
   const updateUrl = `${serverEndpoint}/v0/update_ln_address`;
-  const updateResponse = await fetch(updateUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      k1,
-      sig,
-      key,
-      ln_address: newAddress,
+  const updateResponseResult = await ResultAsync.fromPromise(
+    fetch(updateUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        k1,
+        sig,
+        key,
+        ln_address: newAddress,
+      }),
     }),
-  });
+    (e) => e as Error,
+  );
+
+  if (updateResponseResult.isErr()) {
+    throw updateResponseResult.error;
+  }
+
+  const updateResponse = updateResponseResult.value;
 
   if (!updateResponse.ok) {
     const errorBody = await updateResponse.text();
