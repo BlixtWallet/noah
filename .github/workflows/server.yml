@@ -18,3 +18,10 @@ jobs:
         run: nix develop .#server --command bash -c "cargo fmt --check"
       - name: Build
         run: nix develop .#server --command bash -c "cargo build --release"
+  test:
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: nix develop .#server --command bash -c "cargo test"

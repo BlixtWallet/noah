@@ -11,8 +11,22 @@ on:
       - ".github/workflows/server-push.yml"
 
 jobs:
+  fmt-check:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: nix develop .#server --command bash -c "cargo fmt --check"
+  test:
+    runs-on: self-hosted
+    needs: fmt-check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: nix develop .#server --command bash -c "cargo test"
   build-and-push:
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
