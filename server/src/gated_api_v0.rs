@@ -7,7 +7,7 @@ use crate::{AppState, app_middleware::AuthPayload, errors::ApiError};
 use rand::Rng;
 
 /// Represents events that can occur during LNURL-auth.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum AuthEvent {
     /// Indicates that a user has been successfully registered.
@@ -15,16 +15,16 @@ pub enum AuthEvent {
 }
 
 /// Represents the response for an LNURL-auth request.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LNUrlAuthResponse {
     /// The status of the request, either "OK" or "ERROR".
-    status: String,
+    pub status: String,
     /// An optional event indicating the outcome of the authentication.
     #[serde(skip_serializing_if = "Option::is_none")]
-    event: Option<AuthEvent>,
+    pub event: Option<AuthEvent>,
     /// An optional reason for an error, if one occurred.
     #[serde(skip_serializing_if = "Option::is_none")]
-    reason: Option<String>,
+    pub reason: Option<String>,
     /// The user's lightning address.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lightning_address: Option<String>,
@@ -148,7 +148,6 @@ pub async fn register_push_token(
         return Err(ApiError::InvalidArgument("User not registered".to_string()));
     }
 
-    let conn = app_state.db.connect()?;
     conn
         .execute(
             "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
@@ -196,7 +195,7 @@ pub async fn submit_invoice(
 }
 
 /// Represents the response for a user's information.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UserInfoResponse {
     /// The user's lightning address.
     pub lightning_address: String,

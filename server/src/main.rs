@@ -29,6 +29,8 @@ mod cron;
 mod errors;
 mod migrations;
 mod push;
+#[cfg(test)]
+mod tests;
 mod utils;
 
 use std::time::SystemTime;
@@ -91,21 +93,24 @@ async fn main() -> anyhow::Result<()> {
 
     cron_handle.start().await?;
 
+    // Gated routes, need auth
     let auth_router = Router::new()
         .route("/register", post(register))
         .route("/register_push_token", post(register_push_token))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
-        .route("/user_info", get(get_user_info))
+        .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             app_middleware::auth_middleware,
         ));
 
+    // Public route
     let v0_router = Router::new()
         .route("/getk1", get(get_k1))
         .merge(auth_router);
 
+    // Public route
     let lnurl_router = Router::new().route("/.well-known/lnurlp/{username}", get(lnurlp_request));
 
     let app = Router::new()
@@ -118,6 +123,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::debug!("server started listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
+    // Private routes, not exposed to the internet.
     let private_addr = SocketAddr::from((host, private_port));
     let private_router = Router::new()
         .route("/health", get(health_check))
