@@ -11,6 +11,8 @@ import {
   signMessage as signMessageNitro,
   verifyMessage as verifyMessageNitro,
   maintenance as maintenanceNitro,
+  type OnchainBalanceResult,
+  type OffchainBalanceResult,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
@@ -19,11 +21,12 @@ import { useTransactionStore } from "../store/transactionStore";
 import { ARK_DATA_PATH } from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair } from "./paymentsApi";
+import { err, ok, Result, ResultAsync } from "neverthrow";
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 const USERNAME = "noah";
 
-const createWalletFromMnemonic = async (mnemonic: string) => {
+const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, Error>> => {
   const { config } = useWalletStore.getState();
 
   const creationConfig =
@@ -53,105 +56,159 @@ const createWalletFromMnemonic = async (mnemonic: string) => {
           },
         };
 
-  if (await isWalletLoadedNitro()) {
-    await closeWalletNitro();
+  const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
+  if (isLoadedResult.isErr()) return err(isLoadedResult.error);
+
+  if (isLoadedResult.value) {
+    const closeResult = await ResultAsync.fromPromise(closeWalletNitro(), (e) => e as Error);
+    if (closeResult.isErr()) return err(closeResult.error);
   }
 
-  await createWalletNitro(ARK_DATA_PATH, {
-    ...creationConfig,
-    mnemonic,
-  });
+  const createResult = await ResultAsync.fromPromise(
+    createWalletNitro(ARK_DATA_PATH, { ...creationConfig, mnemonic }),
+    (e) => e as Error,
+  );
 
-  await Keychain.setGenericPassword(USERNAME, mnemonic, {
-    service: MNEMONIC_KEYCHAIN_SERVICE,
-  });
+  if (createResult.isErr()) {
+    return err(createResult.error);
+  }
 
-  // After creating the wallet, load wallet into memory.
-  await loadWalletNitro(ARK_DATA_PATH, mnemonic);
+  const setResult = await ResultAsync.fromPromise(
+    Keychain.setGenericPassword(USERNAME, mnemonic, { service: MNEMONIC_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
 
-  // The first time we generate a pubkey, the index should be undefined.
-  // After that, we can use index 0 to get the static pubkey.
-  await deriveStoreNextKeypair();
-  const keypair = await peakKeyPair(0);
-  useWalletStore.getState().setStaticVtxoPubkey(keypair.public_key);
+  if (setResult.isErr()) {
+    return err(setResult.error);
+  }
+
+  const loadResult = await ResultAsync.fromPromise(
+    loadWalletNitro(ARK_DATA_PATH, mnemonic),
+    (e) => e as Error,
+  );
+  if (loadResult.isErr()) {
+    return err(loadResult.error);
+  }
+
+  const deriveResult = await deriveStoreNextKeypair();
+  if (deriveResult.isErr()) {
+    return err(deriveResult.error);
+  }
+
+  const keypairResult = await peakKeyPair(0);
+  if (keypairResult.isErr()) {
+    return err(keypairResult.error);
+  }
+
+  useWalletStore.getState().setStaticVtxoPubkey(keypairResult.value.public_key);
+  return ok(undefined);
 };
 
-export const createWallet = async () => {
-  const mnemonic = await createMnemonic();
-
-  await createWalletFromMnemonic(mnemonic);
+export const createWallet = async (): Promise<Result<void, Error>> => {
+  const mnemonicResult = await ResultAsync.fromPromise(createMnemonic(), (e) => e as Error);
+  if (mnemonicResult.isErr()) {
+    return err(mnemonicResult.error);
+  }
+  return createWalletFromMnemonic(mnemonicResult.value);
 };
 
-const loadWallet = async () => {
-  const credentials = await Keychain.getGenericPassword({
-    service: MNEMONIC_KEYCHAIN_SERVICE,
-  });
+const loadWallet = async (): Promise<Result<boolean, Error>> => {
+  const credentialsResult = await ResultAsync.fromPromise(
+    Keychain.getGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
 
+  if (credentialsResult.isErr()) {
+    return err(credentialsResult.error);
+  }
+
+  const credentials = credentialsResult.value;
   if (!credentials || !credentials.password) {
-    throw new Error("No wallet found. Please create a wallet first.");
+    return err(new Error("No wallet found. Please create a wallet first."));
   }
 
-  await loadWalletNitro(ARK_DATA_PATH, credentials.password);
-  return true;
-};
+  const loadResult = await ResultAsync.fromPromise(
+    loadWalletNitro(ARK_DATA_PATH, credentials.password),
+    (e) => e as Error,
+  );
 
-export const loadWalletIfNeeded = async () => {
-  const isLoaded = await isWalletLoadedNitro();
-  if (isLoaded) {
-    return true;
+  if (loadResult.isErr()) {
+    return err(loadResult.error);
   }
 
-  return await loadWallet();
+  return ok(true);
 };
 
-export const fetchOnchainBalance = async () => {
-  const newBalance = await onchainBalanceNitro();
-  return newBalance;
+export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
+  const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
+  if (isLoadedResult.isErr()) {
+    return err(isLoadedResult.error);
+  }
+
+  if (isLoadedResult.value) {
+    return ok(true);
+  }
+
+  return loadWallet();
 };
 
-export const fetchOffchainBalance = async () => {
-  const newBalance = await offchainBalanceNitro();
-  return newBalance;
+export const fetchOnchainBalance = async (): Promise<Result<OnchainBalanceResult, Error>> => {
+  return ResultAsync.fromPromise(onchainBalanceNitro(), (e) => e as Error);
 };
 
-export const sync = async () => {
-  await syncNitro();
+export const fetchOffchainBalance = async (): Promise<Result<OffchainBalanceResult, Error>> => {
+  return ResultAsync.fromPromise(offchainBalanceNitro(), (e) => e as Error);
 };
 
-export const signMessage = async (message: string, index: number) => {
-  const signature = await signMessageNitro(message, index);
-  return signature;
+export const sync = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(syncNitro(), (e) => e as Error);
 };
 
-export const verifyMessage = async (message: string, signature: string, publicKey: string) => {
-  const isValid = await verifyMessageNitro(message, signature, publicKey);
-  return isValid;
+export const signMessage = async (
+  message: string,
+  index: number,
+): Promise<Result<string, Error>> => {
+  return ResultAsync.fromPromise(signMessageNitro(message, index), (e) => e as Error);
 };
 
-export const onchainSync = async () => {
-  await onchainSyncNitro();
+export const verifyMessage = async (
+  message: string,
+  signature: string,
+  publicKey: string,
+): Promise<Result<boolean, Error>> => {
+  return ResultAsync.fromPromise(
+    verifyMessageNitro(message, signature, publicKey),
+    (e) => e as Error,
+  );
 };
 
-export const maintanance = async () => {
-  await maintenanceNitro();
+export const onchainSync = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(onchainSyncNitro(), (e) => e as Error);
 };
 
-export const deleteWallet = async () => {
-  try {
-    // Delete the wallet data directory
-    const dataDirExists = await RNFS.exists(ARK_DATA_PATH);
-    if (dataDirExists) {
-      await RNFS.unlink(ARK_DATA_PATH);
-    }
+export const maintanance = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(maintenanceNitro(), (e) => e as Error);
+};
 
-    // Remove the mnemonic from keychain
-    await Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE });
-    useWalletStore.getState().reset();
-    useTransactionStore.getState().reset();
-  } catch (error) {
-    console.error("Failed to delete wallet:", error);
-    throw new Error(
-      `Failed to delete wallet: ${error instanceof Error ? error.message : String(error)}`,
+export const deleteWallet = async (): Promise<Result<void, Error>> => {
+  const existsResult = await ResultAsync.fromPromise(RNFS.exists(ARK_DATA_PATH), (e) => e as Error);
+  if (existsResult.isErr()) return err(existsResult.error);
+
+  if (existsResult.value) {
+    const unlinkResult = await ResultAsync.fromPromise(
+      RNFS.unlink(ARK_DATA_PATH),
+      (e) => e as Error,
     );
+    if (unlinkResult.isErr()) return err(unlinkResult.error);
   }
+
+  const resetResult = await ResultAsync.fromPromise(
+    Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+  if (resetResult.isErr()) return err(resetResult.error);
+
+  useWalletStore.getState().reset();
+  useTransactionStore.getState().reset();
+  return ok(undefined);
 };

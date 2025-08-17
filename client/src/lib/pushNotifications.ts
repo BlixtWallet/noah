@@ -9,6 +9,7 @@ import { captureException } from "@sentry/react-native";
 import { backgroundSync, maintenance, submitInvoice } from "./tasks";
 import { peakKeyPair } from "./paymentsApi";
 import { signMessage } from "./walletApi";
+import { err, ok, Result, ResultAsync } from "neverthrow";
 
 const log = logger("pushNotifications");
 
@@ -17,47 +18,61 @@ const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error, executionInfo }) => {
-    try {
-      if (error) {
-        log.e("[Background Job] error", [error]);
-        captureException(error);
-        return;
-      }
+    if (error) {
+      log.e("[Background Job] error", [error]);
+      captureException(error);
+      return;
+    }
 
-      log.d("[Background Job] dataReceived", [data, typeof data]);
+    log.d("[Background Job] dataReceived", [data, typeof data]);
 
-      let notificationData = (data as any)?.data?.body;
+    const notificationDataResult = Result.fromThrowable(
+      () => {
+        let notificationData = (data as any)?.data?.body;
+        if (typeof notificationData === "string") {
+          return JSON.parse(notificationData);
+        }
+        return notificationData;
+      },
+      (e) => new Error(`Failed to parse notification data: ${e}`),
+    )();
 
-      if (typeof notificationData === "string") {
-        notificationData = JSON.parse(notificationData);
-      }
+    if (notificationDataResult.isErr()) {
+      captureException(notificationDataResult.error);
+      log.e("[Background Job] error", [notificationDataResult.error]);
+      return;
+    }
 
-      log.d("[Background Job] notificationData", [notificationData, typeof notificationData]);
+    const notificationData = notificationDataResult.value;
 
-      if (!notificationData || !notificationData.type) {
-        log.w("[Background Job] No data or type received", [notificationData]);
-        return;
-      }
+    log.d("[Background Job] notificationData", [notificationData, typeof notificationData]);
 
-      if (notificationData.type === "background-sync") {
-        await backgroundSync();
-      } else if (notificationData.type === "maintenance") {
-        await maintenance();
-      } else if (notificationData.type === "lightning-invoice-request") {
-        log.d("Received lightning invoice request", [notificationData]);
-        // TODO: Prompt user to generate and submit invoice for the given amount
-        const amountMsat = parseInt(notificationData.amount);
+    if (!notificationData || !notificationData.type) {
+      log.w("[Background Job] No data or type received", [notificationData]);
+      return;
+    }
 
-        // This is where you would generate a real invoice
-        await submitInvoice(notificationData.request_id, amountMsat);
-      }
-    } catch (e) {
-      captureException(
+    const taskResult = await ResultAsync.fromPromise(
+      (async () => {
+        if (notificationData.type === "background-sync") {
+          await backgroundSync();
+        } else if (notificationData.type === "maintenance") {
+          await maintenance();
+        } else if (notificationData.type === "lightning-invoice-request") {
+          log.d("Received lightning invoice request", [notificationData]);
+          const amountMsat = parseInt(notificationData.amount);
+          await submitInvoice(notificationData.request_id, amountMsat);
+        }
+      })(),
+      (e) =>
         new Error(
           `Failed to handle background notification: ${e instanceof Error ? e.message : String(e)}`,
         ),
-      );
-      log.e("[Background Job] error", [e]);
+    );
+
+    if (taskResult.isErr()) {
+      captureException(taskResult.error);
+      log.e("[Background Job] error", [taskResult.error]);
     }
   },
 );
@@ -73,11 +88,7 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function handleRegistrationError(errorMessage: string) {
-  throw new Error(errorMessage);
-}
-
-export async function registerForPushNotificationsAsync() {
+export async function registerForPushNotificationsAsync(): Promise<Result<string, Error>> {
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -98,63 +109,104 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
-      handleRegistrationError("Permission not granted to get push token for push notification!");
-      return;
+      return err(new Error("Permission not granted to get push token for push notification!"));
     }
     const projectId =
       Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
     if (!projectId) {
-      handleRegistrationError("Project ID not found");
+      return err(new Error("Project ID not found"));
     }
-    try {
-      const nativePushToken = await Notifications.getDevicePushTokenAsync();
-      log.d(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken]);
+    const nativePushTokenResult = await ResultAsync.fromPromise(
+      Notifications.getDevicePushTokenAsync(),
+      (e) => e as Error,
+    );
 
-      const pushTokenString = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId,
-        })
-      ).data;
-      log.d("push token string is ", [pushTokenString]);
-      return pushTokenString;
-    } catch (e: unknown) {
-      handleRegistrationError(`${e}`);
+    if (nativePushTokenResult.isErr()) {
+      return err(nativePushTokenResult.error);
     }
+
+    const nativePushToken = nativePushTokenResult.value;
+    log.d(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken]);
+
+    const pushTokenResult = await ResultAsync.fromPromise(
+      Notifications.getExpoPushTokenAsync({
+        projectId,
+      }),
+      (e) => e as Error,
+    );
+
+    if (pushTokenResult.isErr()) {
+      return err(pushTokenResult.error);
+    }
+
+    const pushTokenString = pushTokenResult.value.data;
+    log.d("push token string is ", [pushTokenString]);
+    return ok(pushTokenString);
   } else {
-    handleRegistrationError("Must use physical device for push notifications");
+    return err(new Error("Must use physical device for push notifications"));
   }
 }
 
-export async function registerPushTokenWithServer(pushToken: string) {
+export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {
   const serverEndpoint = getServerEndpoint();
   const getK1Url = `${serverEndpoint}/v0/getk1`;
-  const response = await fetch(getK1Url);
-  const { k1, tag } = await response.json();
+
+  const k1Result = await ResultAsync.fromPromise(
+    fetch(getK1Url).then((res) => res.json()),
+    (e) => e as Error,
+  );
+
+  if (k1Result.isErr()) {
+    return err(k1Result.error);
+  }
+
+  const { k1, tag } = k1Result.value as { k1: string; tag: string };
 
   if (tag !== "login") {
-    throw new Error("Invalid tag from server");
+    return err(new Error("Invalid tag from server"));
   }
 
   const index = 0;
-  const { public_key: key } = await peakKeyPair(index);
-  const signature = await signMessage(k1, index);
+  const keyPairResult = await peakKeyPair(index);
+  if (keyPairResult.isErr()) {
+    return err(keyPairResult.error);
+  }
+  const { public_key: key } = keyPairResult.value;
+
+  const signatureResult = await signMessage(k1, index);
+  if (signatureResult.isErr()) {
+    return err(signatureResult.error);
+  }
+  const signature = signatureResult.value;
 
   const registerUrl = `${serverEndpoint}/v0/register_push_token`;
-  const registrationResponse = await fetch(registerUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      push_token: pushToken,
-      key,
-      sig: signature,
-      k1,
+  const registrationResponseResult = await ResultAsync.fromPromise(
+    fetch(registerUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        push_token: pushToken,
+        key,
+        sig: signature,
+        k1,
+      }),
     }),
-  });
+    (e) => e as Error,
+  );
+
+  if (registrationResponseResult.isErr()) {
+    return err(registrationResponseResult.error);
+  }
+
+  const registrationResponse = registrationResponseResult.value;
 
   if (!registrationResponse.ok) {
     const errorBody = await registrationResponse.text();
-    throw new Error(`Failed to register push token: ${registrationResponse.status} ${errorBody}`);
+    return err(
+      new Error(`Failed to register push token: ${registrationResponse.status} ${errorBody}`),
+    );
   }
+  return ok(undefined);
 }

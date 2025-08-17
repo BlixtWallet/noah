@@ -21,6 +21,7 @@ import { COLORS } from "../lib/styleConstants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
+import { Result } from "neverthrow";
 
 type Vtxo = {
   id: string;
@@ -84,10 +85,11 @@ const BoardArkScreen = () => {
 
   useEffect(() => {
     if (boardResult) {
-      try {
-        setParsedData(JSON.parse(boardResult));
-      } catch (e) {
-        console.error("Failed to parse boarding result:", e);
+      const result = Result.fromThrowable(JSON.parse)(boardResult);
+      if (result.isOk()) {
+        setParsedData(result.value);
+      } else {
+        console.error("Failed to parse boarding result:", result.error);
       }
     }
   }, [boardResult]);

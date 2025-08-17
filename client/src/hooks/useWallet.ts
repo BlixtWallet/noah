@@ -18,8 +18,12 @@ export function useCreateWallet() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: createWalletAction,
-
+    mutationFn: async () => {
+      const result = await createWalletAction();
+      if (result.isErr()) {
+        throw result.error;
+      }
+    },
     onError: async (error: Error) => {
       await deleteWalletAction();
       showAlert({ title: "Creation Failed", description: error.message });
@@ -32,7 +36,13 @@ export function useLoadWallet() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: loadWalletAction,
+    mutationFn: async () => {
+      const result = await loadWalletAction();
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
     onSuccess: (walletExists) => {
       if (walletExists) {
         setWalletLoaded();
@@ -50,11 +60,19 @@ export function useBalance() {
   return useQuery({
     queryKey: ["balance"],
     queryFn: async () => {
-      const [onchain, offchain] = await Promise.all([
+      const [onchainResult, offchainResult] = await Promise.all([
         fetchOnchainBalance(),
         fetchOffchainBalance(),
       ]);
-      return { onchain, offchain };
+
+      if (onchainResult.isErr()) {
+        throw onchainResult.error;
+      }
+      if (offchainResult.isErr()) {
+        throw offchainResult.error;
+      }
+
+      return { onchain: onchainResult.value, offchain: offchainResult.value };
     },
     enabled: isInitialized,
     retry: false,
@@ -80,8 +98,14 @@ export const useBalanceSync = () => {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: async () => await Promise.allSettled([syncAction(), onchainSyncAction()]),
-
+    mutationFn: async () => {
+      const results = await Promise.allSettled([syncAction(), onchainSyncAction()]);
+      results.forEach((result) => {
+        if (result.status === "rejected") {
+          throw result.reason;
+        }
+      });
+    },
     onError: (error: Error) => {
       showAlert({ title: "Failed to sync wallet balance", description: error.message });
     },
@@ -92,7 +116,12 @@ export function useOffchainSync() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: syncAction,
+    mutationFn: async () => {
+      const result = await syncAction();
+      if (result.isErr()) {
+        throw result.error;
+      }
+    },
     onError: (error: Error) => {
       showAlert({ title: "Failed to sync wallet", description: error.message });
     },
@@ -103,7 +132,12 @@ export function useOnchainSync() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: onchainSyncAction,
+    mutationFn: async () => {
+      const result = await onchainSyncAction();
+      if (result.isErr()) {
+        throw result.error;
+      }
+    },
     onError: (error: Error) => {
       showAlert({ title: "Failed to sync wallet", description: error.message });
     },
@@ -116,7 +150,12 @@ export function useDeleteWallet() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: deleteWalletAction,
+    mutationFn: async () => {
+      const result = await deleteWalletAction();
+      if (result.isErr()) {
+        throw result.error;
+      }
+    },
     onSuccess: () => {
       reset();
       resetRegistration();

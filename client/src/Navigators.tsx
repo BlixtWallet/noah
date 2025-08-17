@@ -17,6 +17,7 @@ import MnemonicScreen from "~/screens/MnemonicScreen";
 import LogScreen from "~/screens/LogScreen";
 import TransactionsScreen from "~/screens/TransactionsScreen";
 import TransactionDetailScreen from "~/screens/TransactionDetailScreen";
+import LightningAddressScreen from "~/screens/LightningAddressScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { COLORS } from "~/lib/styleConstants";
@@ -29,6 +30,7 @@ export type SettingsStackParamList = {
   SettingsList: undefined;
   Mnemonic: { fromOnboarding: boolean };
   Logs: undefined;
+  LightningAddress: undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -58,6 +60,7 @@ const SettingsStackNav = () => (
     <Stack.Screen name="SettingsList" component={SettingsScreen} />
     <Stack.Screen name="Mnemonic" component={MnemonicScreen} />
     <Stack.Screen name="Logs" component={LogScreen} />
+    <Stack.Screen name="LightningAddress" component={LightningAddressScreen} />
   </Stack.Navigator>
 );
 

@@ -17,15 +17,19 @@ export const usePushNotifications = (isReady: boolean) => {
         return;
       }
 
-      try {
-        const token = await registerForPushNotificationsAsync();
-        if (token) {
-          await registerPushTokenWithServer(token);
-          log.d("Successfully registered for push notifications");
-        }
-      } catch (error) {
-        log.w("Failed to register for push notifications", [error]);
+      const tokenResult = await registerForPushNotificationsAsync();
+      if (tokenResult.isErr()) {
+        log.w("Failed to register for push notifications", [tokenResult.error]);
+        return;
       }
+
+      const registerResult = await registerPushTokenWithServer(tokenResult.value);
+      if (registerResult.isErr()) {
+        log.w("Failed to register push token with server", [registerResult.error]);
+        return;
+      }
+
+      log.d("Successfully registered for push notifications");
     };
 
     register();

@@ -24,6 +24,7 @@ import { Label } from "~/components/ui/label";
 import { useNavigation } from "@react-navigation/native";
 import { HomeStackParamList } from "~/Navigators";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { ResultAsync } from "neverthrow";
 
 const TransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -86,26 +87,34 @@ const TransactionsScreen = () => {
     const filename = `noah_transactions_${new Date().toISOString().split("T")[0]}.csv`;
     const filePath = `${RNFS.CachesDirectoryPath}/${filename}`;
 
-    try {
-      await RNFS.writeFile(filePath, csvContent, "utf8");
+    const writeFileResult = await ResultAsync.fromPromise(
+      RNFS.writeFile(filePath, csvContent, "utf8"),
+      (e) => e as Error,
+    );
 
-      await Share.open({
+    if (writeFileResult.isErr()) {
+      console.error("Error writing CSV file:", writeFileResult.error);
+      return;
+    }
+
+    const shareResult = await ResultAsync.fromPromise(
+      Share.open({
         title: "Export Transactions",
         url: `file://${filePath}`,
         type: "text/csv",
         filename: filename,
         subject: "Noah Wallet Transaction Export",
-      });
+      }),
+      (e) => e as Error,
+    );
 
-      await RNFS.unlink(filePath);
-    } catch (error) {
-      if (error && typeof error === "object" && "message" in error) {
-        const errorMessage = (error as Error).message;
-        if (!errorMessage.includes("User did not share")) {
-          console.error("Error sharing CSV:", error);
-        }
+    if (shareResult.isErr()) {
+      if (!shareResult.error.message.includes("User did not share")) {
+        console.error("Error sharing CSV:", shareResult.error);
       }
     }
+
+    await ResultAsync.fromPromise(RNFS.unlink(filePath), (e) => e as Error);
   };
 
   const onCancelDelete = () => {

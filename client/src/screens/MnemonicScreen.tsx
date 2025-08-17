@@ -32,11 +32,11 @@ const MnemonicScreen = () => {
 
   useEffect(() => {
     const fetchMnemonic = async () => {
-      try {
-        const fetchedMnemonic = await getMnemonic();
-        setMnemonic(fetchedMnemonic);
-      } catch (error) {
-        console.error("Mnemonic screen, failed to fetch mnemonic", error);
+      const mnemonicResult = await getMnemonic();
+      if (mnemonicResult.isOk()) {
+        setMnemonic(mnemonicResult.value);
+      } else {
+        console.error("Mnemonic screen, failed to fetch mnemonic", mnemonicResult.error);
         showAlert({
           title: "Error",
           description: "Could not retrieve your recovery phrase. Please try again from settings.",

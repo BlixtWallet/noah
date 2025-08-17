@@ -11,6 +11,7 @@ import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import Share from "react-native-share";
 import { PLATFORM } from "~/constants";
+import { ResultAsync } from "neverthrow";
 
 const LogScreen = () => {
   const navigation = useNavigation();
@@ -23,17 +24,14 @@ const LogScreen = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchLogs = async () => {
-      try {
-        const appLogs = await getAppLogs();
-        if (isMounted) {
-          setLogs(appLogs);
-        }
-      } catch (e: any) {
-        if (isMounted) {
-          setError(e.message || "Failed to fetch logs.");
-        }
-      }
+      const result = await ResultAsync.fromPromise(getAppLogs(), (e) => e as Error);
+
       if (isMounted) {
+        if (result.isOk()) {
+          setLogs(result.value);
+        } else {
+          setError(result.error.message || "Failed to fetch logs.");
+        }
         setIsLoading(false);
       }
     };
@@ -57,28 +55,33 @@ const LogScreen = () => {
     const path = `${RNFS.CachesDirectoryPath}/noah_logs.txt`;
     const url = PLATFORM === "android" ? `file://${path}` : path;
 
-    try {
-      await RNFS.writeFile(path, logs.join("\n"), "utf8");
+    const writeFileResult = await ResultAsync.fromPromise(
+      RNFS.writeFile(path, logs.join("\n"), "utf8"),
+      (e) => e as Error,
+    );
 
-      const options = {
-        title: "Share your file",
-        message: "Noah App Logs",
-        url,
-        type: "text/plain",
-      };
+    if (writeFileResult.isErr()) {
+      console.error("Error writing log file:", writeFileResult.error);
+      return;
+    }
 
-      await Share.open(options);
+    const options = {
+      title: "Share your file",
+      message: "Noah App Logs",
+      url,
+      type: "text/plain",
+    };
 
-      // Clean up: Delete the temporary file after sharing
-      await RNFS.unlink(path);
-    } catch (error) {
-      if (error && typeof error === "object" && "message" in error) {
-        const errorMessage = (error as Error).message;
-        if (!errorMessage.includes("User did not share")) {
-          console.error("Error sharing Logs:", error);
-        }
+    const shareResult = await ResultAsync.fromPromise(Share.open(options), (e) => e as Error);
+
+    if (shareResult.isErr()) {
+      if (!shareResult.error.message.includes("User did not share")) {
+        console.error("Error sharing Logs:", shareResult.error);
       }
     }
+
+    // Clean up: Delete the temporary file after sharing
+    await ResultAsync.fromPromise(RNFS.unlink(path), (e) => e as Error);
   };
 
   return (

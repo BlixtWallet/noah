@@ -5,6 +5,7 @@ import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import logger from "~/lib/log";
 import * as SQLite from "expo-sqlite";
+import { ResultAsync } from "neverthrow";
 
 const txIdFromOutpoint = (outpoint: string): string => outpoint.split(":")[0];
 
@@ -20,45 +21,55 @@ export const syncArkReceives = async () => {
   const db = await SQLite.openDatabaseAsync("db.sqlite", { useNewConnection: true }, ARK_DATA_PATH);
   const { addTransaction } = useTransactionStore.getState();
 
-  try {
-    const rows = await db.getAllAsync<ReceivedVtxos>(
+  const rowsResult = await ResultAsync.fromPromise(
+    db.getAllAsync<ReceivedVtxos>(
       `SELECT id, amount_sat, created_at FROM bark_vtxo WHERE received_in NOT IN (SELECT DISTINCT spent_in FROM bark_vtxo WHERE spent_in IS NOT NULL);`,
-    );
+    ),
+    (e) => e as Error,
+  );
 
-    if (rows && rows.length > 0) {
-      const currentTransactions = useTransactionStore
-        .getState()
-        .transactions.filter((tx) => tx.type === "Arkoor");
+  if (rowsResult.isErr()) {
+    db.closeSync();
+    console.error("Failed to sync transactions from SQLite:", rowsResult.error);
+    return;
+  }
 
-      for (const tx of rows) {
-        const existingTx = currentTransactions.find(
-          (t) => t.txid && txIdFromOutpoint(t.txid) === txIdFromOutpoint(tx.id),
-        );
+  const rows = rowsResult.value;
 
-        if (!existingTx) {
-          log.d(`Syncing new Ark transaction from sqlite: ${tx.id}`, [tx]);
+  if (rows && rows.length > 0) {
+    const currentTransactions = useTransactionStore
+      .getState()
+      .transactions.filter((tx) => tx.type === "Arkoor");
 
-          const btcPrice = await getHistoricalBtcToUsdRate(String(tx.created_at));
-          const newTransaction: Transaction = {
-            id: uuid.v4().toString(),
-            txid: tx.id as string,
-            amount: tx.amount_sat as number,
-            date: new Date(tx.created_at as number).toISOString(),
-            direction: "incoming",
-            type: "Arkoor",
-            btcPrice: btcPrice,
-            description: "",
-            destination: "",
-          };
-          addTransaction(newTransaction);
+    for (const tx of rows) {
+      const existingTx = currentTransactions.find(
+        (t) => t.txid && txIdFromOutpoint(t.txid) === txIdFromOutpoint(tx.id),
+      );
+
+      if (!existingTx) {
+        log.d(`Syncing new Ark transaction from sqlite: ${tx.id}`, [tx]);
+
+        const btcPriceResult = await getHistoricalBtcToUsdRate(String(tx.created_at));
+        if (btcPriceResult.isErr()) {
+          log.w("Could not get historical BTC price", [btcPriceResult.error]);
+          continue;
         }
+        const newTransaction: Transaction = {
+          id: uuid.v4().toString(),
+          txid: tx.id as string,
+          amount: tx.amount_sat as number,
+          date: new Date(tx.created_at as number).toISOString(),
+          direction: "incoming",
+          type: "Arkoor",
+          btcPrice: btcPriceResult.value,
+          description: "",
+          destination: "",
+        };
+        addTransaction(newTransaction);
       }
     }
-
-    log.d("Successfully synced Ark transactions from SQLite");
-    db.closeSync();
-  } catch (error) {
-    db.closeSync();
-    console.error("Failed to sync transactions from SQLite:", error);
   }
+
+  log.d("Successfully synced Ark transactions from SQLite");
+  db.closeSync();
 };

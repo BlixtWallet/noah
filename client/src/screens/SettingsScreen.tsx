@@ -12,7 +12,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
-import { useUpdateLightningAddress } from "../hooks/useUpdateLightningAddress";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
@@ -47,18 +46,8 @@ const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const { config, isInitialized } = useWalletStore();
   const { lightningAddress, resetRegistration } = useServerStore();
-  const [newLightningAddress, setNewLightningAddress] = useState("");
   const [showResetSuccess, setShowResetSuccess] = useState(false);
-  const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
-  const updateLightningAddressMutation = useUpdateLightningAddress({
-    onSuccess: () => {
-      setShowUpdateSuccess(true);
-      setTimeout(() => {
-        setShowUpdateSuccess(false);
-      }, 3000);
-    },
-  });
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -148,15 +137,18 @@ const SettingsScreen = () => {
             <AlertDescription>Server registration has been reset.</AlertDescription>
           </Alert>
         )}
-        {showUpdateSuccess && (
-          <Alert icon={CheckCircle} className="mb-4">
-            <AlertTitle>Success!</AlertTitle>
-            <AlertDescription>Lightning address has been updated.</AlertDescription>
-          </Alert>
-        )}
         <ScrollView className="flex-1 mb-16">
           {lightningAddress && (
-            <CopyableSettingRow label="Lightning Address" value={lightningAddress} />
+            <Pressable
+              onPress={() => navigation.navigate("LightningAddress")}
+              className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
+            >
+              <View>
+                <Label className="text-foreground text-lg">Lightning Address</Label>
+                <Text className="text-base mt-1 text-muted-foreground">{lightningAddress}</Text>
+              </View>
+              <Icon name="chevron-forward-outline" size={24} color="white" />
+            </Pressable>
           )}
 
           {data.map((item) => {
@@ -205,37 +197,6 @@ const SettingsScreen = () => {
               </Pressable>
             );
           })}
-          {isInitialized && (
-            <ConfirmationDialog
-              trigger={
-                <Pressable className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2">
-                  <View>
-                    <Label className="text-foreground text-lg">Update Lightning Address</Label>
-                  </View>
-                  <Icon name="chevron-forward-outline" size={24} color="white" />
-                </Pressable>
-              }
-              title="Update Lightning Address"
-              description="Enter your new lightning address below."
-              onConfirm={() => {
-                if (newLightningAddress && newLightningAddress !== lightningAddress) {
-                  updateLightningAddressMutation.mutate(newLightningAddress);
-                }
-              }}
-              confirmText="Update"
-              confirmVariant="default"
-            >
-              <Input
-                value={newLightningAddress}
-                onChangeText={setNewLightningAddress}
-                placeholder="Enter new lightning address"
-                className="h-12 mt-2"
-                autoCapitalize="none"
-                autoCorrect={false}
-                inputMode="email"
-              />
-            </ConfirmationDialog>
-          )}
           {isInitialized && (
             <View className="mt-4">
               <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>

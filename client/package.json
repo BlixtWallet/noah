@@ -76,6 +76,7 @@
     "light-bolt11-decoder": "^3.2.0",
     "lucide-react-native": "^0.525.0",
     "nativewind": "^4.1.23",
+    "neverthrow": "^8.2.0",
     "noah-tools": "file:./nitromodules/noah-tools",
     "react": "19.0.0",
     "react-native": "0.79.5",
