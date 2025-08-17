@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// Represents the response for a `k1` request, used in LNURL-auth.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct GetK1 {
     /// A unique, single-use secret for the authentication process.
     pub k1: String,
@@ -71,21 +71,21 @@ pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>
 ///
 /// This response provides the necessary details for a wallet to make a payment,
 /// such as the callback URL, sendable amounts, and metadata.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnurlpDefaultResponse {
     /// The URL where the wallet should send the second request.
-    callback: String,
+    pub callback: String,
     /// The maximum amount that can be sent in a single payment, in millisatoshis.
-    max_sendable: u64,
+    pub max_sendable: u64,
     /// The minimum amount that can be sent in a single payment, in millisatoshis.
-    min_sendable: u64,
+    pub min_sendable: u64,
     /// A JSON string containing metadata about the payment.
-    metadata: String,
+    pub metadata: String,
     /// The LNURL-pay tag, which is always "payRequest".
-    tag: String,
+    pub tag: String,
     /// The maximum length of a comment that can be included with the payment.
-    comment_allowed: u16,
+    pub comment_allowed: u16,
 }
 
 /// Represents the second response in the LNURL-pay protocol.

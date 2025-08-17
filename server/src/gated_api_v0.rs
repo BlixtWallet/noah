@@ -7,7 +7,7 @@ use crate::{AppState, app_middleware::AuthPayload, errors::ApiError};
 use rand::Rng;
 
 /// Represents events that can occur during LNURL-auth.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum AuthEvent {
     /// Indicates that a user has been successfully registered.
@@ -15,13 +15,13 @@ pub enum AuthEvent {
 }
 
 /// Represents the response for an LNURL-auth request.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LNUrlAuthResponse {
     /// The status of the request, either "OK" or "ERROR".
-    status: String,
+    pub status: String,
     /// An optional event indicating the outcome of the authentication.
     #[serde(skip_serializing_if = "Option::is_none")]
-    event: Option<AuthEvent>,
+    pub event: Option<AuthEvent>,
     /// An optional reason for an error, if one occurred.
     #[serde(skip_serializing_if = "Option::is_none")]
     reason: Option<String>,
@@ -196,7 +196,7 @@ pub async fn submit_invoice(
 }
 
 /// Represents the response for a user's information.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UserInfoResponse {
     /// The user's lightning address.
     pub lightning_address: String,

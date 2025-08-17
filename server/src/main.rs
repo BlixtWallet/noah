@@ -29,6 +29,8 @@ mod cron;
 mod errors;
 mod migrations;
 mod push;
+#[cfg(test)]
+mod tests;
 mod utils;
 
 use std::time::SystemTime;
@@ -95,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/register", post(register))
         .route("/register_push_token", post(register_push_token))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
-        .route("/user_info", get(get_user_info))
+        .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
