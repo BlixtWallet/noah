@@ -148,7 +148,6 @@ pub async fn register_push_token(
         return Err(ApiError::InvalidArgument("User not registered".to_string()));
     }
 
-    let conn = app_state.db.connect()?;
     conn
         .execute(
             "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",

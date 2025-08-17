@@ -31,3 +31,4 @@ validator = { version = "0.20.0", features = ["derive"] }
 
 [dev-dependencies]
 tower = { version = "0.4", features = ["full"] }
+tracing-test = "0.2.5"

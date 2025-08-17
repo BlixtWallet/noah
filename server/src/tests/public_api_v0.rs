@@ -34,6 +34,7 @@ async fn setup_test_app() -> (Router, AppState) {
     (app, app_state)
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_lnurlp_request_default() {
     let (app, app_state) = setup_test_app().await;
@@ -66,6 +67,7 @@ async fn test_lnurlp_request_default() {
     assert_eq!(res.callback, "https://localhost/.well-known/lnurlp/test");
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_k1() {
     let (app, app_state) = setup_test_app().await;

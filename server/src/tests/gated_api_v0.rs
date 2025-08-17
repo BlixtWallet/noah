@@ -48,6 +48,7 @@ async fn setup_test_app() -> (Router, AppState) {
     (app, app_state)
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_new_user() {
     let (app, app_state) = setup_test_app().await;
@@ -102,6 +103,7 @@ async fn test_register_new_user() {
     assert_eq!(res.lightning_address, Some("test@localhost".to_string()));
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_existing_user() {
     let (app, app_state) = setup_test_app().await;
@@ -167,6 +169,7 @@ async fn test_register_existing_user() {
     );
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_signature() {
     let (app, app_state) = setup_test_app().await;
@@ -210,6 +213,7 @@ async fn test_register_invalid_signature() {
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_k1() {
     let (app, _) = setup_test_app().await;
@@ -250,6 +254,7 @@ async fn test_register_invalid_k1() {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_push_token() {
     let (app, app_state) = setup_test_app().await;
@@ -316,6 +321,7 @@ async fn test_register_push_token() {
     assert_eq!(push_token, "test_push_token");
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_user_info() {
     let (app, app_state) = setup_test_app().await;
@@ -374,6 +380,7 @@ async fn test_get_user_info() {
     assert_eq!(res.lightning_address, "existing@localhost");
 }
 
+#[tracing_test::traced_test]
 #[tokio::test]
 async fn test_update_ln_address() {
     let (app, app_state) = setup_test_app().await;
