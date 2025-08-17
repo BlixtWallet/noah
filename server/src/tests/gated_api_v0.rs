@@ -4,17 +4,17 @@ use std::time::SystemTime;
 use axum::Router;
 use axum::body::Body;
 use axum::http::{self, Request, StatusCode};
-use bitcoin::key::Keypair;
 use dashmap::DashMap;
 use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
 
-use crate::app_middleware::{AuthPayload, auth_middleware};
+use crate::app_middleware::auth_middleware;
 use crate::gated_api_v0::{
     LNUrlAuthResponse, UserInfoResponse, get_user_info, register, register_push_token,
     update_ln_address,
 };
+use crate::tests::common::TestUser;
 use crate::{AppState, AppStruct};
 use axum::middleware;
 
@@ -58,20 +58,8 @@ async fn test_register_new_user() {
         .k1_values
         .insert(k1.to_string(), SystemTime::now());
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
-
-    let hash = bitcoin::sign_message::signed_msg_hash(k1);
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
-    let sig = secp.sign_ecdsa(&msg, &keypair.secret_key());
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: sig.to_string(),
-        k1: k1.to_string(),
-    };
+    let user = TestUser::new();
+    let auth_payload = user.auth_payload(k1);
 
     let response = app
         .oneshot(
@@ -113,28 +101,16 @@ async fn test_register_existing_user() {
         .k1_values
         .insert(k1.to_string(), SystemTime::now());
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
+    let user = TestUser::new();
+    let auth_payload = user.auth_payload(k1);
 
     let conn = app_state.db.connect().unwrap();
     conn.execute(
         "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![pubkey.to_string(), "existing@localhost"],
+        libsql::params![user.pubkey().to_string(), "existing@localhost"],
     )
     .await
     .unwrap();
-
-    let hash = bitcoin::sign_message::signed_msg_hash(k1);
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
-    let sig = secp.sign_ecdsa(&msg, &keypair.secret_key());
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: sig.to_string(),
-        k1: k1.to_string(),
-    };
 
     let response = app
         .oneshot(
@@ -179,16 +155,9 @@ async fn test_register_invalid_signature() {
         .k1_values
         .insert(k1.to_string(), SystemTime::now());
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: "invalid_sig".to_string(),
-        k1: k1.to_string(),
-    };
+    let user = TestUser::new();
+    let mut auth_payload = user.auth_payload(k1);
+    auth_payload.sig = "invalid_sig".to_string();
 
     let response = app
         .oneshot(
@@ -220,16 +189,9 @@ async fn test_register_invalid_k1() {
 
     let k1 = "test_k1_invalid";
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: "test_sig".to_string(),
-        k1: k1.to_string(),
-    };
+    let user = TestUser::new();
+    let mut auth_payload = user.auth_payload(k1);
+    auth_payload.k1 = "invalid_k1".to_string();
 
     let response = app
         .oneshot(
@@ -259,15 +221,12 @@ async fn test_register_invalid_k1() {
 async fn test_register_push_token() {
     let (app, app_state) = setup_test_app().await;
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
+    let user = TestUser::new();
 
     let conn = app_state.db.connect().unwrap();
     conn.execute(
         "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![pubkey.to_string(), "existing@localhost"],
+        libsql::params![user.pubkey().to_string(), "existing@localhost"],
     )
     .await
     .unwrap();
@@ -276,15 +235,7 @@ async fn test_register_push_token() {
     app_state
         .k1_values
         .insert(k1.to_string(), SystemTime::now());
-    let hash = bitcoin::sign_message::signed_msg_hash(k1);
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
-    let sig = secp.sign_ecdsa(&msg, &keypair.secret_key());
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: sig.to_string(),
-        k1: k1.to_string(),
-    };
+    let auth_payload = user.auth_payload(k1);
 
     let response = app
         .oneshot(
@@ -311,7 +262,7 @@ async fn test_register_push_token() {
     let mut rows = conn
         .query(
             "SELECT push_token FROM push_tokens WHERE pubkey = ?",
-            libsql::params![pubkey.to_string()],
+            libsql::params![user.pubkey().to_string()],
         )
         .await
         .unwrap();
@@ -326,15 +277,12 @@ async fn test_register_push_token() {
 async fn test_get_user_info() {
     let (app, app_state) = setup_test_app().await;
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
+    let user = TestUser::new();
 
     let conn = app_state.db.connect().unwrap();
     conn.execute(
         "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![pubkey.to_string(), "existing@localhost"],
+        libsql::params![user.pubkey().to_string(), "existing@localhost"],
     )
     .await
     .unwrap();
@@ -343,15 +291,7 @@ async fn test_get_user_info() {
     app_state
         .k1_values
         .insert(k1.to_string(), SystemTime::now());
-    let hash = bitcoin::sign_message::signed_msg_hash(k1);
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
-    let sig = secp.sign_ecdsa(&msg, &keypair.secret_key());
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: sig.to_string(),
-        k1: k1.to_string(),
-    };
+    let auth_payload = user.auth_payload(k1);
 
     let response = app
         .oneshot(
@@ -385,15 +325,12 @@ async fn test_get_user_info() {
 async fn test_update_ln_address() {
     let (app, app_state) = setup_test_app().await;
 
-    let secp = bitcoin::secp256k1::Secp256k1::new();
-    let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
-    let keypair = Keypair::from_secret_key(&secp, &secret_key);
-    let pubkey = keypair.public_key();
+    let user = TestUser::new();
 
     let conn = app_state.db.connect().unwrap();
     conn.execute(
         "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![pubkey.to_string(), "existing@localhost"],
+        libsql::params![user.pubkey().to_string(), "existing@localhost"],
     )
     .await
     .unwrap();
@@ -402,15 +339,7 @@ async fn test_update_ln_address() {
     app_state
         .k1_values
         .insert(k1.to_string(), SystemTime::now());
-    let hash = bitcoin::sign_message::signed_msg_hash(k1);
-    let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
-    let sig = secp.sign_ecdsa(&msg, &keypair.secret_key());
-
-    let auth_payload = AuthPayload {
-        key: pubkey.to_string(),
-        sig: sig.to_string(),
-        k1: k1.to_string(),
-    };
+    let auth_payload = user.auth_payload(k1);
 
     let response = app
         .oneshot(
@@ -437,7 +366,7 @@ async fn test_update_ln_address() {
     let mut rows = conn
         .query(
             "SELECT lightning_address FROM users WHERE pubkey = ?",
-            libsql::params![pubkey.to_string()],
+            libsql::params![user.pubkey().to_string()],
         )
         .await
         .unwrap();

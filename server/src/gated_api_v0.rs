@@ -24,7 +24,7 @@ pub struct LNUrlAuthResponse {
     pub event: Option<AuthEvent>,
     /// An optional reason for an error, if one occurred.
     #[serde(skip_serializing_if = "Option::is_none")]
-    reason: Option<String>,
+    pub reason: Option<String>,
     /// The user's lightning address.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lightning_address: Option<String>,
