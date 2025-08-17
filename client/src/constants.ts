@@ -131,8 +131,9 @@ const network = () => {
   switch (APP_VARIANT) {
     case "mainnet":
       return Network.mainnet;
+    // Note that signet addresses will be validated as testnet by the parsing lib.
     case "signet":
-      return Network.signet;
+      return Network.testnet;
     case "regtest":
       return Network.regtest;
   }
