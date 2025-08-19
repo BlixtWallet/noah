@@ -13,6 +13,7 @@ import {
   type LightningPaymentResult,
   type LnurlPaymentResult,
   type OnchainPaymentResult,
+  boardAllArk,
 } from "../lib/paymentsApi";
 import { type DestinationTypes } from "~/lib/sendUtils";
 import { queryClient } from "~/queryClient";
@@ -74,6 +75,26 @@ export function useBoardArk() {
   return useMutation({
     mutationFn: async (amount: number) => {
       const result = await boardArk(amount);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["balance"] });
+    },
+    onError: (error: Error) => {
+      showAlert({ title: "Boarding Failed", description: error.message });
+    },
+  });
+}
+
+export function useBoardAllAmountArk() {
+  const { showAlert } = useAlert();
+
+  return useMutation({
+    mutationFn: async () => {
+      const result = await boardAllArk();
       if (result.isErr()) {
         throw result.error;
       }

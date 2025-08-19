@@ -14,7 +14,7 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
 import { useBalance } from "../hooks/useWallet";
-import { useBoardArk } from "../hooks/usePayments";
+import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { cn } from "../lib/utils";
 import { COLORS } from "../lib/styleConstants";
@@ -78,9 +78,21 @@ const BoardArkScreen = () => {
   const { showAlert } = useAlert();
   const navigation = useNavigation();
   const { data: balance, isLoading: isBalanceLoading } = useBalance();
-  const { mutate: boardArk, isPending: isBoarding, data: boardResult, error } = useBoardArk();
+  const {
+    mutate: boardArk,
+    isPending: isBoarding,
+    data: boardResult,
+    error: boardError,
+  } = useBoardArk();
+  const {
+    mutate: boardAllArk,
+    isPending: isBoardingAll,
+    data: boardAllResult,
+    error: boardAllError,
+  } = useBoardAllAmountArk();
 
   const [amount, setAmount] = useState("");
+  const [isMaxAmount, setIsMaxAmount] = useState(false);
   const [parsedData, setParsedData] = useState<BoardingResponse | null>(null);
 
   useEffect(() => {
@@ -94,9 +106,25 @@ const BoardArkScreen = () => {
     }
   }, [boardResult]);
 
+  useEffect(() => {
+    if (boardAllResult) {
+      const result = Result.fromThrowable(JSON.parse)(boardAllResult);
+      if (result.isOk()) {
+        setParsedData(result.value);
+      } else {
+        console.error("Failed to parse boarding result:", result.error);
+      }
+    }
+  }, [boardAllResult]);
+
   const onchainBalance = balance?.onchain.confirmed ?? 0;
 
   const handleBoard = () => {
+    if (isMaxAmount) {
+      setParsedData(null);
+      boardAllArk();
+      return;
+    }
     const amountSat = parseInt(amount, 10);
     if (isNaN(amountSat) || amountSat <= 0) {
       showAlert({
@@ -121,7 +149,9 @@ const BoardArkScreen = () => {
     showAlert({ title: "Copied!", description: "TXID copied to clipboard." });
   };
 
-  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorMessage =
+    (boardError instanceof Error ? boardError.message : String(boardError ?? "")) ||
+    (boardAllError instanceof Error ? boardAllError.message : String(boardAllError ?? ""));
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -154,14 +184,20 @@ const BoardArkScreen = () => {
             <View className="flex-row items-center">
               <Input
                 value={amount}
-                onChangeText={setAmount}
+                onChangeText={(text) => {
+                  setAmount(text);
+                  setIsMaxAmount(false);
+                }}
                 placeholder="Enter amount in sats"
                 keyboardType="numeric"
                 className="flex-1 border-border bg-card p-4 rounded-lg text-foreground"
               />
               <Button
                 variant="outline"
-                onPress={() => setAmount(String(onchainBalance))}
+                onPress={() => {
+                  setAmount(String(onchainBalance));
+                  setIsMaxAmount(true);
+                }}
                 className="ml-2"
               >
                 <Text>Max</Text>
@@ -171,8 +207,8 @@ const BoardArkScreen = () => {
 
           <NoahButton
             onPress={handleBoard}
-            isLoading={isBoarding}
-            disabled={isBoarding || !amount || onchainBalance === 0}
+            isLoading={isBoarding || isBoardingAll}
+            disabled={isBoarding || isBoardingAll || !amount || onchainBalance === 0}
             className="mt-8"
           >
             Board Ark
@@ -222,7 +258,7 @@ const BoardArkScreen = () => {
               ))}
             </View>
           )}
-          {error && (
+          {(boardError || boardAllError) && (
             <Card className="mt-8 bg-destructive">
               <CardHeader>
                 <CardTitle className="text-destructive-foreground">Error</CardTitle>

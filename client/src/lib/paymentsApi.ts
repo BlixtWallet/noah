@@ -1,5 +1,6 @@
 import {
   boardAmount as boardAmountNitro,
+  boardAll as boardAllNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   sendLnaddr as sendLnaddrNitro,
   bolt11Invoice as bolt11InvoiceNitro,
@@ -99,6 +100,16 @@ export const bolt11Invoice = async (amountSat: number): Promise<Result<string, E
 
 export const boardArk = async (amountSat: number): Promise<Result<string, Error>> => {
   return ResultAsync.fromPromise(boardAmountNitro(amountSat), (error) => {
+    const e = new Error(
+      `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const boardAllArk = async (): Promise<Result<string, Error>> => {
+  return ResultAsync.fromPromise(boardAllNitro(), (error) => {
     const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
     );
