@@ -227,7 +227,7 @@ const HomeScreen = () => {
                 </CollapsibleContent>
               </Collapsible>
               <NoahButton onPress={() => navigation.navigate("BoardArk")} className="mt-8">
-                🚢 Board Ark
+                🚢 Board/Offboard Ark
               </NoahButton>
             </>
           )}

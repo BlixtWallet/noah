@@ -14,6 +14,7 @@ import {
   type LnurlPaymentResult,
   type OnchainPaymentResult,
   boardAllArk,
+  offboardAllArk,
 } from "../lib/paymentsApi";
 import { type DestinationTypes } from "~/lib/sendUtils";
 import { queryClient } from "~/queryClient";
@@ -105,6 +106,26 @@ export function useBoardAllAmountArk() {
     },
     onError: (error: Error) => {
       showAlert({ title: "Boarding Failed", description: error.message });
+    },
+  });
+}
+
+export function useOffboardAllArk() {
+  const { showAlert } = useAlert();
+
+  return useMutation({
+    mutationFn: async (address: string) => {
+      const result = await offboardAllArk(address);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["balance"] });
+    },
+    onError: (error: Error) => {
+      showAlert({ title: "Offboarding Failed", description: error.message });
     },
   });
 }

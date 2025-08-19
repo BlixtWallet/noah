@@ -1,6 +1,7 @@
 import {
   boardAmount as boardAmountNitro,
   boardAll as boardAllNitro,
+  offboardAll as offboardAllNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   sendLnaddr as sendLnaddrNitro,
   bolt11Invoice as bolt11InvoiceNitro,
@@ -112,6 +113,16 @@ export const boardAllArk = async (): Promise<Result<string, Error>> => {
   return ResultAsync.fromPromise(boardAllNitro(), (error) => {
     const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const offboardAllArk = async (address: string): Promise<Result<string, Error>> => {
+  return ResultAsync.fromPromise(offboardAllNitro(address), (error) => {
+    const e = new Error(
+      `Failed to offboard funds: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;
