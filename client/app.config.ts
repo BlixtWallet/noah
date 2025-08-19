@@ -38,6 +38,7 @@ const config: { expo: ExpoConfig } = {
         "expo-build-properties",
         {
           ios: {
+            deploymentTarget: "15.1",
             extraPods: [
               { name: "SDWebImage", modular_headers: true },
               { name: "SDWebImageSVGCoder", modular_headers: true },
