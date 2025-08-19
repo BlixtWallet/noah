@@ -55,8 +55,8 @@
         "react-native-gesture-handler": "~2.24.0",
         "react-native-keychain": "^10.0.0",
         "react-native-mmkv": "^3.3.0",
-        "react-native-nitro-ark": "^0.0.47",
-        "react-native-nitro-modules": "0.27.5",
+        "react-native-nitro-ark": "^0.0.49",
+        "react-native-nitro-modules": "0.28.0",
         "react-native-qrcode-svg": "^6.3.15",
         "react-native-reanimated": "~3.17.4",
         "react-native-safe-area-context": "5.4.0",
@@ -1907,9 +1907,9 @@
 
     "react-native-mmkv": ["react-native-mmkv@3.3.0", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-2iPjIJ+IAODXN35wm53EN6nv+hR/0NXLLiLWOdPA/0gXDB2dYVrr6MqvoiFpxhLhdj0B8fkf5ARNVavJaSvuuQ=="],
 
-    "react-native-nitro-ark": ["react-native-nitro-ark@0.0.47", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.26.4" } }, "sha512-/rmXArm/p8hcqqpTXMgOn8kpCE8Eygc4Ze7mGrNSUTipzfuTteb0JO8smITWmmwJ8lWMpk97aBJBEbep3zQKOQ=="],
+    "react-native-nitro-ark": ["react-native-nitro-ark@0.0.49", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.28.0" } }, "sha512-Bu/7RgD4zuJ/ZRDCYniDcc4cclTVSwxmUdgq0ncD2BmaL9PfEtSR8LVu6eS6uIxelj719KwRHZYJEfriKVZ7lA=="],
 
-    "react-native-nitro-modules": ["react-native-nitro-modules@0.27.5", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-7slvqIQ+mKdaLRWu2DFZFvUXSPNU5udzlHyMrLCwTp51TgS/i25SQ4nhV9U9iwwVXajL73bJnS7G5pUyqmyshg=="],
+    "react-native-nitro-modules": ["react-native-nitro-modules@0.28.0", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-SR5fpEOxuzqObowLzwrAU7Pv9Kq+AcxKBTCprMcsaiNlURhex2R8T8moSU/hpZO8Vuf3iomdkzEVEIO8udSZ/w=="],
 
     "react-native-qrcode-svg": ["react-native-qrcode-svg@6.3.15", "", { "dependencies": { "prop-types": "^15.8.0", "qrcode": "^1.5.4", "text-encoding": "^0.7.0" }, "peerDependencies": { "react": "*", "react-native": ">=0.63.4", "react-native-svg": ">=14.0.0" } }, "sha512-vLuNImGfstE8u+rlF4JfFpq65nPhmByuDG6XUPWh8yp8MgLQX11rN5eQ8nb/bf4OB+V8XoLTJB/AZF2g7jQSSQ=="],
 
