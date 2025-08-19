@@ -53,6 +53,7 @@ const config: { expo: ExpoConfig } = {
         },
       ],
       "expo-notifications",
+      "expo-sqlite",
     ],
     ios: {
       supportsTablet: true,

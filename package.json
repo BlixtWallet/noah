@@ -6,5 +6,8 @@
   "scripts": {
     "client": "bun --cwd client",
     "postinstall": "bun scripts/download_ark_binaries.js"
+  },
+  "dependencies": {
+    "react-native-worklets": "^0.4.1"
   }
 }
