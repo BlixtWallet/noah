@@ -47,6 +47,10 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun getAppLogs(): Promise<Array<String>>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun zipDirectory(sourceDirectory: String, outputZipPath: String): Promise<String>
 
   private external fun initHybrid(): HybridData
 

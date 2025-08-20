@@ -16,8 +16,8 @@
 
 
 #include <string>
-#include <NitroModules/Promise.hpp>
 #include <vector>
+#include <NitroModules/Promise.hpp>
 
 namespace margelo::nitro::noahtools {
 
@@ -52,6 +52,7 @@ namespace margelo::nitro::noahtools {
       // Methods
       virtual std::string getAppVariant() = 0;
       virtual std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() = 0;
+      virtual std::shared_ptr<Promise<std::string>> zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) = 0;
 
     protected:
       // Hybrid Setup

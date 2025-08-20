@@ -15,8 +15,8 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
 
 #include <string>
-#include <NitroModules/Promise.hpp>
 #include <vector>
+#include <NitroModules/Promise.hpp>
 
 #include "NoahTools-Swift-Cxx-Umbrella.hpp"
 
@@ -46,9 +46,11 @@ namespace margelo::nitro::noahtools {
     }
 
   public:
-    // Get memory pressure
     inline size_t getExternalMemorySize() noexcept override {
       return _swiftPart.getMemorySize();
+    }
+    void dispose() noexcept override {
+      _swiftPart.dispose();
     }
 
   public:
@@ -67,6 +69,14 @@ namespace margelo::nitro::noahtools {
     }
     inline std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() override {
       auto __result = _swiftPart.getAppLogs();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<std::string>> zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) override {
+      auto __result = _swiftPart.zipDirectory(sourceDirectory, outputZipPath);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

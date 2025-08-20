@@ -29,6 +29,7 @@ namespace margelo::nitro::noahtools {
     // C++ constructor (called from Java via `initHybrid()`)
     explicit JHybridNoahToolsSpec(jni::alias_ref<jhybridobject> jThis) :
       HybridObject(HybridNoahToolsSpec::TAG),
+      HybridBase(jThis),
       _javaPart(jni::make_global(jThis)) {}
 
   public:
@@ -39,6 +40,7 @@ namespace margelo::nitro::noahtools {
 
   public:
     size_t getExternalMemorySize() noexcept override;
+    void dispose() noexcept override;
 
   public:
     inline const jni::global_ref<JHybridNoahToolsSpec::javaobject>& getJavaPart() const noexcept {
@@ -53,6 +55,7 @@ namespace margelo::nitro::noahtools {
     // Methods
     std::string getAppVariant() override;
     std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() override;
+    std::shared_ptr<Promise<std::string>> zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) override;
 
   private:
     friend HybridBase;

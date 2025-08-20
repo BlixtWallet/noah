@@ -37,7 +37,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
    * Specialized version of `std::vector<std::string>`.
    */
   using std__vector_std__string_ = std::vector<std::string>;
-  inline std::vector<std::string> create_std__vector_std__string_(size_t size) {
+  inline std::vector<std::string> create_std__vector_std__string_(size_t size) noexcept {
     std::vector<std::string> vector;
     vector.reserve(size);
     return vector;
@@ -48,10 +48,10 @@ namespace margelo::nitro::noahtools::bridge::swift {
    * Specialized version of `std::shared_ptr<Promise<std::vector<std::string>>>`.
    */
   using std__shared_ptr_Promise_std__vector_std__string___ = std::shared_ptr<Promise<std::vector<std::string>>>;
-  inline std::shared_ptr<Promise<std::vector<std::string>>> create_std__shared_ptr_Promise_std__vector_std__string___() {
+  inline std::shared_ptr<Promise<std::vector<std::string>>> create_std__shared_ptr_Promise_std__vector_std__string___() noexcept {
     return Promise<std::vector<std::string>>::create();
   }
-  inline PromiseHolder<std::vector<std::string>> wrap_std__shared_ptr_Promise_std__vector_std__string___(std::shared_ptr<Promise<std::vector<std::string>>> promise) {
+  inline PromiseHolder<std::vector<std::string>> wrap_std__shared_ptr_Promise_std__vector_std__string___(std::shared_ptr<Promise<std::vector<std::string>>> promise) noexcept {
     return PromiseHolder<std::vector<std::string>>(std::move(promise));
   }
   
@@ -65,15 +65,15 @@ namespace margelo::nitro::noahtools::bridge::swift {
    */
   class Func_void_std__vector_std__string__Wrapper final {
   public:
-    explicit Func_void_std__vector_std__string__Wrapper(std::function<void(const std::vector<std::string>& /* result */)>&& func): _function(std::make_shared<std::function<void(const std::vector<std::string>& /* result */)>>(std::move(func))) {}
-    inline void call(std::vector<std::string> result) const {
+    explicit Func_void_std__vector_std__string__Wrapper(std::function<void(const std::vector<std::string>& /* result */)>&& func): _function(std::make_unique<std::function<void(const std::vector<std::string>& /* result */)>>(std::move(func))) {}
+    inline void call(std::vector<std::string> result) const noexcept {
       _function->operator()(result);
     }
   private:
-    std::shared_ptr<std::function<void(const std::vector<std::string>& /* result */)>> _function;
-  };
-  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* _Nonnull swiftClosureWrapper);
-  inline Func_void_std__vector_std__string__Wrapper wrap_Func_void_std__vector_std__string_(Func_void_std__vector_std__string_ value) {
+    std::unique_ptr<std::function<void(const std::vector<std::string>& /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* _Nonnull swiftClosureWrapper) noexcept;
+  inline Func_void_std__vector_std__string__Wrapper wrap_Func_void_std__vector_std__string_(Func_void_std__vector_std__string_ value) noexcept {
     return Func_void_std__vector_std__string__Wrapper(std::move(value));
   }
   
@@ -87,46 +87,89 @@ namespace margelo::nitro::noahtools::bridge::swift {
    */
   class Func_void_std__exception_ptr_Wrapper final {
   public:
-    explicit Func_void_std__exception_ptr_Wrapper(std::function<void(const std::exception_ptr& /* error */)>&& func): _function(std::make_shared<std::function<void(const std::exception_ptr& /* error */)>>(std::move(func))) {}
-    inline void call(std::exception_ptr error) const {
+    explicit Func_void_std__exception_ptr_Wrapper(std::function<void(const std::exception_ptr& /* error */)>&& func): _function(std::make_unique<std::function<void(const std::exception_ptr& /* error */)>>(std::move(func))) {}
+    inline void call(std::exception_ptr error) const noexcept {
       _function->operator()(error);
     }
   private:
-    std::shared_ptr<std::function<void(const std::exception_ptr& /* error */)>> _function;
-  };
-  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* _Nonnull swiftClosureWrapper);
-  inline Func_void_std__exception_ptr_Wrapper wrap_Func_void_std__exception_ptr(Func_void_std__exception_ptr value) {
+    std::unique_ptr<std::function<void(const std::exception_ptr& /* error */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* _Nonnull swiftClosureWrapper) noexcept;
+  inline Func_void_std__exception_ptr_Wrapper wrap_Func_void_std__exception_ptr(Func_void_std__exception_ptr value) noexcept {
     return Func_void_std__exception_ptr_Wrapper(std::move(value));
   }
   
-  // pragma MARK: std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>
+  // pragma MARK: std::shared_ptr<Promise<std::string>>
   /**
-   * Specialized version of `std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>`.
+   * Specialized version of `std::shared_ptr<Promise<std::string>>`.
    */
-  using std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_ = std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>;
-  std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec> create_std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_(void* _Nonnull swiftUnsafePointer);
-  void* _Nonnull get_std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_(std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_ cppType);
+  using std__shared_ptr_Promise_std__string__ = std::shared_ptr<Promise<std::string>>;
+  inline std::shared_ptr<Promise<std::string>> create_std__shared_ptr_Promise_std__string__() noexcept {
+    return Promise<std::string>::create();
+  }
+  inline PromiseHolder<std::string> wrap_std__shared_ptr_Promise_std__string__(std::shared_ptr<Promise<std::string>> promise) noexcept {
+    return PromiseHolder<std::string>(std::move(promise));
+  }
   
-  // pragma MARK: std::weak_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>
-  using std__weak_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_ = std::weak_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>;
-  inline std__weak_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_ weakify_std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_(const std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>& strong) { return strong; }
+  // pragma MARK: std::function<void(const std::string& /* result */)>
+  /**
+   * Specialized version of `std::function<void(const std::string&)>`.
+   */
+  using Func_void_std__string = std::function<void(const std::string& /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(const std::string& / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_std__string_Wrapper final {
+  public:
+    explicit Func_void_std__string_Wrapper(std::function<void(const std::string& /* result */)>&& func): _function(std::make_unique<std::function<void(const std::string& /* result */)>>(std::move(func))) {}
+    inline void call(std::string result) const noexcept {
+      _function->operator()(result);
+    }
+  private:
+    std::unique_ptr<std::function<void(const std::string& /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_std__string create_Func_void_std__string(void* _Nonnull swiftClosureWrapper) noexcept;
+  inline Func_void_std__string_Wrapper wrap_Func_void_std__string(Func_void_std__string value) noexcept {
+    return Func_void_std__string_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::shared_ptr<HybridNoahToolsSpec>
+  /**
+   * Specialized version of `std::shared_ptr<HybridNoahToolsSpec>`.
+   */
+  using std__shared_ptr_HybridNoahToolsSpec_ = std::shared_ptr<HybridNoahToolsSpec>;
+  std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* _Nonnull swiftUnsafePointer) noexcept;
+  void* _Nonnull get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept;
+  
+  // pragma MARK: std::weak_ptr<HybridNoahToolsSpec>
+  using std__weak_ptr_HybridNoahToolsSpec_ = std::weak_ptr<HybridNoahToolsSpec>;
+  inline std__weak_ptr_HybridNoahToolsSpec_ weakify_std__shared_ptr_HybridNoahToolsSpec_(const std::shared_ptr<HybridNoahToolsSpec>& strong) noexcept { return strong; }
   
   // pragma MARK: Result<std::string>
   using Result_std__string_ = Result<std::string>;
-  inline Result_std__string_ create_Result_std__string_(const std::string& value) {
+  inline Result_std__string_ create_Result_std__string_(const std::string& value) noexcept {
     return Result<std::string>::withValue(value);
   }
-  inline Result_std__string_ create_Result_std__string_(const std::exception_ptr& error) {
+  inline Result_std__string_ create_Result_std__string_(const std::exception_ptr& error) noexcept {
     return Result<std::string>::withError(error);
   }
   
   // pragma MARK: Result<std::shared_ptr<Promise<std::vector<std::string>>>>
   using Result_std__shared_ptr_Promise_std__vector_std__string____ = Result<std::shared_ptr<Promise<std::vector<std::string>>>>;
-  inline Result_std__shared_ptr_Promise_std__vector_std__string____ create_Result_std__shared_ptr_Promise_std__vector_std__string____(const std::shared_ptr<Promise<std::vector<std::string>>>& value) {
+  inline Result_std__shared_ptr_Promise_std__vector_std__string____ create_Result_std__shared_ptr_Promise_std__vector_std__string____(const std::shared_ptr<Promise<std::vector<std::string>>>& value) noexcept {
     return Result<std::shared_ptr<Promise<std::vector<std::string>>>>::withValue(value);
   }
-  inline Result_std__shared_ptr_Promise_std__vector_std__string____ create_Result_std__shared_ptr_Promise_std__vector_std__string____(const std::exception_ptr& error) {
+  inline Result_std__shared_ptr_Promise_std__vector_std__string____ create_Result_std__shared_ptr_Promise_std__vector_std__string____(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<std::vector<std::string>>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<std::string>>>
+  using Result_std__shared_ptr_Promise_std__string___ = Result<std::shared_ptr<Promise<std::string>>>;
+  inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::shared_ptr<Promise<std::string>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<std::string>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<std::string>>>::withError(error);
   }
 
 } // namespace margelo::nitro::noahtools::bridge::swift

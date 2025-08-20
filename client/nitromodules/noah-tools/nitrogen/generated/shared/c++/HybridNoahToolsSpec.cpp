@@ -16,6 +16,7 @@ namespace margelo::nitro::noahtools {
     registerHybrids(this, [](Prototype& prototype) {
       prototype.registerHybridMethod("getAppVariant", &HybridNoahToolsSpec::getAppVariant);
       prototype.registerHybridMethod("getAppLogs", &HybridNoahToolsSpec::getAppLogs);
+      prototype.registerHybridMethod("zipDirectory", &HybridNoahToolsSpec::zipDirectory);
     });
   }
 

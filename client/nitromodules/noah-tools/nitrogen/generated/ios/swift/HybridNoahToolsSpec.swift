@@ -16,11 +16,13 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   // Methods
   func getAppVariant() throws -> String
   func getAppLogs() throws -> Promise<[String]>
+  func zipDirectory(sourceDirectory: String, outputZipPath: String) throws -> Promise<String>
 }
 
 /// See ``HybridNoahToolsSpec``
-public class HybridNoahToolsSpec_base {
+open class HybridNoahToolsSpec_base {
   private weak var cxxWrapper: HybridNoahToolsSpec_cxx? = nil
+  public init() { }
   public func getCxxWrapper() -> HybridNoahToolsSpec_cxx {
   #if DEBUG
     guard self is HybridNoahToolsSpec else {
