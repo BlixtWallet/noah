@@ -68,46 +68,43 @@ class NoahTools: HybridNoahToolsSpec {
         attributes: nil
       )
       
-      // Create a simple archive by copying all files to a temporary directory and then creating a tar file
-      try self.createSimpleArchive(sourceURL: sourceURL, outputURL: outputURL)
+      let fileManager = FileManager.default
+      var archiveUrl: URL?
+      var coordinatorError: NSError?
+      var moveError: Error?
+      
+      let coordinator = NSFileCoordinator()
+      
+      // Use NSFileCoordinator with .forUploading option to create a zip file
+      // This is iOS's built-in way to create zip files without external dependencies
+      coordinator.coordinate(readingItemAt: sourceURL, options: [.forUploading], error: &coordinatorError) { (zipUrl) in
+        do {
+          // zipUrl points to the zip file created by the coordinator
+          // zipUrl is valid only until the end of this block, so we move the file to our desired location
+          try fileManager.moveItem(at: zipUrl, to: outputURL)
+          archiveUrl = outputURL
+        } catch {
+          moveError = error
+        }
+      }
+      
+      if let error = coordinatorError {
+        throw error
+      }
+      
+      if let error = moveError {
+        throw error
+      }
+      
+      guard archiveUrl != nil else {
+        throw NSError(
+          domain: "NoahTools",
+          code: 3,
+          userInfo: [NSLocalizedDescriptionKey: "Failed to create zip archive"]
+        )
+      }
       
       return outputZipPath
     }
-  }
-  
-  private func createSimpleArchive(sourceURL: URL, outputURL: URL) throws {
-    let fileManager = FileManager.default
-    
-    // Get all files recursively
-    let enumerator = fileManager.enumerator(at: sourceURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
-    
-    var allData = Data()
-    let baseName = sourceURL.lastPathComponent
-    
-    // Create a simple concatenated file format with file headers
-    while let fileURL = enumerator?.nextObject() as? URL {
-      let resourceValues = try fileURL.resourceValues(forKeys: [.isDirectoryKey])
-      
-      if resourceValues.isDirectory != true {
-        let relativePath = String(fileURL.path.dropFirst(sourceURL.path.count + 1))
-        let fullPath = "\(baseName)/\(relativePath)"
-        
-        // Read file data
-        let fileData = try Data(contentsOf: fileURL)
-        
-        // Create a simple header: path length (4 bytes) + path + data length (4 bytes) + data
-        let pathData = fullPath.data(using: .utf8) ?? Data()
-        var pathLength = UInt32(pathData.count).bigEndian
-        var dataLength = UInt32(fileData.count).bigEndian
-        
-        allData.append(Data(bytes: &pathLength, count: 4))
-        allData.append(pathData)
-        allData.append(Data(bytes: &dataLength, count: 4))
-        allData.append(fileData)
-      }
-    }
-    
-    // Write the archive
-    try allData.write(to: outputURL)
   }
 }

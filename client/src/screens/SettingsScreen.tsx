@@ -77,8 +77,10 @@ const SettingsScreen = () => {
   const exportDatabase = async () => {
     setIsExporting(true);
     try {
-      const timestamp = new Date().toISOString().split("T")[0];
-      const filename = `noah_database_export_${timestamp}.zip`;
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, "-").split("T")[0];
+      const timeComponent = now.toISOString().replace(/[:.]/g, "-").split("T")[1].split(".")[0];
+      const filename = `noah_database_export_${timestamp}_${timeComponent}.zip`;
       const outputPath = `${RNFS.CachesDirectoryPath}/${filename}`;
 
       // Create zip file using the native zipDirectory method
