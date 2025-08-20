@@ -4,7 +4,9 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android:clean": "rm -rf android/.gradle && rm -rf android/app/build && rm -rf android/build && rm -rf android/.cxx && rm -rf android/app/.cxx && rm -rf android/app/.idea",
+    "android:clean": "rm -rf android/.gradle android/app/build android/build android/.cxx android/app/.cxx android/app/.idea",
+    "ios:clean": "rm -rf ios/Pods ios/Podfile.lock ios/Gemfile.lock ios/build/",
+    "clean:all": "bun android:clean && bun ios:clean",
     "android:mainnet:debug": "expo run:android --variant mainnetDebug --app-id=com.anonymous.noah",
     "android:mainnet:release": "expo run:android --variant mainnetRelease --app-id=com.anonymous.noah",
     "android:signet:debug": "expo run:android --variant signetDebug --app-id=com.anonymous.noah.signet",

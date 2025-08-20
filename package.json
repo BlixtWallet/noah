@@ -5,6 +5,12 @@
   ],
   "scripts": {
     "client": "bun --cwd client",
+    "start": "bun client start",
+    "ios:prebuild": "bun client ios:prebuild",
+    "android:signet:debug": "bun client android:signet:debug",
+    "android:regtest:debug": "bun client android:regtest:debug",
+    "android:clean": "bun client android:clean",
+    "ios:clean": "bun client ios:clean",
     "postinstall": "bun scripts/download_ark_binaries.js"
   }
 }
