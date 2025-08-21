@@ -17,7 +17,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { CheckCircle } from "lucide-react-native";
+import { AlertTriangle, CheckCircle } from "lucide-react-native";
 
 type Setting = {
   id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
@@ -49,7 +49,8 @@ const SettingsScreen = () => {
   const { lightningAddress, resetRegistration } = useServerStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
-  const { isExporting, showExportSuccess, exportDatabase } = useExportDatabase();
+  const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
+    useExportDatabase();
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -143,6 +144,12 @@ const SettingsScreen = () => {
           <Alert icon={CheckCircle} className="mb-4">
             <AlertTitle>Export Complete!</AlertTitle>
             <AlertDescription>Database has been exported successfully.</AlertDescription>
+          </Alert>
+        )}
+        {showExportError && (
+          <Alert icon={AlertTriangle} variant="destructive" className="mb-4">
+            <AlertTitle>Export Failed!</AlertTitle>
+            <AlertDescription>{exportError}</AlertDescription>
           </Alert>
         )}
         <ScrollView className="flex-1 mb-16">
