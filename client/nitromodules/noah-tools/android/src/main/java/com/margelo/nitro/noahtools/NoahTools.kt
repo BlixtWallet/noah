@@ -93,7 +93,7 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         zipOut.putNextEntry(zipEntry)
 
         FileInputStream(file).use { fis ->
-          val buffer = ByteArray(1024)
+          val buffer = ByteArray(4096)
           var length: Int
           while (fis.read(buffer).also { length = it } > 0) {
             zipOut.write(buffer, 0, length)
