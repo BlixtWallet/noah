@@ -16,7 +16,7 @@ interface WalletLoaderProps {
  * `AppServices`.
  */
 const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
-  const { isInitialized, isWalletLoaded } = useWalletStore();
+  const { isInitialized, isWalletLoaded, walletError } = useWalletStore();
   const { mutate: loadWallet, isPending: isWalletLoading } = useLoadWallet();
   const { mutate: closeWallet } = useCloseWallet();
 
@@ -36,7 +36,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     };
   }, [isWalletLoaded, closeWallet]);
 
-  if (isWalletLoading || !isWalletLoaded) {
+  if ((isWalletLoading || !isWalletLoaded) && !walletError) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />

@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
-import { useBalance, useBalanceSync } from "../hooks/useWallet";
+import { useBalance, useBalanceSync, useLoadWallet } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
@@ -25,11 +25,14 @@ import Animated, {
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
+import { useWalletStore } from "~/store/walletStore";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const { walletError } = useWalletStore();
   const { data: balance, isFetching, refetch, error } = useBalance();
   const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
+  const { mutate: loadWallet } = useLoadWallet();
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const [fact, setFact] = useState("");
@@ -45,10 +48,13 @@ const HomeScreen = () => {
   }, [getRandomFact]);
 
   const onRefresh = useCallback(async () => {
+    if (walletError) {
+      loadWallet();
+    }
     await balanceSync();
     await refetch();
     getRandomFact();
-  }, [balanceSync, refetch, getRandomFact]);
+  }, [balanceSync, refetch, getRandomFact, walletError, loadWallet]);
 
   const onchainBalance = balance
     ? balance.onchain.confirmed +
@@ -108,26 +114,28 @@ const HomeScreen = () => {
           flexGrow: 1,
         }}
         refreshControl={
-          !balance ? undefined : (
-            <RefreshControl
-              refreshing={isFetching || isSyncing}
-              onRefresh={onRefresh}
-              tintColor={COLORS.BITCOIN_ORANGE}
-              colors={[COLORS.BITCOIN_ORANGE]}
-              title="Refreshing..."
-              titleColor={COLORS.BITCOIN_ORANGE}
-              progressViewOffset={-10}
-            />
-          )
+          <RefreshControl
+            refreshing={isFetching || isSyncing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.BITCOIN_ORANGE}
+            colors={[COLORS.BITCOIN_ORANGE]}
+            title="Refreshing..."
+            titleColor={COLORS.BITCOIN_ORANGE}
+            progressViewOffset={-10}
+          />
         }
       >
         <View className="items-center justify-center flex-1">
           {isFetching && !balance ? (
             <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
-          ) : error ? (
+          ) : error || walletError ? (
             <Alert variant="destructive" icon={AlertCircle}>
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{errorMessage}</AlertDescription>
+              <AlertDescription>
+                {walletError
+                  ? "Failed to connect to wallet. Pull down to try again."
+                  : errorMessage}
+              </AlertDescription>
             </Alert>
           ) : (
             <>

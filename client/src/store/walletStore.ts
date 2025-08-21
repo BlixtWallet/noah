@@ -57,10 +57,12 @@ const initialConfig = (): WalletConfig => {
 interface WalletState {
   isInitialized: boolean;
   isWalletLoaded: boolean;
+  walletError: boolean;
   config: WalletConfig;
   finishOnboarding: () => void;
   setWalletLoaded: () => void;
   setWalletUnloaded: () => void;
+  setWalletError: (error: boolean) => void;
   setConfig: (config: WalletConfig) => void;
   setStaticVtxoPubkey: (pubkey: string) => void;
   reset: () => void;
@@ -69,6 +71,7 @@ interface WalletState {
 const initialState = {
   isInitialized: false,
   isWalletLoaded: false,
+  walletError: false,
   config: initialConfig(),
 };
 
@@ -77,8 +80,9 @@ export const useWalletStore = create<WalletState>()(
     (set) => ({
       ...initialState,
       finishOnboarding: () => set({ isInitialized: true, isWalletLoaded: true }),
-      setWalletLoaded: () => set({ isWalletLoaded: true }),
+      setWalletLoaded: () => set({ isWalletLoaded: true, walletError: false }),
       setWalletUnloaded: () => set({ isWalletLoaded: false }),
+      setWalletError: (error) => set({ walletError: error }),
       setConfig: (config) => set({ config }),
       setStaticVtxoPubkey: (pubkey) =>
         set((state) => ({ config: { ...state.config, staticVtxoPubkey: pubkey } })),
