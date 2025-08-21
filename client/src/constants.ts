@@ -12,6 +12,8 @@ const isUsername = (n: string): boolean => /^[a-z0-9_.]*$/.test(n);
 const parseEmail = (email: string): string[] => email.split("@");
 
 export const PLATFORM = Platform.OS;
+export const DOCUMENT_DIRECTORY_PATH = RNFS.DocumentDirectoryPath;
+export const CACHES_DIRECTORY_PATH = RNFS.CachesDirectoryPath;
 
 const REGTEST_URL = !!process.env.EXPO_PUBLIC_REGTEST_URL
   ? process.env.EXPO_PUBLIC_REGTEST_URL
@@ -28,16 +30,18 @@ const REGTEST_SERVER_URL = !!process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
 const getArkDataPath = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
-      return `${RNFS.DocumentDirectoryPath}/noah-data-regtest`;
+      return `${DOCUMENT_DIRECTORY_PATH}/noah-data-regtest`;
     case "signet":
-      return `${RNFS.DocumentDirectoryPath}/noah-data-signet`;
+      return `${DOCUMENT_DIRECTORY_PATH}/noah-data-signet`;
     case "mainnet":
-      return `${RNFS.DocumentDirectoryPath}/noah-data-mainnet`;
+      return `${DOCUMENT_DIRECTORY_PATH}/noah-data-mainnet`;
     default:
       // Default to signet for development builds that aren't launched via a profile
-      return `${RNFS.DocumentDirectoryPath}/noah-data-signet`;
+      return `${DOCUMENT_DIRECTORY_PATH}/noah-data-signet`;
   }
 };
+
+export const ARK_DATA_PATH = getArkDataPath();
 
 export const getServerEndpoint = (): string => {
   switch (APP_VARIANT) {
@@ -64,8 +68,6 @@ export const getLnurlDomain = (): string => {
       return "noah.noderunner.wtf";
   }
 };
-
-export const ARK_DATA_PATH = getArkDataPath();
 
 type WalletCreationOptions = Omit<BarkCreateOpts, "mnemonic">;
 

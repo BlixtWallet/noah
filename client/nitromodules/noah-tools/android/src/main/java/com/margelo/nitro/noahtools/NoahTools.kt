@@ -7,6 +7,11 @@ import com.margelo.nitro.core.Promise
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.ArrayDeque
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsSpec() {
 
@@ -51,6 +56,51 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         throw Exception("Failed to read logcat: ${e.message}")
       }
       return@async logcat.toTypedArray()
+    }
+  }
+
+  override fun zipDirectory(sourceDirectory: String, outputZipPath: String): Promise<String> {
+    return Promise.async {
+      try {
+        val sourceDir = File(sourceDirectory)
+        if (!sourceDir.exists() || !sourceDir.isDirectory) {
+          throw Exception("Source directory does not exist or is not a directory: $sourceDirectory")
+        }
+
+        val outputFile = File(outputZipPath)
+        outputFile.parentFile?.mkdirs()
+
+        ZipOutputStream(FileOutputStream(outputFile)).use { zipOut ->
+          zipDirectory(sourceDir, sourceDir.name, zipOut)
+        }
+
+        return@async outputZipPath
+      } catch (e: Exception) {
+        throw Exception("Failed to zip directory: ${e.message}")
+      }
+    }
+  }
+
+  private fun zipDirectory(sourceDir: File, baseName: String, zipOut: ZipOutputStream) {
+    val files = sourceDir.listFiles() ?: return
+
+    for (file in files) {
+      if (file.isDirectory) {
+        zipDirectory(file, "$baseName/${file.name}", zipOut)
+      } else {
+        val entryName = "$baseName/${file.name}"
+        val zipEntry = ZipEntry(entryName)
+        zipOut.putNextEntry(zipEntry)
+
+        FileInputStream(file).use { fis ->
+          val buffer = ByteArray(4096)
+          var length: Int
+          while (fis.read(buffer).also { length = it } > 0) {
+            zipOut.write(buffer, 0, length)
+          }
+        }
+        zipOut.closeEntry()
+      }
     }
   }
 

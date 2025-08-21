@@ -10,3 +10,7 @@ export function getAppVariant(): "mainnet" | "signet" | "regtest" {
 export function getAppLogs(): Promise<string[]> {
   return NoahToolsHybridObject.getAppLogs();
 }
+
+export function zipDirectory(sourceDirectory: string, outputZipPath: string): Promise<string> {
+  return NoahToolsHybridObject.zipDirectory(sourceDirectory, outputZipPath);
+}

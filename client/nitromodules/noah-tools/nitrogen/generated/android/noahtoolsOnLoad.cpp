@@ -16,7 +16,6 @@
 #include <NitroModules/HybridObjectRegistry.hpp>
 
 #include "JHybridNoahToolsSpec.hpp"
-#include <NitroModules/JNISharedPtr.hpp>
 #include <NitroModules/DefaultConstructableObject.hpp>
 
 namespace margelo::nitro::noahtools {
@@ -37,7 +36,7 @@ int initialize(JavaVM* vm) {
         static DefaultConstructableObject<JHybridNoahToolsSpec::javaobject> object("com/margelo/nitro/noahtools/NoahTools");
         auto instance = object.create();
         auto globalRef = jni::make_global(instance);
-        return JNISharedPtr::make_shared_from_jni<JHybridNoahToolsSpec>(globalRef);
+        return globalRef->cthis()->shared();
       }
     );
   });

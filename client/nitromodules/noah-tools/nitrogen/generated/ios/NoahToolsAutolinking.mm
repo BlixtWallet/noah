@@ -24,7 +24,7 @@
   HybridObjectRegistry::registerHybridObjectConstructor(
     "NoahTools",
     []() -> std::shared_ptr<HybridObject> {
-      std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec> hybridObject = NoahTools::NoahToolsAutolinking::createNoahTools();
+      std::shared_ptr<HybridNoahToolsSpec> hybridObject = NoahTools::NoahToolsAutolinking::createNoahTools();
       return hybridObject;
     }
   );

@@ -12,11 +12,12 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
+import { useExportDatabase } from "../hooks/useExportDatabase";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { CheckCircle } from "lucide-react-native";
+import { AlertTriangle, CheckCircle } from "lucide-react-native";
 
 type Setting = {
   id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
@@ -48,6 +49,8 @@ const SettingsScreen = () => {
   const { lightningAddress, resetRegistration } = useServerStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
+  const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
+    useExportDatabase();
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -137,6 +140,18 @@ const SettingsScreen = () => {
             <AlertDescription>Server registration has been reset.</AlertDescription>
           </Alert>
         )}
+        {showExportSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Export Complete!</AlertTitle>
+            <AlertDescription>Database has been exported successfully.</AlertDescription>
+          </Alert>
+        )}
+        {showExportError && (
+          <Alert icon={AlertTriangle} variant="destructive" className="mb-4">
+            <AlertTitle>Export Failed!</AlertTitle>
+            <AlertDescription>{exportError}</AlertDescription>
+          </Alert>
+        )}
         <ScrollView className="flex-1 mb-16">
           {lightningAddress && (
             <Pressable
@@ -200,6 +215,20 @@ const SettingsScreen = () => {
           {isInitialized && (
             <View className="mt-4">
               <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
+
+              <ConfirmationDialog
+                trigger={
+                  <Button variant="outline" disabled={isExporting} className="mb-4">
+                    <Text>{isExporting ? "Exporting..." : "Export Database"}</Text>
+                  </Button>
+                }
+                title="Export Database"
+                description="This will create a zip file containing all your wallet data including transactions, keys, and configuration. Keep this file secure as it contains sensitive information."
+                onConfirm={exportDatabase}
+                confirmText="Export"
+                confirmVariant="default"
+              />
+
               <ConfirmationDialog
                 trigger={
                   <Button variant="destructive">

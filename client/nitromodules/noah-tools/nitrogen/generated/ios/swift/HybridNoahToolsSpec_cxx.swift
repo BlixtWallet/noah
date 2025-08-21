@@ -17,7 +17,7 @@ import NitroModules
  * - Other HybridObjects need to be wrapped/unwrapped from the Swift TCxx wrapper
  * - Throwing methods need to be wrapped with a Result<T, Error> type, as exceptions cannot be propagated to C++
  */
-public class HybridNoahToolsSpec_cxx {
+open class HybridNoahToolsSpec_cxx {
   /**
    * The Swift <> C++ bridge's namespace (`margelo::nitro::noahtools::bridge::swift`)
    * from `NoahTools-Swift-Cxx-Bridge.hpp`.
@@ -33,7 +33,7 @@ public class HybridNoahToolsSpec_cxx {
   /**
    * Holds a weak pointer to the C++ class that wraps the Swift class.
    */
-  private var __cxxPart: bridge.std__weak_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_
+  private var __cxxPart: bridge.std__weak_ptr_HybridNoahToolsSpec_
 
   /**
    * Create a new `HybridNoahToolsSpec_cxx` that wraps the given `HybridNoahToolsSpec`.
@@ -72,15 +72,15 @@ public class HybridNoahToolsSpec_cxx {
 
   /**
    * Gets (or creates) the C++ part of this Hybrid Object.
-   * The C++ part is a `std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpec>`.
+   * The C++ part is a `std::shared_ptr<HybridNoahToolsSpec>`.
    */
-  public func getCxxPart() -> bridge.std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_ {
+  public func getCxxPart() -> bridge.std__shared_ptr_HybridNoahToolsSpec_ {
     let cachedCxxPart = self.__cxxPart.lock()
     if cachedCxxPart.__convertToBool() {
       return cachedCxxPart
     } else {
-      let newCxxPart = bridge.create_std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_(self.toUnsafe())
-      __cxxPart = bridge.weakify_std__shared_ptr_margelo__nitro__noahtools__HybridNoahToolsSpec_(newCxxPart)
+      let newCxxPart = bridge.create_std__shared_ptr_HybridNoahToolsSpec_(self.toUnsafe())
+      __cxxPart = bridge.weakify_std__shared_ptr_HybridNoahToolsSpec_(newCxxPart)
       return newCxxPart
     }
   }
@@ -94,6 +94,15 @@ public class HybridNoahToolsSpec_cxx {
   @inline(__always)
   public var memorySize: Int {
     return MemoryHelper.getSizeOf(self.__implementation) + self.__implementation.memorySize
+  }
+
+  /**
+   * Call dispose() on the Swift class.
+   * This _may_ be called manually from JS.
+   */
+  @inline(__always)
+  public func dispose() {
+    self.__implementation.dispose()
   }
 
   // Properties
@@ -134,6 +143,25 @@ public class HybridNoahToolsSpec_cxx {
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
       return bridge.create_Result_std__shared_ptr_Promise_std__vector_std__string____(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func zipDirectory(sourceDirectory: std.string, outputZipPath: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+    do {
+      let __result = try self.__implementation.zipDirectory(sourceDirectory: String(sourceDirectory), outputZipPath: String(outputZipPath))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(std.string(__result)) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
     }
   }
 }

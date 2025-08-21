@@ -47,4 +47,64 @@ class NoahTools: HybridNoahToolsSpec {
       return formattedEntries
     }
   }
+  
+  func zipDirectory(sourceDirectory: String, outputZipPath: String) throws -> Promise<String> {
+    return Promise.async {
+      let sourceURL = URL(fileURLWithPath: sourceDirectory)
+      let outputURL = URL(fileURLWithPath: outputZipPath)
+      
+      guard FileManager.default.fileExists(atPath: sourceDirectory) else {
+        throw NSError(
+          domain: "NoahTools",
+          code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Source directory does not exist: \(sourceDirectory)"]
+        )
+      }
+      
+      // Create output directory if it doesn't exist
+      try FileManager.default.createDirectory(
+        at: outputURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true,
+        attributes: nil
+      )
+      
+      let fileManager = FileManager.default
+      var archiveUrl: URL?
+      var coordinatorError: NSError?
+      var moveError: Error?
+      
+      let coordinator = NSFileCoordinator()
+      
+      // Use NSFileCoordinator with .forUploading option to create a zip file
+      // This is iOS's built-in way to create zip files without external dependencies
+      coordinator.coordinate(readingItemAt: sourceURL, options: [.forUploading], error: &coordinatorError) { (zipUrl) in
+        do {
+          // zipUrl points to the zip file created by the coordinator
+          // zipUrl is valid only until the end of this block, so we move the file to our desired location
+          try fileManager.moveItem(at: zipUrl, to: outputURL)
+          archiveUrl = outputURL
+        } catch {
+          moveError = error
+        }
+      }
+      
+      if let error = coordinatorError {
+        throw error
+      }
+      
+      if let error = moveError {
+        throw error
+      }
+      
+      guard archiveUrl != nil else {
+        throw NSError(
+          domain: "NoahTools",
+          code: 3,
+          userInfo: [NSLocalizedDescriptionKey: "Failed to create zip archive"]
+        )
+      }
+      
+      return outputZipPath
+    }
+  }
 }

@@ -10,8 +10,8 @@
 
 
 #include <string>
-#include <NitroModules/Promise.hpp>
 #include <vector>
+#include <NitroModules/Promise.hpp>
 #include <NitroModules/JPromise.hpp>
 
 namespace margelo::nitro::noahtools {
@@ -29,6 +29,11 @@ namespace margelo::nitro::noahtools {
   size_t JHybridNoahToolsSpec::getExternalMemorySize() noexcept {
     static const auto method = javaClassStatic()->getMethod<jlong()>("getMemorySize");
     return method(_javaPart);
+  }
+
+  void JHybridNoahToolsSpec::dispose() noexcept {
+    static const auto method = javaClassStatic()->getMethod<void()>("dispose");
+    method(_javaPart);
   }
 
   // Properties
@@ -57,6 +62,22 @@ namespace margelo::nitro::noahtools {
           }
           return __vector;
         }());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* sourceDirectory */, jni::alias_ref<jni::JString> /* outputZipPath */)>("zipDirectory");
+    auto __result = method(_javaPart, jni::make_jstring(sourceDirectory), jni::make_jstring(outputZipPath));
+    return [&]() {
+      auto __promise = Promise<std::string>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JString>(__boxedResult);
+        __promise->resolve(__result->toStdString());
       });
       __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
         jni::JniException __jniError(__throwable);
