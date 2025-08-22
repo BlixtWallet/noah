@@ -33,7 +33,6 @@ export function useCreateWallet() {
 
 export function useLoadWallet() {
   const { setWalletLoaded, setWalletError } = useWalletStore();
-  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: async () => {
@@ -50,7 +49,6 @@ export function useLoadWallet() {
     },
     onError: (error: Error) => {
       setWalletError(true);
-      showAlert({ title: "Failed to load wallet", description: error.message });
     },
   });
 }
