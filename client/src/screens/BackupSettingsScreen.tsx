@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Switch } from "react-native";
+import { View, Switch, ScrollView } from "react-native";
 import { useBackupManager } from "../hooks/useBackupManager";
 import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
 import { Text } from "../components/ui/text";
@@ -18,7 +18,7 @@ export const BackupSettingsScreen = () => {
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
-      <View className="p-4 flex-1">
+      <ScrollView contentContainerClassName="p-4 flex-1">
         <Text className="text-2xl font-bold text-foreground mb-4">Backup & Restore</Text>
         <Text className="text-muted-foreground mb-8">
           Backups are encrypted with your seed phrase and stored securely on our servers. We can
@@ -34,7 +34,7 @@ export const BackupSettingsScreen = () => {
           <Text>Backup Now</Text>
         </Button>
 
-        <View className="mt-auto">
+        <View className="mt-8">
           <Button
             variant="outline"
             onPress={async () => {
@@ -52,7 +52,7 @@ export const BackupSettingsScreen = () => {
             <Text>Delete Backup v1</Text>
           </Button>
         </View>
-      </View>
+      </ScrollView>
     </NoahSafeAreaView>
   );
 };
