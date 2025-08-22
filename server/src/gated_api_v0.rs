@@ -267,3 +267,187 @@ pub async fn update_ln_address(
 
     Ok(())
 }
+
+use crate::s3_client::S3BackupClient;
+
+#[derive(Deserialize)]
+pub struct GetUploadUrlPayload {
+    pub backup_version: i32, // 1 or 2 (rolling)
+    pub backup_size: i64,    // For validation
+}
+
+#[derive(Serialize)]
+pub struct UploadUrlResponse {
+    pub upload_url: String, // Pre-signed S3 URL
+    pub s3_key: String,     // S3 object key
+}
+
+pub async fn get_upload_url(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<GetUploadUrlPayload>,
+) -> Result<Json<UploadUrlResponse>, ApiError> {
+    let s3_client = S3BackupClient::new().await?;
+    let s3_key = format!(
+        "{}/backup_v{}.db",
+        auth_payload.key.clone(),
+        payload.backup_version
+    );
+    let upload_url = s3_client.generate_upload_url(&s3_key).await?;
+
+    Ok(Json(UploadUrlResponse { upload_url, s3_key }))
+}
+
+#[derive(Deserialize)]
+pub struct CompleteUploadPayload {
+    pub s3_key: String,
+    pub backup_version: i32,
+    pub backup_size: i64,
+}
+
+pub async fn complete_upload(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<CompleteUploadPayload>,
+) -> Result<(), ApiError> {
+    let conn = state.db.connect()?;
+    conn.execute(
+        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
+         ON CONFLICT(pubkey, backup_version) DO UPDATE SET s3_key = excluded.s3_key, backup_size = excluded.backup_size, created_at = CURRENT_TIMESTAMP",
+        libsql::params![auth_payload.key.clone(), payload.s3_key, payload.backup_size, payload.backup_version],
+    )
+    .await?;
+
+    Ok(())
+}
+
+#[derive(Serialize)]
+pub struct BackupInfo {
+    pub backup_version: i32,
+    pub created_at: String,
+    pub backup_size: i64,
+}
+
+pub async fn list_backups(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+) -> Result<Json<Vec<BackupInfo>>, ApiError> {
+    let conn = state.db.connect()?;
+    let mut rows = conn
+        .query(
+            "SELECT backup_version, created_at, backup_size FROM backup_metadata WHERE pubkey = ?",
+            libsql::params![auth_payload.key.clone()],
+        )
+        .await?;
+
+    let mut backups = Vec::new();
+    while let Some(row) = rows.next().await? {
+        backups.push(BackupInfo {
+            backup_version: row.get(0)?,
+            created_at: row.get(1)?,
+            backup_size: row.get(2)?,
+        });
+    }
+
+    Ok(Json(backups))
+}
+
+#[derive(Deserialize)]
+pub struct GetDownloadUrlPayload {
+    pub backup_version: Option<i32>, // None = latest
+}
+
+#[derive(Serialize)]
+pub struct DownloadUrlResponse {
+    pub download_url: String, // Pre-signed S3 URL
+    pub backup_size: i64,
+}
+
+pub async fn get_download_url(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<GetDownloadUrlPayload>,
+) -> Result<Json<DownloadUrlResponse>, ApiError> {
+    let conn = state.db.connect()?;
+    let (s3_key, backup_size): (String, i64) = if let Some(version) = payload.backup_version {
+        let mut row = conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? AND backup_version = ?", libsql::params![auth_payload.key.clone(), version]).await?;
+        if let Some(row) = row.next().await? {
+            (row.get(0)?, row.get(1)?)
+        } else {
+            return Err(ApiError::NotFound("Backup not found".to_string()));
+        }
+    } else {
+        let mut row = conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? ORDER BY created_at DESC LIMIT 1", libsql::params![auth_payload.key.clone()]).await?;
+        if let Some(row) = row.next().await? {
+            (row.get(0)?, row.get(1)?)
+        } else {
+            return Err(ApiError::NotFound("Backup not found".to_string()));
+        }
+    };
+
+    let s3_client = S3BackupClient::new().await?;
+    let download_url = s3_client.generate_download_url(&s3_key).await?;
+
+    Ok(Json(DownloadUrlResponse {
+        download_url,
+        backup_size,
+    }))
+}
+
+#[derive(Deserialize)]
+pub struct DeleteBackupPayload {
+    pub backup_version: i32,
+}
+
+pub async fn delete_backup(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<DeleteBackupPayload>,
+) -> Result<(), ApiError> {
+    let conn = state.db.connect()?;
+    let s3_key: String = {
+        let mut row = conn
+            .query(
+                "SELECT s3_key FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
+                libsql::params![auth_payload.key.clone(), payload.backup_version],
+            )
+            .await?;
+        if let Some(row) = row.next().await? {
+            row.get(0)?
+        } else {
+            return Err(ApiError::NotFound("Backup not found".to_string()));
+        }
+    };
+
+    let s3_client = S3BackupClient::new().await?;
+    s3_client.delete_object(&s3_key).await?;
+
+    conn.execute(
+        "DELETE FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
+        libsql::params![auth_payload.key.clone(), payload.backup_version],
+    )
+    .await?;
+
+    Ok(())
+}
+
+#[derive(Deserialize)]
+pub struct BackupSettingsPayload {
+    pub backup_enabled: bool,
+}
+
+pub async fn update_backup_settings(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<BackupSettingsPayload>,
+) -> Result<(), ApiError> {
+    let conn = state.db.connect()?;
+    conn.execute(
+        "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)
+         ON CONFLICT(pubkey) DO UPDATE SET backup_enabled = excluded.backup_enabled",
+        libsql::params![auth_payload.key.clone(), payload.backup_enabled],
+    )
+    .await?;
+
+    Ok(())
+}

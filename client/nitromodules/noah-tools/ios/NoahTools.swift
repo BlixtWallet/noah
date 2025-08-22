@@ -1,6 +1,8 @@
 import Foundation
 import OSLog
 import NitroModules
+import CryptoKit
+import CommonCrypto
 
 class NoahTools: HybridNoahToolsSpec {
   func getAppVariant() throws -> String {
@@ -107,4 +109,103 @@ class NoahTools: HybridNoahToolsSpec {
       return outputZipPath
     }
   }
+   
+   func encryptBackup(backupPath: String, seedphrase: String) throws -> Promise<String> {
+       return Promise.async {
+           // Read backup file
+           let backupData = try Data(contentsOf: URL(fileURLWithPath: backupPath))
+           
+           // Derive key from seedphrase using PBKDF2
+           let salt = self.deriveSalt(from: seedphrase)
+           let key = try self.deriveKey(from: seedphrase, salt: salt)
+           
+           // Generate random IV
+           let iv = self.generateRandomBytes(count: 12)
+           
+           // Encrypt using AES-256-GCM
+           let sealedBox = try AES.GCM.seal(backupData, using: key, nonce: AES.GCM.Nonce(data: iv))
+           
+           // Combine IV + encrypted data + auth tag
+           var encryptedData = Data()
+           encryptedData.append(iv)
+           encryptedData.append(sealedBox.ciphertext)
+           encryptedData.append(sealedBox.tag)
+           
+           // Return base64 encoded
+           return encryptedData.base64EncodedString()
+       }
+   }
+   
+   func decryptBackup(encryptedData: String, seedphrase: String, outputPath: String) throws -> Promise<String> {
+       return Promise.async {
+           // Decode base64
+           guard let data = Data(base64Encoded: encryptedData) else {
+               throw NSError(domain: "DecryptionError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid base64 data"])
+           }
+           
+           // Extract IV, ciphertext, and auth tag
+           let iv = data.prefix(12)
+           let ciphertext = data.dropFirst(12).dropLast(16)
+           let tag = data.suffix(16)
+           
+           // Derive key from seedphrase
+           let salt = self.deriveSalt(from: seedphrase)
+           let key = try self.deriveKey(from: seedphrase, salt: salt)
+           
+           // Decrypt using AES-256-GCM
+           let sealedBox = try AES.GCM.SealedBox(nonce: AES.GCM.Nonce(data: iv), ciphertext: ciphertext, tag: tag)
+           let decryptedData = try AES.GCM.open(sealedBox, using: key)
+           
+           // Write to output path
+           try decryptedData.write(to: URL(fileURLWithPath: outputPath))
+           
+           return outputPath
+       }
+   }
+   
+   private func deriveKey(from seedphrase: String, salt: Data) throws -> SymmetricKey {
+       let seedData = seedphrase.data(using: .utf8)!
+       let derivedKey = try self.pbkdf2(password: seedData, salt: salt, iterations: 10000, keyLength: 32)
+       return SymmetricKey(data: derivedKey)
+   }
+   
+   private func deriveSalt(from seedphrase: String) -> Data {
+       // Use first 16 bytes of SHA256 hash of seedphrase as deterministic salt
+       let seedData = seedphrase.data(using: .utf8)!
+       let hash = SHA256.hash(data: seedData)
+       return Data(hash.prefix(16))
+   }
+   
+   private func generateRandomBytes(count: Int) -> Data {
+       var bytes = Data(count: count)
+       let result = bytes.withUnsafeMutableBytes { SecRandomCopyBytes(kSecRandomDefault, count, $0.baseAddress!) }
+       guard result == errSecSuccess else {
+           fatalError("Failed to generate random bytes")
+       }
+       return bytes
+   }
+   
+   private func pbkdf2(password: Data, salt: Data, iterations: Int, keyLength: Int) throws -> Data {
+       var derivedKey = Data(count: keyLength)
+       let result = derivedKey.withUnsafeMutableBytes { derivedKeyBytes in
+           salt.withUnsafeBytes { saltBytes in
+               password.withUnsafeBytes { passwordBytes in
+                   CCKeyDerivationPBKDF(
+                       CCPBKDFAlgorithm(kCCPBKDF2),
+                       passwordBytes.baseAddress, password.count,
+                       saltBytes.baseAddress, salt.count,
+                       CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256),
+                       UInt32(iterations),
+                       derivedKeyBytes.baseAddress, keyLength
+                   )
+               }
+           }
+       }
+       
+       guard result == kCCSuccess else {
+           throw NSError(domain: "CryptoError", code: Int(result), userInfo: [NSLocalizedDescriptionKey: "Key derivation failed"])
+       }
+       
+       return derivedKey
+   }
 }

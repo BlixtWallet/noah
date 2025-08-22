@@ -86,5 +86,37 @@ namespace margelo::nitro::noahtools {
       return __promise;
     }();
   }
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::encryptBackup(const std::string& backupPath, const std::string& seedphrase) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* backupPath */, jni::alias_ref<jni::JString> /* seedphrase */)>("encryptBackup");
+    auto __result = method(_javaPart, jni::make_jstring(backupPath), jni::make_jstring(seedphrase));
+    return [&]() {
+      auto __promise = Promise<std::string>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JString>(__boxedResult);
+        __promise->resolve(__result->toStdString());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::decryptBackup(const std::string& encryptedData, const std::string& seedphrase, const std::string& outputPath) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* encryptedData */, jni::alias_ref<jni::JString> /* seedphrase */, jni::alias_ref<jni::JString> /* outputPath */)>("decryptBackup");
+    auto __result = method(_javaPart, jni::make_jstring(encryptedData), jni::make_jstring(seedphrase), jni::make_jstring(outputPath));
+    return [&]() {
+      auto __promise = Promise<std::string>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JString>(__boxedResult);
+        __promise->resolve(__result->toStdString());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
 
 } // namespace margelo::nitro::noahtools

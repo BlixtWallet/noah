@@ -53,6 +53,8 @@ namespace margelo::nitro::noahtools {
       virtual std::string getAppVariant() = 0;
       virtual std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() = 0;
       virtual std::shared_ptr<Promise<std::string>> zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) = 0;
+      virtual std::shared_ptr<Promise<std::string>> encryptBackup(const std::string& backupPath, const std::string& seedphrase) = 0;
+      virtual std::shared_ptr<Promise<std::string>> decryptBackup(const std::string& encryptedData, const std::string& seedphrase, const std::string& outputPath) = 0;
 
     protected:
       // Hybrid Setup

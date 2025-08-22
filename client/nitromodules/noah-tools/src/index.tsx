@@ -14,3 +14,15 @@ export function getAppLogs(): Promise<string[]> {
 export function zipDirectory(sourceDirectory: string, outputZipPath: string): Promise<string> {
   return NoahToolsHybridObject.zipDirectory(sourceDirectory, outputZipPath);
 }
+
+export function encryptBackup(backupPath: string, seedphrase: string): Promise<string> {
+  return NoahToolsHybridObject.encryptBackup(backupPath, seedphrase);
+}
+
+export function decryptBackup(
+  encryptedData: string,
+  seedphrase: string,
+  outputPath: string,
+): Promise<string> {
+  return NoahToolsHybridObject.decryptBackup(encryptedData, seedphrase, outputPath);
+}

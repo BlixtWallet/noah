@@ -83,6 +83,22 @@ namespace margelo::nitro::noahtools {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline std::shared_ptr<Promise<std::string>> encryptBackup(const std::string& backupPath, const std::string& seedphrase) override {
+      auto __result = _swiftPart.encryptBackup(backupPath, seedphrase);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<std::string>> decryptBackup(const std::string& encryptedData, const std::string& seedphrase, const std::string& outputPath) override {
+      auto __result = _swiftPart.decryptBackup(encryptedData, seedphrase, outputPath);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
 
   private:
     NoahTools::HybridNoahToolsSpec_cxx _swiftPart;

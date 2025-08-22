@@ -6,7 +6,7 @@ import Constants from "expo-constants";
 import { PLATFORM, getServerEndpoint } from "~/constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { backgroundSync, maintenance, submitInvoice } from "./tasks";
+import { backgroundSync, maintenance, submitInvoice, triggerBackup } from "./tasks";
 import { peakKeyPair } from "./paymentsApi";
 import { signMessage } from "./walletApi";
 import { err, ok, Result, ResultAsync } from "neverthrow";
@@ -62,6 +62,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           log.d("Received lightning invoice request", [notificationData]);
           const amountMsat = parseInt(notificationData.amount);
           await submitInvoice(notificationData.request_id, amountMsat);
+        } else if (notificationData.type === "backup_trigger") {
+          await triggerBackup();
         }
       })(),
       (e) =>

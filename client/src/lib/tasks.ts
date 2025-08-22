@@ -111,3 +111,22 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
 
   log.d("[Submit Invoice Job] completed");
 }
+
+export async function triggerBackup() {
+  log.d("[Backup Job] running");
+  const loadResult = await loadWalletIfNeeded();
+  if (loadResult.isErr()) {
+    log.e("Failed to load wallet for backup", [loadResult.error]);
+    return;
+  }
+
+  // TODO: Get useBackupManager from a non-hook context
+  // const { triggerBackup } = useBackupManager();
+  // const backupResult = await triggerBackup();
+  // if (backupResult.isErr()) {
+  //   log.e("Backup failed", [backupResult.error]);
+  //   return;
+  // }
+
+  log.d("[Backup Job] completed");
+}

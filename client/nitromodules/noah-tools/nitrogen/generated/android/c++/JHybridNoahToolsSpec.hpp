@@ -56,6 +56,8 @@ namespace margelo::nitro::noahtools {
     std::string getAppVariant() override;
     std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() override;
     std::shared_ptr<Promise<std::string>> zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) override;
+    std::shared_ptr<Promise<std::string>> encryptBackup(const std::string& backupPath, const std::string& seedphrase) override;
+    std::shared_ptr<Promise<std::string>> decryptBackup(const std::string& encryptedData, const std::string& seedphrase, const std::string& outputPath) override;
 
   private:
     friend HybridBase;

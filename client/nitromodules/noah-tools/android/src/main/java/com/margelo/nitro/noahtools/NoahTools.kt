@@ -12,6 +12,14 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import android.util.Base64
+import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.SecretKeyFactory
+import java.security.MessageDigest
 
 class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsSpec() {
 
@@ -79,8 +87,73 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         throw Exception("Failed to zip directory: ${e.message}")
       }
     }
+  
+   override fun encryptBackup(backupPath: String, seedphrase: String): Promise<String> {
+     return Promise.async {
+       try {
+         // Read backup file
+         val backupData = File(backupPath).readBytes()
+         // Derive key from seedphrase using PBKDF2
+         val salt = deriveSalt(seedphrase)
+         val key = deriveKey(seedphrase, salt)
+         // Generate random IV
+         val iv = ByteArray(12)
+         SecureRandom().nextBytes(iv)
+         // Encrypt using AES-256-GCM
+         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+         val secretKey = SecretKeySpec(key, "AES")
+         val gcmSpec = GCMParameterSpec(128, iv)
+         cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec)
+         val encryptedData = cipher.doFinal(backupData)
+         // Combine IV + encrypted data (GCM includes auth tag)
+         val result = iv + encryptedData
+         // Return base64 encoded
+         return@async Base64.encodeToString(result, Base64.NO_WRAP)
+       } catch (e: Exception) {
+         throw Exception("Failed to encrypt backup: ${e.message}", e)
+       }
+     }
+   }
+  
+   override fun decryptBackup(encryptedData: String, seedphrase: String, outputPath: String): Promise<String> {
+     return Promise.async {
+       try {
+         // Decode base64
+         val data = Base64.decode(encryptedData, Base64.NO_WRAP)
+         // Extract IV and ciphertext
+         val iv = data.sliceArray(0..11)
+         val ciphertext = data.sliceArray(12 until data.size)
+         // Derive key from seedphrase
+         val salt = deriveSalt(seedphrase)
+         val key = deriveKey(seedphrase, salt)
+         // Decrypt using AES-256-GCM
+         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+         val secretKey = SecretKeySpec(key, "AES")
+         val gcmSpec = GCMParameterSpec(128, iv)
+         cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
+         val decryptedData = cipher.doFinal(ciphertext)
+         // Write to output path
+         File(outputPath).writeBytes(decryptedData)
+         return@async outputPath
+       } catch (e: Exception) {
+         throw Exception("Failed to decrypt backup: ${e.message}", e)
+       }
+     }
+   }
+  
+   private fun deriveKey(seedphrase: String, salt: ByteArray): ByteArray {
+     val spec = PBEKeySpec(seedphrase.toCharArray(), salt, 10000, 256)
+     val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+     return factory.generateSecret(spec).encoded
+   }
+  
+   private fun deriveSalt(seedphrase: String): ByteArray {
+     // Use first 16 bytes of SHA256 hash of seedphrase as deterministic salt
+     val digest = MessageDigest.getInstance("SHA-256")
+     val hash = digest.digest(seedphrase.toByteArray())
+     return hash.sliceArray(0..15)
+   }
   }
-
   private fun zipDirectory(sourceDir: File, baseName: String, zipOut: ZipOutputStream) {
     val files = sourceDir.listFiles() ?: return
 

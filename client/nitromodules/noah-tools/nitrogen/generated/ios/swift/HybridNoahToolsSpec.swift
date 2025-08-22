@@ -17,6 +17,8 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func getAppVariant() throws -> String
   func getAppLogs() throws -> Promise<[String]>
   func zipDirectory(sourceDirectory: String, outputZipPath: String) throws -> Promise<String>
+  func encryptBackup(backupPath: String, seedphrase: String) throws -> Promise<String>
+  func decryptBackup(encryptedData: String, seedphrase: String, outputPath: String) throws -> Promise<String>
 }
 
 /// See ``HybridNoahToolsSpec``
