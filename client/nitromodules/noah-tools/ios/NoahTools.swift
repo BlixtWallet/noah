@@ -3,6 +3,7 @@ import OSLog
 import NitroModules
 import CryptoKit
 import CommonCrypto
+import ZIPFoundation
 
 class NoahTools: HybridNoahToolsSpec {
   func getAppVariant() throws -> String {
@@ -70,41 +71,8 @@ class NoahTools: HybridNoahToolsSpec {
         attributes: nil
       )
       
-      let fileManager = FileManager.default
-      var archiveUrl: URL?
-      var coordinatorError: NSError?
-      var moveError: Error?
-      
-      let coordinator = NSFileCoordinator()
-      
-      // Use NSFileCoordinator with .forUploading option to create a zip file
-      // This is iOS's built-in way to create zip files without external dependencies
-      coordinator.coordinate(readingItemAt: sourceURL, options: [.forUploading], error: &coordinatorError) { (zipUrl) in
-        do {
-          // zipUrl points to the zip file created by the coordinator
-          // zipUrl is valid only until the end of this block, so we move the file to our desired location
-          try fileManager.moveItem(at: zipUrl, to: outputURL)
-          archiveUrl = outputURL
-        } catch {
-          moveError = error
-        }
-      }
-      
-      if let error = coordinatorError {
-        throw error
-      }
-      
-      if let error = moveError {
-        throw error
-      }
-      
-      guard archiveUrl != nil else {
-        throw NSError(
-          domain: "NoahTools",
-          code: 3,
-          userInfo: [NSLocalizedDescriptionKey: "Failed to create zip archive"]
-        )
-      }
+      // Use ZIPFoundation's FileManager extension to zip the directory
+      try FileManager.default.zipItem(at: sourceURL, to: outputURL, shouldKeepParent: false, compressionMethod: .deflate)
       
       return outputZipPath
     }
@@ -123,14 +91,6 @@ class NoahTools: HybridNoahToolsSpec {
        )
      }
      
-     // Create output directory if it doesn't exist
-     try FileManager.default.createDirectory(
-       at: outputURL,
-       withIntermediateDirectories: true,
-       attributes: nil
-     )
-     
-     // Use ZipFoundation to properly unzip the file
      let fileManager = FileManager.default
      
      print("Starting unzip process...")
@@ -161,16 +121,27 @@ class NoahTools: HybridNoahToolsSpec {
      print("Creating output directory...")
      try fileManager.createDirectory(at: outputURL, withIntermediateDirectories: true, attributes: nil)
      
-     // Use Foundation's built-in unzip with file name sanitization
-     print("Attempting to unzip with file name sanitization...")
+     // Use ZIPFoundation Archive for manual extraction
+     print("Using ZIPFoundation Archive to unzip file...")
      
-     do {
-       try self.unzipWithSanitizedNames(zipURL: zipURL, outputURL: outputURL)
-       print("Unzip with sanitized names completed successfully")
-     } catch {
-       print("Unzip with sanitized names failed: \(error)")
-       throw error
+     let archive = try Archive(url: zipURL, accessMode: .read)
+     
+     for entry in archive {
+       let entryURL = outputURL.appendingPathComponent(entry.path)
+       
+       if entry.type == .directory {
+         try fileManager.createDirectory(at: entryURL, withIntermediateDirectories: true, attributes: nil)
+         print("Created directory: \(entry.path)")
+       } else {
+         // Create parent directories if needed
+         try fileManager.createDirectory(at: entryURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+         
+         // Extract the file
+         _ = try archive.extract(entry, to: entryURL)
+         print("Extracted file: \(entry.path)")
+       }
      }
+     print("ZIPFoundation extraction completed successfully")
      
      // Check what was actually created
      print("Checking output directory contents...")
@@ -196,92 +167,6 @@ class NoahTools: HybridNoahToolsSpec {
    }
  }
  
- private func unzipWithSanitizedNames(zipURL: URL, outputURL: URL) throws {
-   // Use NSFileCoordinator to create a temporary unzipped version
-   let fileManager = FileManager.default
-   var coordinatorError: NSError?
-   var extractionError: Error?
-   let coordinator = NSFileCoordinator()
-   
-   print("Using NSFileCoordinator to extract zip contents...")
-   
-   coordinator.coordinate(readingItemAt: zipURL, options: [.forUploading], error: &coordinatorError) { (tempURL) in
-     do {
-       print("Temporary extraction URL: \(tempURL.path)")
-       
-       // List what was extracted
-       let extractedItems = try fileManager.contentsOfDirectory(at: tempURL, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey], options: [])
-       print("Found \(extractedItems.count) items in temporary extraction")
-       
-       // Copy each item with sanitized names
-       for item in extractedItems {
-         let originalName = item.lastPathComponent
-         let sanitizedName = self.sanitizeFileName(originalName)
-         let destinationURL = outputURL.appendingPathComponent(sanitizedName)
-         
-         print("Copying: \(originalName) -> \(sanitizedName)")
-         
-         if item.hasDirectoryPath {
-           try self.copyDirectoryWithSanitizedNames(from: item, to: destinationURL)
-         } else {
-           // Create parent directory if needed
-           try fileManager.createDirectory(at: destinationURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-           try fileManager.copyItem(at: item, to: destinationURL)
-         }
-       }
-       
-     } catch let error {
-       extractionError = error
-     }
-   }
-   
-   if let coordinatorError = coordinatorError {
-     throw coordinatorError
-   }
-   
-   if let extractionError = extractionError {
-     throw extractionError
-   }
- }
- 
- private func sanitizeFileName(_ fileName: String) -> String {
-   // Replace problematic file extensions and names
-   var sanitized = fileName
-   
-   // Replace .sqlite with .db_backup
-   sanitized = sanitized.replacingOccurrences(of: ".sqlite", with: ".db_backup")
-   sanitized = sanitized.replacingOccurrences(of: ".sqlite-wal", with: ".db_wal_backup")
-   sanitized = sanitized.replacingOccurrences(of: ".sqlite-shm", with: ".db_shm_backup")
-   
-   // Remove any other problematic characters
-   sanitized = sanitized.replacingOccurrences(of: ":", with: "_")
-   sanitized = sanitized.replacingOccurrences(of: "/", with: "_")
-   
-   print("Sanitized '\(fileName)' to '\(sanitized)'")
-   return sanitized
- }
- 
- private func copyDirectoryWithSanitizedNames(from sourceURL: URL, to destinationURL: URL) throws {
-   let fileManager = FileManager.default
-   
-   // Create destination directory
-   try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
-   
-   // Get contents of source directory
-   let contents = try fileManager.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: [.isDirectoryKey], options: [])
-   
-   for item in contents {
-     let originalName = item.lastPathComponent
-     let sanitizedName = self.sanitizeFileName(originalName)
-     let itemDestination = destinationURL.appendingPathComponent(sanitizedName)
-     
-     if item.hasDirectoryPath {
-       try self.copyDirectoryWithSanitizedNames(from: item, to: itemDestination)
-     } else {
-       try fileManager.copyItem(at: item, to: itemDestination)
-     }
-   }
- }
  
  func encryptBackup(backupPath: String, seedphrase: String) throws -> Promise<String> {
        return Promise.async {
@@ -381,4 +266,5 @@ class NoahTools: HybridNoahToolsSpec {
        
        return derivedKey
    }
+   
 }

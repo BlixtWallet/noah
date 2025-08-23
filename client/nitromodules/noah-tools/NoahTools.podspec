@@ -27,6 +27,7 @@ Pod::Spec.new do |s|
 
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
+  s.dependency 'ZIPFoundation'
 
   load 'nitrogen/generated/ios/NoahTools+autolinking.rb'
   add_nitrogen_files(s)
