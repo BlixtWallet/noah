@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Result, ok, err } from "neverthrow";
+import { Result, ok, err, ResultAsync } from "neverthrow";
 import { BackupService } from "../lib/backupService";
 import {
   getUploadUrl,
@@ -14,6 +14,10 @@ import { useExportDatabase } from "./useExportDatabase";
 import { unzipFile } from "noah-tools";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import { getMnemonic } from "~/lib/walletApi";
+import { useServerStore } from "../store/serverStore";
+import logger from "~/lib/log";
+
+const log = logger("backupManager");
 
 interface BackupInfo {
   backup_version: number;
@@ -28,203 +32,296 @@ interface UseBackupManager {
   listBackups: () => Promise<Result<BackupInfo[], Error>>;
   restoreBackup: (version?: number) => Promise<Result<void, Error>>;
   deleteBackup: (version: number) => Promise<Result<void, Error>>;
+  isLoading: boolean;
+  backupsList: BackupInfo[] | null;
 }
 
 export const useBackupManager = (): UseBackupManager => {
-  const [isBackupEnabled, setIsBackupEnabled] = useState(false);
+  const { isBackupEnabled, setBackupEnabled: setBackupEnabledStore } = useServerStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [backupsList, setBackupsList] = useState<BackupInfo[] | null>(null);
   const backupService = new BackupService();
   const { exportDatabaseToZip } = useExportDatabase();
 
   const setBackupEnabled = async (enabled: boolean) => {
-    setIsBackupEnabled(enabled);
-    await updateBackupSettings({ backup_enabled: enabled });
+    setIsLoading(true);
+    setBackupEnabledStore(enabled);
+    const updateResult = await updateBackupSettings({ backup_enabled: enabled });
+    if (updateResult.isErr()) {
+      console.error("Failed to update backup settings:", updateResult.error);
+      // Revert the local state if the API call failed
+      setBackupEnabledStore(!enabled);
+    }
+    setIsLoading(false);
   };
 
   const triggerBackup = async (): Promise<Result<void, Error>> => {
-    try {
-      const zipResult = await exportDatabaseToZip();
-      if (zipResult.isErr()) {
-        return err(zipResult.error);
-      }
-      const { outputPath: outputZipPath } = zipResult.value;
+    setIsLoading(true);
+    const zipResult = await exportDatabaseToZip();
+    if (zipResult.isErr()) {
+      setIsLoading(false);
+      return err(zipResult.error);
+    }
+    const { outputPath: outputZipPath } = zipResult.value;
 
-      console.log("outputZipPath", outputZipPath);
+    log.d("outputZipPath", [outputZipPath]);
 
-      const seedphrase = await getMnemonic();
-      if (seedphrase.isErr()) {
-        return err(seedphrase.error);
-      }
+    const seedphrase = await getMnemonic();
+    if (seedphrase.isErr()) {
+      setIsLoading(false);
+      return err(seedphrase.error);
+    }
 
-      const encryptedDataResult = await backupService.encryptBackupFile(
-        outputZipPath,
-        seedphrase.value,
-      );
+    const encryptedDataResult = await backupService.encryptBackupFile(
+      outputZipPath,
+      seedphrase.value,
+    );
 
-      if (encryptedDataResult.isErr()) {
-        return err(encryptedDataResult.error);
-      }
+    if (encryptedDataResult.isErr()) {
+      setIsLoading(false);
+      return err(encryptedDataResult.error);
+    }
 
-      // Debug: Check the encrypted data
-      console.log("Encrypted data length:", encryptedDataResult.value.length);
-      console.log("Encrypted data first 100 chars:", encryptedDataResult.value.substring(0, 100));
-      console.log(
-        "Encrypted data last 100 chars:",
-        encryptedDataResult.value.substring(encryptedDataResult.value.length - 100),
-      );
+    // Debug: Check the encrypted data
+    log.d("Encrypted data length:", [encryptedDataResult.value.length]);
 
-      // Calculate backup size from encrypted data
-      const backup_size = encryptedDataResult.value.length;
+    // Calculate backup size from encrypted data
+    const backup_size = encryptedDataResult.value.length;
 
-      const uploadUrlResult = await getUploadUrl({
-        backup_version: 1, // Implement version rotation
-        backup_size,
-      });
+    const uploadUrlResult = await getUploadUrl({
+      backup_version: 1, // Implement version rotation
+      backup_size,
+    });
 
-      console.log("uploadUrlResult", uploadUrlResult);
+    log.d("uploadUrlResult", [uploadUrlResult]);
 
-      if (uploadUrlResult.isErr()) {
-        return err(uploadUrlResult.error);
-      }
+    if (uploadUrlResult.isErr()) {
+      setIsLoading(false);
+      return err(uploadUrlResult.error);
+    }
 
-      const { upload_url, s3_key } = uploadUrlResult.value;
+    const { upload_url, s3_key } = uploadUrlResult.value;
 
-      // Upload directly as raw data, not multipart form data
-      const response = await fetch(upload_url, {
+    // Upload directly as raw data, not multipart form data
+    const uploadResult = await ResultAsync.fromPromise(
+      fetch(upload_url, {
         method: "PUT",
         headers: {
           "Content-Type": "application/octet-stream",
         },
         body: encryptedDataResult.value,
-      });
+      }),
+      (e) => e as Error,
+    );
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
-      }
-
-      await completeUpload({
-        s3_key,
-        backup_version: 1,
-        backup_size,
-      });
-
-      await RNFS.unlink(outputZipPath);
-
-      return ok(undefined);
-    } catch (e) {
-      console.error(e);
-      return err(e as Error);
+    if (uploadResult.isErr()) {
+      setIsLoading(false);
+      return err(uploadResult.error);
     }
+
+    const response = uploadResult.value;
+    if (!response.ok) {
+      setIsLoading(false);
+      return err(new Error(`Upload failed: ${response.status} ${response.statusText}`));
+    }
+
+    const completeUploadResult = await completeUpload({
+      s3_key,
+      backup_version: 1,
+      backup_size,
+    });
+
+    if (completeUploadResult.isErr()) {
+      setIsLoading(false);
+      return err(completeUploadResult.error);
+    }
+
+    const unlinkResult = await ResultAsync.fromPromise(
+      RNFS.unlink(outputZipPath),
+      (e) => e as Error,
+    );
+
+    if (unlinkResult.isErr()) {
+      setIsLoading(false);
+      return err(unlinkResult.error);
+    }
+
+    // Refresh the backups list after successful backup
+    const refreshResult = await listBackupsApi();
+    if (refreshResult.isOk()) {
+      setBackupsList(refreshResult.value);
+    }
+
+    const result = ok(undefined);
+    setIsLoading(false);
+    return result;
   };
 
   const listBackups = async (): Promise<Result<BackupInfo[], Error>> => {
-    return listBackupsApi();
+    setIsLoading(true);
+    const result = await listBackupsApi();
+    if (result.isOk()) {
+      setBackupsList(result.value);
+    }
+    setIsLoading(false);
+    return result;
   };
 
   const restoreBackup = async (version?: number): Promise<Result<void, Error>> => {
-    try {
-      const downloadUrlResult = await getDownloadUrl({ backup_version: version });
-      console.log("downloadUrlResult", downloadUrlResult);
+    setIsLoading(true);
+    const downloadUrlResult = await getDownloadUrl({ backup_version: version });
+    log.d("downloadUrlResult", [downloadUrlResult]);
 
-      if (downloadUrlResult.isErr()) {
-        return err(downloadUrlResult.error);
-      }
+    if (downloadUrlResult.isErr()) {
+      setIsLoading(false);
+      return err(downloadUrlResult.error);
+    }
 
-      const { download_url } = downloadUrlResult.value;
-      const outputPath = `${RNFS.TemporaryDirectoryPath}/backup.zip`;
+    const { download_url } = downloadUrlResult.value;
+    const outputPath = `${RNFS.TemporaryDirectoryPath}/backup.zip`;
 
-      console.log("outputPath", outputPath);
+    log.d("outputPath", [outputPath]);
 
-      await RNFS.downloadFile({
+    const downloadResult = await ResultAsync.fromPromise(
+      RNFS.downloadFile({
         fromUrl: download_url,
         toFile: outputPath,
-      }).promise;
+      }).promise,
+      (e) => e as Error,
+    );
 
-      const seedphrase = await getMnemonic();
-      if (seedphrase.isErr()) {
-        return err(seedphrase.error);
-      }
-
-      // Debug: Check what we actually downloaded
-      const fileStats = await RNFS.stat(outputPath);
-      console.log("Downloaded file stats:", fileStats);
-
-      const encryptedData = await RNFS.readFile(outputPath, "utf8");
-      console.log("Downloaded data length:", encryptedData.length);
-      console.log("Downloaded data first 100 chars:", encryptedData.substring(0, 100));
-      console.log(
-        "Downloaded data last 100 chars:",
-        encryptedData.substring(encryptedData.length - 100),
-      );
-
-      // Check if it looks like base64
-      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-      console.log("Is valid base64 format:", base64Regex.test(encryptedData.trim()));
-
-      const decryptedPathResult = await backupService.decryptBackupFile(
-        encryptedData.trim(),
-        seedphrase.value,
-        outputPath,
-      );
-
-      console.log("decryptedPathResult", decryptedPathResult);
-
-      if (decryptedPathResult.isErr()) {
-        return err(decryptedPathResult.error);
-      }
-
-      console.log("decryptedPathResult", decryptedPathResult);
-
-      // Unzip and log contents
-      const unzipDirectory = `${CACHES_DIRECTORY_PATH}/restored_backup`;
-      const unzipResult = await unzipFile(decryptedPathResult.value, unzipDirectory);
-      console.log("Unzip result:", unzipResult);
-
-      // Check if the unzip directory exists and get its stats
-      try {
-        const dirExists = await RNFS.exists(unzipDirectory);
-        console.log("Unzip directory exists:", dirExists);
-
-        if (dirExists) {
-          const dirStats = await RNFS.stat(unzipDirectory);
-          console.log("Unzip directory stats:", dirStats);
-        }
-      } catch (error) {
-        console.log("Error checking unzip directory:", error);
-      }
-
-      // List contents of unzipped directory
-      const listContents = async (dir: string, prefix = ""): Promise<void> => {
-        try {
-          console.log(`${prefix}Attempting to read directory: ${dir}`);
-          const items = await RNFS.readDir(dir);
-          console.log(`${prefix}Found ${items.length} items in ${dir}`);
-
-          for (const item of items) {
-            console.log(
-              `${prefix}${item.name} (${item.isDirectory() ? "directory" : "file"} - ${item.size} bytes)`,
-            );
-            if (item.isDirectory()) {
-              await listContents(item.path, `${prefix}  `);
-            }
-          }
-        } catch (error) {
-          console.log(`${prefix}Error reading directory ${dir}:`, error);
-        }
-      };
-
-      console.log("=== RESTORED BACKUP CONTENTS ===");
-      await listContents(unzipDirectory);
-      console.log("=== END BACKUP CONTENTS ===");
-
-      return ok(undefined);
-    } catch (e) {
-      console.error(e);
-      return err(e as Error);
+    if (downloadResult.isErr()) {
+      setIsLoading(false);
+      return err(downloadResult.error);
     }
+
+    const seedphrase = await getMnemonic();
+    if (seedphrase.isErr()) {
+      setIsLoading(false);
+      return err(seedphrase.error);
+    }
+
+    // Debug: Check what we actually downloaded
+    const fileStatsResult = await ResultAsync.fromPromise(RNFS.stat(outputPath), (e) => e as Error);
+
+    if (fileStatsResult.isErr()) {
+      setIsLoading(false);
+      return err(fileStatsResult.error);
+    }
+
+    log.d("Downloaded file stats:", [fileStatsResult.value]);
+
+    const encryptedDataResult = await ResultAsync.fromPromise(
+      RNFS.readFile(outputPath, "utf8"),
+      (e) => e as Error,
+    );
+
+    if (encryptedDataResult.isErr()) {
+      setIsLoading(false);
+      return err(encryptedDataResult.error);
+    }
+
+    const encryptedData = encryptedDataResult.value;
+    log.d("Downloaded data length:", [encryptedData.length]);
+
+    const decryptedPathResult = await backupService.decryptBackupFile(
+      encryptedData.trim(),
+      seedphrase.value,
+      outputPath,
+    );
+
+    log.d("decryptedPathResult", [decryptedPathResult]);
+
+    if (decryptedPathResult.isErr()) {
+      setIsLoading(false);
+      return err(decryptedPathResult.error);
+    }
+
+    log.d("decryptedPathResult", [decryptedPathResult]);
+
+    // Unzip and log contents
+    const unzipDirectory = `${CACHES_DIRECTORY_PATH}/restored_backup`;
+    const unzipResult = await ResultAsync.fromPromise(
+      unzipFile(decryptedPathResult.value, unzipDirectory),
+      (e) => e as Error,
+    );
+
+    if (unzipResult.isErr()) {
+      setIsLoading(false);
+      return err(unzipResult.error);
+    }
+
+    log.d("Unzip result:", [unzipResult.value]);
+
+    // Check if the unzip directory exists and get its stats
+    const dirExistsResult = await ResultAsync.fromPromise(
+      RNFS.exists(unzipDirectory),
+      (e) => e as Error,
+    );
+
+    if (dirExistsResult.isOk()) {
+      log.d("Unzip directory exists:", [dirExistsResult.value]);
+
+      if (dirExistsResult.value) {
+        const dirStatsResult = await ResultAsync.fromPromise(
+          RNFS.stat(unzipDirectory),
+          (e) => e as Error,
+        );
+
+        if (dirStatsResult.isOk()) {
+          log.d("Unzip directory stats:", [dirStatsResult.value]);
+        } else {
+          log.d("Error getting unzip directory stats:", [dirStatsResult.error]);
+        }
+      }
+    } else {
+      log.d("Error checking unzip directory:", [dirExistsResult.error]);
+    }
+
+    // List contents of unzipped directory
+    const listContents = async (dir: string, prefix = ""): Promise<void> => {
+      log.d(`${prefix}Attempting to read directory: ${dir}`);
+
+      const readDirResult = await ResultAsync.fromPromise(RNFS.readDir(dir), (e) => e as Error);
+
+      if (readDirResult.isErr()) {
+        log.d(`${prefix}Error reading directory ${dir}:`, [readDirResult.error]);
+        return;
+      }
+
+      const items = readDirResult.value;
+      log.d(`${prefix}Found ${items.length} items in ${dir}`);
+
+      for (const item of items) {
+        log.d(
+          `${prefix}${item.name} (${item.isDirectory() ? "directory" : "file"} - ${item.size} bytes)`,
+        );
+        if (item.isDirectory()) {
+          await listContents(item.path, `${prefix}  `);
+        }
+      }
+    };
+
+    log.d("=== RESTORED BACKUP CONTENTS ===");
+    await listContents(unzipDirectory);
+    log.d("=== END BACKUP CONTENTS ===");
+
+    setIsLoading(false);
+    return ok(undefined);
   };
 
   const deleteBackup = async (version: number): Promise<Result<void, Error>> => {
+    setIsLoading(true);
     const result = await deleteBackupApi({ backup_version: version });
+
+    if (result.isOk()) {
+      // Update the local backups list by removing the deleted backup
+      setBackupsList((prev) =>
+        prev ? prev.filter((backup) => backup.backup_version !== version) : null,
+      );
+    }
+
+    setIsLoading(false);
     return result.map(() => undefined);
   };
 
@@ -235,5 +332,7 @@ export const useBackupManager = (): UseBackupManager => {
     listBackups,
     restoreBackup,
     deleteBackup,
+    isLoading,
+    backupsList,
   };
 };

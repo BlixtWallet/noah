@@ -1,12 +1,15 @@
-import React from "react";
-import { View, Switch, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { View, Switch, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useBackupManager } from "../hooks/useBackupManager";
 import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
 import { Text } from "../components/ui/text";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
+import Icon from "@react-native-vector-icons/ionicons";
 
 export const BackupSettingsScreen = () => {
+  const navigation = useNavigation();
   const {
     isBackupEnabled,
     setBackupEnabled,
@@ -14,12 +17,21 @@ export const BackupSettingsScreen = () => {
     listBackups,
     restoreBackup,
     deleteBackup,
+    isLoading,
+    backupsList,
   } = useBackupManager();
+
+  const [showBackups, setShowBackups] = useState(false);
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4 flex-1">
-        <Text className="text-2xl font-bold text-foreground mb-4">Backup & Restore</Text>
+        <View className="flex-row items-center mb-8">
+          <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Icon name="arrow-back-outline" size={24} color="white" />
+          </Pressable>
+          <Text className="text-2xl font-bold text-foreground">Backup & Restore</Text>
+        </View>
         <Text className="text-muted-foreground mb-8">
           Backups are encrypted with your seed phrase and stored securely on our servers. We can
           never access your funds or data.
@@ -27,29 +39,101 @@ export const BackupSettingsScreen = () => {
 
         <View className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-4">
           <Label className="text-foreground text-lg">Enable Automatic Backups</Label>
-          <Switch value={isBackupEnabled} onValueChange={setBackupEnabled} />
+          <View className="flex-row items-center">
+            {isLoading && <ActivityIndicator size="small" className="mr-2" />}
+            <Switch value={isBackupEnabled} onValueChange={setBackupEnabled} disabled={isLoading} />
+          </View>
         </View>
 
-        <Button onPress={() => triggerBackup()} className="mb-4">
-          <Text>Backup Now</Text>
+        <Button onPress={() => triggerBackup()} className="mb-4" disabled={isLoading}>
+          {isLoading ? (
+            <View className="flex-row items-center">
+              <ActivityIndicator size="small" color="white" className="mr-2" />
+              <Text>Backing up...</Text>
+            </View>
+          ) : (
+            <Text>Backup Now</Text>
+          )}
         </Button>
 
         <View className="mt-8">
           <Button
             variant="outline"
             onPress={async () => {
-              const backups = await listBackups();
-              console.log(backups);
+              const result = await listBackups();
+              if (result.isOk()) {
+                setShowBackups(true);
+              }
             }}
             className="mb-4"
+            disabled={isLoading}
           >
-            <Text>List Backups</Text>
+            {isLoading ? (
+              <View className="flex-row items-center">
+                <ActivityIndicator size="small" className="mr-2" />
+                <Text>Loading...</Text>
+              </View>
+            ) : (
+              <Text>List Backups</Text>
+            )}
           </Button>
-          <Button variant="outline" onPress={() => restoreBackup()} className="mb-4">
-            <Text>Restore Latest Backup</Text>
-          </Button>
-          <Button variant="destructive" onPress={() => deleteBackup(1)}>
-            <Text>Delete Backup v1</Text>
+
+          {showBackups && backupsList && (
+            <View className="mb-4 p-4 bg-card rounded-lg border border-border">
+              <Text className="text-lg font-semibold mb-2">Available Backups</Text>
+              {backupsList.length === 0 ? (
+                <Text className="text-muted-foreground">No backups found</Text>
+              ) : (
+                backupsList.map((backup) => (
+                  <View
+                    key={backup.backup_version}
+                    className="flex-row justify-between items-center py-2 border-b border-border"
+                  >
+                    <View>
+                      <Text className="font-medium">Version {backup.backup_version}</Text>
+                      <Text className="text-sm text-muted-foreground">
+                        {new Date(backup.created_at).toLocaleDateString()} -{" "}
+                        {(backup.backup_size / 1024).toFixed(1)} KB
+                      </Text>
+                    </View>
+                    <View className="flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onPress={() => restoreBackup(backup.backup_version)}
+                        disabled={isLoading}
+                      >
+                        <Text>Restore</Text>
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onPress={() => deleteBackup(backup.backup_version)}
+                        disabled={isLoading}
+                      >
+                        <Text>Delete</Text>
+                      </Button>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          <Button
+            variant="outline"
+            onPress={() => restoreBackup()}
+            className="mb-4"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <View className="flex-row items-center">
+                <ActivityIndicator size="small" className="mr-2" />
+                <Text>Restoring...</Text>
+              </View>
+            ) : (
+              <Text>Restore Latest Backup</Text>
+            )}
           </Button>
         </View>
       </ScrollView>
