@@ -10,7 +10,7 @@ import { NoahButton } from "../components/ui/NoahButton";
 import { Button } from "../components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
-import { getMnemonic } from "../lib/paymentsApi";
+import { getMnemonic } from "../lib/walletApi";
 import { useWalletStore } from "../store/walletStore";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";

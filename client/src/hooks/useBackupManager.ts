@@ -13,6 +13,7 @@ import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useExportDatabase } from "./useExportDatabase";
 import { unzipFile } from "noah-tools";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
+import { getMnemonic } from "~/lib/walletApi";
 
 interface BackupInfo {
   backup_version: number;
@@ -49,8 +50,15 @@ export const useBackupManager = (): UseBackupManager => {
 
       console.log("outputZipPath", outputZipPath);
 
-      const seedphrase = "test-seedphrase"; // Replace with actual seedphrase
-      const encryptedDataResult = await backupService.encryptBackupFile(outputZipPath, seedphrase);
+      const seedphrase = await getMnemonic();
+      if (seedphrase.isErr()) {
+        return err(seedphrase.error);
+      }
+
+      const encryptedDataResult = await backupService.encryptBackupFile(
+        outputZipPath,
+        seedphrase.value,
+      );
 
       if (encryptedDataResult.isErr()) {
         return err(encryptedDataResult.error);
@@ -131,7 +139,10 @@ export const useBackupManager = (): UseBackupManager => {
         toFile: outputPath,
       }).promise;
 
-      const seedphrase = "test-seedphrase"; // Replace with actual seedphrase
+      const seedphrase = await getMnemonic();
+      if (seedphrase.isErr()) {
+        return err(seedphrase.error);
+      }
 
       // Debug: Check what we actually downloaded
       const fileStats = await RNFS.stat(outputPath);
@@ -151,7 +162,7 @@ export const useBackupManager = (): UseBackupManager => {
 
       const decryptedPathResult = await backupService.decryptBackupFile(
         encryptedData.trim(),
-        seedphrase,
+        seedphrase.value,
         outputPath,
       );
 

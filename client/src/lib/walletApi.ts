@@ -113,22 +113,19 @@ export const createWallet = async (): Promise<Result<void, Error>> => {
 };
 
 const loadWallet = async (): Promise<Result<boolean, Error>> => {
-  const credentialsResult = await ResultAsync.fromPromise(
-    Keychain.getGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
-    (e) => e as Error,
-  );
+  const credentialsResult = await getMnemonic();
 
   if (credentialsResult.isErr()) {
     return err(credentialsResult.error);
   }
 
   const credentials = credentialsResult.value;
-  if (!credentials || !credentials.password) {
+  if (!credentials) {
     return err(new Error("No wallet found. Please create a wallet first."));
   }
 
   const loadResult = await ResultAsync.fromPromise(
-    loadWalletNitro(ARK_DATA_PATH, credentials.password),
+    loadWalletNitro(ARK_DATA_PATH, credentials),
     (e) => e as Error,
   );
 
@@ -150,6 +147,24 @@ export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
   }
 
   return loadWallet();
+};
+
+export const getMnemonic = async (): Promise<Result<string, Error>> => {
+  const credentialsResult = await ResultAsync.fromPromise(
+    Keychain.getGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+
+  if (credentialsResult.isErr()) {
+    return err(credentialsResult.error);
+  }
+
+  const credentials = credentialsResult.value;
+  if (!credentials || !credentials.password) {
+    return err(new Error("No wallet found. Please create a wallet first."));
+  }
+
+  return ok(credentials.password);
 };
 
 export const fetchOnchainBalance = async (): Promise<Result<OnchainBalanceResult, Error>> => {

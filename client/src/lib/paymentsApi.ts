@@ -18,10 +18,8 @@ import {
   NewAddressResult,
   KeyPairResult,
 } from "react-native-nitro-ark";
-import * as Keychain from "react-native-keychain";
-import { APP_VARIANT } from "../config";
 import { captureException } from "@sentry/react-native";
-import { err, ok, Result, ResultAsync } from "neverthrow";
+import { Result, ResultAsync } from "neverthrow";
 
 export type {
   ArkoorPaymentResult,
@@ -35,19 +33,6 @@ export type PaymentResult =
   | OnchainPaymentResult
   | LightningPaymentResult
   | LnurlPaymentResult;
-
-const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
-
-export const getMnemonic = async (): Promise<Result<string, Error>> => {
-  const credentials = await Keychain.getGenericPassword({
-    service: MNEMONIC_KEYCHAIN_SERVICE,
-  });
-
-  if (!credentials) {
-    return err(new Error("Mnemonic not found. Is the wallet initialized?"));
-  }
-  return ok(credentials.password);
-};
 
 export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => {
   return ResultAsync.fromPromise(
