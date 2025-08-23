@@ -81,11 +81,15 @@ pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler>
     })?;
     sched.add(maintenance_job).await?;
 
-    let backup_cron = std::env::var("BACKUP_CRON").unwrap_or_else(|_| "0 0 * * *".to_string());
+    let backup_cron = std::env::var("BACKUP_CRON").unwrap_or_else(|_| "every 24 hours".to_string());
     let backup_app_state = app_state.clone();
     let backup_job = Job::new_async(&backup_cron, move |_, _| {
         let app_state = backup_app_state.clone();
-        Box::pin(send_backup_notifications(app_state))
+        Box::pin(async move {
+            if let Err(e) = send_backup_notifications(app_state).await {
+                tracing::error!("Failed to send backup notifications: {}", e);
+            }
+        })
     })?;
     sched.add(backup_job).await?;
 

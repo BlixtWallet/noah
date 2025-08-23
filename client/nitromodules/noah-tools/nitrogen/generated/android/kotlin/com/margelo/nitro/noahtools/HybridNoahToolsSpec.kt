@@ -54,6 +54,10 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   
   @DoNotStrip
   @Keep
+  abstract fun unzipFile(zipPath: String, outputDirectory: String): Promise<String>
+  
+  @DoNotStrip
+  @Keep
   abstract fun encryptBackup(backupPath: String, seedphrase: String): Promise<String>
   
   @DoNotStrip

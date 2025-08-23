@@ -17,6 +17,7 @@ namespace margelo::nitro::noahtools {
       prototype.registerHybridMethod("getAppVariant", &HybridNoahToolsSpec::getAppVariant);
       prototype.registerHybridMethod("getAppLogs", &HybridNoahToolsSpec::getAppLogs);
       prototype.registerHybridMethod("zipDirectory", &HybridNoahToolsSpec::zipDirectory);
+      prototype.registerHybridMethod("unzipFile", &HybridNoahToolsSpec::unzipFile);
       prototype.registerHybridMethod("encryptBackup", &HybridNoahToolsSpec::encryptBackup);
       prototype.registerHybridMethod("decryptBackup", &HybridNoahToolsSpec::decryptBackup);
     });

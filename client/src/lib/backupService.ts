@@ -1,6 +1,5 @@
 import { encryptBackup, decryptBackup } from "noah-tools";
 import { Result, ResultAsync } from "neverthrow";
-import * as RNFS from "@dr.pogodin/react-native-fs";
 
 export class BackupService {
   async encryptBackupFile(backupPath: string, seedphrase: string): Promise<Result<string, Error>> {

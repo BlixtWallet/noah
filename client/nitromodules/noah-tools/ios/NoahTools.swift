@@ -3,6 +3,7 @@ import OSLog
 import NitroModules
 import CryptoKit
 import CommonCrypto
+import ZIPFoundation
 
 class NoahTools: HybridNoahToolsSpec {
   func getAppVariant() throws -> String {
@@ -109,8 +110,55 @@ class NoahTools: HybridNoahToolsSpec {
       return outputZipPath
     }
   }
-   
-   func encryptBackup(backupPath: String, seedphrase: String) throws -> Promise<String> {
+ 
+ func unzipFile(zipPath: String, outputDirectory: String) throws -> Promise<String> {
+   return Promise.async {
+     let zipURL = URL(fileURLWithPath: zipPath)
+     let outputURL = URL(fileURLWithPath: outputDirectory)
+     
+     guard FileManager.default.fileExists(atPath: zipPath) else {
+       throw NSError(
+         domain: "NoahTools",
+         code: 4,
+         userInfo: [NSLocalizedDescriptionKey: "Zip file does not exist: \(zipPath)"]
+       )
+     }
+     
+     // Create output directory if it doesn't exist
+     try FileManager.default.createDirectory(
+       at: outputURL,
+       withIntermediateDirectories: true,
+       attributes: nil
+     )
+     
+     // Use ZipFoundation to properly unzip the file
+     let fileManager = FileManager.default
+     
+     // Clear the output directory first if it exists
+     if fileManager.fileExists(atPath: outputDirectory) {
+       try fileManager.removeItem(at: outputURL)
+     }
+     
+     // Create the output directory
+     try fileManager.createDirectory(at: outputURL, withIntermediateDirectories: true, attributes: nil)
+     
+     // Unzip the file using ZipFoundation
+     try fileManager.unzipItem(at: zipURL, to: outputURL)
+     
+     // Log the contents of the unzipped directory
+     let unzippedContents = try fileManager.contentsOfDirectory(at: outputURL, includingPropertiesForKeys: [.isDirectoryKey], options: [])
+     print("Unzipped contents:")
+     for item in unzippedContents {
+       let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey])
+       let isDirectory = resourceValues.isDirectory ?? false
+       print("  \(item.lastPathComponent) (\(isDirectory ? "directory" : "file"))")
+     }
+     
+     return outputDirectory
+   }
+ }
+ 
+ func encryptBackup(backupPath: String, seedphrase: String) throws -> Promise<String> {
        return Promise.async {
            // Read backup file
            let backupData = try Data(contentsOf: URL(fileURLWithPath: backupPath))

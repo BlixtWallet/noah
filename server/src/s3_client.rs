@@ -1,3 +1,4 @@
+use aws_config::BehaviorVersion;
 use aws_config::meta::region::RegionProviderChain;
 use aws_sdk_s3::Client;
 use aws_sdk_s3::presigning::PresigningConfig;
@@ -11,7 +12,10 @@ pub struct S3BackupClient {
 impl S3BackupClient {
     pub async fn new() -> Result<Self, anyhow::Error> {
         let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
-        let config = aws_config::from_env().region(region_provider).load().await;
+        let config = aws_config::defaults(BehaviorVersion::latest())
+            .region(region_provider)
+            .load()
+            .await;
         let client = Client::new(&config);
         let bucket = std::env::var("S3_BUCKET_NAME")?;
         Ok(Self { client, bucket })

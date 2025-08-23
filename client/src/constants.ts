@@ -48,9 +48,9 @@ export const getServerEndpoint = (): string => {
     case "regtest":
       return REGTEST_SERVER_URL;
     case "signet":
-      return "https://noah.noderunner.wtf";
+      return process.env.EXPO_PUBLIC_SIGNET_SERVER_URL || "https://noah.noderunner.wtf";
     case "mainnet":
-      return "https://noah.noderunner.wtf";
+      return process.env.EXPO_PUBLIC_MAINNET_SERVER_URL || "https://noah.noderunner.wtf";
     default:
       return "https://noah.noderunner.wtf";
   }

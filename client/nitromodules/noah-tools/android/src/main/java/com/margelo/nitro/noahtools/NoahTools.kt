@@ -12,6 +12,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import java.util.zip.ZipInputStream
 import android.util.Base64
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -87,7 +88,47 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         throw Exception("Failed to zip directory: ${e.message}")
       }
     }
-  
+
+   override fun unzipFile(zipPath: String, outputDirectory: String): Promise<String> {
+     return Promise.async {
+       try {
+         val zipFile = File(zipPath)
+         if (!zipFile.exists()) {
+           throw Exception("Zip file does not exist: $zipPath")
+         }
+
+         val outputDir = File(outputDirectory)
+         outputDir.mkdirs()
+
+         ZipInputStream(FileInputStream(zipFile)).use { zipIn ->
+           var entry: ZipEntry? = zipIn.nextEntry
+           while (entry != null) {
+             val entryFile = File(outputDir, entry.name)
+             
+             if (entry.isDirectory) {
+               entryFile.mkdirs()
+             } else {
+               entryFile.parentFile?.mkdirs()
+               FileOutputStream(entryFile).use { output ->
+                 val buffer = ByteArray(4096)
+                 var length: Int
+                 while (zipIn.read(buffer).also { length = it } > 0) {
+                   output.write(buffer, 0, length)
+                 }
+               }
+             }
+             zipIn.closeEntry()
+             entry = zipIn.nextEntry
+           }
+         }
+
+         return@async outputDirectory
+       } catch (e: Exception) {
+         throw Exception("Failed to unzip file: ${e.message}")
+       }
+     }
+   }
+   
    override fun encryptBackup(backupPath: String, seedphrase: String): Promise<String> {
      return Promise.async {
        try {

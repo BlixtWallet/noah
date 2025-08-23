@@ -11,9 +11,7 @@ export const useExportDatabase = () => {
   const [showExportError, setShowExportError] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  const exportDatabase = async () => {
-    setIsExporting(true);
-
+  const exportDatabaseToZip = async () => {
     const now = new Date();
     const timestamp = now.toISOString().replace(/[:.]/g, "-").split("T")[0];
     const timeComponent = now.toISOString().replace(/[:.]/g, "-").split("T")[1].split(".")[0];
@@ -36,9 +34,23 @@ export const useExportDatabase = () => {
         setShowExportError(false);
         setExportError(null);
       }, 5000);
+      return zipResult;
+    }
+
+    return zipResult.map(() => ({ outputPath, filename }));
+  };
+
+  const exportDatabase = async () => {
+    setIsExporting(true);
+
+    const zipResult = await exportDatabaseToZip();
+
+    if (zipResult.isErr()) {
       setIsExporting(false);
       return;
     }
+
+    const { outputPath, filename } = zipResult.value;
 
     // Share the zip file
     const shareResult = await ResultAsync.fromPromise(
@@ -81,5 +93,6 @@ export const useExportDatabase = () => {
     showExportError,
     exportError,
     exportDatabase,
+    exportDatabaseToZip,
   };
 };

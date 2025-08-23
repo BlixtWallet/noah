@@ -1,4 +1,4 @@
-import { Result, ok, err } from "neverthrow";
+import { Result, ok, err, ResultAsync } from "neverthrow";
 import { getServerEndpoint } from "~/constants";
 import { peakKeyPair } from "./paymentsApi";
 import { signMessage } from "./walletApi";
@@ -15,16 +15,25 @@ async function post<T, U>(
       "Content-Type": "application/json",
     };
 
-    let body: string;
+    let body;
 
     if (authenticated) {
+      const k1Result = await ResultAsync.fromPromise(
+        fetch(`${API_URL}/v0/getk1`).then((res) => res.json()),
+        (e) => e as Error,
+      );
+
+      if (k1Result.isErr()) {
+        return err(k1Result.error);
+      }
+
+      const { k1 } = k1Result.value;
+
       const peakResult = await peakKeyPair(0);
       if (peakResult.isErr()) {
         return err(peakResult.error);
       }
       const { public_key: key } = peakResult.value;
-
-      const k1 = Math.random().toString(36).substring(2);
 
       const signatureResult = await signMessage(k1, 0);
       if (signatureResult.isErr()) {
@@ -32,10 +41,13 @@ async function post<T, U>(
       }
       const sig = signatureResult.value;
 
-      headers["X-Noah-Auth-K1"] = k1;
-      headers["X-Noah-Auth-Sig"] = sig;
-      headers["X-Noah-Auth-Key"] = key;
-      body = JSON.stringify(payload);
+      const authPayload = {
+        ...payload,
+        k1,
+        sig,
+        key,
+      };
+      body = JSON.stringify(authPayload);
     } else {
       body = JSON.stringify(payload);
     }
@@ -51,7 +63,13 @@ async function post<T, U>(
       return err(new Error(`API Error: ${response.status} ${errorText}`));
     }
 
-    const data = await response.json();
+    // Handle cases where response might be empty
+    const responseText = await response.text();
+    if (!responseText) {
+      return ok(undefined as U);
+    }
+
+    const data = JSON.parse(responseText);
     return ok(data);
   } catch (e) {
     return err(e as Error);
@@ -71,7 +89,7 @@ export const completeUpload = (payload: {
 }) => post("/backup/complete_upload", payload);
 
 export const listBackups = () =>
-  post<{}, { backup_version: number; created_at: string; backup_size: number }[]>(
+  post<object, { backup_version: number; created_at: string; backup_size: number }[]>(
     "/backup/list",
     {},
   );

@@ -15,6 +15,10 @@ export function zipDirectory(sourceDirectory: string, outputZipPath: string): Pr
   return NoahToolsHybridObject.zipDirectory(sourceDirectory, outputZipPath);
 }
 
+export function unzipFile(zipPath: string, outputDirectory: string): Promise<string> {
+  return NoahToolsHybridObject.unzipFile(zipPath, outputDirectory);
+}
+
 export function encryptBackup(backupPath: string, seedphrase: string): Promise<string> {
   return NoahToolsHybridObject.encryptBackup(backupPath, seedphrase);
 }
