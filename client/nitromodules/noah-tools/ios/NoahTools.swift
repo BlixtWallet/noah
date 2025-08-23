@@ -3,7 +3,6 @@ import OSLog
 import NitroModules
 import CryptoKit
 import CommonCrypto
-import ZIPFoundation
 
 class NoahTools: HybridNoahToolsSpec {
   func getAppVariant() throws -> String {
@@ -134,27 +133,153 @@ class NoahTools: HybridNoahToolsSpec {
      // Use ZipFoundation to properly unzip the file
      let fileManager = FileManager.default
      
+     print("Starting unzip process...")
+     print("Zip file path: \(zipPath)")
+     print("Output directory: \(outputDirectory)")
+     
+     // Check if zip file exists and get its size
+     let zipFileExists = fileManager.fileExists(atPath: zipPath)
+     print("Zip file exists: \(zipFileExists)")
+     
+     if zipFileExists {
+       do {
+         let zipFileAttributes = try fileManager.attributesOfItem(atPath: zipPath)
+         let zipFileSize = zipFileAttributes[.size] as? Int64 ?? 0
+         print("Zip file size: \(zipFileSize) bytes")
+       } catch {
+         print("Error getting zip file attributes: \(error)")
+       }
+     }
+     
      // Clear the output directory first if it exists
      if fileManager.fileExists(atPath: outputDirectory) {
+       print("Removing existing output directory...")
        try fileManager.removeItem(at: outputURL)
      }
      
      // Create the output directory
+     print("Creating output directory...")
      try fileManager.createDirectory(at: outputURL, withIntermediateDirectories: true, attributes: nil)
      
-     // Unzip the file using ZipFoundation
-     try fileManager.unzipItem(at: zipURL, to: outputURL)
+     // Use Foundation's built-in unzip with file name sanitization
+     print("Attempting to unzip with file name sanitization...")
      
-     // Log the contents of the unzipped directory
-     let unzippedContents = try fileManager.contentsOfDirectory(at: outputURL, includingPropertiesForKeys: [.isDirectoryKey], options: [])
-     print("Unzipped contents:")
-     for item in unzippedContents {
-       let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey])
-       let isDirectory = resourceValues.isDirectory ?? false
-       print("  \(item.lastPathComponent) (\(isDirectory ? "directory" : "file"))")
+     do {
+       try self.unzipWithSanitizedNames(zipURL: zipURL, outputURL: outputURL)
+       print("Unzip with sanitized names completed successfully")
+     } catch {
+       print("Unzip with sanitized names failed: \(error)")
+       throw error
+     }
+     
+     // Check what was actually created
+     print("Checking output directory contents...")
+     do {
+       let contents = try fileManager.contentsOfDirectory(at: outputURL, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey], options: [])
+       print("Found \(contents.count) items in output directory")
+       
+       for item in contents {
+         do {
+           let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+           let isDirectory = resourceValues.isDirectory ?? false
+           let fileSize = resourceValues.fileSize ?? 0
+           print("  \(item.lastPathComponent) (\(isDirectory ? "directory" : "file") - \(fileSize) bytes)")
+         } catch {
+           print("  \(item.lastPathComponent) (error reading properties: \(error))")
+         }
+       }
+     } catch {
+       print("Error reading output directory: \(error)")
      }
      
      return outputDirectory
+   }
+ }
+ 
+ private func unzipWithSanitizedNames(zipURL: URL, outputURL: URL) throws {
+   // Use NSFileCoordinator to create a temporary unzipped version
+   let fileManager = FileManager.default
+   var coordinatorError: NSError?
+   var extractionError: Error?
+   let coordinator = NSFileCoordinator()
+   
+   print("Using NSFileCoordinator to extract zip contents...")
+   
+   coordinator.coordinate(readingItemAt: zipURL, options: [.forUploading], error: &coordinatorError) { (tempURL) in
+     do {
+       print("Temporary extraction URL: \(tempURL.path)")
+       
+       // List what was extracted
+       let extractedItems = try fileManager.contentsOfDirectory(at: tempURL, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey], options: [])
+       print("Found \(extractedItems.count) items in temporary extraction")
+       
+       // Copy each item with sanitized names
+       for item in extractedItems {
+         let originalName = item.lastPathComponent
+         let sanitizedName = self.sanitizeFileName(originalName)
+         let destinationURL = outputURL.appendingPathComponent(sanitizedName)
+         
+         print("Copying: \(originalName) -> \(sanitizedName)")
+         
+         if item.hasDirectoryPath {
+           try self.copyDirectoryWithSanitizedNames(from: item, to: destinationURL)
+         } else {
+           // Create parent directory if needed
+           try fileManager.createDirectory(at: destinationURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+           try fileManager.copyItem(at: item, to: destinationURL)
+         }
+       }
+       
+     } catch let error {
+       extractionError = error
+     }
+   }
+   
+   if let coordinatorError = coordinatorError {
+     throw coordinatorError
+   }
+   
+   if let extractionError = extractionError {
+     throw extractionError
+   }
+ }
+ 
+ private func sanitizeFileName(_ fileName: String) -> String {
+   // Replace problematic file extensions and names
+   var sanitized = fileName
+   
+   // Replace .sqlite with .db_backup
+   sanitized = sanitized.replacingOccurrences(of: ".sqlite", with: ".db_backup")
+   sanitized = sanitized.replacingOccurrences(of: ".sqlite-wal", with: ".db_wal_backup")
+   sanitized = sanitized.replacingOccurrences(of: ".sqlite-shm", with: ".db_shm_backup")
+   
+   // Remove any other problematic characters
+   sanitized = sanitized.replacingOccurrences(of: ":", with: "_")
+   sanitized = sanitized.replacingOccurrences(of: "/", with: "_")
+   
+   print("Sanitized '\(fileName)' to '\(sanitized)'")
+   return sanitized
+ }
+ 
+ private func copyDirectoryWithSanitizedNames(from sourceURL: URL, to destinationURL: URL) throws {
+   let fileManager = FileManager.default
+   
+   // Create destination directory
+   try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
+   
+   // Get contents of source directory
+   let contents = try fileManager.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: [.isDirectoryKey], options: [])
+   
+   for item in contents {
+     let originalName = item.lastPathComponent
+     let sanitizedName = self.sanitizeFileName(originalName)
+     let itemDestination = destinationURL.appendingPathComponent(sanitizedName)
+     
+     if item.hasDirectoryPath {
+       try self.copyDirectoryWithSanitizedNames(from: item, to: itemDestination)
+     } else {
+       try fileManager.copyItem(at: item, to: itemDestination)
+     }
    }
  }
  

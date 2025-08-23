@@ -176,20 +176,42 @@ export const useBackupManager = (): UseBackupManager => {
       const unzipResult = await unzipFile(decryptedPathResult.value, unzipDirectory);
       console.log("Unzip result:", unzipResult);
 
+      // Check if the unzip directory exists and get its stats
+      try {
+        const dirExists = await RNFS.exists(unzipDirectory);
+        console.log("Unzip directory exists:", dirExists);
+
+        if (dirExists) {
+          const dirStats = await RNFS.stat(unzipDirectory);
+          console.log("Unzip directory stats:", dirStats);
+        }
+      } catch (error) {
+        console.log("Error checking unzip directory:", error);
+      }
+
       // List contents of unzipped directory
       const listContents = async (dir: string, prefix = ""): Promise<void> => {
-        const items = await RNFS.readDir(dir);
-        for (const item of items) {
-          console.log(
-            `${prefix}${item.name} (${item.isDirectory() ? "directory" : "file"} - ${item.size} bytes)`,
-          );
-          if (item.isDirectory()) {
-            await listContents(item.path, `${prefix}  `);
+        try {
+          console.log(`${prefix}Attempting to read directory: ${dir}`);
+          const items = await RNFS.readDir(dir);
+          console.log(`${prefix}Found ${items.length} items in ${dir}`);
+
+          for (const item of items) {
+            console.log(
+              `${prefix}${item.name} (${item.isDirectory() ? "directory" : "file"} - ${item.size} bytes)`,
+            );
+            if (item.isDirectory()) {
+              await listContents(item.path, `${prefix}  `);
+            }
           }
+        } catch (error) {
+          console.log(`${prefix}Error reading directory ${dir}:`, error);
         }
       };
 
+      console.log("=== RESTORED BACKUP CONTENTS ===");
       await listContents(unzipDirectory);
+      console.log("=== END BACKUP CONTENTS ===");
 
       // Clean up
       await RNFS.unlink(unzipDirectory);
