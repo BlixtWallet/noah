@@ -12,6 +12,7 @@ import {
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useExportDatabase } from "./useExportDatabase";
 import { unzipFile } from "noah-tools";
+import { CACHES_DIRECTORY_PATH } from "~/constants";
 
 interface BackupInfo {
   backup_version: number;
@@ -51,8 +52,6 @@ export const useBackupManager = (): UseBackupManager => {
       const seedphrase = "test-seedphrase"; // Replace with actual seedphrase
       const encryptedDataResult = await backupService.encryptBackupFile(outputZipPath, seedphrase);
 
-      console.log("encryptedDataResult", encryptedDataResult);
-
       if (encryptedDataResult.isErr()) {
         return err(encryptedDataResult.error);
       }
@@ -63,13 +62,6 @@ export const useBackupManager = (): UseBackupManager => {
       console.log(
         "Encrypted data last 100 chars:",
         encryptedDataResult.value.substring(encryptedDataResult.value.length - 100),
-      );
-
-      // Check if it looks like base64
-      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-      console.log(
-        "Encrypted data is valid base64 format:",
-        base64Regex.test(encryptedDataResult.value),
       );
 
       // Calculate backup size from encrypted data
@@ -172,7 +164,7 @@ export const useBackupManager = (): UseBackupManager => {
       console.log("decryptedPathResult", decryptedPathResult);
 
       // Unzip and log contents
-      const unzipDirectory = `${RNFS.TemporaryDirectoryPath}/restored_backup`;
+      const unzipDirectory = `${CACHES_DIRECTORY_PATH}/restored_backup`;
       const unzipResult = await unzipFile(decryptedPathResult.value, unzipDirectory);
       console.log("Unzip result:", unzipResult);
 
@@ -212,9 +204,6 @@ export const useBackupManager = (): UseBackupManager => {
       console.log("=== RESTORED BACKUP CONTENTS ===");
       await listContents(unzipDirectory);
       console.log("=== END BACKUP CONTENTS ===");
-
-      // Clean up
-      await RNFS.unlink(unzipDirectory);
 
       return ok(undefined);
     } catch (e) {
