@@ -200,8 +200,9 @@ class NoahTools: HybridNoahToolsSpec {
       let sealedBox = try AES.GCM.seal(backupData, using: key, nonce: AES.GCM.Nonce(data: iv))
 
       // HERE'S THE KEY PART: Package everything into ONE file
-      // The encrypted file contains: [salt][iv][ciphertext][tag]
-      var encryptedData = Data()
+      // The encrypted file contains: [version][salt][iv][ciphertext][tag]
+      let version: [UInt8] = [1]  // Format version
+      var encryptedData = Data(version)
       encryptedData.append(salt)  // 16 bytes - STORED IN FILE
       encryptedData.append(iv)  // 12 bytes - STORED IN FILE
       encryptedData.append(sealedBox.ciphertext)  // encrypted data
@@ -226,9 +227,15 @@ class NoahTools: HybridNoahToolsSpec {
 
       // HERE'S THE KEY PART: Extract the salt FROM the encrypted file
       // The user didn't provide the salt - it's already in the file!
-      let salt = data.prefix(16)  // Read salt from file
-      let iv = data.dropFirst(16).prefix(12)  // Read IV from file
-      let ciphertext = data.dropFirst(28).dropLast(16)  // Read ciphertext
+      let version = data.prefix(1)
+      guard version.first == 1 else {
+        throw NSError(
+          domain: "DecryptionError", code: 2,
+          userInfo: [NSLocalizedDescriptionKey: "Unsupported backup version"])
+      }
+      let salt = data.dropFirst(1).prefix(16)  // Read salt from file
+      let iv = data.dropFirst(17).prefix(12)  // Read IV from file
+      let ciphertext = data.dropFirst(29).dropLast(16)  // Read ciphertext
       let tag = data.suffix(16)  // Read auth tag
 
       // Derive the SAME key using the seedphrase + the salt we read from the file

@@ -19,6 +19,7 @@ import TransactionsScreen from "~/screens/TransactionsScreen";
 import TransactionDetailScreen from "~/screens/TransactionDetailScreen";
 import LightningAddressScreen from "~/screens/LightningAddressScreen";
 import { BackupSettingsScreen } from "~/screens/BackupSettingsScreen";
+import RestoreWalletScreen from "~/screens/RestoreWalletScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { COLORS } from "~/lib/styleConstants";
@@ -40,6 +41,7 @@ export type OnboardingStackParamList = {
   Configuration: undefined;
   EditConfiguration: { item: { id: string; title: string; value?: string } };
   Mnemonic: { fromOnboarding: boolean };
+  RestoreWallet: undefined;
 };
 
 export type HomeStackParamList = {
@@ -107,6 +109,7 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen name="Configuration" component={SettingsScreen} />
     <OnboardingStack.Screen name="EditConfiguration" component={EditSettingScreen} />
     <OnboardingStack.Screen name="Mnemonic" component={MnemonicScreen} />
+    <OnboardingStack.Screen name="RestoreWallet" component={RestoreWalletScreen} />
   </OnboardingStack.Navigator>
 );
 

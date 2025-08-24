@@ -122,7 +122,7 @@ export class BackupService {
     return ResultAsync.fromSafePromise(Promise.resolve(undefined));
   }
 
-  async restoreBackup(version?: number): Promise<Result<void, Error>> {
+  async restoreBackup(seedPhrase: string, version?: number): Promise<Result<string, Error>> {
     const downloadUrlResult = await getDownloadUrl({ backup_version: version });
     log.d("downloadUrlResult", [downloadUrlResult]);
 
@@ -145,11 +145,6 @@ export class BackupService {
 
     if (downloadResult.isErr()) {
       return err(downloadResult.error);
-    }
-
-    const seedphrase = await getMnemonic();
-    if (seedphrase.isErr()) {
-      return err(seedphrase.error);
     }
 
     // Debug: Check what we actually downloaded
@@ -175,7 +170,7 @@ export class BackupService {
 
     const decryptedPathResult = await this.decryptBackupFile(
       encryptedData.trim(),
-      seedphrase.value,
+      seedPhrase,
       outputPath,
     );
 
@@ -253,6 +248,6 @@ export class BackupService {
     await listContents(unzipDirectory);
     log.d("=== END BACKUP CONTENTS ===");
 
-    return ok(undefined);
+    return ok(unzipDirectory);
   }
 }

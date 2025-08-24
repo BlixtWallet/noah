@@ -17,7 +17,6 @@ import {
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useWalletStore } from "../store/walletStore";
-import { useTransactionStore } from "../store/transactionStore";
 import { ARK_DATA_PATH } from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair } from "./paymentsApi";
@@ -223,7 +222,5 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
   );
   if (resetResult.isErr()) return err(resetResult.error);
 
-  useWalletStore.getState().reset();
-  useTransactionStore.getState().reset();
   return ok(undefined);
 };
