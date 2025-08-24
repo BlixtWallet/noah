@@ -276,7 +276,7 @@ pub struct GetUploadUrlPayload {
     pub backup_size: i64,    // For validation
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UploadUrlResponse {
     pub upload_url: String, // Pre-signed S3 URL
     pub s3_key: String,     // S3 object key
@@ -321,7 +321,7 @@ pub async fn complete_upload(
     Ok(())
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct BackupInfo {
     pub backup_version: i32,
     pub created_at: String,
@@ -357,7 +357,7 @@ pub struct GetDownloadUrlPayload {
     pub backup_version: Option<i32>, // None = latest
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct DownloadUrlResponse {
     pub download_url: String, // Pre-signed S3 URL
     pub backup_size: i64,
