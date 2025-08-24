@@ -6,6 +6,8 @@ import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
 import { Text } from "../components/ui/text";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { CheckCircle } from "lucide-react-native";
 import Icon from "@react-native-vector-icons/ionicons";
 
 export const BackupSettingsScreen = () => {
@@ -22,6 +24,8 @@ export const BackupSettingsScreen = () => {
   } = useBackupManager();
 
   const [showBackups, setShowBackups] = useState(false);
+  const [showBackupSuccess, setShowBackupSuccess] = useState(false);
+  const [showRestoreSuccess, setShowRestoreSuccess] = useState(false);
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -45,7 +49,19 @@ export const BackupSettingsScreen = () => {
           </View>
         </View>
 
-        <Button onPress={() => triggerBackup()} className="mb-4" disabled={isLoading}>
+        <Button
+          onPress={async () => {
+            const result = await triggerBackup();
+            if (result.isOk()) {
+              setShowBackupSuccess(true);
+              setTimeout(() => {
+                setShowBackupSuccess(false);
+              }, 3000);
+            }
+          }}
+          className="mb-4"
+          disabled={isLoading}
+        >
           {isLoading ? (
             <View className="flex-row items-center">
               <ActivityIndicator size="small" color="white" className="mr-2" />
@@ -55,6 +71,20 @@ export const BackupSettingsScreen = () => {
             <Text>Backup Now</Text>
           )}
         </Button>
+
+        {showBackupSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Backup Complete!</AlertTitle>
+            <AlertDescription>Your wallet has been backed up successfully.</AlertDescription>
+          </Alert>
+        )}
+
+        {showRestoreSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Restore Complete!</AlertTitle>
+            <AlertDescription>Your wallet has been restored successfully.</AlertDescription>
+          </Alert>
+        )}
 
         <View className="mt-8">
           <Button
@@ -100,7 +130,15 @@ export const BackupSettingsScreen = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onPress={() => restoreBackup(backup.backup_version)}
+                        onPress={async () => {
+                          const result = await restoreBackup(backup.backup_version);
+                          if (result.isOk()) {
+                            setShowRestoreSuccess(true);
+                            setTimeout(() => {
+                              setShowRestoreSuccess(false);
+                            }, 3000);
+                          }
+                        }}
                         disabled={isLoading}
                       >
                         <Text>Restore</Text>
@@ -122,7 +160,15 @@ export const BackupSettingsScreen = () => {
 
           <Button
             variant="outline"
-            onPress={() => restoreBackup()}
+            onPress={async () => {
+              const result = await restoreBackup();
+              if (result.isOk()) {
+                setShowRestoreSuccess(true);
+                setTimeout(() => {
+                  setShowRestoreSuccess(false);
+                }, 3000);
+              }
+            }}
             className="mb-4"
             disabled={isLoading}
           >
