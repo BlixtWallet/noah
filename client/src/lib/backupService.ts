@@ -1,6 +1,6 @@
-import { encryptBackup, decryptBackup, zipDirectory } from "noah-tools";
-import { Result, ResultAsync } from "neverthrow";
-import { completeUpload, getUploadUrl } from "./api";
+import { encryptBackup, decryptBackup, zipDirectory, unzipFile } from "noah-tools";
+import { err, ok, Result, ResultAsync } from "neverthrow";
+import { completeUpload, getDownloadUrl, getUploadUrl } from "./api";
 import { getMnemonic } from "./walletApi";
 import { CACHES_DIRECTORY_PATH, DOCUMENT_DIRECTORY_PATH } from "~/constants";
 import * as RNFS from "@dr.pogodin/react-native-fs";
@@ -120,5 +120,139 @@ export class BackupService {
     await ResultAsync.fromPromise(RNFS.unlink(outputZipPath), (e) => e as Error);
 
     return ResultAsync.fromSafePromise(Promise.resolve(undefined));
+  }
+
+  async restoreBackup(version?: number): Promise<Result<void, Error>> {
+    const downloadUrlResult = await getDownloadUrl({ backup_version: version });
+    log.d("downloadUrlResult", [downloadUrlResult]);
+
+    if (downloadUrlResult.isErr()) {
+      return err(downloadUrlResult.error);
+    }
+
+    const { download_url } = downloadUrlResult.value;
+    const outputPath = `${RNFS.TemporaryDirectoryPath}/backup.zip`;
+
+    log.d("outputPath", [outputPath]);
+
+    const downloadResult = await ResultAsync.fromPromise(
+      RNFS.downloadFile({
+        fromUrl: download_url,
+        toFile: outputPath,
+      }).promise,
+      (e) => e as Error,
+    );
+
+    if (downloadResult.isErr()) {
+      return err(downloadResult.error);
+    }
+
+    const seedphrase = await getMnemonic();
+    if (seedphrase.isErr()) {
+      return err(seedphrase.error);
+    }
+
+    // Debug: Check what we actually downloaded
+    const fileStatsResult = await ResultAsync.fromPromise(RNFS.stat(outputPath), (e) => e as Error);
+
+    if (fileStatsResult.isErr()) {
+      return err(fileStatsResult.error);
+    }
+
+    log.d("Downloaded file stats:", [fileStatsResult.value]);
+
+    const encryptedDataResult = await ResultAsync.fromPromise(
+      RNFS.readFile(outputPath, "utf8"),
+      (e) => e as Error,
+    );
+
+    if (encryptedDataResult.isErr()) {
+      return err(encryptedDataResult.error);
+    }
+
+    const encryptedData = encryptedDataResult.value;
+    log.d("Downloaded data length:", [encryptedData.length]);
+
+    const decryptedPathResult = await this.decryptBackupFile(
+      encryptedData.trim(),
+      seedphrase.value,
+      outputPath,
+    );
+
+    log.d("decryptedPathResult", [decryptedPathResult]);
+
+    if (decryptedPathResult.isErr()) {
+      return err(decryptedPathResult.error);
+    }
+
+    log.d("decryptedPathResult", [decryptedPathResult]);
+
+    // Unzip and log contents
+    const unzipDirectory = `${CACHES_DIRECTORY_PATH}/restored_backup`;
+    const unzipResult = await ResultAsync.fromPromise(
+      unzipFile(decryptedPathResult.value, unzipDirectory),
+      (e) => e as Error,
+    );
+
+    if (unzipResult.isErr()) {
+      return err(unzipResult.error);
+    }
+
+    log.d("Unzip result:", [unzipResult.value]);
+
+    // Check if the unzip directory exists and get its stats
+    const dirExistsResult = await ResultAsync.fromPromise(
+      RNFS.exists(unzipDirectory),
+      (e) => e as Error,
+    );
+
+    if (dirExistsResult.isOk()) {
+      log.d("Unzip directory exists:", [dirExistsResult.value]);
+
+      if (dirExistsResult.value) {
+        const dirStatsResult = await ResultAsync.fromPromise(
+          RNFS.stat(unzipDirectory),
+          (e) => e as Error,
+        );
+
+        if (dirStatsResult.isOk()) {
+          log.d("Unzip directory stats:", [dirStatsResult.value]);
+        } else {
+          log.d("Error getting unzip directory stats:", [dirStatsResult.error]);
+        }
+      }
+    } else {
+      log.d("Error checking unzip directory:", [dirExistsResult.error]);
+    }
+
+    // List contents of unzipped directory
+    const listContents = async (dir: string, prefix = ""): Promise<void> => {
+      log.d(`${prefix}Attempting to read directory: ${dir}`);
+
+      const readDirResult = await ResultAsync.fromPromise(RNFS.readDir(dir), (e) => e as Error);
+
+      if (readDirResult.isErr()) {
+        log.d(`${prefix}Error reading directory ${dir}:`, [readDirResult.error]);
+        return;
+      }
+
+      const items = readDirResult.value;
+      log.d(`${prefix}Found ${items.length} items in ${dir}`);
+
+      for (const item of items) {
+        log.d(
+          `${prefix}${item.name} (${item.isDirectory() ? "directory" : "file"} - ${item.size} bytes)`,
+        );
+        if (item.isDirectory()) {
+          await listContents(item.path, `${prefix}  `);
+        }
+      }
+    };
+
+    log.d("=== RESTORED BACKUP CONTENTS ===");
+    await listContents(unzipDirectory);
+    log.d("=== END BACKUP CONTENTS ===");
+
+    return ok(undefined);
   }
 }
