@@ -2,15 +2,12 @@ import { useState } from "react";
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import { BackupService } from "../lib/backupService";
 import {
-  getUploadUrl,
-  completeUpload,
   listBackups as listBackupsApi,
   getDownloadUrl,
   deleteBackup as deleteBackupApi,
   updateBackupSettings,
 } from "../lib/api";
 import * as RNFS from "@dr.pogodin/react-native-fs";
-import { useExportDatabase } from "./useExportDatabase";
 import { unzipFile } from "noah-tools";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import { getMnemonic } from "~/lib/walletApi";
@@ -41,7 +38,6 @@ export const useBackupManager = (): UseBackupManager => {
   const [isLoading, setIsLoading] = useState(false);
   const [backupsList, setBackupsList] = useState<BackupInfo[] | null>(null);
   const backupService = new BackupService();
-  const { exportDatabaseToZip } = useExportDatabase();
 
   const setBackupEnabled = async (enabled: boolean) => {
     setIsLoading(true);
@@ -57,93 +53,14 @@ export const useBackupManager = (): UseBackupManager => {
 
   const triggerBackup = async (): Promise<Result<void, Error>> => {
     setIsLoading(true);
-    const zipResult = await exportDatabaseToZip();
-    if (zipResult.isErr()) {
+
+    const backupService = new BackupService();
+
+    const backupResult = await backupService.performBackup();
+
+    if (backupResult.isErr()) {
       setIsLoading(false);
-      return err(zipResult.error);
-    }
-    const { outputPath: outputZipPath } = zipResult.value;
-
-    log.d("outputZipPath", [outputZipPath]);
-
-    const seedphrase = await getMnemonic();
-    if (seedphrase.isErr()) {
-      setIsLoading(false);
-      return err(seedphrase.error);
-    }
-
-    const encryptedDataResult = await backupService.encryptBackupFile(
-      outputZipPath,
-      seedphrase.value,
-    );
-
-    if (encryptedDataResult.isErr()) {
-      setIsLoading(false);
-      return err(encryptedDataResult.error);
-    }
-
-    // Debug: Check the encrypted data
-    log.d("Encrypted data length:", [encryptedDataResult.value.length]);
-
-    // Calculate backup size from encrypted data
-    const backup_size = encryptedDataResult.value.length;
-
-    const uploadUrlResult = await getUploadUrl({
-      backup_version: 1, // Implement version rotation
-      backup_size,
-    });
-
-    log.d("uploadUrlResult", [uploadUrlResult]);
-
-    if (uploadUrlResult.isErr()) {
-      setIsLoading(false);
-      return err(uploadUrlResult.error);
-    }
-
-    const { upload_url, s3_key } = uploadUrlResult.value;
-
-    // Upload directly as raw data, not multipart form data
-    const uploadResult = await ResultAsync.fromPromise(
-      fetch(upload_url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/octet-stream",
-        },
-        body: encryptedDataResult.value,
-      }),
-      (e) => e as Error,
-    );
-
-    if (uploadResult.isErr()) {
-      setIsLoading(false);
-      return err(uploadResult.error);
-    }
-
-    const response = uploadResult.value;
-    if (!response.ok) {
-      setIsLoading(false);
-      return err(new Error(`Upload failed: ${response.status} ${response.statusText}`));
-    }
-
-    const completeUploadResult = await completeUpload({
-      s3_key,
-      backup_version: 1,
-      backup_size,
-    });
-
-    if (completeUploadResult.isErr()) {
-      setIsLoading(false);
-      return err(completeUploadResult.error);
-    }
-
-    const unlinkResult = await ResultAsync.fromPromise(
-      RNFS.unlink(outputZipPath),
-      (e) => e as Error,
-    );
-
-    if (unlinkResult.isErr()) {
-      setIsLoading(false);
-      return err(unlinkResult.error);
+      return err(backupResult.error);
     }
 
     // Refresh the backups list after successful backup
@@ -152,9 +69,8 @@ export const useBackupManager = (): UseBackupManager => {
       setBackupsList(refreshResult.value);
     }
 
-    const result = ok(undefined);
     setIsLoading(false);
-    return result;
+    return ok(undefined);
   };
 
   const listBackups = async (): Promise<Result<BackupInfo[], Error>> => {

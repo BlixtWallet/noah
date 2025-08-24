@@ -105,3 +105,12 @@ export const deleteBackup = (payload: { backup_version: number }) =>
 
 export const updateBackupSettings = (payload: { backup_enabled: boolean }) =>
   post("/backup/settings", payload);
+
+export const registerWithServer = () =>
+  post<object, { lightning_address: string }>("/register", {});
+
+export const updateLightningAddress = (payload: { ln_address: string }) =>
+  post("/update_ln_address", payload);
+
+export const registerPushToken = (payload: { push_token: string }) =>
+  post("/register_push_token", payload);

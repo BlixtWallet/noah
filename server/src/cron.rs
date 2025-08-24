@@ -47,7 +47,7 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
         let data = crate::push::PushNotificationData {
             title: None,
             body: None,
-            data: r#"{"type": "backup_trigger"}"#.to_string(),
+            data: r#"{"type": "backup-trigger"}"#.to_string(),
             priority: "high".to_string(),
             content_available: true,
         };
@@ -81,7 +81,7 @@ pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler>
     })?;
     sched.add(maintenance_job).await?;
 
-    let backup_cron = std::env::var("BACKUP_CRON").unwrap_or_else(|_| "every 24 hours".to_string());
+    let backup_cron = std::env::var("BACKUP_CRON").unwrap_or_else(|_| "every 2 hours".to_string());
     let backup_app_state = app_state.clone();
     let backup_job = Job::new_async(&backup_cron, move |_, _| {
         let app_state = backup_app_state.clone();

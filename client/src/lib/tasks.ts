@@ -5,6 +5,7 @@ import logger from "~/lib/log";
 import { bolt11Invoice, peakKeyPair } from "./paymentsApi";
 import { getServerEndpoint } from "~/constants";
 import { ResultAsync } from "neverthrow";
+import { BackupService } from "~/lib/backupService";
 
 const log = logger("tasks");
 
@@ -112,7 +113,9 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
   log.d("[Submit Invoice Job] completed");
 }
 
-export async function triggerBackup() {
+// Shared backup function that can be used by both hooks and background tasks
+
+export async function triggerBackupTask() {
   log.d("[Backup Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
@@ -120,13 +123,13 @@ export async function triggerBackup() {
     return;
   }
 
-  // TODO: Get useBackupManager from a non-hook context
-  // const { triggerBackup } = useBackupManager();
-  // const backupResult = await triggerBackup();
-  // if (backupResult.isErr()) {
-  //   log.e("Backup failed", [backupResult.error]);
-  //   return;
-  // }
+  const backupService = new BackupService();
 
-  log.d("[Backup Job] completed");
+  const backupResult = await backupService.performBackup();
+  if (backupResult.isErr()) {
+    log.e("Backup job failed", [backupResult.error]);
+    return;
+  }
+
+  log.d("[Backup Job] completed successfully");
 }
