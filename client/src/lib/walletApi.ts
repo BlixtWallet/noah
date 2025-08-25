@@ -19,7 +19,7 @@ import {
 import * as Keychain from "react-native-keychain";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
-import { ARK_DATA_PATH, MNEMONIC_KEYCHAIN_SERVICE } from "../constants";
+import { ARK_DATA_PATH, DOCUMENT_DIRECTORY_PATH, MNEMONIC_KEYCHAIN_SERVICE } from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
@@ -216,6 +216,13 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
     (e) => e as Error,
   );
   if (resetResult.isErr()) return err(resetResult.error);
+
+  // Delete the Data path
+  const deleteResult = await ResultAsync.fromPromise(
+    RNFS.unlink(DOCUMENT_DIRECTORY_PATH),
+    (e) => e as Error,
+  );
+  if (deleteResult.isErr()) return err(deleteResult.error);
 
   return ok(undefined);
 };

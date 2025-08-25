@@ -20,7 +20,6 @@ interface UseBackupManager {
   setBackupEnabled: (enabled: boolean) => void;
   triggerBackup: () => Promise<Result<void, Error>>;
   listBackups: () => Promise<Result<BackupInfo[], Error>>;
-  restoreBackup: (version?: number) => Promise<Result<void, Error>>;
   deleteBackup: (version: number) => Promise<Result<void, Error>>;
   isLoading: boolean;
   backupsList: BackupInfo[] | null;
@@ -74,20 +73,6 @@ export const useBackupManager = (): UseBackupManager => {
     return result;
   };
 
-  const restoreBackup = async (version?: number): Promise<Result<void, Error>> => {
-    setIsLoading(true);
-
-    const restoreResult = await backupService.restoreBackup(version);
-
-    if (restoreResult.isErr()) {
-      setIsLoading(false);
-      return err(restoreResult.error);
-    }
-
-    setIsLoading(false);
-    return ok(undefined);
-  };
-
   const deleteBackup = async (version: number): Promise<Result<void, Error>> => {
     setIsLoading(true);
     const result = await deleteBackupApi({ backup_version: version });
@@ -108,7 +93,6 @@ export const useBackupManager = (): UseBackupManager => {
     setBackupEnabled,
     triggerBackup,
     listBackups,
-    restoreBackup,
     deleteBackup,
     isLoading,
     backupsList,

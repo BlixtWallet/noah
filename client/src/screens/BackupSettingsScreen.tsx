@@ -17,7 +17,6 @@ export const BackupSettingsScreen = () => {
     setBackupEnabled,
     triggerBackup,
     listBackups,
-    restoreBackup,
     deleteBackup,
     isLoading,
     backupsList,
@@ -25,7 +24,6 @@ export const BackupSettingsScreen = () => {
 
   const [showBackups, setShowBackups] = useState(false);
   const [showBackupSuccess, setShowBackupSuccess] = useState(false);
-  const [showRestoreSuccess, setShowRestoreSuccess] = useState(false);
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -34,7 +32,7 @@ export const BackupSettingsScreen = () => {
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
           </Pressable>
-          <Text className="text-2xl font-bold text-foreground">Backup & Restore</Text>
+          <Text className="text-2xl font-bold text-foreground">Backup</Text>
         </View>
         <Text className="text-muted-foreground mb-8">
           Backups are encrypted with your seed phrase and stored securely on our servers. We can
@@ -76,13 +74,6 @@ export const BackupSettingsScreen = () => {
           <Alert icon={CheckCircle} className="mb-4">
             <AlertTitle>Backup Complete!</AlertTitle>
             <AlertDescription>Your wallet has been backed up successfully.</AlertDescription>
-          </Alert>
-        )}
-
-        {showRestoreSuccess && (
-          <Alert icon={CheckCircle} className="mb-4">
-            <AlertTitle>Restore Complete!</AlertTitle>
-            <AlertDescription>Your wallet has been restored successfully.</AlertDescription>
           </Alert>
         )}
 
@@ -128,22 +119,6 @@ export const BackupSettingsScreen = () => {
                     </View>
                     <View className="flex-row gap-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onPress={async () => {
-                          const result = await restoreBackup(backup.backup_version);
-                          if (result.isOk()) {
-                            setShowRestoreSuccess(true);
-                            setTimeout(() => {
-                              setShowRestoreSuccess(false);
-                            }, 3000);
-                          }
-                        }}
-                        disabled={isLoading}
-                      >
-                        <Text>Restore</Text>
-                      </Button>
-                      <Button
                         variant="destructive"
                         size="sm"
                         onPress={() => deleteBackup(backup.backup_version)}
@@ -157,30 +132,6 @@ export const BackupSettingsScreen = () => {
               )}
             </View>
           )}
-
-          <Button
-            variant="outline"
-            onPress={async () => {
-              const result = await restoreBackup();
-              if (result.isOk()) {
-                setShowRestoreSuccess(true);
-                setTimeout(() => {
-                  setShowRestoreSuccess(false);
-                }, 3000);
-              }
-            }}
-            className="mb-4"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <View className="flex-row items-center">
-                <ActivityIndicator size="small" className="mr-2" />
-                <Text>Restoring...</Text>
-              </View>
-            ) : (
-              <Text>Restore Latest Backup</Text>
-            )}
-          </Button>
         </View>
       </ScrollView>
     </NoahSafeAreaView>
