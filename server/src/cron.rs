@@ -33,6 +33,32 @@ async fn maintenance(app_state: AppState) {
     }
 }
 
+pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
+    let conn = app_state.db.connect()?;
+    let mut rows = conn
+        .query(
+            "SELECT pubkey FROM backup_settings WHERE backup_enabled = TRUE",
+            (),
+        )
+        .await?;
+
+    while let Some(row) = rows.next().await? {
+        let pubkey: String = row.get(0)?;
+        let data = crate::push::PushNotificationData {
+            title: None,
+            body: None,
+            data: r#"{"type": "backup-trigger"}"#.to_string(),
+            priority: "high".to_string(),
+            content_available: true,
+        };
+        if let Err(e) = send_push_notification(app_state.clone(), data, Some(pubkey)).await {
+            tracing::error!("Failed to send backup notification: {}", e);
+        }
+    }
+
+    Ok(())
+}
+
 pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
 
@@ -54,6 +80,18 @@ pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler>
         Box::pin(maintenance(app_state))
     })?;
     sched.add(maintenance_job).await?;
+
+    let backup_cron = std::env::var("BACKUP_CRON").unwrap_or_else(|_| "every 2 hours".to_string());
+    let backup_app_state = app_state.clone();
+    let backup_job = Job::new_async(&backup_cron, move |_, _| {
+        let app_state = backup_app_state.clone();
+        Box::pin(async move {
+            if let Err(e) = send_backup_notifications(app_state).await {
+                tracing::error!("Failed to send backup notifications: {}", e);
+            }
+        })
+    })?;
+    sched.add(backup_job).await?;
 
     Ok(sched)
 }

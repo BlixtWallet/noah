@@ -30,14 +30,24 @@ const OnboardingScreen = () => {
           <Text className="mt-4 text-muted-foreground">Creating your wallet...</Text>
         </View>
       ) : (
-        <NoahButton
-          onPress={() => createWallet()}
-          onLongPress={() => navigation.navigate("Configuration")}
-          delayLongPress={200}
-          size="lg"
-        >
-          Create Wallet
-        </NoahButton>
+        <View>
+          <NoahButton
+            onPress={() => createWallet()}
+            onLongPress={() => navigation.navigate("Configuration")}
+            delayLongPress={200}
+            size="lg"
+          >
+            Create Wallet
+          </NoahButton>
+          <View style={{ height: 20 }} />
+          <NoahButton
+            onPress={() => navigation.navigate("RestoreWallet")}
+            size="lg"
+            variant="secondary"
+          >
+            Restore Wallet
+          </NoahButton>
+        </View>
       )}
     </View>
   );
