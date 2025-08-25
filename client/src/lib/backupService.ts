@@ -32,24 +32,66 @@ export class BackupService {
   }
 
   async performBackup() {
-    // Create database export zip
     const now = new Date();
     const timestamp = now.toISOString().replace(/[:.]/g, "-").split("T")[0];
     const timeComponent = now.toISOString().replace(/[:.]/g, "-").split("T")[1].split(".")[0];
     const randomId = Math.random().toString(36).substring(2, 8);
-    const filename = `noah_database_export_${timestamp}_${timeComponent}_${randomId}.zip`;
+    const filename = `noah_backup_${timestamp}_${timeComponent}_${randomId}.zip`;
     const outputZipPath = `${CACHES_DIRECTORY_PATH}/${filename}`;
+    const backupStagingPath = `${CACHES_DIRECTORY_PATH}/backup_staging`;
 
     log.d("outputZipPath", [outputZipPath]);
+    log.d("backupStagingPath", [backupStagingPath]);
 
-    // Create zip file using the native zipDirectory method
-    const zipResult = await ResultAsync.fromPromise(
-      zipDirectory(DOCUMENT_DIRECTORY_PATH, outputZipPath),
-      (e) => e as Error,
-    );
+    try {
+      // Clean up previous staging directory if it exists
+      if (await RNFS.exists(backupStagingPath)) {
+        await RNFS.unlink(backupStagingPath);
+      }
+      await RNFS.mkdir(backupStagingPath);
 
-    if (zipResult.isErr()) {
-      return zipResult;
+      // Define platform-specific paths
+      const mmkvPath = `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
+      const dataPath = ARK_DATA_PATH;
+
+      console.log("mmkvPath", mmkvPath);
+      console.log("dataPath", dataPath);
+
+      // Move directories to staging
+      if (await RNFS.exists(mmkvPath)) {
+        await RNFS.moveFile(mmkvPath, `${backupStagingPath}/mmkv`);
+      }
+      if (await RNFS.exists(dataPath)) {
+        await RNFS.moveFile(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
+      }
+
+      // Create zip file from the staging directory
+      const zipResult = await ResultAsync.fromPromise(
+        zipDirectory(backupStagingPath, outputZipPath),
+        (e) => e as Error,
+      );
+
+      if (zipResult.isErr()) {
+        return zipResult;
+      }
+    } catch (e) {
+      log.e("Error during backup staging", [e]);
+      return err(e as Error);
+    } finally {
+      // Move directories back
+      const mmkvPath = `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`;
+      const dataPath = ARK_DATA_PATH;
+      if (await RNFS.exists(`${backupStagingPath}/mmkv`)) {
+        await RNFS.moveFile(`${backupStagingPath}/mmkv`, mmkvPath);
+      }
+      if (await RNFS.exists(`${backupStagingPath}/noah-data-${APP_VARIANT}`)) {
+        await RNFS.moveFile(`${backupStagingPath}/noah-data-${APP_VARIANT}`, dataPath);
+      }
+
+      // Clean up staging directory
+      if (await RNFS.exists(backupStagingPath)) {
+        await RNFS.unlink(backupStagingPath);
+      }
     }
 
     // Get mnemonic for encryption
@@ -300,25 +342,29 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
   }
 
   const unzippedPath = restoreResult.value;
-  const mmkvSourcePath = `${unzippedPath}/mmkv`;
-  const dbSourcePath = `${unzippedPath}/noah-data-${APP_VARIANT}/db.sqlite`;
-
-  const mmkvDestPath = `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
-  const dbDestPath = `${ARK_DATA_PATH}/db.sqlite`;
 
   try {
-    // Remove the existing documents directory if it exists
-    const dirExists = await RNFS.exists(DOCUMENT_DIRECTORY_PATH);
-    if (dirExists) {
-      await RNFS.unlink(DOCUMENT_DIRECTORY_PATH);
+    const mmkvSourcePath = `${unzippedPath}/mmkv`;
+    const dataSourcePath = `${unzippedPath}/noah-data-${APP_VARIANT}`;
+
+    const mmkvDestPath = `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
+    const dataDestPath = ARK_DATA_PATH;
+
+    // Clean up existing directories
+    if (await RNFS.exists(mmkvDestPath)) {
+      await RNFS.unlink(mmkvDestPath);
+    }
+    if (await RNFS.exists(dataDestPath)) {
+      await RNFS.unlink(dataDestPath);
     }
 
-    await RNFS.mkdir(DOCUMENT_DIRECTORY_PATH);
-    await RNFS.mkdir(ARK_DATA_PATH);
-    await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
-    await RNFS.moveFile(dbSourcePath, dbDestPath);
-    await setMnemonic(mnemonic);
+    // Move files from backup
+    if (await RNFS.exists(mmkvSourcePath)) {
+      await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
+    }
+    await RNFS.moveFile(dataSourcePath, dataDestPath);
 
+    await setMnemonic(mnemonic);
     await loadWalletIfNeeded();
     useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
     return ok(undefined);
