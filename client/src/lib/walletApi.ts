@@ -217,12 +217,16 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
   );
   if (resetResult.isErr()) return err(resetResult.error);
 
-  // Delete the Data path
-  const deleteResult = await ResultAsync.fromPromise(
-    RNFS.unlink(DOCUMENT_DIRECTORY_PATH),
-    (e) => e as Error,
-  );
-  if (deleteResult.isErr()) return err(deleteResult.error);
+  // Remove the existing documents directory if it exists
+  const dirExists = await RNFS.exists(DOCUMENT_DIRECTORY_PATH);
+  if (dirExists) {
+    // Delete the Data path
+    const deleteResult = await ResultAsync.fromPromise(
+      RNFS.unlink(DOCUMENT_DIRECTORY_PATH),
+      (e) => e as Error,
+    );
+    if (deleteResult.isErr()) return err(deleteResult.error);
+  }
 
   return ok(undefined);
 };

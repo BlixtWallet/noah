@@ -22,7 +22,7 @@ const OnboardingScreen = () => {
     <View className="flex-1 items-center justify-center bg-background p-5">
       <Text className="text-3xl font-bold mb-4 text-center">Welcome to Noah</Text>
       <Text className="text-lg text-muted-foreground mb-10 text-center">
-        Tap to create a wallet with default settings. Press and hold to customize.
+        Create a new wallet or restore an existing one.
       </Text>
       {isPending ? (
         <View className="items-center">
@@ -30,7 +30,7 @@ const OnboardingScreen = () => {
           <Text className="mt-4 text-muted-foreground">Creating your wallet...</Text>
         </View>
       ) : (
-        <View>
+        <View className="flex-row">
           <NoahButton
             onPress={() => createWallet()}
             onLongPress={() => navigation.navigate("Configuration")}
@@ -39,12 +39,8 @@ const OnboardingScreen = () => {
           >
             Create Wallet
           </NoahButton>
-          <View style={{ height: 20 }} />
-          <NoahButton
-            onPress={() => navigation.navigate("RestoreWallet")}
-            size="lg"
-            variant="secondary"
-          >
+          <View style={{ width: 20 }} />
+          <NoahButton onPress={() => navigation.navigate("RestoreWallet")} size="lg">
             Restore Wallet
           </NoahButton>
         </View>

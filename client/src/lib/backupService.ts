@@ -307,9 +307,13 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
   const dbDestPath = `${ARK_DATA_PATH}/db.sqlite`;
 
   try {
-    // Remove the existing documents directory
-    await RNFS.unlink(DOCUMENT_DIRECTORY_PATH);
+    // Remove the existing documents directory if it exists
+    const dirExists = await RNFS.exists(DOCUMENT_DIRECTORY_PATH);
+    if (dirExists) {
+      await RNFS.unlink(DOCUMENT_DIRECTORY_PATH);
+    }
 
+    await RNFS.mkdir(DOCUMENT_DIRECTORY_PATH);
     await RNFS.mkdir(ARK_DATA_PATH);
     await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
     await RNFS.moveFile(dbSourcePath, dbDestPath);
@@ -319,6 +323,7 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
     useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
     return ok(undefined);
   } catch (e) {
+    log.e("Error during restore:", [e as Error]);
     return err(e as Error);
   }
 };
