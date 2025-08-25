@@ -1,7 +1,6 @@
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import { getServerEndpoint } from "~/constants";
-import { peakKeyPair } from "./paymentsApi";
-import { signMessage } from "./walletApi";
+import { peakKeyPair, signMessage } from "./crypto";
 
 const API_URL = getServerEndpoint();
 
@@ -18,16 +17,12 @@ async function post<T, U>(
     let body;
 
     if (authenticated) {
-      const k1Result = await ResultAsync.fromPromise(
-        fetch(`${API_URL}/v0/getk1`).then((res) => res.json()),
-        (e) => e as Error,
-      );
-
+      const k1Result = await getK1();
       if (k1Result.isErr()) {
         return err(k1Result.error);
       }
 
-      const { k1 } = k1Result.value;
+      const k1 = k1Result.value;
 
       const peakResult = await peakKeyPair(0);
       if (peakResult.isErr()) {
@@ -114,3 +109,34 @@ export const updateLightningAddress = (payload: { ln_address: string }) =>
 
 export const registerPushToken = (payload: { push_token: string }) =>
   post("/register_push_token", payload);
+
+export const getK1 = async () => {
+  const k1Result = await ResultAsync.fromPromise(
+    fetch(`${API_URL}/v0/getk1`).then((res) => res.json()),
+    (e) => e as Error,
+  );
+
+  if (k1Result.isErr()) {
+    return err(k1Result.error);
+  }
+
+  const { k1 } = k1Result.value;
+  return ok(k1);
+};
+
+export const getDownloadUrlForRestore = (payload: {
+  backup_version?: number;
+  k1: string;
+  sig: string;
+  key: string;
+}) =>
+  post<
+    { backup_version?: number; k1: string; sig: string; key: string },
+    { download_url: string; backup_size: number }
+  >(
+    "/backup/download_url",
+    {
+      ...payload,
+    },
+    false,
+  );

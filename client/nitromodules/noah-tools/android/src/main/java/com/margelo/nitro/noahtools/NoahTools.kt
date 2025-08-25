@@ -158,12 +158,12 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
     }
   }
   
-  override fun encryptBackup(backupPath: String, seedphrase: String): Promise<String> {
+  override fun encryptBackup(backupPath: String, mnemonic: String): Promise<String> {
     return Promise.async {
       try {
         // Validate input
-        if (seedphrase.isBlank()) {
-          throw IllegalArgumentException("Seedphrase cannot be empty")
+        if (mnemonic.isBlank()) {
+          throw IllegalArgumentException("mnemonic cannot be empty")
         }
         
         // Read backup file
@@ -177,8 +177,8 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         // Generate RANDOM salt (not deterministic!)
         val salt = generateRandomBytes(SALT_LENGTH)
         
-        // Derive key from seedphrase using PBKDF2 with high iterations
-        val key = deriveKey(seedphrase, salt, PBKDF2_ITERATIONS)
+        // Derive key from mnemonic using PBKDF2 with high iterations
+        val key = deriveKey(mnemonic, salt, PBKDF2_ITERATIONS)
         
         // Generate random IV
         val iv = generateRandomBytes(IV_LENGTH)
@@ -213,12 +213,12 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
     }
   }
   
-  override fun decryptBackup(encryptedData: String, seedphrase: String, outputPath: String): Promise<String> {
+  override fun decryptBackup(encryptedData: String, mnemonic: String, outputPath: String): Promise<String> {
     return Promise.async {
       try {
         // Validate input
-        if (seedphrase.isBlank()) {
-          throw IllegalArgumentException("Seedphrase cannot be empty")
+        if (mnemonic.isBlank()) {
+          throw IllegalArgumentException("mnemonic cannot be empty")
         }
         
         // Decode base64
@@ -248,8 +248,8 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         val ciphertext = ByteArray(buffer.remaining())
         buffer.get(ciphertext)
         
-        // Derive key from seedphrase using the stored salt
-        val key = deriveKey(seedphrase, salt, PBKDF2_ITERATIONS)
+        // Derive key from mnemonic using the stored salt
+        val key = deriveKey(mnemonic, salt, PBKDF2_ITERATIONS)
         
         // Decrypt using AES-256-GCM
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -262,7 +262,7 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
         } catch (e: Exception) {
           // Clear sensitive data before throwing
           key.fill(0)
-          throw Exception("Decryption failed: Invalid seedphrase or corrupted data", e)
+          throw Exception("Decryption failed: Invalid mnemonic or corrupted data", e)
         }
         
         // Write to output path
@@ -282,8 +282,8 @@ class NoahTools(private val context: ReactApplicationContext) : HybridNoahToolsS
     }
   }
   
-  private fun deriveKey(seedphrase: String, salt: ByteArray, iterations: Int): ByteArray {
-    val spec = PBEKeySpec(seedphrase.toCharArray(), salt, iterations, KEY_LENGTH)
+  private fun deriveKey(mnemonic: String, salt: ByteArray, iterations: Int): ByteArray {
+    val spec = PBEKeySpec(mnemonic.toCharArray(), salt, iterations, KEY_LENGTH)
     return try {
       val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
       factory.generateSecret(spec).encoded

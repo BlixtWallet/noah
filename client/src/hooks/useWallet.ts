@@ -11,15 +11,17 @@ import {
   sync as syncAction,
   onchainSync as onchainSyncAction,
 } from "../lib/walletApi";
+import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 import { queryClient } from "~/queryClient";
 
 export function useCreateWallet() {
   const { showAlert } = useAlert();
+  const { config } = useWalletStore();
 
   return useMutation({
     mutationFn: async () => {
-      const result = await createWalletAction();
+      const result = await createWalletAction(config);
       if (result.isErr()) {
         throw result.error;
       }
@@ -162,6 +164,22 @@ export function useDeleteWallet() {
     },
     onError: (error: Error) => {
       showAlert({ title: "Deletion Failed", description: error.message });
+    },
+  });
+}
+
+export function useRestoreWallet() {
+  const { showAlert } = useAlert();
+
+  return useMutation({
+    mutationFn: async (mnemonic: string) => {
+      const result = await restoreWalletAction(mnemonic);
+      if (result.isErr()) {
+        throw result.error;
+      }
+    },
+    onError: (error: Error) => {
+      showAlert({ title: "Restore Failed", description: error.message });
     },
   });
 }

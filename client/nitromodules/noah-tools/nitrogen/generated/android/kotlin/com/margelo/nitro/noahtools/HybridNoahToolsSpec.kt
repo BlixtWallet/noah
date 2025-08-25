@@ -58,11 +58,11 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   
   @DoNotStrip
   @Keep
-  abstract fun encryptBackup(backupPath: String, seedphrase: String): Promise<String>
+  abstract fun encryptBackup(backupPath: String, mnemonic: String): Promise<String>
   
   @DoNotStrip
   @Keep
-  abstract fun decryptBackup(encryptedData: String, seedphrase: String, outputPath: String): Promise<String>
+  abstract fun decryptBackup(encryptedData: String, mnemonic: String, outputPath: String): Promise<String>
 
   private external fun initHybrid(): HybridData
 

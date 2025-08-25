@@ -102,9 +102,9 @@ namespace margelo::nitro::noahtools {
       return __promise;
     }();
   }
-  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::encryptBackup(const std::string& backupPath, const std::string& seedphrase) {
-    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* backupPath */, jni::alias_ref<jni::JString> /* seedphrase */)>("encryptBackup");
-    auto __result = method(_javaPart, jni::make_jstring(backupPath), jni::make_jstring(seedphrase));
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::encryptBackup(const std::string& backupPath, const std::string& mnemonic) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* backupPath */, jni::alias_ref<jni::JString> /* mnemonic */)>("encryptBackup");
+    auto __result = method(_javaPart, jni::make_jstring(backupPath), jni::make_jstring(mnemonic));
     return [&]() {
       auto __promise = Promise<std::string>::create();
       __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
@@ -118,9 +118,9 @@ namespace margelo::nitro::noahtools {
       return __promise;
     }();
   }
-  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::decryptBackup(const std::string& encryptedData, const std::string& seedphrase, const std::string& outputPath) {
-    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* encryptedData */, jni::alias_ref<jni::JString> /* seedphrase */, jni::alias_ref<jni::JString> /* outputPath */)>("decryptBackup");
-    auto __result = method(_javaPart, jni::make_jstring(encryptedData), jni::make_jstring(seedphrase), jni::make_jstring(outputPath));
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::decryptBackup(const std::string& encryptedData, const std::string& mnemonic, const std::string& outputPath) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* encryptedData */, jni::alias_ref<jni::JString> /* mnemonic */, jni::alias_ref<jni::JString> /* outputPath */)>("decryptBackup");
+    auto __result = method(_javaPart, jni::make_jstring(encryptedData), jni::make_jstring(mnemonic), jni::make_jstring(outputPath));
     return [&]() {
       auto __promise = Promise<std::string>::create();
       __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {

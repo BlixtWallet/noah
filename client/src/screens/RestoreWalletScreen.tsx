@@ -3,19 +3,19 @@ import { View, TextInput } from "react-native";
 import { type NativeStackScreenProps } from "@react-navigation/native-stack";
 import { OnboardingStackParamList } from "../Navigators";
 import { NoahButton } from "../components/ui/NoahButton";
-import { useWalletStore } from "~/store/walletStore";
+import { useRestoreWallet } from "~/hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "RestoreWallet">;
 
 const RestoreWalletScreen = ({ navigation }: Props) => {
-  const [seedPhrase, setSeedPhrase] = useState("");
-  const { restoreWallet } = useWalletStore();
+  const [mnemonic, setMnemonic] = useState("");
+  const { mutate: restoreWallet, isPending } = useRestoreWallet();
 
   const handleRestore = async () => {
-    if (seedPhrase) {
-      await restoreWallet(seedPhrase);
+    if (mnemonic) {
+      restoreWallet(mnemonic);
     }
   };
 
@@ -29,12 +29,14 @@ const RestoreWalletScreen = ({ navigation }: Props) => {
         <TextInput
           className="w-full h-24 bg-input rounded-lg p-4 text-foreground text-lg text-left"
           placeholder="Enter your seed phrase"
-          value={seedPhrase}
-          onChangeText={setSeedPhrase}
+          value={mnemonic}
+          onChangeText={setMnemonic}
           multiline
         />
         <View className="h-5" />
-        <NoahButton onPress={handleRestore}>Restore</NoahButton>
+        <NoahButton onPress={handleRestore} disabled={isPending}>
+          {isPending ? "Restoring..." : "Restore"}
+        </NoahButton>
       </View>
     </NoahSafeAreaView>
   );

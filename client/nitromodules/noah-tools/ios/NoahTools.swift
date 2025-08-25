@@ -182,7 +182,7 @@ class NoahTools: HybridNoahToolsSpec {
     }
   }
 
-  func encryptBackup(backupPath: String, seedphrase: String) throws -> Promise<String> {
+  func encryptBackup(backupPath: String, mnemonic: String) throws -> Promise<String> {
     return Promise.async {
       // Read the backup file
       let backupData = try Data(contentsOf: URL(fileURLWithPath: backupPath))
@@ -190,8 +190,8 @@ class NoahTools: HybridNoahToolsSpec {
       // Generate a RANDOM salt (different every time!)
       let salt = self.generateRandomBytes(count: 16)
 
-      // Derive encryption key using seedphrase + random salt
-      let key = try self.deriveKey(from: seedphrase, salt: salt)
+      // Derive encryption key using mnemonic + random salt
+      let key = try self.deriveKey(from: mnemonic, salt: salt)
 
       // Generate random IV
       let iv = self.generateRandomBytes(count: 12)
@@ -214,7 +214,7 @@ class NoahTools: HybridNoahToolsSpec {
     }
   }
 
-  func decryptBackup(encryptedData: String, seedphrase: String, outputPath: String) throws
+  func decryptBackup(encryptedData: String, mnemonic: String, outputPath: String) throws
     -> Promise<String>
   {
     return Promise.async {
@@ -238,8 +238,8 @@ class NoahTools: HybridNoahToolsSpec {
       let ciphertext = data.dropFirst(29).dropLast(16)  // Read ciphertext
       let tag = data.suffix(16)  // Read auth tag
 
-      // Derive the SAME key using the seedphrase + the salt we read from the file
-      let key = try self.deriveKey(from: seedphrase, salt: salt)
+      // Derive the SAME key using the mnemonic + the salt we read from the file
+      let key = try self.deriveKey(from: mnemonic, salt: salt)
 
       // Decrypt
       let sealedBox = try AES.GCM.SealedBox(
@@ -257,8 +257,8 @@ class NoahTools: HybridNoahToolsSpec {
   }
 
   // Updated helper function with better security
-  private func deriveKey(from seedphrase: String, salt: Data) throws -> SymmetricKey {
-    let seedData = seedphrase.data(using: .utf8)!
+  private func deriveKey(from mnemonic: String, salt: Data) throws -> SymmetricKey {
+    let seedData = mnemonic.data(using: .utf8)!
     let derivedKey = try self.pbkdf2(
       password: seedData,
       salt: salt,

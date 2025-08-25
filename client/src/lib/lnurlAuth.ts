@@ -1,7 +1,6 @@
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
-import { signMessage } from "./walletApi";
-import { peakKeyPair } from "./paymentsApi";
+import { peakKeyPair, signMessage } from "./crypto";
 
 const log = logger("lnurlAuth");
 

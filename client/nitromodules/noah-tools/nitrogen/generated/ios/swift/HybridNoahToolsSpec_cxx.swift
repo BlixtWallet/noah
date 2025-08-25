@@ -185,9 +185,9 @@ open class HybridNoahToolsSpec_cxx {
   }
   
   @inline(__always)
-  public final func encryptBackup(backupPath: std.string, seedphrase: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+  public final func encryptBackup(backupPath: std.string, mnemonic: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
     do {
-      let __result = try self.__implementation.encryptBackup(backupPath: String(backupPath), seedphrase: String(seedphrase))
+      let __result = try self.__implementation.encryptBackup(backupPath: String(backupPath), mnemonic: String(mnemonic))
       let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
         let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
         let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
@@ -204,9 +204,9 @@ open class HybridNoahToolsSpec_cxx {
   }
   
   @inline(__always)
-  public final func decryptBackup(encryptedData: std.string, seedphrase: std.string, outputPath: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+  public final func decryptBackup(encryptedData: std.string, mnemonic: std.string, outputPath: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
     do {
-      let __result = try self.__implementation.decryptBackup(encryptedData: String(encryptedData), seedphrase: String(seedphrase), outputPath: String(outputPath))
+      let __result = try self.__implementation.decryptBackup(encryptedData: String(encryptedData), mnemonic: String(mnemonic), outputPath: String(outputPath))
       let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
         let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
         let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)

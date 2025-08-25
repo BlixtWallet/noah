@@ -13,10 +13,7 @@ import {
   onchainAddress as onchainAddressNitro,
   sendLightningPayment as sendLightningPaymentNitro,
   onchainSend as onchainSendNitro,
-  peakKeyPair as peakKeyPairNitro,
-  deriveStoreNextKeypair as deriveStoreNextKeypairNitro,
   NewAddressResult,
-  KeyPairResult,
 } from "react-native-nitro-ark";
 import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
@@ -40,26 +37,6 @@ export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => 
     (error) =>
       new Error(
         `Failed to generate VTXO pubkey: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-  );
-};
-
-export const peakKeyPair = async (index: number): Promise<Result<KeyPairResult, Error>> => {
-  return ResultAsync.fromPromise(
-    peakKeyPairNitro(index),
-    (error) =>
-      new Error(
-        `Failed to peak keypair: ${error instanceof Error ? error.message : String(error)}`,
-      ),
-  );
-};
-
-export const deriveStoreNextKeypair = async (): Promise<Result<KeyPairResult, Error>> => {
-  return ResultAsync.fromPromise(
-    deriveStoreNextKeypairNitro(),
-    (error) =>
-      new Error(
-        `Failed to derive next keypair: ${error instanceof Error ? error.message : String(error)}`,
       ),
   );
 };

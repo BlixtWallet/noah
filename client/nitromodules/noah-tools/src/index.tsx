@@ -19,14 +19,14 @@ export function unzipFile(zipPath: string, outputDirectory: string): Promise<str
   return NoahToolsHybridObject.unzipFile(zipPath, outputDirectory);
 }
 
-export function encryptBackup(backupPath: string, seedphrase: string): Promise<string> {
-  return NoahToolsHybridObject.encryptBackup(backupPath, seedphrase);
+export function encryptBackup(backupPath: string, mnemonic: string): Promise<string> {
+  return NoahToolsHybridObject.encryptBackup(backupPath, mnemonic);
 }
 
 export function decryptBackup(
   encryptedData: string,
-  seedphrase: string,
+  mnemonic: string,
   outputPath: string,
 ): Promise<string> {
-  return NoahToolsHybridObject.decryptBackup(encryptedData, seedphrase, outputPath);
+  return NoahToolsHybridObject.decryptBackup(encryptedData, mnemonic, outputPath);
 }

@@ -1,25 +1,32 @@
 import { encryptBackup, decryptBackup, zipDirectory, unzipFile } from "noah-tools";
 import { err, ok, Result, ResultAsync } from "neverthrow";
-import { completeUpload, getDownloadUrl, getUploadUrl } from "./api";
-import { getMnemonic } from "./walletApi";
-import { CACHES_DIRECTORY_PATH, DOCUMENT_DIRECTORY_PATH } from "~/constants";
+import { completeUpload, getDownloadUrlForRestore, getK1, getUploadUrl } from "./api";
+import { getMnemonic, setMnemonic } from "./crypto";
+import {
+  deriveKeypairFromMnemonic,
+  signMesssageWithMnemonic,
+  loadWalletIfNeeded,
+} from "./walletApi";
+import { useWalletStore } from "~/store/walletStore";
+import { CACHES_DIRECTORY_PATH, DOCUMENT_DIRECTORY_PATH, ARK_DATA_PATH } from "~/constants";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import logger from "~/lib/log";
+import { APP_VARIANT } from "~/config";
 
 const log = logger("backupService");
 
 export class BackupService {
-  async encryptBackupFile(backupPath: string, seedphrase: string): Promise<Result<string, Error>> {
-    return ResultAsync.fromPromise(encryptBackup(backupPath, seedphrase), (e) => e as Error);
+  async encryptBackupFile(backupPath: string, mnemonic: string): Promise<Result<string, Error>> {
+    return ResultAsync.fromPromise(encryptBackup(backupPath, mnemonic), (e) => e as Error);
   }
 
   async decryptBackupFile(
     encryptedData: string,
-    seedphrase: string,
+    mnemonic: string,
     outputPath: string,
   ): Promise<Result<string, Error>> {
     return ResultAsync.fromPromise(
-      decryptBackup(encryptedData, seedphrase, outputPath),
+      decryptBackup(encryptedData, mnemonic, outputPath),
       (e) => e as Error,
     );
   }
@@ -45,16 +52,14 @@ export class BackupService {
       return zipResult;
     }
 
-    log.d("zipResult", [zipResult.value]);
-
-    // Get seedphrase for encryption
-    const seedphrase = await getMnemonic();
-    if (seedphrase.isErr()) {
-      return seedphrase;
+    // Get mnemonic for encryption
+    const mnemonicResult = await getMnemonic();
+    if (mnemonicResult.isErr()) {
+      return mnemonicResult;
     }
 
     // Encrypt the backup file
-    const encryptedDataResult = await this.encryptBackupFile(outputZipPath, seedphrase.value);
+    const encryptedDataResult = await this.encryptBackupFile(outputZipPath, mnemonicResult.value);
 
     if (encryptedDataResult.isErr()) {
       return encryptedDataResult;
@@ -122,8 +127,42 @@ export class BackupService {
     return ResultAsync.fromSafePromise(Promise.resolve(undefined));
   }
 
-  async restoreBackup(seedPhrase: string, version?: number): Promise<Result<string, Error>> {
-    const downloadUrlResult = await getDownloadUrl({ backup_version: version });
+  async restoreBackup(mnemonic: string, version?: number): Promise<Result<string, Error>> {
+    const k1Result = await getK1();
+    if (k1Result.isErr()) {
+      return err(k1Result.error);
+    }
+
+    const k1 = k1Result.value;
+
+    log.d("k1", [k1]);
+
+    // Sign the k1 with mnemonic
+    const signatureResult = await signMesssageWithMnemonic(k1, mnemonic, APP_VARIANT, 0);
+    if (signatureResult.isErr()) {
+      return err(signatureResult.error);
+    }
+
+    const sig = signatureResult.value;
+
+    log.d("sig", [sig]);
+
+    // Derive keypair from mnemonic
+    const keypairResult = await deriveKeypairFromMnemonic(mnemonic, APP_VARIANT, 0);
+    if (keypairResult.isErr()) {
+      return err(keypairResult.error);
+    }
+    const { public_key: key } = keypairResult.value;
+
+    log.d("key", [key]);
+
+    const downloadUrlResult = await getDownloadUrlForRestore({
+      backup_version: version,
+      k1,
+      sig,
+      key,
+    });
+
     log.d("downloadUrlResult", [downloadUrlResult]);
 
     if (downloadUrlResult.isErr()) {
@@ -170,7 +209,7 @@ export class BackupService {
 
     const decryptedPathResult = await this.decryptBackupFile(
       encryptedData.trim(),
-      seedPhrase,
+      mnemonic,
       outputPath,
     );
 
@@ -251,3 +290,35 @@ export class BackupService {
     return ok(unzipDirectory);
   }
 }
+
+export const restoreWallet = async (mnemonic: string): Promise<Result<void, Error>> => {
+  const backupService = new BackupService();
+  const restoreResult = await backupService.restoreBackup(mnemonic);
+
+  if (restoreResult.isErr()) {
+    return err(restoreResult.error);
+  }
+
+  const unzippedPath = restoreResult.value;
+  const mmkvSourcePath = `${unzippedPath}/mmkv`;
+  const dbSourcePath = `${unzippedPath}/noah-data-${APP_VARIANT}/db.sqlite`;
+
+  const mmkvDestPath = `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
+  const dbDestPath = `${ARK_DATA_PATH}/db.sqlite`;
+
+  try {
+    // Remove the existing documents directory
+    await RNFS.unlink(DOCUMENT_DIRECTORY_PATH);
+
+    await RNFS.mkdir(ARK_DATA_PATH);
+    await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
+    await RNFS.moveFile(dbSourcePath, dbDestPath);
+    await setMnemonic(mnemonic);
+
+    await loadWalletIfNeeded();
+    useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
+    return ok(undefined);
+  } catch (e) {
+    return err(e as Error);
+  }
+};

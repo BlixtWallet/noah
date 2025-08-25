@@ -1,11 +1,12 @@
 import { syncWallet } from "~/lib/sync";
 import { logger as sentryLogger } from "@sentry/react-native";
-import { loadWalletIfNeeded, maintanance, signMessage } from "./walletApi";
+import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
-import { bolt11Invoice, peakKeyPair } from "./paymentsApi";
+import { bolt11Invoice } from "./paymentsApi";
 import { getServerEndpoint } from "~/constants";
 import { ResultAsync } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
+import { peakKeyPair, signMessage } from "./crypto";
 
 const log = logger("tasks");
 
