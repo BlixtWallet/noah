@@ -83,7 +83,7 @@ PODS:
   - hermes-engine (0.79.5):
     - hermes-engine/Pre-built (= 0.79.5)
   - hermes-engine/Pre-built (0.79.5)
-  - NitroArk (0.0.49):
+  - NitroArk (0.0.51):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -159,6 +159,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+    - ZIPFoundation
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2341,6 +2342,7 @@ PODS:
   - VisionCamera/React (4.7.1):
     - React-Core
   - Yoga (0.0.0)
+  - ZIPFoundation (0.9.19)
 
 DEPENDENCIES:
   - boost (from `../../node_modules/react-native/third-party-podspecs/boost.podspec`)
@@ -2457,6 +2459,7 @@ SPEC REPOS:
     - Sentry
     - SocketRocket
     - SwiftUIIntrospect
+    - ZIPFoundation
 
 EXTERNAL SOURCES:
   boost:
@@ -2686,9 +2689,9 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: f03b0e06d3882d71e67e45b073bb827da1a21aae
-  NitroArk: c56b7540cdb6923fb01876adfd84f052e2890061
+  NitroArk: 9b714bf7c450f9b1df51a7f086f1d5a099edd04e
   NitroModules: 6f5dafb3e513b6b0766eea959ea3106948cafe45
-  NoahTools: 12a4e8705c339d40f7218c725de658f4a62ef646
+  NoahTools: ecc6e08bca7079ea7a15847297c0e727066b56d7
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: 5f638f65935e273753b1f31a365db6a8d6dc53b5
   RCTRequired: 8b46a520ea9071e2bc47d474aa9ca31b4a935bd8
@@ -2773,6 +2776,7 @@ SPEC CHECKSUMS:
   UMAppLoader: 55159b69750129faa7a51c493cb8ea55a7b64eb9
   VisionCamera: 9a8f98ae344fe5d148f84bb45829f9e4caab9d2f
   Yoga: adb397651e1c00672c12e9495babca70777e411e
+  ZIPFoundation: b8c29ea7ae353b309bc810586181fd073cb3312c
 
 PODFILE CHECKSUM: ff438adb2b7c1b0ddcc968dbf937a69cde178947
 

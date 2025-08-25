@@ -10,6 +10,7 @@
 ## Project structure
 
 - `/client`: React Native code for the mobile wallet.
+- `/client/nitromodules`: Nitro-modules for writing any native code.
 - `/server`: Rust code for the backend.
 - The project is built in a monorepo style.
 - You can run `cargo` and `bun` commands from the root of the project.
@@ -23,6 +24,7 @@
 - Routing: React navigation
 - Datafetching: Tanstack query
 - Error handling: Neverthrow
+- Native modules: Nitro-modules
 
 ## Tech stack Server
 

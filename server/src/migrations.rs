@@ -37,6 +37,28 @@ const MIGRATIONS: &[&str] = &[
         UPDATE push_tokens SET updated_at = CURRENT_TIMESTAMP WHERE pubkey = OLD.pubkey;
     END;
     "#,
+    r#"
+   CREATE TABLE backup_metadata (
+       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       pubkey TEXT NOT NULL,
+       s3_key TEXT NOT NULL,
+       backup_size INTEGER NOT NULL,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       backup_version INTEGER NOT NULL DEFAULT 1,
+       FOREIGN KEY (pubkey) REFERENCES users(pubkey),
+       UNIQUE(pubkey, backup_version)
+   );
+
+   CREATE INDEX idx_backup_metadata_pubkey ON backup_metadata(pubkey);
+   CREATE INDEX idx_backup_metadata_created_at ON backup_metadata(created_at);
+
+   CREATE TABLE backup_settings (
+       pubkey TEXT PRIMARY KEY,
+       backup_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+       last_backup_at TIMESTAMP,
+       FOREIGN KEY (pubkey) REFERENCES users(pubkey)
+   );
+   "#,
 ];
 
 /// Applies all pending migrations to the database.

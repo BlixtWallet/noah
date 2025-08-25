@@ -164,4 +164,61 @@ open class HybridNoahToolsSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func unzipFile(zipPath: std.string, outputDirectory: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+    do {
+      let __result = try self.__implementation.unzipFile(zipPath: String(zipPath), outputDirectory: String(outputDirectory))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(std.string(__result)) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func encryptBackup(backupPath: std.string, mnemonic: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+    do {
+      let __result = try self.__implementation.encryptBackup(backupPath: String(backupPath), mnemonic: String(mnemonic))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(std.string(__result)) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func decryptBackup(encryptedData: std.string, mnemonic: std.string, outputPath: std.string) -> bridge.Result_std__shared_ptr_Promise_std__string___ {
+    do {
+      let __result = try self.__implementation.decryptBackup(encryptedData: String(encryptedData), mnemonic: String(mnemonic), outputPath: String(outputPath))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_std__string__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_std__string__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_std__string__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve(std.string(__result)) })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_std__string___(__exceptionPtr)
+    }
+  }
 }

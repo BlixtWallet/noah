@@ -18,7 +18,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     cron::cron_scheduler,
     gated_api_v0::{
-        get_user_info, register, register_push_token, submit_invoice, update_ln_address,
+        complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info,
+        list_backups, register, register_push_token, submit_invoice, update_backup_settings,
+        update_ln_address,
     },
     private_api_v0::health_check,
     public_api_v0::{get_k1, lnurlp_request},
@@ -29,6 +31,7 @@ mod cron;
 mod errors;
 mod migrations;
 mod push;
+mod s3_client;
 #[cfg(test)]
 mod tests;
 mod utils;
@@ -100,6 +103,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/lnurlp/submit_invoice", post(submit_invoice))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
+        .route("/backup/upload_url", post(get_upload_url))
+        .route("/backup/complete_upload", post(complete_upload))
+        .route("/backup/list", post(list_backups))
+        .route("/backup/download_url", post(get_download_url))
+        .route("/backup/delete", post(delete_backup))
+        .route("/backup/settings", post(update_backup_settings))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             app_middleware::auth_middleware,

@@ -3,12 +3,11 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
-import { PLATFORM, getServerEndpoint } from "~/constants";
+import { PLATFORM } from "~/constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { backgroundSync, maintenance, submitInvoice } from "./tasks";
-import { peakKeyPair } from "./paymentsApi";
-import { signMessage } from "./walletApi";
+import { backgroundSync, maintenance, submitInvoice, triggerBackupTask } from "./tasks";
+import { registerPushToken } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 
 const log = logger("pushNotifications");
@@ -62,6 +61,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           log.d("Received lightning invoice request", [notificationData]);
           const amountMsat = parseInt(notificationData.amount);
           await submitInvoice(notificationData.request_id, amountMsat);
+        } else if (notificationData.type === "backup-trigger") {
+          await triggerBackupTask();
         }
       })(),
       (e) =>
@@ -148,65 +149,11 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
 }
 
 export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {
-  const serverEndpoint = getServerEndpoint();
-  const getK1Url = `${serverEndpoint}/v0/getk1`;
+  const result = await registerPushToken({ push_token: pushToken });
 
-  const k1Result = await ResultAsync.fromPromise(
-    fetch(getK1Url).then((res) => res.json()),
-    (e) => e as Error,
-  );
-
-  if (k1Result.isErr()) {
-    return err(k1Result.error);
+  if (result.isErr()) {
+    return err(result.error);
   }
 
-  const { k1, tag } = k1Result.value as { k1: string; tag: string };
-
-  if (tag !== "login") {
-    return err(new Error("Invalid tag from server"));
-  }
-
-  const index = 0;
-  const keyPairResult = await peakKeyPair(index);
-  if (keyPairResult.isErr()) {
-    return err(keyPairResult.error);
-  }
-  const { public_key: key } = keyPairResult.value;
-
-  const signatureResult = await signMessage(k1, index);
-  if (signatureResult.isErr()) {
-    return err(signatureResult.error);
-  }
-  const signature = signatureResult.value;
-
-  const registerUrl = `${serverEndpoint}/v0/register_push_token`;
-  const registrationResponseResult = await ResultAsync.fromPromise(
-    fetch(registerUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        push_token: pushToken,
-        key,
-        sig: signature,
-        k1,
-      }),
-    }),
-    (e) => e as Error,
-  );
-
-  if (registrationResponseResult.isErr()) {
-    return err(registrationResponseResult.error);
-  }
-
-  const registrationResponse = registrationResponseResult.value;
-
-  if (!registrationResponse.ok) {
-    const errorBody = await registrationResponse.text();
-    return err(
-      new Error(`Failed to register push token: ${registrationResponse.status} ${errorBody}`),
-    );
-  }
   return ok(undefined);
 }

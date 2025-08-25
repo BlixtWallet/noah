@@ -11,6 +11,9 @@ const isOnion = (n: string): boolean => /.onion$/.test(n);
 const isUsername = (n: string): boolean => /^[a-z0-9_.]*$/.test(n);
 const parseEmail = (email: string): string[] => email.split("@");
 
+export const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
+export const KEYCHAIN_USERNAME = "noah";
+
 export const PLATFORM = Platform.OS;
 export const DOCUMENT_DIRECTORY_PATH = RNFS.DocumentDirectoryPath;
 export const CACHES_DIRECTORY_PATH = RNFS.CachesDirectoryPath;
@@ -48,9 +51,9 @@ export const getServerEndpoint = (): string => {
     case "regtest":
       return REGTEST_SERVER_URL;
     case "signet":
-      return "https://noah.noderunner.wtf";
+      return process.env.EXPO_PUBLIC_SIGNET_SERVER_URL || "https://noah.noderunner.wtf";
     case "mainnet":
-      return "https://noah.noderunner.wtf";
+      return process.env.EXPO_PUBLIC_MAINNET_SERVER_URL || "https://noah.noderunner.wtf";
     default:
       return "https://noah.noderunner.wtf";
   }

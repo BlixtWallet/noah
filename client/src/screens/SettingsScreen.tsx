@@ -18,9 +18,16 @@ import Clipboard from "@react-native-clipboard/clipboard";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
+import { BackupStatusCard } from "../components/BackupStatusCard";
 
 type Setting = {
-  id: keyof WalletConfig | "showMnemonic" | "showLogs" | "staticVtxoPubkey" | "resetRegistration";
+  id:
+    | keyof WalletConfig
+    | "showMnemonic"
+    | "showLogs"
+    | "staticVtxoPubkey"
+    | "resetRegistration"
+    | "backup";
   title: string;
   value?: string;
   isPressable: boolean;
@@ -63,6 +70,8 @@ const SettingsScreen = () => {
       navigation.navigate("Logs");
     } else if (item.id === "resetRegistration") {
       // This is handled by the AlertDialog now
+    } else if (item.id === "backup") {
+      navigation.navigate("BackupSettings");
     } else {
       navigation.navigate("EditConfiguration", {
         item: item as { id: keyof WalletConfig; title: string; value?: string },
@@ -123,6 +132,7 @@ const SettingsScreen = () => {
       title: "Reset Server Registration",
       isPressable: true,
     });
+    data.push({ id: "backup", title: "Backup & Restore", isPressable: true });
   }
 
   return (
@@ -153,6 +163,7 @@ const SettingsScreen = () => {
           </Alert>
         )}
         <ScrollView className="flex-1 mb-16">
+          <BackupStatusCard />
           {lightningAddress && (
             <Pressable
               onPress={() => navigation.navigate("LightningAddress")}

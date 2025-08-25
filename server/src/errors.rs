@@ -23,6 +23,8 @@ pub enum ApiError {
     Secp256k1(#[from] bitcoin::secp256k1::Error),
     #[error("Invalid Signature")]
     InvalidSignature,
+    #[error("Not found: {0}")]
+    NotFound(String),
 }
 
 #[derive(Serialize)]
@@ -53,6 +55,7 @@ impl IntoResponse for ApiError {
             ApiError::InvalidSignature => {
                 (StatusCode::UNAUTHORIZED, "Invalid signature".to_string())
             }
+            ApiError::NotFound(e) => (StatusCode::NOT_FOUND, e.to_string()),
         };
 
         let body = Json(ErrorResponse {
