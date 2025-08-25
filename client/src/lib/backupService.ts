@@ -8,7 +8,12 @@ import {
   loadWalletIfNeeded,
 } from "./walletApi";
 import { useWalletStore } from "~/store/walletStore";
-import { CACHES_DIRECTORY_PATH, DOCUMENT_DIRECTORY_PATH, ARK_DATA_PATH } from "~/constants";
+import {
+  CACHES_DIRECTORY_PATH,
+  DOCUMENT_DIRECTORY_PATH,
+  ARK_DATA_PATH,
+  PLATFORM,
+} from "~/constants";
 import * as RNFS from "@dr.pogodin/react-native-fs";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
@@ -51,13 +56,18 @@ export class BackupService {
       await RNFS.mkdir(backupStagingPath);
 
       // Define platform-specific paths
-      const mmkvPath = `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
+      const mmkvPath =
+        PLATFORM === "ios"
+          ? `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`
+          : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
       const dataPath = ARK_DATA_PATH;
 
       console.log("mmkvPath", mmkvPath);
       console.log("dataPath", dataPath);
 
+      console.log("mmkv path exists", await RNFS.exists(mmkvPath));
       // Move directories to staging
+      // Always move directories to staging
       if (await RNFS.exists(mmkvPath)) {
         await RNFS.moveFile(mmkvPath, `${backupStagingPath}/mmkv`);
       }
@@ -79,7 +89,10 @@ export class BackupService {
       return err(e as Error);
     } finally {
       // Move directories back
-      const mmkvPath = `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`;
+      const mmkvPath =
+        PLATFORM === "ios"
+          ? `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`
+          : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
       const dataPath = ARK_DATA_PATH;
       if (await RNFS.exists(`${backupStagingPath}/mmkv`)) {
         await RNFS.moveFile(`${backupStagingPath}/mmkv`, mmkvPath);
@@ -329,6 +342,9 @@ export class BackupService {
     await listContents(unzipDirectory);
     log.d("=== END BACKUP CONTENTS ===");
 
+    log.d("Make the document directory path", [DOCUMENT_DIRECTORY_PATH]);
+    await RNFS.mkdir(DOCUMENT_DIRECTORY_PATH);
+
     return ok(unzipDirectory);
   }
 }
@@ -343,11 +359,22 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
 
   const unzippedPath = restoreResult.value;
 
-  try {
-    const mmkvSourcePath = `${unzippedPath}/mmkv`;
-    const dataSourcePath = `${unzippedPath}/noah-data-${APP_VARIANT}`;
+  log.d("unzippedPath", [unzippedPath]);
 
-    const mmkvDestPath = `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
+  try {
+    // Check if backup_staging directory exists for backward compatibility
+    const stagingPath = `${unzippedPath}/backup_staging`;
+    const stagingExists = await RNFS.exists(stagingPath);
+
+    const mmkvSourcePath = stagingExists ? `${stagingPath}/mmkv` : `${unzippedPath}/mmkv`;
+    const dataSourcePath = stagingExists
+      ? `${stagingPath}/noah-data-${APP_VARIANT}`
+      : `${unzippedPath}/noah-data-${APP_VARIANT}`;
+
+    const mmkvDestPath =
+      PLATFORM === "ios"
+        ? `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`
+        : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
     const dataDestPath = ARK_DATA_PATH;
 
     // Clean up existing directories
@@ -358,10 +385,17 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
       await RNFS.unlink(dataDestPath);
     }
 
+    console.log("mmkv dest path exists", await RNFS.exists(mmkvDestPath));
+    console.log("data dest path exists", await RNFS.exists(dataDestPath));
+    console.log("document directory path exists", await RNFS.exists(DOCUMENT_DIRECTORY_PATH));
+
     // Move files from backup
     if (await RNFS.exists(mmkvSourcePath)) {
+      console.log("moving mmkv");
       await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
     }
+
+    console.log("moving data");
     await RNFS.moveFile(dataSourcePath, dataDestPath);
 
     await setMnemonic(mnemonic);
