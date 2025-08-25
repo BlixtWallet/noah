@@ -80,7 +80,7 @@ class NoahTools: HybridNoahToolsSpec {
 
       // Use ZIPFoundation's FileManager extension to zip the directory
       try FileManager.default.zipItem(
-        at: sourceURL, to: outputURL, shouldKeepParent: false, compressionMethod: .deflate)
+        at: sourceURL, to: outputURL, shouldKeepParent: true, compressionMethod: .deflate)
 
       return outputZipPath
     }

@@ -362,14 +362,8 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
   log.d("unzippedPath", [unzippedPath]);
 
   try {
-    // Check if backup_staging directory exists for backward compatibility
-    const stagingPath = `${unzippedPath}/backup_staging`;
-    const stagingExists = await RNFS.exists(stagingPath);
-
-    const mmkvSourcePath = stagingExists ? `${stagingPath}/mmkv` : `${unzippedPath}/mmkv`;
-    const dataSourcePath = stagingExists
-      ? `${stagingPath}/noah-data-${APP_VARIANT}`
-      : `${unzippedPath}/noah-data-${APP_VARIANT}`;
+    const mmkvSourcePath = `${unzippedPath}/backup_staging/mmkv`;
+    const dataSourcePath = `${unzippedPath}/backup_staging/noah-data-${APP_VARIANT}`;
 
     const mmkvDestPath =
       PLATFORM === "ios"
