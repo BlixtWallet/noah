@@ -62,10 +62,6 @@ export class BackupService {
           : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
       const dataPath = ARK_DATA_PATH;
 
-      console.log("mmkvPath", mmkvPath);
-      console.log("dataPath", dataPath);
-
-      console.log("mmkv path exists", RNFSTurbo.exists(mmkvPath));
       // Move directories to staging
       // Always move directories to staging
       if (RNFSTurbo.exists(mmkvPath)) {
@@ -378,17 +374,11 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
       RNFSTurbo.unlink(dataDestPath);
     }
 
-    console.log("mmkv dest path exists", RNFSTurbo.exists(mmkvDestPath));
-    console.log("data dest path exists", RNFSTurbo.exists(dataDestPath));
-    console.log("document directory path exists", RNFSTurbo.exists(DOCUMENT_DIRECTORY_PATH));
-
     // Move files from backup
     if (RNFSTurbo.exists(mmkvSourcePath)) {
-      console.log("moving mmkv");
       RNFSTurbo.moveFile(mmkvSourcePath, mmkvDestPath);
     }
 
-    console.log("moving data");
     RNFSTurbo.moveFile(dataSourcePath, dataDestPath);
 
     await setMnemonic(mnemonic);
