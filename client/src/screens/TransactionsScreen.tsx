@@ -2,7 +2,6 @@ import { View, Pressable } from "react-native";
 import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Share from "react-native-share";
-import * as RNFS from "@dr.pogodin/react-native-fs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +24,8 @@ import { useNavigation } from "@react-navigation/native";
 import { HomeStackParamList } from "~/Navigators";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ResultAsync } from "neverthrow";
+import { CACHES_DIRECTORY_PATH } from "~/constants";
+import NitroFS from "react-native-nitro-fs";
 
 const TransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -85,10 +86,10 @@ const TransactionsScreen = () => {
 
     const csvContent = csvHeader + csvRows;
     const filename = `noah_transactions_${new Date().toISOString().split("T")[0]}.csv`;
-    const filePath = `${RNFS.CachesDirectoryPath}/${filename}`;
+    const filePath = `${CACHES_DIRECTORY_PATH}/${filename}`;
 
     const writeFileResult = await ResultAsync.fromPromise(
-      RNFS.writeFile(filePath, csvContent, "utf8"),
+      NitroFS.writeFile(filePath, csvContent, "utf8"),
       (e) => e as Error,
     );
 
@@ -114,7 +115,7 @@ const TransactionsScreen = () => {
       }
     }
 
-    await ResultAsync.fromPromise(RNFS.unlink(filePath), (e) => e as Error);
+    await ResultAsync.fromPromise(NitroFS.unlink(filePath), (e) => e as Error);
   };
 
   const onCancelDelete = () => {

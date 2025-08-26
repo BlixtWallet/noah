@@ -17,12 +17,12 @@ import {
   KeyPairResult,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
-import * as RNFS from "@dr.pogodin/react-native-fs";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { ARK_DATA_PATH, DOCUMENT_DIRECTORY_PATH, MNEMONIC_KEYCHAIN_SERVICE } from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
+import NitroFS from "react-native-nitro-fs";
 
 const createWalletFromMnemonic = async (
   mnemonic: string,
@@ -200,12 +200,15 @@ export const maintanance = async (): Promise<Result<void, Error>> => {
 };
 
 export const deleteWallet = async (): Promise<Result<void, Error>> => {
-  const existsResult = await ResultAsync.fromPromise(RNFS.exists(ARK_DATA_PATH), (e) => e as Error);
+  const existsResult = await ResultAsync.fromPromise(
+    NitroFS.exists(ARK_DATA_PATH),
+    (e) => e as Error,
+  );
   if (existsResult.isErr()) return err(existsResult.error);
 
   if (existsResult.value) {
     const unlinkResult = await ResultAsync.fromPromise(
-      RNFS.unlink(ARK_DATA_PATH),
+      NitroFS.unlink(ARK_DATA_PATH),
       (e) => e as Error,
     );
     if (unlinkResult.isErr()) return err(unlinkResult.error);
@@ -218,11 +221,11 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
   if (resetResult.isErr()) return err(resetResult.error);
 
   // Remove the existing documents directory if it exists
-  const dirExists = await RNFS.exists(DOCUMENT_DIRECTORY_PATH);
+  const dirExists = await NitroFS.exists(DOCUMENT_DIRECTORY_PATH);
   if (dirExists) {
     // Delete the Data path
     const deleteResult = await ResultAsync.fromPromise(
-      RNFS.unlink(DOCUMENT_DIRECTORY_PATH),
+      NitroFS.unlink(DOCUMENT_DIRECTORY_PATH),
       (e) => e as Error,
     );
     if (deleteResult.isErr()) return err(deleteResult.error);

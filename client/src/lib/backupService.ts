@@ -14,7 +14,7 @@ import {
   ARK_DATA_PATH,
   PLATFORM,
 } from "~/constants";
-import * as RNFS from "@dr.pogodin/react-native-fs";
+import NitroFS from "react-native-nitro-fs";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 
@@ -50,10 +50,10 @@ export class BackupService {
 
     try {
       // Clean up previous staging directory if it exists
-      if (await RNFS.exists(backupStagingPath)) {
-        await RNFS.unlink(backupStagingPath);
+      if (await NitroFS.exists(backupStagingPath)) {
+        await NitroFS.unlink(backupStagingPath);
       }
-      await RNFS.mkdir(backupStagingPath);
+      await NitroFS.mkdir(backupStagingPath);
 
       // Define platform-specific paths
       const mmkvPath =
@@ -65,14 +65,12 @@ export class BackupService {
       console.log("mmkvPath", mmkvPath);
       console.log("dataPath", dataPath);
 
-      console.log("mmkv path exists", await RNFS.exists(mmkvPath));
-      // Move directories to staging
-      // Always move directories to staging
-      if (await RNFS.exists(mmkvPath)) {
-        await RNFS.moveFile(mmkvPath, `${backupStagingPath}/mmkv`);
+      console.log("mmkv path exists", await NitroFS.exists(mmkvPath));
+      if (await NitroFS.exists(mmkvPath)) {
+        await NitroFS.copy(mmkvPath, `${backupStagingPath}/mmkv`);
       }
-      if (await RNFS.exists(dataPath)) {
-        await RNFS.moveFile(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
+      if (await NitroFS.exists(dataPath)) {
+        await NitroFS.copy(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
       }
 
       // Create zip file from the staging directory
@@ -88,22 +86,9 @@ export class BackupService {
       log.e("Error during backup staging", [e]);
       return err(e as Error);
     } finally {
-      // Move directories back
-      const mmkvPath =
-        PLATFORM === "ios"
-          ? `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`
-          : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
-      const dataPath = ARK_DATA_PATH;
-      if (await RNFS.exists(`${backupStagingPath}/mmkv`)) {
-        await RNFS.moveFile(`${backupStagingPath}/mmkv`, mmkvPath);
-      }
-      if (await RNFS.exists(`${backupStagingPath}/noah-data-${APP_VARIANT}`)) {
-        await RNFS.moveFile(`${backupStagingPath}/noah-data-${APP_VARIANT}`, dataPath);
-      }
-
       // Clean up staging directory
-      if (await RNFS.exists(backupStagingPath)) {
-        await RNFS.unlink(backupStagingPath);
+      if (await NitroFS.exists(backupStagingPath)) {
+        await NitroFS.unlink(backupStagingPath);
       }
     }
 
@@ -177,7 +162,7 @@ export class BackupService {
     log.d("completeUploadResult", [completeUploadResult.value]);
 
     // Clean up the temporary zip file
-    await ResultAsync.fromPromise(RNFS.unlink(outputZipPath), (e) => e as Error);
+    await ResultAsync.fromPromise(NitroFS.unlink(outputZipPath), (e) => e as Error);
 
     return ResultAsync.fromSafePromise(Promise.resolve(undefined));
   }
@@ -225,15 +210,12 @@ export class BackupService {
     }
 
     const { download_url } = downloadUrlResult.value;
-    const outputPath = `${RNFS.TemporaryDirectoryPath}/backup.zip`;
+    const outputPath = `${NitroFS.CACHE_DIR}/backup.zip`;
 
     log.d("outputPath", [outputPath]);
 
     const downloadResult = await ResultAsync.fromPromise(
-      RNFS.downloadFile({
-        fromUrl: download_url,
-        toFile: outputPath,
-      }).promise,
+      NitroFS.downloadFile(download_url, outputPath),
       (e) => e as Error,
     );
 
@@ -242,7 +224,10 @@ export class BackupService {
     }
 
     // Debug: Check what we actually downloaded
-    const fileStatsResult = await ResultAsync.fromPromise(RNFS.stat(outputPath), (e) => e as Error);
+    const fileStatsResult = await ResultAsync.fromPromise(
+      NitroFS.stat(outputPath),
+      (e) => e as Error,
+    );
 
     if (fileStatsResult.isErr()) {
       return err(fileStatsResult.error);
@@ -251,7 +236,7 @@ export class BackupService {
     log.d("Downloaded file stats:", [fileStatsResult.value]);
 
     const encryptedDataResult = await ResultAsync.fromPromise(
-      RNFS.readFile(outputPath, "utf8"),
+      NitroFS.readFile(outputPath, "utf8"),
       (e) => e as Error,
     );
 
@@ -291,7 +276,7 @@ export class BackupService {
 
     // Check if the unzip directory exists and get its stats
     const dirExistsResult = await ResultAsync.fromPromise(
-      RNFS.exists(unzipDirectory),
+      NitroFS.exists(unzipDirectory),
       (e) => e as Error,
     );
 
@@ -300,7 +285,7 @@ export class BackupService {
 
       if (dirExistsResult.value) {
         const dirStatsResult = await ResultAsync.fromPromise(
-          RNFS.stat(unzipDirectory),
+          NitroFS.stat(unzipDirectory),
           (e) => e as Error,
         );
 
@@ -318,7 +303,7 @@ export class BackupService {
     const listContents = async (dir: string, prefix = ""): Promise<void> => {
       log.d(`${prefix}Attempting to read directory: ${dir}`);
 
-      const readDirResult = await ResultAsync.fromPromise(RNFS.readDir(dir), (e) => e as Error);
+      const readDirResult = await ResultAsync.fromPromise(NitroFS.readdir(dir), (e) => e as Error);
 
       if (readDirResult.isErr()) {
         log.d(`${prefix}Error reading directory ${dir}:`, [readDirResult.error]);
@@ -329,12 +314,7 @@ export class BackupService {
       log.d(`${prefix}Found ${items.length} items in ${dir}`);
 
       for (const item of items) {
-        log.d(
-          `${prefix}${item.name} (${item.isDirectory() ? "directory" : "file"} - ${item.size} bytes)`,
-        );
-        if (item.isDirectory()) {
-          await listContents(item.path, `${prefix}  `);
-        }
+        log.d(`${prefix}${item}`);
       }
     };
 
@@ -343,7 +323,7 @@ export class BackupService {
     log.d("=== END BACKUP CONTENTS ===");
 
     log.d("Make the document directory path", [DOCUMENT_DIRECTORY_PATH]);
-    await RNFS.mkdir(DOCUMENT_DIRECTORY_PATH);
+    await NitroFS.mkdir(DOCUMENT_DIRECTORY_PATH);
 
     return ok(unzipDirectory);
   }
@@ -372,25 +352,25 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
     const dataDestPath = ARK_DATA_PATH;
 
     // Clean up existing directories
-    if (await RNFS.exists(mmkvDestPath)) {
-      await RNFS.unlink(mmkvDestPath);
+    if (await NitroFS.exists(mmkvDestPath)) {
+      await NitroFS.unlink(mmkvDestPath);
     }
-    if (await RNFS.exists(dataDestPath)) {
-      await RNFS.unlink(dataDestPath);
+    if (await NitroFS.exists(dataDestPath)) {
+      await NitroFS.unlink(dataDestPath);
     }
 
-    console.log("mmkv dest path exists", await RNFS.exists(mmkvDestPath));
-    console.log("data dest path exists", await RNFS.exists(dataDestPath));
-    console.log("document directory path exists", await RNFS.exists(DOCUMENT_DIRECTORY_PATH));
+    console.log("mmkv dest path exists", await NitroFS.exists(mmkvDestPath));
+    console.log("data dest path exists", await NitroFS.exists(dataDestPath));
+    console.log("document directory path exists", await NitroFS.exists(DOCUMENT_DIRECTORY_PATH));
 
     // Move files from backup
-    if (await RNFS.exists(mmkvSourcePath)) {
+    if (await NitroFS.exists(mmkvSourcePath)) {
       console.log("moving mmkv");
-      await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
+      await NitroFS.copy(mmkvSourcePath, mmkvDestPath);
     }
 
     console.log("moving data");
-    await RNFS.moveFile(dataSourcePath, dataDestPath);
+    await NitroFS.copy(dataSourcePath, dataDestPath);
 
     await setMnemonic(mnemonic);
     await loadWalletIfNeeded();

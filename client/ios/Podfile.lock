@@ -1957,30 +1957,6 @@ PODS:
     - React-logger (= 0.79.5)
     - React-perflogger (= 0.79.5)
     - React-utils (= 0.79.5)
-  - ReactNativeFs (2.34.0):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.11.18.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-hermes
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - RNCClipboard (1.16.3):
     - DoubleConversion
     - glog
@@ -2437,7 +2413,6 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../../node_modules/react-native/ReactCommon`)
-  - "ReactNativeFs (from `../../node_modules/@dr.pogodin/react-native-fs`)"
   - "RNCClipboard (from `../../node_modules/@react-native-clipboard/clipboard`)"
   - RNGestureHandler (from `../../node_modules/react-native-gesture-handler`)
   - RNKeychain (from `../../node_modules/react-native-keychain`)
@@ -2643,8 +2618,6 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../../node_modules/react-native/ReactCommon"
-  ReactNativeFs:
-    :path: "../../node_modules/@dr.pogodin/react-native-fs"
   RNCClipboard:
     :path: "../../node_modules/@react-native-clipboard/clipboard"
   RNGestureHandler:
@@ -2759,7 +2732,6 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: f3e842e6cb5a825b6918a74a38402ba1409411f8
   ReactCodegen: e5750edd2bdbda50d17ac5c7f6534c97bc20334d
   ReactCommon: 1ab5451fc5da87c4cc4c3046e19a8054624ca763
-  ReactNativeFs: ae5c96042597005434f8e679775b263a43dd379c
   RNCClipboard: ea6045252d5c0753cf17f62290f647dc0096f6ac
   RNGestureHandler: 7d0931a61d7ba0259f32db0ba7d0963c3ed15d2b
   RNKeychain: 943b4dbceef4b3a310c9122c99d1e5b0bd66b9f3

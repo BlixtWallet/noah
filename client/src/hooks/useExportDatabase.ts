@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { zipDirectory } from "noah-tools";
 import Share from "react-native-share";
-import * as RNFS from "@dr.pogodin/react-native-fs";
+import NitroFS from "react-native-nitro-fs";
 import { ResultAsync } from "neverthrow";
 import { CACHES_DIRECTORY_PATH, DOCUMENT_DIRECTORY_PATH } from "~/constants";
 
@@ -82,7 +82,7 @@ export const useExportDatabase = () => {
     }
 
     // Clean up the temporary file
-    await ResultAsync.fromPromise(RNFS.unlink(outputPath), (e) => e as Error);
+    await ResultAsync.fromPromise(NitroFS.unlink(outputPath), (e) => e as Error);
 
     setIsExporting(false);
   };
