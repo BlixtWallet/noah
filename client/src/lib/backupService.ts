@@ -14,7 +14,7 @@ import {
   ARK_DATA_PATH,
   PLATFORM,
 } from "~/constants";
-import * as RNFS from "@dr.pogodin/react-native-fs";
+import RNFSTurbo from "react-native-fs-turbo";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 
@@ -50,10 +50,10 @@ export class BackupService {
 
     try {
       // Clean up previous staging directory if it exists
-      if (await RNFS.exists(backupStagingPath)) {
-        await RNFS.unlink(backupStagingPath);
+      if (RNFSTurbo.exists(backupStagingPath)) {
+        RNFSTurbo.unlink(backupStagingPath);
       }
-      await RNFS.mkdir(backupStagingPath);
+      RNFSTurbo.mkdir(backupStagingPath);
 
       // Define platform-specific paths
       const mmkvPath =
@@ -65,14 +65,14 @@ export class BackupService {
       console.log("mmkvPath", mmkvPath);
       console.log("dataPath", dataPath);
 
-      console.log("mmkv path exists", await RNFS.exists(mmkvPath));
+      console.log("mmkv path exists", RNFSTurbo.exists(mmkvPath));
       // Move directories to staging
       // Always move directories to staging
-      if (await RNFS.exists(mmkvPath)) {
-        await RNFS.moveFile(mmkvPath, `${backupStagingPath}/mmkv`);
+      if (RNFSTurbo.exists(mmkvPath)) {
+        RNFSTurbo.moveFile(mmkvPath, `${backupStagingPath}/mmkv`);
       }
-      if (await RNFS.exists(dataPath)) {
-        await RNFS.moveFile(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
+      if (RNFSTurbo.exists(dataPath)) {
+        RNFSTurbo.moveFile(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
       }
 
       // Create zip file from the staging directory
@@ -94,16 +94,16 @@ export class BackupService {
           ? `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`
           : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
       const dataPath = ARK_DATA_PATH;
-      if (await RNFS.exists(`${backupStagingPath}/mmkv`)) {
-        await RNFS.moveFile(`${backupStagingPath}/mmkv`, mmkvPath);
+      if (RNFSTurbo.exists(`${backupStagingPath}/mmkv`)) {
+        RNFSTurbo.moveFile(`${backupStagingPath}/mmkv`, mmkvPath);
       }
-      if (await RNFS.exists(`${backupStagingPath}/noah-data-${APP_VARIANT}`)) {
-        await RNFS.moveFile(`${backupStagingPath}/noah-data-${APP_VARIANT}`, dataPath);
+      if (RNFSTurbo.exists(`${backupStagingPath}/noah-data-${APP_VARIANT}`)) {
+        RNFSTurbo.moveFile(`${backupStagingPath}/noah-data-${APP_VARIANT}`, dataPath);
       }
 
       // Clean up staging directory
-      if (await RNFS.exists(backupStagingPath)) {
-        await RNFS.unlink(backupStagingPath);
+      if (RNFSTurbo.exists(backupStagingPath)) {
+        RNFSTurbo.unlink(backupStagingPath);
       }
     }
 
@@ -177,7 +177,12 @@ export class BackupService {
     log.d("completeUploadResult", [completeUploadResult.value]);
 
     // Clean up the temporary zip file
-    await ResultAsync.fromPromise(RNFS.unlink(outputZipPath), (e) => e as Error);
+    Result.fromThrowable(
+      () => {
+        return RNFSTurbo.unlink(outputZipPath);
+      },
+      (e) => e as Error,
+    )();
 
     return ResultAsync.fromSafePromise(Promise.resolve(undefined));
   }
@@ -225,12 +230,12 @@ export class BackupService {
     }
 
     const { download_url } = downloadUrlResult.value;
-    const outputPath = `${RNFS.TemporaryDirectoryPath}/backup.zip`;
+    const outputPath = `${RNFSTurbo.TemporaryDirectoryPath}/backup.zip`;
 
     log.d("outputPath", [outputPath]);
 
     const downloadResult = await ResultAsync.fromPromise(
-      RNFS.downloadFile({
+      RNFSTurbo.downloadFile({
         fromUrl: download_url,
         toFile: outputPath,
       }).promise,
@@ -242,7 +247,12 @@ export class BackupService {
     }
 
     // Debug: Check what we actually downloaded
-    const fileStatsResult = await ResultAsync.fromPromise(RNFS.stat(outputPath), (e) => e as Error);
+    const fileStatsResult = Result.fromThrowable(
+      () => {
+        return RNFSTurbo.stat(outputPath);
+      },
+      (e) => e as Error,
+    )();
 
     if (fileStatsResult.isErr()) {
       return err(fileStatsResult.error);
@@ -250,10 +260,12 @@ export class BackupService {
 
     log.d("Downloaded file stats:", [fileStatsResult.value]);
 
-    const encryptedDataResult = await ResultAsync.fromPromise(
-      RNFS.readFile(outputPath, "utf8"),
+    const encryptedDataResult = Result.fromThrowable(
+      () => {
+        return RNFSTurbo.readFile(outputPath, "utf8");
+      },
       (e) => e as Error,
-    );
+    )();
 
     if (encryptedDataResult.isErr()) {
       return err(encryptedDataResult.error);
@@ -290,35 +302,35 @@ export class BackupService {
     log.d("Unzip result:", [unzipResult.value]);
 
     // Check if the unzip directory exists and get its stats
-    const dirExistsResult = await ResultAsync.fromPromise(
-      RNFS.exists(unzipDirectory),
-      (e) => e as Error,
-    );
+    const dirExists = RNFSTurbo.exists(unzipDirectory);
 
-    if (dirExistsResult.isOk()) {
-      log.d("Unzip directory exists:", [dirExistsResult.value]);
+    log.d("Unzip directory exists:", [dirExists]);
 
-      if (dirExistsResult.value) {
-        const dirStatsResult = await ResultAsync.fromPromise(
-          RNFS.stat(unzipDirectory),
-          (e) => e as Error,
-        );
+    if (dirExists) {
+      const dirStatsResult = Result.fromThrowable(
+        () => {
+          return RNFSTurbo.stat(unzipDirectory);
+        },
+        (e) => e as Error,
+      )();
 
-        if (dirStatsResult.isOk()) {
-          log.d("Unzip directory stats:", [dirStatsResult.value]);
-        } else {
-          log.d("Error getting unzip directory stats:", [dirStatsResult.error]);
-        }
+      if (dirStatsResult.isOk()) {
+        log.d("Unzip directory stats:", [dirStatsResult.value]);
+      } else {
+        log.d("Error getting unzip directory stats:", [dirStatsResult.error]);
       }
-    } else {
-      log.d("Error checking unzip directory:", [dirExistsResult.error]);
     }
 
     // List contents of unzipped directory
     const listContents = async (dir: string, prefix = ""): Promise<void> => {
       log.d(`${prefix}Attempting to read directory: ${dir}`);
 
-      const readDirResult = await ResultAsync.fromPromise(RNFS.readDir(dir), (e) => e as Error);
+      const readDirResult = Result.fromThrowable(
+        () => {
+          return RNFSTurbo.readDir(dir);
+        },
+        (e) => e as Error,
+      )();
 
       if (readDirResult.isErr()) {
         log.d(`${prefix}Error reading directory ${dir}:`, [readDirResult.error]);
@@ -343,7 +355,7 @@ export class BackupService {
     log.d("=== END BACKUP CONTENTS ===");
 
     log.d("Make the document directory path", [DOCUMENT_DIRECTORY_PATH]);
-    await RNFS.mkdir(DOCUMENT_DIRECTORY_PATH);
+    RNFSTurbo.mkdir(DOCUMENT_DIRECTORY_PATH);
 
     return ok(unzipDirectory);
   }
@@ -372,25 +384,25 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
     const dataDestPath = ARK_DATA_PATH;
 
     // Clean up existing directories
-    if (await RNFS.exists(mmkvDestPath)) {
-      await RNFS.unlink(mmkvDestPath);
+    if (RNFSTurbo.exists(mmkvDestPath)) {
+      RNFSTurbo.unlink(mmkvDestPath);
     }
-    if (await RNFS.exists(dataDestPath)) {
-      await RNFS.unlink(dataDestPath);
+    if (RNFSTurbo.exists(dataDestPath)) {
+      RNFSTurbo.unlink(dataDestPath);
     }
 
-    console.log("mmkv dest path exists", await RNFS.exists(mmkvDestPath));
-    console.log("data dest path exists", await RNFS.exists(dataDestPath));
-    console.log("document directory path exists", await RNFS.exists(DOCUMENT_DIRECTORY_PATH));
+    console.log("mmkv dest path exists", RNFSTurbo.exists(mmkvDestPath));
+    console.log("data dest path exists", RNFSTurbo.exists(dataDestPath));
+    console.log("document directory path exists", RNFSTurbo.exists(DOCUMENT_DIRECTORY_PATH));
 
     // Move files from backup
-    if (await RNFS.exists(mmkvSourcePath)) {
+    if (RNFSTurbo.exists(mmkvSourcePath)) {
       console.log("moving mmkv");
-      await RNFS.moveFile(mmkvSourcePath, mmkvDestPath);
+      RNFSTurbo.moveFile(mmkvSourcePath, mmkvDestPath);
     }
 
     console.log("moving data");
-    await RNFS.moveFile(dataSourcePath, dataDestPath);
+    RNFSTurbo.moveFile(dataSourcePath, dataDestPath);
 
     await setMnemonic(mnemonic);
     await loadWalletIfNeeded();

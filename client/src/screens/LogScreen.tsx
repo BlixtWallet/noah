@@ -8,10 +8,10 @@ import { getAppLogs } from "noah-tools";
 import { COLORS } from "~/lib/styleConstants";
 import { Button } from "~/components/ui/button";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
-import * as RNFS from "@dr.pogodin/react-native-fs";
+import RNFSTurbo from "react-native-fs-turbo";
 import Share from "react-native-share";
-import { PLATFORM } from "~/constants";
-import { ResultAsync } from "neverthrow";
+import { CACHES_DIRECTORY_PATH, PLATFORM } from "~/constants";
+import { Result, ResultAsync } from "neverthrow";
 
 const LogScreen = () => {
   const navigation = useNavigation();
@@ -52,13 +52,15 @@ const LogScreen = () => {
   }, [logs, isLoading]);
 
   const handleShare = async () => {
-    const path = `${RNFS.CachesDirectoryPath}/noah_logs.txt`;
+    const path = `${CACHES_DIRECTORY_PATH}/noah_logs.txt`;
     const url = PLATFORM === "android" ? `file://${path}` : path;
 
-    const writeFileResult = await ResultAsync.fromPromise(
-      RNFS.writeFile(path, logs.join("\n"), "utf8"),
+    const writeFileResult = Result.fromThrowable(
+      () => {
+        return RNFSTurbo.writeFile(path, logs.join("\n"), "utf8");
+      },
       (e) => e as Error,
-    );
+    )();
 
     if (writeFileResult.isErr()) {
       console.error("Error writing log file:", writeFileResult.error);
@@ -81,7 +83,12 @@ const LogScreen = () => {
     }
 
     // Clean up: Delete the temporary file after sharing
-    await ResultAsync.fromPromise(RNFS.unlink(path), (e) => e as Error);
+    Result.fromThrowable(
+      () => {
+        return RNFSTurbo.unlink(path);
+      },
+      (e) => e as Error,
+    )();
   };
 
   return (
