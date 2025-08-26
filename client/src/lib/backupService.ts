@@ -110,7 +110,6 @@ export class BackupService {
     // Get upload URL from server
     const uploadUrlResult = await getUploadUrl({
       backup_version: 1, // TODO: Implement proper version management
-      backup_size,
     });
 
     if (uploadUrlResult.isErr()) {
@@ -384,6 +383,7 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
     await setMnemonic(mnemonic);
     await loadWalletIfNeeded();
     useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
+
     return ok(undefined);
   } catch (e) {
     log.e("Error during restore:", [e as Error]);

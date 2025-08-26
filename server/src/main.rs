@@ -6,6 +6,7 @@ use axum::{
 mod gated_api_v0;
 mod private_api_v0;
 mod public_api_v0;
+mod types;
 use dashmap::DashMap;
 use std::{
     net::{Ipv4Addr, SocketAddr},

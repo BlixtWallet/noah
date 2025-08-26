@@ -23,7 +23,7 @@ interface ServerState {
   isRegisteredWithServer: boolean;
   lightningAddress: string | null;
   isBackupEnabled: boolean;
-  setRegisteredWithServer: (isRegistered: boolean, lightningAddress: string) => void;
+  setRegisteredWithServer: (isRegistered: boolean, lightningAddress: string | null) => void;
   setLightningAddress: (lightningAddress: string) => void;
   setBackupEnabled: (enabled: boolean) => void;
   resetRegistration: () => void;

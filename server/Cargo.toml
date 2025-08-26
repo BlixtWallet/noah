@@ -30,6 +30,7 @@ http-body-util = "0.1.1"
 validator = { version = "0.20.0", features = ["derive"] }
 aws-config = "1.8.5"
 aws-sdk-s3 = "1.103.0"
+ts-rs = "11.0.1"
 
 [dev-dependencies]
 tower = { version = "0.4", features = ["full"] }

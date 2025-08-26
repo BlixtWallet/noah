@@ -1,6 +1,18 @@
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import { getServerEndpoint } from "~/constants";
 import { peakKeyPair, signMessage } from "./crypto";
+import {
+  BackupInfo,
+  BackupSettingsPayload,
+  CompleteUploadPayload,
+  DeleteBackupPayload,
+  DownloadUrlResponse,
+  GetDownloadUrlPayload,
+  GetUploadUrlPayload,
+  LNUrlAuthResponse,
+  RegisterPushToken,
+  UpdateLnAddressPayload,
+} from "~/types/serverTypes";
 
 const API_URL = getServerEndpoint();
 
@@ -71,43 +83,28 @@ async function post<T, U>(
   }
 }
 
-export const getUploadUrl = (payload: { backup_version: number; backup_size: number }) =>
-  post<{ backup_version: number; backup_size: number }, { upload_url: string; s3_key: string }>(
-    "/backup/upload_url",
-    payload,
-  );
+export const getUploadUrl = (payload: GetUploadUrlPayload) =>
+  post<GetUploadUrlPayload, { upload_url: string; s3_key: string }>("/backup/upload_url", payload);
 
-export const completeUpload = (payload: {
-  s3_key: string;
-  backup_version: number;
-  backup_size: number;
-}) => post("/backup/complete_upload", payload);
+export const completeUpload = (payload: CompleteUploadPayload) =>
+  post("/backup/complete_upload", payload);
 
-export const listBackups = () =>
-  post<object, { backup_version: number; created_at: string; backup_size: number }[]>(
-    "/backup/list",
-    {},
-  );
+export const listBackups = () => post<object, BackupInfo[]>("/backup/list", {});
 
-export const getDownloadUrl = (payload: { backup_version?: number }) =>
-  post<{ backup_version?: number }, { download_url: string; backup_size: number }>(
-    "/backup/download_url",
-    payload,
-  );
+export const getDownloadUrl = (payload: GetDownloadUrlPayload) =>
+  post<GetDownloadUrlPayload, DownloadUrlResponse>("/backup/download_url", payload);
 
-export const deleteBackup = (payload: { backup_version: number }) =>
-  post("/backup/delete", payload);
+export const deleteBackup = (payload: DeleteBackupPayload) => post("/backup/delete", payload);
 
-export const updateBackupSettings = (payload: { backup_enabled: boolean }) =>
+export const updateBackupSettings = (payload: BackupSettingsPayload) =>
   post("/backup/settings", payload);
 
-export const registerWithServer = () =>
-  post<object, { lightning_address: string }>("/register", {});
+export const registerWithServer = () => post<object, LNUrlAuthResponse>("/register", {});
 
-export const updateLightningAddress = (payload: { ln_address: string }) =>
+export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
   post("/update_ln_address", payload);
 
-export const registerPushToken = (payload: { push_token: string }) =>
+export const registerPushToken = (payload: RegisterPushToken) =>
   post("/register_push_token", payload);
 
 export const getK1 = async () => {
@@ -130,10 +127,7 @@ export const getDownloadUrlForRestore = (payload: {
   sig: string;
   key: string;
 }) =>
-  post<
-    { backup_version?: number; k1: string; sig: string; key: string },
-    { download_url: string; backup_size: number }
-  >(
+  post<{ backup_version?: number; k1: string; sig: string; key: string }, DownloadUrlResponse>(
     "/backup/download_url",
     {
       ...payload,

@@ -18,7 +18,7 @@ import {
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
-import { useWalletStore, type WalletConfig } from "../store/walletStore";
+import { type WalletConfig } from "../store/walletStore";
 import { ARK_DATA_PATH, DOCUMENT_DIRECTORY_PATH, MNEMONIC_KEYCHAIN_SERVICE } from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
@@ -96,7 +96,6 @@ const createWalletFromMnemonic = async (
     return err(keypairResult.error);
   }
 
-  useWalletStore.getState().setStaticVtxoPubkey(keypairResult.value.public_key);
   return ok(undefined);
 };
 
