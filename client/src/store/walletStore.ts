@@ -21,7 +21,7 @@ const zustandStorage: StateStorage = {
 
 export type WalletConfig = {
   bitcoind?: string;
-  asp?: string;
+  ark?: string;
   esplora?: string;
   bitcoind_user?: string;
   bitcoind_pass?: string;
@@ -41,7 +41,7 @@ const initialConfig = (): WalletConfig => {
     return {
       ...baseConfig,
       bitcoind: ACTIVE_WALLET_CONFIG.config.bitcoind,
-      asp: ACTIVE_WALLET_CONFIG.config.asp,
+      ark: ACTIVE_WALLET_CONFIG.config.ark,
       bitcoind_user: ACTIVE_WALLET_CONFIG.config.bitcoind_user,
       bitcoind_pass: ACTIVE_WALLET_CONFIG.config.bitcoind_pass,
     };
@@ -50,7 +50,7 @@ const initialConfig = (): WalletConfig => {
   return {
     ...baseConfig,
     esplora: ACTIVE_WALLET_CONFIG.config.esplora,
-    asp: ACTIVE_WALLET_CONFIG.config.asp,
+    ark: ACTIVE_WALLET_CONFIG.config.ark,
   };
 };
 

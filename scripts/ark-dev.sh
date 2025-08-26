@@ -12,7 +12,7 @@ REPO_DIR="bark"
 COMPOSE_FILE="$REPO_DIR/contrib/docker/docker-compose.yml"
 
 BITCOIND_SERVICE="bitcoind"
-ASPD_SERVICE="aspd"
+ASPD_SERVICE="captaind"
 BARK_SERVICE="bark"
 
 # Bitcoin Core wallet name to be used by this script
@@ -57,7 +57,7 @@ usage() {
 # Clones the repository and checks out the correct tag.
 setup_environment() {
     local repo_url="https://codeberg.org/ark-bitcoin/bark.git"
-    local repo_tag="bark-0.0.0-alpha.18"
+    local repo_tag="bark-0.0.0-alpha.19"
 
     if ! command -v git &> /dev/null; then
         echo "Error: 'git' is not installed. Please install it to continue." >&2
@@ -101,7 +101,7 @@ create_bark_wallet() {
     echo "Creating a new bark wallet with dev settings..."
     dcr run --rm "$BARK_SERVICE" bark create \
         --regtest \
-        --asp http://aspd:3535 \
+        --ark http://captaind:3535 \
         --bitcoind http://bitcoind:18443 \
         --bitcoind-user second \
         --bitcoind-pass ark \

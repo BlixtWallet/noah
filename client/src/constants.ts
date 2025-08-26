@@ -80,7 +80,7 @@ export const SIGNET_CONFIG: WalletCreationOptions = {
   bitcoin: false,
   config: {
     esplora: "esplora.signet.2nd.dev",
-    asp: "ark.signet.2nd.dev",
+    ark: "ark.signet.2nd.dev",
     vtxo_refresh_expiry_threshold: 288,
     fallback_fee_rate: 10000,
   },
@@ -92,7 +92,7 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   bitcoin: false,
   config: {
     bitcoind: `http://${REGTEST_URL}:18443`,
-    asp: `http://${REGTEST_URL}:3535`,
+    ark: `http://${REGTEST_URL}:3535`,
     bitcoind_user: "second",
     bitcoind_pass: "ark",
     vtxo_refresh_expiry_threshold: 288,
@@ -110,7 +110,7 @@ export const PRODUCTION_CONFIG: WalletCreationOptions = {
     esplora: "https://mempool.space/api",
     // This ASP is likely for a local regtest setup,
     // you will need a production ASP for mainnet.
-    asp: "http://192.168.4.252:3535",
+    ark: "http://192.168.4.252:3535",
     vtxo_refresh_expiry_threshold: 288,
     fallback_fee_rate: 10000,
   },

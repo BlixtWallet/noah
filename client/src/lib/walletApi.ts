@@ -36,7 +36,7 @@ const createWalletFromMnemonic = async (
           bitcoin: false,
           config: {
             bitcoind: config.bitcoind,
-            asp: config.asp,
+            ark: config.ark,
             bitcoind_user: config.bitcoind_user,
             bitcoind_pass: config.bitcoind_pass,
             vtxo_refresh_expiry_threshold: 288,
@@ -49,7 +49,7 @@ const createWalletFromMnemonic = async (
           bitcoin: APP_VARIANT === "mainnet",
           config: {
             esplora: config.esplora,
-            asp: config.asp,
+            ark: config.ark,
             vtxo_refresh_expiry_threshold: 288,
             fallback_fee_rate: 10000,
           },
