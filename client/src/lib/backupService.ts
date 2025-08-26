@@ -69,10 +69,10 @@ export class BackupService {
       // Move directories to staging
       // Always move directories to staging
       if (RNFSTurbo.exists(mmkvPath)) {
-        RNFSTurbo.moveFile(mmkvPath, `${backupStagingPath}/mmkv`);
+        RNFSTurbo.copyFolder(mmkvPath, `${backupStagingPath}/mmkv`);
       }
       if (RNFSTurbo.exists(dataPath)) {
-        RNFSTurbo.moveFile(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
+        RNFSTurbo.copyFolder(dataPath, `${backupStagingPath}/noah-data-${APP_VARIANT}`);
       }
 
       // Create zip file from the staging directory
@@ -88,19 +88,6 @@ export class BackupService {
       log.e("Error during backup staging", [e]);
       return err(e as Error);
     } finally {
-      // Move directories back
-      const mmkvPath =
-        PLATFORM === "ios"
-          ? `${DOCUMENT_DIRECTORY_PATH.replace(/\/files$/, "")}/mmkv`
-          : `${DOCUMENT_DIRECTORY_PATH}/mmkv`;
-      const dataPath = ARK_DATA_PATH;
-      if (RNFSTurbo.exists(`${backupStagingPath}/mmkv`)) {
-        RNFSTurbo.moveFile(`${backupStagingPath}/mmkv`, mmkvPath);
-      }
-      if (RNFSTurbo.exists(`${backupStagingPath}/noah-data-${APP_VARIANT}`)) {
-        RNFSTurbo.moveFile(`${backupStagingPath}/noah-data-${APP_VARIANT}`, dataPath);
-      }
-
       // Clean up staging directory
       if (RNFSTurbo.exists(backupStagingPath)) {
         RNFSTurbo.unlink(backupStagingPath);
