@@ -1,5 +1,5 @@
 import type { BarkCreateOpts } from "react-native-nitro-ark";
-import * as RNFS from "@dr.pogodin/react-native-fs";
+import RNFSTurbo from "react-native-fs-turbo";
 import { APP_VARIANT } from "./config";
 import { decode } from "light-bolt11-decoder";
 import { validate, Network } from "bitcoin-address-validation";
@@ -15,8 +15,8 @@ export const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 export const KEYCHAIN_USERNAME = "noah";
 
 export const PLATFORM = Platform.OS;
-export const DOCUMENT_DIRECTORY_PATH = RNFS.DocumentDirectoryPath;
-export const CACHES_DIRECTORY_PATH = RNFS.CachesDirectoryPath;
+export const DOCUMENT_DIRECTORY_PATH = RNFSTurbo.DocumentDirectoryPath;
+export const CACHES_DIRECTORY_PATH = RNFSTurbo.CachesDirectoryPath;
 
 const REGTEST_URL = !!process.env.EXPO_PUBLIC_REGTEST_URL
   ? process.env.EXPO_PUBLIC_REGTEST_URL

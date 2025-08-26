@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.10.0",
-    "@dr.pogodin/react-native-fs": "^2.33.1",
     "@legendapp/list": "^1.1.4",
     "@react-native-clipboard/clipboard": "^1.16.3",
     "@react-native-vector-icons/get-image": "^12.0.1",
@@ -84,6 +83,7 @@
     "react-native": "0.79.5",
     "react-native-bottom-tabs": "^0.10.0",
     "react-native-edge-to-edge": "1.6.0",
+    "react-native-fs-turbo": "^0.3.6",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^3.3.0",
