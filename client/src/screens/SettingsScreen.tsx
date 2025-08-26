@@ -98,7 +98,7 @@ const SettingsScreen = () => {
         value: config.bitcoind,
         isPressable: !isInitialized,
       },
-      { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
+      { id: "ark", title: "Ark Server", value: config.ark, isPressable: !isInitialized },
       {
         id: "bitcoind_user",
         title: "RPC User",
@@ -120,7 +120,7 @@ const SettingsScreen = () => {
         value: config.esplora,
         isPressable: !isInitialized,
       },
-      { id: "asp", title: "ASP URL", value: config.asp, isPressable: !isInitialized },
+      { id: "ark", title: "Ark Server", value: config.ark, isPressable: !isInitialized },
     );
   }
 
