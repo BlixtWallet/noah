@@ -3448,7 +3448,6 @@ dependencies = [
  "tracing-subscriber",
  "tracing-test",
  "ts-rs",
- "uuid",
  "validator",
 ]
 

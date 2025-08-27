@@ -5,7 +5,6 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::oneshot, time::timeout};
 
@@ -13,6 +12,7 @@ use crate::{
     AppState,
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
+    utils::make_k1,
 };
 
 /// Represents the response for a `k1` request, used in LNURL-auth.
@@ -36,9 +36,7 @@ const COMMENT_ALLOWED_SIZE: u16 = 280;
 /// to be used once for a login or registration attempt. This endpoint also manages
 /// the size of the `k1` cache to prevent it from growing indefinitely.
 pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
-    let mut k1_bytes = [0u8; 32];
-    rand::rng().fill_bytes(&mut k1_bytes);
-    let k1 = hex::encode(k1_bytes);
+    let k1 = make_k1();
 
     state.k1_values.insert(k1.clone(), SystemTime::now());
 
@@ -177,17 +175,13 @@ pub async fn lnurlp_request(
 
     // TODO Nitesh:
     // This could be a retarded solution for now.
-    // We are using two separate states for request_id
+    // We are using two separate states for k1
     // One is signed from server, the other to just manage channel requests
     // Probably need a better solution
 
-    let request_id = uuid::Uuid::new_v4().to_string();
-    state
-        .invoice_data_transmitters
-        .insert(request_id.clone(), tx);
-    state
-        .k1_values
-        .insert(request_id.clone(), SystemTime::now());
+    let k1 = make_k1();
+    state.invoice_data_transmitters.insert(k1.clone(), tx);
+    state.k1_values.insert(k1.clone(), SystemTime::now());
 
     let state_clone = state.clone();
     tokio::spawn(async move {
@@ -196,7 +190,7 @@ pub async fn lnurlp_request(
             body: None,
             data: format!(
                 r#"{{"type": "lightning-invoice-request", "request_id": "{}", "amount": {}}}"#,
-                request_id, amount
+                k1, amount
             ),
             priority: "high".to_string(),
             content_available: true,

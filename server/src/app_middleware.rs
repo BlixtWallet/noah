@@ -1,44 +1,77 @@
 use axum::{
-    body::Body,
     extract::{Request, State},
-    http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use http_body_util::BodyExt;
 
 use crate::{AppState, errors::ApiError, types::AuthPayload, utils::verify_auth};
+use std::time::SystemTime;
 
 pub async fn auth_middleware(
     State(state): State<AppState>,
-    request: Request,
+    mut request: Request,
     next: Next,
 ) -> Result<Response, impl IntoResponse> {
-    let (parts, body) = request.into_parts();
-    tracing::info!("auth_middleware: request for uri: {}", parts.uri);
+    tracing::info!("auth_middleware: request for uri: {}", request.uri());
 
-    let bytes = match body.collect().await {
-        Ok(collected) => collected.to_bytes(),
-        Err(err) => {
-            return Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response());
-        }
-    };
+    let k1 = request
+        .headers()
+        .get("x-auth-k1")
+        .and_then(|v| v.to_str().ok())
+        .map(String::from);
+    let sig = request
+        .headers()
+        .get("x-auth-sig")
+        .and_then(|v| v.to_str().ok())
+        .map(String::from);
+    let key = request
+        .headers()
+        .get("x-auth-key")
+        .and_then(|v| v.to_str().ok())
+        .map(String::from);
 
-    let payload: AuthPayload = match serde_json::from_slice(&bytes) {
-        Ok(p) => {
-            tracing::info!("auth_middleware: payload: {:?}", p);
-            p
-        }
-        Err(_) => {
+    let (k1, sig, key) = match (k1, sig, key) {
+        (Some(k1), Some(sig), Some(key)) => (k1, sig, key),
+        _ => {
             return Err(
-                ApiError::InvalidArgument("Invalid or missing auth payload".to_string())
+                ApiError::InvalidArgument("Missing or invalid auth headers".to_string())
                     .into_response(),
             );
         }
     };
 
+    let payload = AuthPayload {
+        k1: k1.clone(),
+        sig: sig.clone(),
+        key: key.clone(),
+    };
+
     if !state.k1_values.contains_key(&payload.k1) {
         return Err(ApiError::InvalidArgument("Invalid k1".to_string()).into_response());
+    }
+
+    let k1_parts: Vec<&str> = payload.k1.split('_').collect();
+    if k1_parts.len() != 2 {
+        return Err(ApiError::InvalidArgument("Invalid k1 format".to_string()).into_response());
+    }
+
+    let timestamp_str = k1_parts[1];
+    let timestamp = match timestamp_str.parse::<u64>() {
+        Ok(t) => t,
+        Err(_) => {
+            return Err(
+                ApiError::InvalidArgument("Invalid timestamp in k1".to_string()).into_response(),
+            );
+        }
+    };
+
+    let now = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    if now.saturating_sub(timestamp) > 600 {
+        return Err(ApiError::K1Expired.into_response());
     }
 
     let is_valid =
@@ -51,11 +84,6 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidSignature.into_response());
     }
 
-    // This is axum's way of inserting back the payload
-    // into the request so the handlers have access to it
-
-    let mut parts = parts;
-    parts.extensions.insert(payload);
-    let request = Request::from_parts(parts, Body::from(bytes));
+    request.extensions_mut().insert(payload);
     Ok(next.run(request).await)
 }

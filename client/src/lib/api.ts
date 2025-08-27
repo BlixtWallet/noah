@@ -27,8 +27,6 @@ async function post<T, U>(
       "Content-Type": "application/json",
     };
 
-    let body;
-
     if (authenticated) {
       const k1Result = await getK1();
       if (k1Result.isErr()) {
@@ -49,16 +47,12 @@ async function post<T, U>(
       }
       const sig = signatureResult.value;
 
-      const authPayload = {
-        ...payload,
-        k1,
-        sig,
-        key,
-      };
-      body = JSON.stringify(authPayload);
-    } else {
-      body = JSON.stringify(payload);
+      headers["x-auth-k1"] = k1;
+      headers["x-auth-sig"] = sig;
+      headers["x-auth-key"] = key;
     }
+
+    const body = JSON.stringify(payload);
 
     const response = await fetch(`${API_URL}/v0${endpoint}`, {
       method: "POST",
@@ -122,16 +116,42 @@ export const getK1 = async () => {
   return ok(k1);
 };
 
-export const getDownloadUrlForRestore = (payload: {
+export const getDownloadUrlForRestore = async (payload: {
   backup_version?: number;
   k1: string;
   sig: string;
   key: string;
-}) =>
-  post<{ backup_version?: number; k1: string; sig: string; key: string }, DownloadUrlResponse>(
-    "/backup/download_url",
-    {
-      ...payload,
-    },
-    false,
-  );
+}): Promise<Result<DownloadUrlResponse, Error>> => {
+  const { k1, sig, key, ...restPayload } = payload;
+  try {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      "x-auth-k1": k1,
+      "x-auth-sig": sig,
+      "x-auth-key": key,
+    };
+
+    const body = JSON.stringify(restPayload);
+
+    const response = await fetch(`${API_URL}/v0/backup/download_url`, {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return err(new Error(`API Error: ${response.status} ${errorText}`));
+    }
+
+    const responseText = await response.text();
+    if (!responseText) {
+      return err(new Error("API Error: Empty response from server"));
+    }
+
+    const data = JSON.parse(responseText);
+    return ok(data);
+  } catch (e) {
+    return err(e as Error);
+  }
+};

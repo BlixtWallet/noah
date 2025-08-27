@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use axum::Router;
 use axum::body::Body;
 use axum::http::{self, Request, StatusCode};
+use axum::{Router, middleware, routing::post};
 use dashmap::DashMap;
 use http_body_util::BodyExt;
 use serde_json::json;
@@ -18,8 +18,8 @@ use crate::tests::common::TestUser;
 use crate::types::{
     BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, UploadUrlResponse, UserInfoResponse,
 };
+use crate::utils::make_k1;
 use crate::{AppState, AppStruct};
-use axum::middleware;
 
 async fn setup_test_app() -> (Router, AppState) {
     // Set up environment variables for S3 testing
@@ -30,7 +30,7 @@ async fn setup_test_app() -> (Router, AppState) {
         std::env::set_var("AWS_REGION", "us-east-1");
     }
 
-    let db_path = format!("/tmp/test-{}.db", uuid::Uuid::new_v4());
+    let db_path = format!("/tmp/test-{}.db", make_k1());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
     let conn = db.connect().unwrap();
     crate::migrations::migrate(&conn).await.unwrap();
@@ -43,28 +43,16 @@ async fn setup_test_app() -> (Router, AppState) {
     });
 
     let app = Router::new()
-        .route("/register", axum::routing::post(register))
-        .route(
-            "/register_push_token",
-            axum::routing::post(register_push_token),
-        )
-        .route("/user_info", axum::routing::post(get_user_info))
-        .route("/update_ln_address", axum::routing::post(update_ln_address))
-        .route("/backup/upload_url", axum::routing::post(get_upload_url))
-        .route(
-            "/backup/complete_upload",
-            axum::routing::post(complete_upload),
-        )
-        .route("/backup/list", axum::routing::post(list_backups))
-        .route(
-            "/backup/download_url",
-            axum::routing::post(get_download_url),
-        )
-        .route("/backup/delete", axum::routing::post(delete_backup))
-        .route(
-            "/backup/settings",
-            axum::routing::post(update_backup_settings),
-        )
+        .route("/register", post(register))
+        .route("/register_push_token", post(register_push_token))
+        .route("/user_info", post(get_user_info))
+        .route("/update_ln_address", post(update_ln_address))
+        .route("/backup/upload_url", post(get_upload_url))
+        .route("/backup/complete_upload", post(complete_upload))
+        .route("/backup/list", post(list_backups))
+        .route("/backup/download_url", post(get_download_url))
+        .route("/backup/delete", post(delete_backup))
+        .route("/backup/settings", post(update_backup_settings))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_middleware,
@@ -79,13 +67,11 @@ async fn setup_test_app() -> (Router, AppState) {
 async fn test_register_new_user() {
     let (app, app_state) = setup_test_app().await;
 
-    let k1 = "test_k1";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
 
     let user = TestUser::new();
-    let auth_payload = user.auth_payload(k1);
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -93,11 +79,11 @@ async fn test_register_new_user() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "ln_address": "test@localhost"
                     }))
                     .unwrap(),
@@ -122,13 +108,11 @@ async fn test_register_new_user() {
 async fn test_register_existing_user() {
     let (app, app_state) = setup_test_app().await;
 
-    let k1 = "test_k1_existing";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
 
     let user = TestUser::new();
-    let auth_payload = user.auth_payload(k1);
+    let auth_payload = user.auth_payload(&k1);
 
     let conn = app_state.db.connect().unwrap();
     conn.execute(
@@ -144,11 +128,11 @@ async fn test_register_existing_user() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "ln_address": "test@localhost"
                     }))
                     .unwrap(),
@@ -176,13 +160,11 @@ async fn test_register_existing_user() {
 async fn test_register_invalid_signature() {
     let (app, app_state) = setup_test_app().await;
 
-    let k1 = "test_k1_invalid_sig";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
 
     let user = TestUser::new();
-    let mut auth_payload = user.auth_payload(k1);
+    let mut auth_payload = user.auth_payload(&k1);
     auth_payload.sig = "invalid_sig".to_string();
 
     let response = app
@@ -191,11 +173,11 @@ async fn test_register_invalid_signature() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "ln_address": "test@localhost"
                     }))
                     .unwrap(),
@@ -213,10 +195,10 @@ async fn test_register_invalid_signature() {
 async fn test_register_invalid_k1() {
     let (app, _) = setup_test_app().await;
 
-    let k1 = "test_k1_invalid";
+    let k1 = make_k1();
 
     let user = TestUser::new();
-    let mut auth_payload = user.auth_payload(k1);
+    let mut auth_payload = user.auth_payload(&k1);
     auth_payload.k1 = "invalid_k1".to_string();
 
     let response = app
@@ -225,11 +207,11 @@ async fn test_register_invalid_k1() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "ln_address": "test@localhost"
                     }))
                     .unwrap(),
@@ -257,11 +239,9 @@ async fn test_register_push_token() {
     .await
     .unwrap();
 
-    let k1 = "test_k1";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -269,11 +249,11 @@ async fn test_register_push_token() {
                 .method(http::Method::POST)
                 .uri("/register_push_token")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "push_token": "test_push_token"
                     }))
                     .unwrap(),
@@ -313,11 +293,9 @@ async fn test_get_user_info() {
     .await
     .unwrap();
 
-    let k1 = "test_k1";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -325,14 +303,10 @@ async fn test_get_user_info() {
                 .method(http::Method::POST)
                 .uri("/user_info")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .body(Body::from(
-                    serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1
-                    }))
-                    .unwrap(),
-                ))
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
@@ -361,11 +335,9 @@ async fn test_update_ln_address() {
     .await
     .unwrap();
 
-    let k1 = "test_k1";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -373,11 +345,11 @@ async fn test_update_ln_address() {
                 .method(http::Method::POST)
                 .uri("/update_ln_address")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "ln_address": "new@localhost"
                     }))
                     .unwrap(),
@@ -422,11 +394,9 @@ async fn test_get_upload_url() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_upload";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -434,13 +404,12 @@ async fn test_get_upload_url() {
                 .method(http::Method::POST)
                 .uri("/backup/upload_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
-                        "backup_version": 1,
-                        "backup_size": 1024
+                        "backup_version": 1
                     }))
                     .unwrap(),
                 ))
@@ -471,11 +440,9 @@ async fn test_complete_upload() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_complete";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
 
@@ -485,11 +452,11 @@ async fn test_complete_upload() {
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "s3_key": s3_key,
                         "backup_version": 1,
                         "backup_size": 1024
@@ -530,11 +497,9 @@ async fn test_complete_upload_upsert() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_upsert";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
 
@@ -546,11 +511,11 @@ async fn test_complete_upload_upsert() {
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "s3_key": s3_key,
                         "backup_version": 1,
                         "backup_size": 1024
@@ -565,11 +530,9 @@ async fn test_complete_upload_upsert() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Second upload with same version (should update)
-    let k1_2 = "test_k1_upsert_2";
-    app_state
-        .k1_values
-        .insert(k1_2.to_string(), SystemTime::now());
-    let auth_payload_2 = user.auth_payload(k1_2);
+    let k1_2 = make_k1();
+    app_state.k1_values.insert(k1_2.clone(), SystemTime::now());
+    let auth_payload_2 = user.auth_payload(&k1_2);
 
     let response = app
         .oneshot(
@@ -577,11 +540,11 @@ async fn test_complete_upload_upsert() {
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_2.key)
+                .header("x-auth-sig", auth_payload_2.sig)
+                .header("x-auth-k1", auth_payload_2.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload_2.key,
-                        "sig": auth_payload_2.sig,
-                        "k1": auth_payload_2.k1,
                         "s3_key": s3_key,
                         "backup_version": 1,
                         "backup_size": 2048
@@ -620,11 +583,9 @@ async fn test_list_backups_empty() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_list_empty";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -632,14 +593,10 @@ async fn test_list_backups_empty() {
                 .method(http::Method::POST)
                 .uri("/backup/list")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .body(Body::from(
-                    serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1
-                    }))
-                    .unwrap(),
-                ))
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
@@ -675,11 +632,9 @@ async fn test_list_backups_with_data() {
     .await
     .unwrap();
 
-    let k1 = "test_k1_list_data";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -687,14 +642,10 @@ async fn test_list_backups_with_data() {
                 .method(http::Method::POST)
                 .uri("/backup/list")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .body(Body::from(
-                    serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1
-                    }))
-                    .unwrap(),
-                ))
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
                 .unwrap(),
         )
         .await
@@ -733,11 +684,9 @@ async fn test_get_download_url_specific_version() {
     .await
     .unwrap();
 
-    let k1 = "test_k1_download";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -745,11 +694,11 @@ async fn test_get_download_url_specific_version() {
                 .method(http::Method::POST)
                 .uri("/backup/download_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_version": 1
                     }))
                     .unwrap(),
@@ -794,11 +743,9 @@ async fn test_get_download_url_latest() {
     .await
     .unwrap();
 
-    let k1 = "test_k1_download_latest";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -806,15 +753,10 @@ async fn test_get_download_url_latest() {
                 .method(http::Method::POST)
                 .uri("/backup/download_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .body(Body::from(
-                    serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1
-                        // No backup_version specified, should get latest
-                    }))
-                    .unwrap(),
-                ))
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::from(serde_json::to_vec(&json!({})).unwrap()))
                 .unwrap(),
         )
         .await
@@ -839,11 +781,9 @@ async fn test_get_download_url_not_found() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_download_not_found";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -851,11 +791,11 @@ async fn test_get_download_url_not_found() {
                 .method(http::Method::POST)
                 .uri("/backup/download_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_version": 999
                     }))
                     .unwrap(),
@@ -885,11 +825,9 @@ async fn test_delete_backup() {
     .await
     .unwrap();
 
-    let k1 = "test_k1_delete";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -897,11 +835,11 @@ async fn test_delete_backup() {
                 .method(http::Method::POST)
                 .uri("/backup/delete")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_version": 1
                     }))
                     .unwrap(),
@@ -939,11 +877,9 @@ async fn test_delete_backup_not_found() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_delete_not_found";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -951,11 +887,11 @@ async fn test_delete_backup_not_found() {
                 .method(http::Method::POST)
                 .uri("/backup/delete")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_version": 999
                     }))
                     .unwrap(),
@@ -975,11 +911,9 @@ async fn test_update_backup_settings_enable() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_settings_enable";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -987,11 +921,11 @@ async fn test_update_backup_settings_enable() {
                 .method(http::Method::POST)
                 .uri("/backup/settings")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_enabled": true
                     }))
                     .unwrap(),
@@ -1034,11 +968,9 @@ async fn test_update_backup_settings_disable() {
     .await
     .unwrap();
 
-    let k1 = "test_k1_settings_disable";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -1046,11 +978,11 @@ async fn test_update_backup_settings_disable() {
                 .method(http::Method::POST)
                 .uri("/backup/settings")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_enabled": false
                     }))
                     .unwrap(),
@@ -1085,11 +1017,9 @@ async fn test_backup_endpoints_invalid_auth() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_invalid_auth";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let mut auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let mut auth_payload = user.auth_payload(&k1);
     auth_payload.sig = "invalid_signature".to_string();
 
     let endpoints = vec![
@@ -1109,11 +1039,11 @@ async fn test_backup_endpoints_invalid_auth() {
                     .method(http::Method::POST)
                     .uri(endpoint)
                     .header(http::header::CONTENT_TYPE, "application/json")
+                    .header("x-auth-key", auth_payload.key.clone())
+                    .header("x-auth-sig", auth_payload.sig.clone())
+                    .header("x-auth-k1", auth_payload.k1.clone())
                     .body(Body::from(
                         serde_json::to_vec(&json!({
-                            "key": auth_payload.key,
-                            "sig": auth_payload.sig,
-                            "k1": auth_payload.k1,
                             "backup_version": 1,
                             "backup_size": 1024,
                             "backup_enabled": true
@@ -1140,8 +1070,8 @@ async fn test_backup_endpoints_missing_k1() {
     let (app, _app_state) = setup_test_app().await;
     let user = TestUser::new();
 
-    let k1 = "test_k1_missing";
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    let auth_payload = user.auth_payload(&k1);
 
     let endpoints = vec![
         "/backup/upload_url",
@@ -1160,11 +1090,11 @@ async fn test_backup_endpoints_missing_k1() {
                     .method(http::Method::POST)
                     .uri(endpoint)
                     .header(http::header::CONTENT_TYPE, "application/json")
+                    .header("x-auth-key", auth_payload.key.clone())
+                    .header("x-auth-sig", auth_payload.sig.clone())
+                    .header("x-auth-k1", auth_payload.k1.clone())
                     .body(Body::from(
                         serde_json::to_vec(&json!({
-                            "key": auth_payload.key,
-                            "sig": auth_payload.sig,
-                            "k1": auth_payload.k1,
                             "backup_version": 1,
                             "backup_size": 1024,
                             "backup_enabled": true
@@ -1188,12 +1118,15 @@ async fn test_backup_endpoints_missing_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_backup_endpoints_malformed_json() {
-    let (app, _app_state) = setup_test_app().await;
+    let (app, app_state) = setup_test_app().await;
+    let user = TestUser::new();
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let endpoints = vec![
         "/backup/upload_url",
         "/backup/complete_upload",
-        "/backup/list",
         "/backup/download_url",
         "/backup/delete",
         "/backup/settings",
@@ -1207,6 +1140,9 @@ async fn test_backup_endpoints_malformed_json() {
                     .method(http::Method::POST)
                     .uri(endpoint)
                     .header(http::header::CONTENT_TYPE, "application/json")
+                    .header("x-auth-key", auth_payload.key.clone())
+                    .header("x-auth-sig", auth_payload.sig.clone())
+                    .header("x-auth-k1", auth_payload.k1.clone())
                     .body(Body::from("invalid json"))
                     .unwrap(),
             )
@@ -1229,11 +1165,9 @@ async fn test_complete_upload_missing_fields() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_missing_fields";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     // Test missing s3_key
     let response = app
@@ -1243,11 +1177,11 @@ async fn test_complete_upload_missing_fields() {
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_version": 1,
                         "backup_size": 1024
                         // Missing s3_key
@@ -1276,11 +1210,9 @@ async fn test_get_upload_url_missing_fields() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_upload_missing";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     // Test missing backup_version
     let response = app
@@ -1290,11 +1222,11 @@ async fn test_get_upload_url_missing_fields() {
                 .method(http::Method::POST)
                 .uri("/backup/upload_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1,
                         "backup_size": 1024
                         // Missing backup_version
                     }))
@@ -1320,11 +1252,9 @@ async fn test_delete_backup_missing_version() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_delete_missing";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -1332,11 +1262,11 @@ async fn test_delete_backup_missing_version() {
                 .method(http::Method::POST)
                 .uri("/backup/delete")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1
                         // Missing backup_version
                     }))
                     .unwrap(),
@@ -1361,11 +1291,9 @@ async fn test_update_backup_settings_missing_enabled() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = "test_k1_settings_missing";
-    app_state
-        .k1_values
-        .insert(k1.to_string(), SystemTime::now());
-    let auth_payload = user.auth_payload(k1);
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -1373,11 +1301,11 @@ async fn test_update_backup_settings_missing_enabled() {
                 .method(http::Method::POST)
                 .uri("/backup/settings")
                 .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
                 .body(Body::from(
                     serde_json::to_vec(&json!({
-                        "key": auth_payload.key,
-                        "sig": auth_payload.sig,
-                        "k1": auth_payload.k1
                         // Missing backup_enabled
                     }))
                     .unwrap(),
@@ -1393,4 +1321,45 @@ async fn test_update_backup_settings_missing_enabled() {
         "Expected BAD_REQUEST (400) or UNPROCESSABLE_ENTITY (422), got {}",
         response.status()
     );
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_register_expired_k1() {
+    let (app, app_state) = setup_test_app().await;
+
+    let k1_hex = "5a9b8f7c6d5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e";
+    let old_timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        - 700; // 700 seconds ago, more than 10 minutes
+    let k1 = format!("{}_{}", k1_hex, old_timestamp);
+
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+
+    let user = TestUser::new();
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "test@localhost"
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }

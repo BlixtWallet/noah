@@ -8,10 +8,11 @@ use http_body_util::BodyExt;
 use tower::ServiceExt;
 
 use crate::public_api_v0::{GetK1, LnurlpDefaultResponse, get_k1, lnurlp_request};
+use crate::utils::make_k1;
 use crate::{AppState, AppStruct};
 
 async fn setup_test_app() -> (Router, AppState) {
-    let db_path = format!("/tmp/test-{}.db", uuid::Uuid::new_v4());
+    let db_path = format!("/tmp/test-{}.db", make_k1());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
     let conn = db.connect().unwrap();
     crate::migrations::migrate(&conn).await.unwrap();

@@ -25,6 +25,8 @@ pub enum ApiError {
     InvalidSignature,
     #[error("Not found: {0}")]
     NotFound(String),
+    #[error("K1 expired")]
+    K1Expired,
 }
 
 #[derive(Serialize)]
@@ -56,6 +58,7 @@ impl IntoResponse for ApiError {
                 (StatusCode::UNAUTHORIZED, "Invalid signature".to_string())
             }
             ApiError::NotFound(e) => (StatusCode::NOT_FOUND, e.to_string()),
+            ApiError::K1Expired => (StatusCode::UNAUTHORIZED, "K1 expired".to_string()),
         };
 
         let body = Json(ErrorResponse {

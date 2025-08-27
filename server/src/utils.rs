@@ -1,3 +1,4 @@
+use rand::RngCore;
 use std::str::FromStr;
 
 use crate::errors::ApiError;
@@ -24,4 +25,15 @@ pub async fn verify_auth(
     let is_valid = verify_message(&k1, signature, &public_key).await?;
 
     Ok(is_valid)
+}
+
+pub fn make_k1() -> String {
+    let mut k1_bytes = [0u8; 32];
+    rand::rng().fill_bytes(&mut k1_bytes);
+    let k1 = hex::encode(k1_bytes);
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    format!("{}_{}", k1, timestamp)
 }
