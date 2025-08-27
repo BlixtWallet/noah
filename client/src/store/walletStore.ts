@@ -25,21 +25,14 @@ export type WalletConfig = {
   esplora?: string;
   bitcoind_user?: string;
   bitcoind_pass?: string;
-  staticVtxoPubkey: string;
+  staticVtxoPubkey?: string;
 };
 
 const initialConfig = (): WalletConfig => {
-  const baseConfig: WalletConfig = {
-    staticVtxoPubkey: "",
-  };
-
-  if (!ACTIVE_WALLET_CONFIG.config) {
-    return baseConfig;
-  }
+  if (!ACTIVE_WALLET_CONFIG.config) return {};
 
   if (APP_VARIANT === "regtest") {
     return {
-      ...baseConfig,
       bitcoind: ACTIVE_WALLET_CONFIG.config.bitcoind,
       ark: ACTIVE_WALLET_CONFIG.config.ark,
       bitcoind_user: ACTIVE_WALLET_CONFIG.config.bitcoind_user,
@@ -48,7 +41,6 @@ const initialConfig = (): WalletConfig => {
   }
 
   return {
-    ...baseConfig,
     esplora: ACTIVE_WALLET_CONFIG.config.esplora,
     ark: ACTIVE_WALLET_CONFIG.config.ark,
   };

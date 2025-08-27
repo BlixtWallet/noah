@@ -19,6 +19,7 @@ import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDia
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { BackupStatusCard } from "../components/BackupStatusCard";
+import { usePeakKeyPair } from "~/hooks/useCrypto";
 
 type Setting = {
   id:
@@ -58,6 +59,8 @@ const SettingsScreen = () => {
   const deleteWalletMutation = useDeleteWallet();
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
     useExportDatabase();
+  const { data: peakKeyPair } = usePeakKeyPair();
+
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
@@ -81,11 +84,11 @@ const SettingsScreen = () => {
 
   const data: Setting[] = [];
 
-  if (isInitialized && config.staticVtxoPubkey) {
+  if (isInitialized && peakKeyPair?.public_key) {
     data.push({
       id: "staticVtxoPubkey",
       title: "Public Key",
-      value: config.staticVtxoPubkey,
+      value: peakKeyPair.public_key,
       isPressable: false,
     });
   }
@@ -116,7 +119,7 @@ const SettingsScreen = () => {
     data.push(
       {
         id: "esplora",
-        title: "Esplora URL",
+        title: "Esplora Server",
         value: config.esplora,
         isPressable: !isInitialized,
       },

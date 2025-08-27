@@ -11,11 +11,13 @@ use tower::ServiceExt;
 
 use crate::app_middleware::auth_middleware;
 use crate::gated_api_v0::{
-    BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, UploadUrlResponse, UserInfoResponse,
     complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info, list_backups,
     register, register_push_token, update_backup_settings, update_ln_address,
 };
 use crate::tests::common::TestUser;
+use crate::types::{
+    BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, UploadUrlResponse, UserInfoResponse,
+};
 use crate::{AppState, AppStruct};
 use axum::middleware;
 
@@ -709,7 +711,7 @@ async fn test_list_backups_with_data() {
     assert!(versions.contains(&1));
     assert!(versions.contains(&2));
 
-    let sizes: Vec<i64> = res.iter().map(|b| b.backup_size).collect();
+    let sizes: Vec<u64> = res.iter().map(|b| b.backup_size).collect();
     assert!(sizes.contains(&1024));
     assert!(sizes.contains(&2048));
 }

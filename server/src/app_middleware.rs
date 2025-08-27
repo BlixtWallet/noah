@@ -6,16 +6,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use http_body_util::BodyExt;
-use serde::Deserialize;
 
-use crate::{AppState, errors::ApiError, utils::verify_auth};
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct AuthPayload {
-    pub key: String,
-    pub sig: String,
-    pub k1: String,
-}
+use crate::{AppState, errors::ApiError, types::AuthPayload, utils::verify_auth};
 
 pub async fn auth_middleware(
     State(state): State<AppState>,

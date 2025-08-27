@@ -1,6 +1,6 @@
 use bitcoin::key::Keypair;
 
-use crate::app_middleware::AuthPayload;
+use crate::types::AuthPayload;
 
 pub struct TestUser {
     keypair: Keypair,

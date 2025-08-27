@@ -1,42 +1,20 @@
+use crate::s3_client::S3BackupClient;
+use crate::types::{
+    BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DeleteBackupPayload,
+    DownloadUrlResponse, GetDownloadUrlPayload, SubmitInvoicePayload, UserInfoResponse,
+};
+use crate::{
+    AppState,
+    errors::ApiError,
+    types::{
+        AuthEvent, AuthPayload, GetUploadUrlPayload, LNUrlAuthResponse, RegisterPayload,
+        RegisterPushToken, UpdateLnAddressPayload, UploadUrlResponse,
+    },
+};
 use axum::{Extension, Json, extract::State};
-use random_word::Lang;
-use serde::{Deserialize, Serialize};
-use validator::Validate;
-
-use crate::{AppState, app_middleware::AuthPayload, errors::ApiError};
 use rand::Rng;
-
-/// Represents events that can occur during LNURL-auth.
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum AuthEvent {
-    /// Indicates that a user has been successfully registered.
-    Registered,
-}
-
-/// Represents the response for an LNURL-auth request.
-#[derive(Serialize, Deserialize)]
-pub struct LNUrlAuthResponse {
-    /// The status of the request, either "OK" or "ERROR".
-    pub status: String,
-    /// An optional event indicating the outcome of the authentication.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub event: Option<AuthEvent>,
-    /// An optional reason for an error, if one occurred.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
-    /// The user's lightning address.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub lightning_address: Option<String>,
-}
-
-/// Defines the payload for a user registration request.
-#[derive(Deserialize, Debug, Validate)]
-pub struct RegisterPayload {
-    /// User chosen lightning address
-    #[validate(email)]
-    pub ln_address: Option<String>,
-}
+use random_word::Lang;
+use validator::Validate;
 
 /// Handles user registration via LNURL-auth.
 ///
@@ -115,13 +93,6 @@ pub async fn register(
     }))
 }
 
-/// Defines the payload for registering a push notification token.
-#[derive(Deserialize)]
-pub struct RegisterPushToken {
-    /// The Expo push token for the user's device.
-    pub push_token: String,
-}
-
 /// Registers a push notification token for a user.
 ///
 /// This endpoint associates a push token with a user's public key, allowing
@@ -158,13 +129,6 @@ pub async fn register_push_token(
     Ok(())
 }
 
-/// Defines the payload for submitting a BOLT11 invoice.
-#[derive(Deserialize)]
-pub struct SubmitInvoicePayload {
-    /// The BOLT11 invoice to be paid.
-    pub invoice: String,
-}
-
 /// Receives and processes a BOLT11 invoice from a user's device.
 ///
 /// After a user generates an invoice in response to a push notification,
@@ -194,13 +158,6 @@ pub async fn submit_invoice(
     }
 }
 
-/// Represents the response for a user's information.
-#[derive(Serialize, Deserialize)]
-pub struct UserInfoResponse {
-    /// The user's lightning address.
-    pub lightning_address: String,
-}
-
 /// Retrieves the user's information.
 ///
 /// This endpoint returns the user's lightning address.
@@ -222,14 +179,6 @@ pub async fn get_user_info(
     } else {
         Err(ApiError::InvalidArgument("User not found".to_string()))
     }
-}
-
-/// Defines the payload for updating a user's lightning address.
-#[derive(Deserialize, Validate)]
-pub struct UpdateLnAddressPayload {
-    /// The new lightning address for the user.
-    #[validate(email)]
-    pub ln_address: String,
 }
 
 /// Updates a user's lightning address.
@@ -268,22 +217,7 @@ pub async fn update_ln_address(
     Ok(())
 }
 
-use crate::s3_client::S3BackupClient;
-
-#[derive(Deserialize)]
-pub struct GetUploadUrlPayload {
-    pub backup_version: i32, // 1 or 2 (rolling)
-    pub backup_size: i64,    // For validation
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UploadUrlResponse {
-    pub upload_url: String, // Pre-signed S3 URL
-    pub s3_key: String,     // S3 object key
-}
-
 pub async fn get_upload_url(
-    State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<GetUploadUrlPayload>,
 ) -> Result<Json<UploadUrlResponse>, ApiError> {
@@ -296,13 +230,6 @@ pub async fn get_upload_url(
     let upload_url = s3_client.generate_upload_url(&s3_key).await?;
 
     Ok(Json(UploadUrlResponse { upload_url, s3_key }))
-}
-
-#[derive(Deserialize)]
-pub struct CompleteUploadPayload {
-    pub s3_key: String,
-    pub backup_version: i32,
-    pub backup_size: i64,
 }
 
 pub async fn complete_upload(
@@ -319,13 +246,6 @@ pub async fn complete_upload(
     .await?;
 
     Ok(())
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct BackupInfo {
-    pub backup_version: i32,
-    pub created_at: String,
-    pub backup_size: i64,
 }
 
 pub async fn list_backups(
@@ -352,24 +272,13 @@ pub async fn list_backups(
     Ok(Json(backups))
 }
 
-#[derive(Deserialize)]
-pub struct GetDownloadUrlPayload {
-    pub backup_version: Option<i32>, // None = latest
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DownloadUrlResponse {
-    pub download_url: String, // Pre-signed S3 URL
-    pub backup_size: i64,
-}
-
 pub async fn get_download_url(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<GetDownloadUrlPayload>,
 ) -> Result<Json<DownloadUrlResponse>, ApiError> {
     let conn = state.db.connect()?;
-    let (s3_key, backup_size): (String, i64) = if let Some(version) = payload.backup_version {
+    let (s3_key, backup_size): (String, u64) = if let Some(version) = payload.backup_version {
         let mut row = conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? AND backup_version = ?", libsql::params![auth_payload.key.clone(), version]).await?;
         if let Some(row) = row.next().await? {
             (row.get(0)?, row.get(1)?)
@@ -392,11 +301,6 @@ pub async fn get_download_url(
         download_url,
         backup_size,
     }))
-}
-
-#[derive(Deserialize)]
-pub struct DeleteBackupPayload {
-    pub backup_version: i32,
 }
 
 pub async fn delete_backup(
@@ -429,11 +333,6 @@ pub async fn delete_backup(
     .await?;
 
     Ok(())
-}
-
-#[derive(Deserialize)]
-pub struct BackupSettingsPayload {
-    pub backup_enabled: bool,
 }
 
 pub async fn update_backup_settings(
