@@ -12,6 +12,7 @@ import {
   LNUrlAuthResponse,
   RegisterPushToken,
   UpdateLnAddressPayload,
+  UploadUrlResponse,
 } from "~/types/serverTypes";
 
 const API_URL = getServerEndpoint();
@@ -84,7 +85,7 @@ async function post<T, U>(
 }
 
 export const getUploadUrl = (payload: GetUploadUrlPayload) =>
-  post<GetUploadUrlPayload, { upload_url: string; s3_key: string }>("/backup/upload_url", payload);
+  post<GetUploadUrlPayload, UploadUrlResponse>("/backup/upload_url", payload);
 
 export const completeUpload = (payload: CompleteUploadPayload) =>
   post("/backup/complete_upload", payload);

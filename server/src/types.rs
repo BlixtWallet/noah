@@ -83,7 +83,8 @@ pub struct GetUploadUrlPayload {
     pub backup_version: i32, // 1 or 2 (rolling)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct UploadUrlResponse {
     pub upload_url: String, // Pre-signed S3 URL
     pub s3_key: String,     // S3 object key

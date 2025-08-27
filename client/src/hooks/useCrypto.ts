@@ -3,12 +3,10 @@ import { peakKeyPair } from "~/lib/crypto";
 import { useWalletStore } from "~/store/walletStore";
 
 export function usePeakKeyPair() {
-  const { config } = useWalletStore();
-
   return useQuery({
     queryKey: ["peakKeyPair"],
     queryFn: async () => {
-      const pubkey = config.staticVtxoPubkey;
+      const pubkey = useWalletStore.getState().config.staticVtxoPubkey;
       if (pubkey) {
         return { public_key: pubkey };
       }

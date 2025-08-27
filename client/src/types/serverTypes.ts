@@ -77,3 +77,5 @@ export type UpdateLnAddressPayload = {
  * The new lightning address for the user.
  */
 ln_address: string, };
+
+export type UploadUrlResponse = { upload_url: string, s3_key: string, };
