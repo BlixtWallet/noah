@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { useAlert } from "~/contexts/AlertProvider";
@@ -38,6 +38,7 @@ export const useSendScreen = () => {
   const [comment, setComment] = useState("");
   const [parsedResult, setParsedResult] = useState<DisplayResult | null>(null);
   const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
+  const [currency, setCurrency] = useState<"USD" | "SATS">("SATS");
 
   useEffect(() => {
     if (route.params?.destination) {
@@ -76,12 +77,25 @@ export const useSendScreen = () => {
     reset,
   } = useSend(destinationType);
 
+  const amountSat = useMemo(() => {
+    if (currency === "SATS") {
+      return parseInt(amount, 10) || 0;
+    }
+    if (btcPrice) {
+      return Math.round((parseFloat(amount) / btcPrice) * 100000000);
+    }
+    return 0;
+  }, [amount, currency, btcPrice]);
+
+  const toggleCurrency = useCallback(() => {
+    setCurrency((prev) => (prev === "SATS" ? "USD" : "SATS"));
+  }, []);
+
   useEffect(() => {
     if (!result) {
       return;
     }
 
-    const satoshis = parseInt(amount, 10) || 0;
     let displayResult: DisplayResult | null = null;
 
     const processResult = (res: PaymentResult) => {
@@ -109,7 +123,7 @@ export const useSendScreen = () => {
           const lnurlRes = res as LnurlPaymentResult;
           return {
             success: true,
-            amount_sat: satoshis,
+            amount_sat: amountSat,
             destination: lnurlRes.lnurl,
             preimage: lnurlRes.preimage,
             type: res.payment_type,
@@ -119,7 +133,7 @@ export const useSendScreen = () => {
           const bolt11Res = res as LightningPaymentResult;
           return {
             success: true,
-            amount_sat: satoshis,
+            amount_sat: amountSat,
             destination: bolt11Res.bolt11_invoice,
             preimage: bolt11Res.preimage,
             type: res.payment_type,
@@ -159,11 +173,9 @@ export const useSendScreen = () => {
       }
       setParsedResult(displayResult);
     }
-  }, [result, amount, showAlert, addTransaction, destinationType, comment, btcPrice]);
+  }, [result, amountSat, showAlert, addTransaction, destinationType, comment, btcPrice]);
 
   const handleSend = () => {
-    let amountSat: number | undefined = parseInt(amount, 10);
-
     if (!isValidDestination(destination)) {
       showAlert({
         title: "Invalid Destination",
@@ -177,15 +189,11 @@ export const useSendScreen = () => {
       return;
     }
 
-    if (destinationType === "lightning" && amountSat !== 0) {
-      amountSat = undefined;
-    }
-
     const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
 
     send({
       destination: cleanedDestination,
-      amountSat,
+      amountSat: destinationType === "lightning" ? undefined : amountSat,
       comment: comment || null,
     });
   };
@@ -227,5 +235,9 @@ export const useSendScreen = () => {
     setShowCamera,
     handleScanPress,
     codeScanner,
+    currency,
+    toggleCurrency,
+    amountSat,
+    btcPrice,
   };
 };
