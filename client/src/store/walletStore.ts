@@ -83,10 +83,10 @@ export const useWalletStore = create<WalletState>()(
     {
       name: "wallet-storage",
       storage: createJSONStorage(() => zustandStorage),
-      partialize: (state) =>
-        Object.fromEntries(
-          Object.entries(state).filter(([key]) => !["isWalletLoaded"].includes(key)),
-        ),
+      partialize: (state) => ({
+        isInitialized: state.isInitialized,
+        config: state.config,
+      }),
     },
   ),
 );
