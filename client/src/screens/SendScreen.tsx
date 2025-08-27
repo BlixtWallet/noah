@@ -65,8 +65,9 @@ const SendScreen = () => {
       </View>
       <View className="flex-1">
         <View className="flex-row items-center justify-center my-4">
+          {currency === "USD" && <Text className="text-white text-3xl font-bold mr-2">$</Text>}
           <TextInput
-            className="text-white text-5xl font-bold text-center h-20"
+            className="text-white text-3xl font-bold text-center h-20"
             placeholder="0"
             placeholderTextColor="#6b7280"
             keyboardType="numeric"
@@ -75,24 +76,25 @@ const SendScreen = () => {
             editable={isAmountEditable}
             style={!isAmountEditable ? { color: "gray" } : {}}
           />
+          {currency === "SATS" && <Text className="text-white text-3xl font-bold ml-2">sats</Text>}
           {!parsedAmount && (
             <TouchableOpacity onPress={toggleCurrency} className="ml-2">
               <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
             </TouchableOpacity>
           )}
         </View>
-        <Text className="text-gray-400 text-center text-lg">
+        <Text className="text-gray-400 text-center text-xl">
           {parsedAmount
             ? `${formatNumber(parsedAmount)} sats ($${
                 btcPrice ? formatNumber(((parsedAmount * btcPrice) / 100000000).toFixed(2)) : "0.00"
               })`
             : currency === "SATS"
               ? `$${
-                  btcPrice && amountSat
+                  btcPrice && amountSat && !isNaN(amountSat)
                     ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
                     : "0.00"
                 }`
-              : `${formatNumber(amountSat)} sats`}
+              : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
         </Text>
 
         <View className="mt-8">
@@ -110,7 +112,7 @@ const SendScreen = () => {
           </View>
           <TextInput
             className="border border-border bg-card p-4 rounded-lg text-foreground mt-4"
-            placeholder="Note to self"
+            placeholder="Add a note (optional)"
             placeholderTextColor="#6b7280"
             value={comment}
             onChangeText={setComment}

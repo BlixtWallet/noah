@@ -97,8 +97,18 @@ export const useSendScreen = () => {
   }, [amount, currency, btcPrice]);
 
   const toggleCurrency = useCallback(() => {
-    setCurrency((prev) => (prev === "SATS" ? "USD" : "SATS"));
-  }, []);
+    if (currency === "SATS") {
+      if (btcPrice && amount) {
+        setAmount(((parseInt(amount, 10) * btcPrice) / 100000000).toFixed(2));
+      }
+      setCurrency("USD");
+    } else {
+      if (btcPrice && amount) {
+        setAmount(Math.round((parseFloat(amount) / btcPrice) * 100000000).toString());
+      }
+      setCurrency("SATS");
+    }
+  }, [currency, btcPrice, amount]);
 
   useEffect(() => {
     if (!result) {
