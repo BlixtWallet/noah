@@ -34,6 +34,7 @@ const SendScreen = () => {
     toggleCurrency,
     amountSat,
     btcPrice,
+    parsedAmount,
   } = useSendScreen();
 
   const handlePaste = async () => {
@@ -65,22 +66,33 @@ const SendScreen = () => {
       <View className="flex-1">
         <View className="flex-row items-center justify-center my-4">
           <TextInput
-            className="text-white text-5xl font-bold text-center"
+            className="text-white text-5xl font-bold text-center h-20"
             placeholder="0"
             placeholderTextColor="#6b7280"
             keyboardType="numeric"
             value={amount}
             onChangeText={setAmount}
             editable={isAmountEditable}
+            style={!isAmountEditable ? { color: "gray" } : {}}
           />
-          <TouchableOpacity onPress={toggleCurrency} className="ml-2">
-            <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
-          </TouchableOpacity>
+          {!parsedAmount && (
+            <TouchableOpacity onPress={toggleCurrency} className="ml-2">
+              <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
+            </TouchableOpacity>
+          )}
         </View>
         <Text className="text-gray-400 text-center text-lg">
-          {currency === "SATS"
-            ? `$${btcPrice ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2)) : "0.00"}`
-            : `${formatNumber(amountSat)} sats`}
+          {parsedAmount
+            ? `${formatNumber(parsedAmount)} sats ($${
+                btcPrice ? formatNumber(((parsedAmount * btcPrice) / 100000000).toFixed(2)) : "0.00"
+              })`
+            : currency === "SATS"
+              ? `$${
+                  btcPrice && amountSat
+                    ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
+                    : "0.00"
+                }`
+              : `${formatNumber(amountSat)} sats`}
         </Text>
 
         <View className="mt-8">

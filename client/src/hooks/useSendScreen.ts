@@ -39,6 +39,7 @@ export const useSendScreen = () => {
   const [parsedResult, setParsedResult] = useState<DisplayResult | null>(null);
   const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
   const [currency, setCurrency] = useState<"USD" | "SATS">("SATS");
+  const [parsedAmount, setParsedAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (route.params?.destination) {
@@ -60,12 +61,20 @@ export const useSendScreen = () => {
       }
 
       setDestinationType(newDestinationType);
-      setAmount(newAmount?.toString() ?? "");
+      if (newAmount) {
+        setCurrency("SATS");
+        setAmount(newAmount.toString());
+        setParsedAmount(newAmount);
+      } else {
+        setAmount("");
+        setParsedAmount(null);
+      }
       setIsAmountEditable(newIsAmountEditable);
     } else {
       setDestinationType(null);
       setAmount("");
       setIsAmountEditable(true);
+      setParsedAmount(null);
     }
   }, [destination, showAlert]);
 
@@ -239,5 +248,6 @@ export const useSendScreen = () => {
     toggleCurrency,
     amountSat,
     btcPrice,
+    parsedAmount,
   };
 };
