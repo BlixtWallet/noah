@@ -80,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
 
     let _ = std::env::var("EXPO_ACCESS_TOKEN")
         .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
-    let _ = std::env::var("ARK_SERVER_URL")
+    let ark_server_url = std::env::var("ARK_SERVER_URL")
         .context("ARK_SERVER_URL must be set in the environment variables")?;
 
     let db = libsql::Builder::new_remote(turso_url, turso_api_key)
@@ -102,7 +102,9 @@ async fn main() -> anyhow::Result<()> {
 
     let ark_client_app_state = app_state.clone();
     tokio::spawn(async move {
-        if let Err(e) = ark_client::connect_to_ark_server(ark_client_app_state).await {
+        if let Err(e) =
+            ark_client::connect_to_ark_server(ark_client_app_state, ark_server_url).await
+        {
             tracing::error!("Failed to connect to ark server: {}", e);
         }
     });

@@ -1,5 +1,4 @@
 use crate::{AppState, cron::maintenance};
-use anyhow::Context;
 
 use futures_util::stream::StreamExt;
 use server_rpc::{
@@ -7,9 +6,10 @@ use server_rpc::{
     protos::{Empty, HandshakeRequest, round_event},
 };
 
-pub async fn connect_to_ark_server(app_state: AppState) -> anyhow::Result<()> {
-    let ark_server_url = std::env::var("ARK_SERVER_URL")
-        .context("ARK_SERVER_URL must be set in the environment variables")?;
+pub async fn connect_to_ark_server(
+    app_state: AppState,
+    ark_server_url: String,
+) -> anyhow::Result<()> {
     let mut client = ArkServiceClient::connect(ark_server_url).await?;
 
     let response = client
