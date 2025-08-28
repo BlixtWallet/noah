@@ -3,6 +3,8 @@ FROM rust:1.88 AS builder
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y protobuf-compiler
+
 # Copy the workspace and server Cargo files to plan the build
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./server/Cargo.toml ./server/Cargo.toml
