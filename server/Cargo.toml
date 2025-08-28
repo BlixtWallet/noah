@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 axum = { version = "0.8.4", features = ["json"] }
 anyhow = "1.0.99"
-tokio = { version = "1.47.1", features = ["macros"] }
+tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tower-http = { version = "0.6.6", features = ["trace"] }
@@ -18,11 +18,13 @@ hex = "0.4.3"
 rand = "0.9.2"
 bitcoin = "0.32.7"
 expo_push_notification_client = "1.0.4"
-thiserror = "1.0.63"
+thiserror = "2.0.16"
 dashmap = "6.1.0"
 tokio-cron-scheduler = { version = "0.14.0", features = ["english"] }
 serde_json = "1.0.142"
 random_word = { version = "0.5.0", features = ["en"] }
+futures-util = "0.3.30"
+bark-server-rpc = { git = "https://codeberg.org/ark-bitcoin/bark", tag = "server-0.0.0-alpha.19" }
 
 async-trait = "0.1.80"
 http-body-util = "0.1.1"
@@ -32,5 +34,6 @@ aws-sdk-s3 = "1.103.0"
 ts-rs = "11.0.1"
 
 [dev-dependencies]
-tower = { version = "0.4", features = ["full"] }
+tower = { version = "0.5.2", features = ["full"] }
 tracing-test = "0.2.5"
+

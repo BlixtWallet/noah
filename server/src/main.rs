@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{Context, bail};
 use axum::{
     Router, middleware,
     routing::{get, post},
@@ -28,6 +28,7 @@ use crate::{
 };
 
 mod app_middleware;
+mod ark_client;
 mod cron;
 mod errors;
 mod migrations;
@@ -79,6 +80,8 @@ async fn main() -> anyhow::Result<()> {
 
     let _ = std::env::var("EXPO_ACCESS_TOKEN")
         .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
+    let ark_server_url = std::env::var("ARK_SERVER_URL")
+        .context("ARK_SERVER_URL must be set in the environment variables")?;
 
     let db = libsql::Builder::new_remote(turso_url, turso_api_key)
         .build()
@@ -96,6 +99,16 @@ async fn main() -> anyhow::Result<()> {
     let cron_handle = cron_scheduler(app_state.clone()).await?;
 
     cron_handle.start().await?;
+
+    let ark_client_app_state = app_state.clone();
+    tokio::spawn(async move {
+        if let Err(e) =
+            ark_client::connect_to_ark_server(ark_client_app_state, ark_server_url).await
+        {
+            bail!("Failed to connect to ark server: {}", e);
+        }
+        Ok(())
+    });
 
     // Gated routes, need auth
     let auth_router = Router::new()
