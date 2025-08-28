@@ -48,6 +48,12 @@ pub async fn send_push_notification(
         }
     }
 
+    tracing::debug!(
+        "send_push_notification: Preparing to send push notification to tokens: {:?} {:?}",
+        push_tokens,
+        data.data
+    );
+
     if push_tokens.is_empty() {
         return Ok(());
     }
@@ -69,14 +75,18 @@ pub async fn send_push_notification(
                 if let Some(body) = &data_clone.body {
                     builder = builder.body(body.clone());
                 }
-                let message = builder
-                    .data(&data_clone.data)
-                    .unwrap()
-                    .priority(data_clone.priority.clone())
-                    .content_available(data_clone.content_available)
-                    .mutable_content(false)
-                    .build()
-                    .unwrap();
+                let message = match builder.data(&data_clone.data).and_then(|b| {
+                    b.priority(data_clone.priority.clone())
+                        .content_available(data_clone.content_available)
+                        .mutable_content(false)
+                        .build()
+                }) {
+                    Ok(msg) => msg,
+                    Err(e) => {
+                        tracing::error!("Failed to build push notification message: {}", e);
+                        return;
+                    }
+                };
 
                 if let Err(e) = expo_clone.send_push_notifications(message).await {
                     tracing::error!("Failed to send push notification chunk: {}", e);

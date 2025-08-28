@@ -18,21 +18,6 @@ async fn background_sync(app_state: AppState) {
     }
 }
 
-pub async fn maintenance(app_state: AppState) {
-    tracing::info!("Maintenance task running");
-    let data = crate::push::PushNotificationData {
-        title: None,
-        body: None,
-        data: r#"{"type": "maintenance"}"#.to_string(),
-        priority: "high".to_string(),
-        content_available: true,
-    };
-
-    if let Err(e) = send_push_notification(app_state.clone(), data, None).await {
-        tracing::error!("Failed to send push notification for maintenance: {}", e);
-    }
-}
-
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
     let conn = app_state.db.connect()?;
     let mut rows = conn

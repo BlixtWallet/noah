@@ -1,4 +1,4 @@
-use crate::{AppState, cron::maintenance};
+use crate::{AppState, push::send_push_notification};
 
 use futures_util::stream::StreamExt;
 use server_rpc::{
@@ -43,4 +43,18 @@ pub async fn connect_to_ark_server(
     }
 
     Ok(())
+}
+
+pub async fn maintenance(app_state: AppState) {
+    let data = crate::push::PushNotificationData {
+        title: None,
+        body: None,
+        data: r#"{"type": "maintenance"}"#.to_string(),
+        priority: "high".to_string(),
+        content_available: true,
+    };
+
+    if let Err(e) = send_push_notification(app_state.clone(), data, None).await {
+        tracing::error!("Failed to send push notification for maintenance: {}", e);
+    }
 }

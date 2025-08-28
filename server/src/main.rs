@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{Context, bail};
 use axum::{
     Router, middleware,
     routing::{get, post},
@@ -105,8 +105,9 @@ async fn main() -> anyhow::Result<()> {
         if let Err(e) =
             ark_client::connect_to_ark_server(ark_client_app_state, ark_server_url).await
         {
-            tracing::error!("Failed to connect to ark server: {}", e);
+            bail!("Failed to connect to ark server: {}", e);
         }
+        Ok(())
     });
 
     // Gated routes, need auth
