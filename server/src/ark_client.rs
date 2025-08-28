@@ -24,17 +24,27 @@ pub async fn connect_to_ark_server(
 
     let mut stream = client.subscribe_rounds(Empty {}).await?.into_inner();
 
+    let maintenance_interval_rounds: u32 = std::env::var("MAINTENANCE_INTERVAL_ROUNDS")
+        .unwrap_or_else(|_| "1".to_string())
+        .parse()
+        .unwrap_or(1);
+    let mut round_counter = 0;
+
     tracing::info!("starting round subscription");
     while let Some(item) = stream.next().await {
         if let Ok(round_event) = item {
             if let Some(event) = round_event.event {
                 match event {
                     round_event::Event::Start(_) => {
-                        tracing::info!("Round started, triggering maintenance task");
-                        let app_state_clone = app_state.clone();
-                        tokio::spawn(async move {
-                            maintenance(app_state_clone).await;
-                        });
+                        round_counter += 1;
+                        if round_counter >= maintenance_interval_rounds {
+                            tracing::info!("Round started, triggering maintenance task");
+                            let app_state_clone = app_state.clone();
+                            tokio::spawn(async move {
+                                maintenance(app_state_clone).await;
+                            });
+                            round_counter = 0;
+                        }
                     }
                     _ => {}
                 }
