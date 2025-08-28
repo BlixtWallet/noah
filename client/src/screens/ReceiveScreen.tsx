@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable, TouchableWithoutFeedback, Keyboard } from "react-native";
+import {
+  View,
+  Pressable,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { Text } from "../components/ui/text";
-import { Input } from "../components/ui/input";
 import { NoahButton } from "../components/ui/NoahButton";
 
 import {
@@ -14,11 +21,14 @@ import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
-import { satsToBtc } from "~/lib/utils";
+import { satsToBtc, formatNumber } from "~/lib/utils";
+import { useReceiveScreen } from "../hooks/useReceiveScreen";
+import { FontAwesome } from "@expo/vector-icons";
+import { COLORS } from "~/lib/styleConstants";
 
 const ReceiveScreen = () => {
   const navigation = useNavigation();
-  const [amount, setAmount] = useState("");
+  const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const [copied, setCopied] = useState(false);
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
 
@@ -50,20 +60,23 @@ const ReceiveScreen = () => {
 
   useEffect(() => {
     if (onchainAddress && vtxoPubkey && lightningInvoice) {
-      const amountInSats = parseInt(amount);
       let uri = `bitcoin:${onchainAddress}?ark=${vtxoPubkey}&lightning=${lightningInvoice}`;
-      if (!isNaN(amountInSats) && amountInSats >= 330) {
-        const amountInBtc = satsToBtc(amountInSats);
+      if (amountSat >= 330) {
+        const amountInBtc = satsToBtc(amountSat);
         uri += `&amount=${amountInBtc}`;
       }
       setBip321Uri(uri);
     }
-  }, [onchainAddress, vtxoPubkey, lightningInvoice, amount]);
+  }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
   const handleGenerate = () => {
-    const amountInSats = parseInt(amount);
-    if (!isNaN(amountInSats) && amountInSats >= 330) {
-      generateLightningInvoice(amountInSats);
+    if (amountSat && amountSat < 330) {
+      Alert.alert("Invalid Amount", "The minimum amount is 330 sats.");
+      return;
+    }
+
+    if (amountSat >= 330) {
+      generateLightningInvoice(amountSat);
     } else {
       generateLightningInvoice(0);
     }
@@ -90,19 +103,35 @@ const ReceiveScreen = () => {
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
-            <Text className="text-2xl font-bold text-foreground">Receive Funds</Text>
+            <Text className="text-2xl font-bold text-foreground">Receive</Text>
           </View>
 
-          <View className="mb-4">
-            <Text className="text-lg text-muted-foreground mb-2">Amount (sats)</Text>
-            <Input
+          <View className="flex-row items-center justify-center my-4">
+            {currency === "USD" && <Text className="text-white text-3xl font-bold mr-2">$</Text>}
+            <TextInput
+              className="text-white text-3xl font-bold text-center h-20"
+              placeholder="0"
+              placeholderTextColor="#6b7280"
+              keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
-              placeholder="Optional"
-              keyboardType="numeric"
-              className="border-border bg-card p-4 rounded-lg text-foreground"
             />
+            {currency === "SATS" && (
+              <Text className="text-white text-3xl font-bold ml-2">sats</Text>
+            )}
+            <TouchableOpacity onPress={toggleCurrency} className="ml-2">
+              <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
+            </TouchableOpacity>
           </View>
+          <Text className="text-gray-400 text-center text-xl">
+            {currency === "SATS"
+              ? `$${
+                  btcPrice && amountSat && !isNaN(amountSat)
+                    ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
+                    : "0.00"
+                }`
+              : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
+          </Text>
 
           <NoahButton
             onPress={handleGenerate}
