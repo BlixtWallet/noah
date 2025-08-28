@@ -1,5 +1,6 @@
 use anyhow::Context;
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
+use futures_util::{StreamExt, stream};
 use serde::Serialize;
 
 use crate::{AppState, errors::ApiError};
@@ -51,28 +52,38 @@ pub async fn send_push_notification(
         return Ok(());
     }
 
-    let mut builder = ExpoPushMessage::builder(push_tokens.clone());
+    let chunks = push_tokens
+        .chunks(100)
+        .map(|c| c.to_vec())
+        .collect::<Vec<_>>();
 
-    if let Some(title) = data.title {
-        builder = builder.title(title);
-    }
+    stream::iter(chunks)
+        .for_each_concurrent(None, |chunk| {
+            let expo_clone = expo.clone();
+            let data_clone = data.clone();
+            async move {
+                let mut builder = ExpoPushMessage::builder(chunk);
+                if let Some(title) = &data_clone.title {
+                    builder = builder.title(title.clone());
+                }
+                if let Some(body) = &data_clone.body {
+                    builder = builder.body(body.clone());
+                }
+                let message = builder
+                    .data(&data_clone.data)
+                    .unwrap()
+                    .priority(data_clone.priority.clone())
+                    .content_available(data_clone.content_available)
+                    .mutable_content(false)
+                    .build()
+                    .unwrap();
 
-    if let Some(body) = data.body {
-        builder = builder.body(body);
-    }
-
-    let expo_push_message = builder
-        .data(&data.data)
-        .map_err(|e| ApiError::SerializeErr(e.to_string()))?
-        .priority(data.priority)
-        .content_available(data.content_available)
-        .mutable_content(false)
-        .build()
-        .map_err(|e| ApiError::ServerErr(e.to_string()))?;
-
-    expo.send_push_notifications(expo_push_message)
-        .await
-        .map_err(|e| ApiError::ServerErr(e.to_string()))?;
+                if let Err(e) = expo_clone.send_push_notifications(message).await {
+                    tracing::error!("Failed to send push notification chunk: {}", e);
+                }
+            }
+        })
+        .await;
 
     tracing::debug!(
         "send_push_notification: Sent push notification to tokens: {:?} {:?}",
