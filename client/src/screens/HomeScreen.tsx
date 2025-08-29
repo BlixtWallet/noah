@@ -161,7 +161,7 @@ const HomeScreen = () => {
                           {totalBalance.toLocaleString()} sats
                         </Text>
                         <Animated.View style={animatedRotation}>
-                          <ChevronDown className="text-white" size={28} />
+                          <ChevronDown color="white" size={28} />
                         </Animated.View>
                       </View>
                     </View>

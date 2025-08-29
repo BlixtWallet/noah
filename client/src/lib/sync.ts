@@ -1,6 +1,6 @@
 import { queryClient } from "~/queryClient";
 import { useWalletStore } from "~/store/walletStore";
-import { maintanance, onchainSync, sync } from "~/lib/walletApi";
+import { onchainSync, sync } from "~/lib/walletApi";
 import { syncArkReceives } from "~/lib/syncTransactions";
 import logger from "~/lib/log";
 
@@ -15,7 +15,7 @@ export const syncWallet = async () => {
 
   log.i("syncWallet");
 
-  const results = await Promise.allSettled([sync(), onchainSync(), maintanance()]);
+  const results = await Promise.allSettled([sync(), onchainSync()]);
   results.forEach((result) => {
     if (result.status === "rejected") {
       log.e("background sync failed:", [result.reason]);
