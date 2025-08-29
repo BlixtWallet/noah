@@ -13,7 +13,7 @@ const log = logger("sendUtils");
 export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | "bip321" | null;
 
 export type ParsedBip321 = {
-  onchainAddress: string;
+  onchainAddress?: string;
   arkAddress?: string;
   lightningInvoice?: string;
 };

@@ -223,7 +223,7 @@ export const useSendScreen = () => {
 
   const handleSend = () => {
     if (destinationType === "bip321" && bip321Data) {
-      let destinationToSend = "";
+      let destinationToSend = null;
       let newDestinationType: DestinationTypes = "onchain";
 
       if (selectedPaymentMethod === "ark" && bip321Data.arkAddress) {
@@ -232,9 +232,17 @@ export const useSendScreen = () => {
       } else if (selectedPaymentMethod === "lightning" && bip321Data.lightningInvoice) {
         destinationToSend = bip321Data.lightningInvoice;
         newDestinationType = "lightning";
-      } else {
+      } else if (selectedPaymentMethod === "onchain" && bip321Data.onchainAddress) {
         destinationToSend = bip321Data.onchainAddress;
         newDestinationType = "onchain";
+      }
+
+      if (!destinationToSend) {
+        showAlert({
+          title: "Invalid Destination",
+          description: "Please select a valid destination method.",
+        });
+        return;
       }
 
       send({

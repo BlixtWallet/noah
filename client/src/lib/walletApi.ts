@@ -200,12 +200,26 @@ export const maintanance = async (): Promise<Result<void, Error>> => {
 
 export const deleteWallet = async (): Promise<Result<void, Error>> => {
   // Remove the existing documents directory if it exists
-  const dirExists = RNFSTurbo.exists(DOCUMENT_DIRECTORY_PATH);
-  if (dirExists) {
+  const arkDataExists = RNFSTurbo.exists(ARK_DATA_PATH);
+  if (arkDataExists) {
     // Delete the Data path
     const deleteResult = Result.fromThrowable(
       () => {
-        return RNFSTurbo.unlink(DOCUMENT_DIRECTORY_PATH);
+        RNFSTurbo.unlink(ARK_DATA_PATH);
+      },
+      (e) => e as Error,
+    )();
+
+    if (deleteResult.isErr()) return err(deleteResult.error);
+  }
+
+  // Remove the mmkv directory if it exists
+  const mmkvExists = RNFSTurbo.exists(`${DOCUMENT_DIRECTORY_PATH}/mmkv`);
+  if (mmkvExists) {
+    // Delete the Data path
+    const deleteResult = Result.fromThrowable(
+      () => {
+        RNFSTurbo.unlink(`${DOCUMENT_DIRECTORY_PATH}/mmkv`);
       },
       (e) => e as Error,
     )();

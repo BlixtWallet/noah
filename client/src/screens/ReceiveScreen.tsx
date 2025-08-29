@@ -65,7 +65,7 @@ const ReceiveScreen = () => {
         const amountInBtc = satsToBtc(amountSat);
         uri += `&amount=${amountInBtc}`;
       }
-      setBip321Uri(uri);
+      setBip321Uri(uri.toUpperCase());
     }
   }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
