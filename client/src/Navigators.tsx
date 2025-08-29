@@ -177,6 +177,7 @@ const AppTabs = () => {
       hapticFeedbackEnabled
       screenOptions={{
         tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
+        preventsDefault: isIos ? true : false,
       }}
     >
       <Tab.Screen
