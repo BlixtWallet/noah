@@ -6,14 +6,24 @@ import {
   isValidBolt11,
   isValidLightningAddress,
 } from "../constants";
+import logger from "./log";
 
-export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | null;
+const log = logger("sendUtils");
+
+export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | "bip321" | null;
+
+export type ParsedBip321 = {
+  onchainAddress: string;
+  arkAddress?: string;
+  lightningInvoice?: string;
+};
 
 export type ParsedDestination = {
   destinationType: DestinationTypes;
   amount?: number;
   isAmountEditable: boolean;
   error?: string;
+  bip321?: ParsedBip321;
 };
 
 export const isValidDestination = (dest: string): boolean => {
@@ -27,8 +37,49 @@ export const isValidDestination = (dest: string): boolean => {
   );
 };
 
+const btcToSats = (btc: number) => {
+  return btc * 100_000_000;
+};
+
+export const parseBip321Uri = (uri: string): ParsedDestination => {
+  try {
+    const url = new URL(uri);
+    const onchainAddress = url.pathname;
+    const amountBtc = url.searchParams.get("amount");
+    const arkAddress = url.searchParams.get("ark");
+    const lightningInvoice = url.searchParams.get("lightning");
+
+    const bip321: ParsedBip321 = { onchainAddress };
+    if (arkAddress) bip321.arkAddress = arkAddress;
+    if (lightningInvoice) bip321.lightningInvoice = lightningInvoice;
+
+    const result: ParsedDestination = {
+      destinationType: "bip321",
+      isAmountEditable: !amountBtc,
+      bip321,
+    };
+
+    if (amountBtc) {
+      result.amount = btcToSats(parseFloat(amountBtc));
+    }
+
+    return result;
+  } catch (error) {
+    log.w("Failed to parse BIP-321 URI", [error]);
+    return {
+      destinationType: null,
+      isAmountEditable: true,
+      error: "Invalid BIP-321 URI",
+    };
+  }
+};
+
 export const parseDestination = (destination: string): ParsedDestination => {
-  const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
+  if (destination.startsWith("bitcoin:")) {
+    return parseBip321Uri(destination);
+  }
+
+  const cleanedDestination = destination.replace(/^(lightning:)/i, "");
 
   if (isValidLightningAddress(cleanedDestination)) {
     return {

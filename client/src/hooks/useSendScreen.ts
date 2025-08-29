@@ -2,7 +2,12 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { useAlert } from "~/contexts/AlertProvider";
-import { parseDestination, isValidDestination, type DestinationTypes } from "../lib/sendUtils";
+import {
+  parseDestination,
+  isValidDestination,
+  type DestinationTypes,
+  ParsedBip321,
+} from "../lib/sendUtils";
 import { useSend } from "./usePayments";
 import {
   type ArkoorPaymentResult,
@@ -40,6 +45,10 @@ export const useSendScreen = () => {
   const [destinationType, setDestinationType] = useState<DestinationTypes | null>(null);
   const [currency, setCurrency] = useState<"USD" | "SATS">("SATS");
   const [parsedAmount, setParsedAmount] = useState<number | null>(null);
+  const [bip321Data, setBip321Data] = useState<ParsedBip321 | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "ark" | "lightning" | "onchain"
+  >("onchain");
 
   useEffect(() => {
     if (route.params?.destination) {
@@ -54,6 +63,7 @@ export const useSendScreen = () => {
         amount: newAmount,
         isAmountEditable: newIsAmountEditable,
         error: parseError,
+        bip321,
       } = parseDestination(destination);
 
       if (parseError) {
@@ -70,13 +80,30 @@ export const useSendScreen = () => {
         setParsedAmount(null);
       }
       setIsAmountEditable(newIsAmountEditable);
+
+      if (newDestinationType === "bip321" && bip321) {
+        setBip321Data(bip321);
+        if (bip321.arkAddress) {
+          setSelectedPaymentMethod("ark");
+        } else if (bip321.lightningInvoice) {
+          setSelectedPaymentMethod("lightning");
+        } else {
+          setSelectedPaymentMethod("onchain");
+        }
+      } else {
+        setBip321Data(null);
+      }
     } else {
       setDestinationType(null);
       setAmount("");
       setIsAmountEditable(true);
       setParsedAmount(null);
+      setBip321Data(null);
     }
   }, [destination, showAlert]);
+
+  const finalDestinationType =
+    destinationType === "bip321" ? selectedPaymentMethod : destinationType;
 
   const {
     mutate: send,
@@ -84,7 +111,7 @@ export const useSendScreen = () => {
     data: result,
     error,
     reset,
-  } = useSend(destinationType);
+  } = useSend(finalDestinationType);
 
   const amountSat = useMemo(() => {
     if (currency === "SATS") {
@@ -195,6 +222,29 @@ export const useSendScreen = () => {
   }, [result, amountSat, showAlert, addTransaction, destinationType, comment, btcPrice]);
 
   const handleSend = () => {
+    if (destinationType === "bip321" && bip321Data) {
+      let destinationToSend = "";
+      let newDestinationType: DestinationTypes = "onchain";
+
+      if (selectedPaymentMethod === "ark" && bip321Data.arkAddress) {
+        destinationToSend = bip321Data.arkAddress;
+        newDestinationType = "ark";
+      } else if (selectedPaymentMethod === "lightning" && bip321Data.lightningInvoice) {
+        destinationToSend = bip321Data.lightningInvoice;
+        newDestinationType = "lightning";
+      } else {
+        destinationToSend = bip321Data.onchainAddress;
+        newDestinationType = "onchain";
+      }
+
+      send({
+        destination: destinationToSend,
+        amountSat: newDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
+        comment: comment || null,
+      });
+      return;
+    }
+
     if (!isValidDestination(destination)) {
       showAlert({
         title: "Invalid Destination",
@@ -212,7 +262,7 @@ export const useSendScreen = () => {
 
     send({
       destination: cleanedDestination,
-      amountSat: destinationType === "lightning" ? undefined : amountSat,
+      amountSat: finalDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
       comment: comment || null,
     });
   };
@@ -223,6 +273,10 @@ export const useSendScreen = () => {
     setDestination("");
     setAmount("");
     setComment("");
+  };
+
+  const handleClear = () => {
+    setDestination("");
   };
 
   const { showCamera, setShowCamera, handleScanPress, codeScanner } = useQRCodeScanner({
@@ -247,6 +301,7 @@ export const useSendScreen = () => {
     parsedResult,
     handleSend,
     handleDone,
+    handleClear,
     isSending,
     error,
     errorMessage,
@@ -259,5 +314,8 @@ export const useSendScreen = () => {
     amountSat,
     btcPrice,
     parsedAmount,
+    bip321Data,
+    selectedPaymentMethod,
+    setSelectedPaymentMethod,
   };
 };

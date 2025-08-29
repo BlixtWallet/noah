@@ -15,3 +15,7 @@ export function isValidEmail(email: string): boolean {
 export const formatNumber = (num: number | string) => {
   return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
 };
+
+export const satsToBtc = (sats: number) => {
+  return sats / 100_000_000;
+};

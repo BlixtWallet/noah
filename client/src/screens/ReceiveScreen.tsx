@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable, TouchableWithoutFeedback, Keyboard } from "react-native";
-import { Text } from "../components/ui/text";
-import { Input } from "../components/ui/input";
-import { NoahButton } from "../components/ui/NoahButton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+  View,
+  Pressable,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
+import { Text } from "../components/ui/text";
+import { NoahButton } from "../components/ui/NoahButton";
+
 import {
   useGenerateLightningInvoice,
   useGenerateOnchainAddress,
@@ -20,79 +21,64 @@ import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
-import { ArkIcon } from "~/lib/icons/Ark";
-import { LightningIcon } from "~/lib/icons/Lightning";
-import { OnchainIcon } from "~/lib/icons/Onchain";
-
-type ReceiveType = "ark" | "onchain" | "lightning";
-
-const receiveTypeDisplay: Record<ReceiveType, string> = {
-  ark: "Ark",
-  onchain: "On-chain",
-  lightning: "Lightning",
-};
-
-const receiveTypeDescription: Record<ReceiveType, string> = {
-  ark: "Instant, low-fee Ark payments",
-  onchain: "Standard Bitcoin transaction",
-  lightning: "Fast payments via Lightning Network",
-};
+import { satsToBtc, formatNumber } from "~/lib/utils";
+import { useReceiveScreen } from "../hooks/useReceiveScreen";
+import { FontAwesome } from "@expo/vector-icons";
+import { COLORS } from "~/lib/styleConstants";
 
 const ReceiveScreen = () => {
   const navigation = useNavigation();
-  const [receiveType, setReceiveType] = useState<ReceiveType | undefined>(undefined);
-  const [amount, setAmount] = useState("");
+  const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const [copied, setCopied] = useState(false);
+  const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
 
   const {
     mutate: generateOffchainAddress,
     data: vtxoPubkey,
     isPending: isGeneratingVtxo,
-    reset: resetVtxo,
   } = useGenerateOffchainAddress();
 
   const {
     mutate: generateOnchainAddress,
     data: onchainAddress,
     isPending: isGeneratingOnchain,
-    reset: resetOnchain,
   } = useGenerateOnchainAddress();
 
   const {
     mutate: generateLightningInvoice,
     data: lightningInvoice,
     isPending: isGeneratingLightning,
-    reset: resetLightning,
   } = useGenerateLightningInvoice();
 
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
-  const address =
-    receiveType === "ark"
-      ? vtxoPubkey
-      : receiveType === "onchain"
-        ? onchainAddress
-        : lightningInvoice;
 
   useEffect(() => {
-    if (receiveType === "ark") {
-      resetOnchain();
-      resetLightning();
-    } else if (receiveType === "onchain") {
-      resetVtxo();
-      resetLightning();
-    } else if (receiveType === "lightning") {
-      resetVtxo();
-      resetOnchain();
+    generateOnchainAddress();
+    generateOffchainAddress();
+    generateLightningInvoice(0);
+  }, [generateLightningInvoice, generateOffchainAddress, generateOnchainAddress]);
+
+  useEffect(() => {
+    if (onchainAddress && vtxoPubkey && lightningInvoice) {
+      let uri = `bitcoin:${onchainAddress}?ark=${vtxoPubkey}&lightning=${lightningInvoice}`;
+      if (amountSat >= 330) {
+        const amountInBtc = satsToBtc(amountSat);
+        uri += `&amount=${amountInBtc}`;
+      }
+      setBip321Uri(uri);
     }
-  }, [receiveType, resetOnchain, resetVtxo, resetLightning]);
+  }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
   const handleGenerate = () => {
-    if (receiveType === "ark") {
-      generateOffchainAddress();
-    } else if (receiveType === "onchain") {
-      generateOnchainAddress();
-    } else if (receiveType === "lightning") {
-      generateLightningInvoice(parseInt(amount));
+    if (amountSat && amountSat < 330) {
+      Alert.alert("Invalid Amount", "The minimum amount is 330 sats.");
+      return;
+    }
+
+    if (amountSat >= 330) {
+      generateLightningInvoice(amountSat);
+    } else {
+      generateLightningInvoice(0);
     }
   };
 
@@ -101,10 +87,6 @@ const ReceiveScreen = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 1000);
   };
-
-  const currentSelectValue = receiveType
-    ? { value: receiveType, label: receiveTypeDisplay[receiveType] }
-    : undefined;
 
   const truncateAddress = (addr: string) => {
     if (addr.length <= 100) {
@@ -121,76 +103,57 @@ const ReceiveScreen = () => {
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
-            <Text className="text-2xl font-bold text-foreground">Receive Funds</Text>
+            <Text className="text-2xl font-bold text-foreground">Receive</Text>
           </View>
 
-          <View className="mb-4">
-            <Text className="text-lg text-muted-foreground mb-2">Receive via</Text>
-            <Select
-              value={currentSelectValue}
-              onValueChange={(v) => v && setReceiveType(v.value as ReceiveType)}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  className="text-foreground text-sm native:text-lg"
-                  placeholder="Select receive type..."
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  label={receiveTypeDisplay.ark}
-                  value="ark"
-                  icon={<ArkIcon className="w-4 h-4 mr-2 text-foreground" />}
-                  description={receiveTypeDescription.ark}
-                />
-                <SelectItem
-                  label={receiveTypeDisplay.lightning}
-                  value="lightning"
-                  icon={<LightningIcon className="w-4 h-4 mr-2 text-foreground" />}
-                  description={receiveTypeDescription.lightning}
-                />
-                <SelectItem
-                  label={receiveTypeDisplay.onchain}
-                  value="onchain"
-                  icon={<OnchainIcon className="w-4 h-4 mr-2 text-foreground" />}
-                  description={receiveTypeDescription.onchain}
-                />
-              </SelectContent>
-            </Select>
-          </View>
-
-          <View className="mb-4">
-            <Text className="text-lg text-muted-foreground mb-2">Amount (sats)</Text>
-            <Input
+          <View className="flex-row items-center justify-center my-4">
+            {currency === "USD" && <Text className="text-white text-3xl font-bold mr-2">$</Text>}
+            <TextInput
+              className="text-white text-3xl font-bold text-center h-20"
+              placeholder="0"
+              placeholderTextColor="#6b7280"
+              keyboardType="numeric"
               value={amount}
               onChangeText={setAmount}
-              placeholder="Optional"
-              keyboardType="numeric"
-              className="border-border bg-card p-4 rounded-lg text-foreground"
             />
+            {currency === "SATS" && (
+              <Text className="text-white text-3xl font-bold ml-2">sats</Text>
+            )}
+            <TouchableOpacity onPress={toggleCurrency} className="ml-2">
+              <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
+            </TouchableOpacity>
           </View>
+          <Text className="text-gray-400 text-center text-xl">
+            {currency === "SATS"
+              ? `$${
+                  btcPrice && amountSat && !isNaN(amountSat)
+                    ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
+                    : "0.00"
+                }`
+              : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
+          </Text>
 
           <NoahButton
             onPress={handleGenerate}
             isLoading={isLoading}
-            disabled={isLoading || !receiveType}
+            disabled={isLoading}
             className="mt-8"
           >
             Generate
           </NoahButton>
 
-          {address && (
+          {bip321Uri && (
             <View className="mt-8 p-4 bg-card rounded-lg items-center">
               <View className="p-2 bg-white rounded-lg">
-                <QRCode value={address} size={200} backgroundColor="white" color="black" />
+                <QRCode value={bip321Uri} size={200} backgroundColor="white" color="black" />
               </View>
-              <Pressable onPress={() => handleCopyToClipboard(address)} className="mt-4 p-2">
+              <Pressable onPress={() => handleCopyToClipboard(bip321Uri)} className="mt-4 p-2">
                 <Text
                   className={`text-base text-center break-words ${
                     copied ? "text-muted-foreground" : "text-foreground"
                   }`}
                 >
-                  {truncateAddress(address)}
+                  {truncateAddress(bip321Uri)}
                 </Text>
                 <Text
                   className={`text-sm text-center mt-2 ${
