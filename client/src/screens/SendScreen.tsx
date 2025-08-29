@@ -135,18 +135,21 @@ const SendScreen = () => {
         )}
         <View className="flex-row items-center justify-between mt-9 mr-4 ml-4 gap-4">
           {destination ? (
-            <Button onPress={handleClear} variant="outline" className="flex-1">
-              <Text>Cancel</Text>
-            </Button>
+            <View className="flex-1">
+              <Button onPress={handleClear} variant="outline">
+                <Text>Cancel</Text>
+              </Button>
+            </View>
           ) : null}
-          <NoahButton
-            onPress={handleSend}
-            disabled={!destination || isSending}
-            isLoading={isSending}
-            className="flex-1"
-          >
-            Send
-          </NoahButton>
+          <View className="flex-1">
+            <NoahButton
+              onPress={handleSend}
+              disabled={!destination || isSending}
+              isLoading={isSending}
+            >
+              Send
+            </NoahButton>
+          </View>
         </View>
       </View>
     </NoahSafeAreaView>

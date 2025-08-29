@@ -81,7 +81,7 @@ export const useSendScreen = () => {
       }
       setIsAmountEditable(newIsAmountEditable);
 
-      if (bip321) {
+      if (newDestinationType === "bip321" && bip321) {
         setBip321Data(bip321);
         if (bip321.arkAddress) {
           setSelectedPaymentMethod("ark");
@@ -236,8 +236,6 @@ export const useSendScreen = () => {
         destinationToSend = bip321Data.onchainAddress;
         newDestinationType = "onchain";
       }
-
-      console.log(newDestinationType, destinationToSend);
 
       send({
         destination: destinationToSend,

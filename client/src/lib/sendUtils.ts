@@ -6,6 +6,9 @@ import {
   isValidBolt11,
   isValidLightningAddress,
 } from "../constants";
+import logger from "./log";
+
+const log = logger("sendUtils");
 
 export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | "bip321" | null;
 
@@ -62,6 +65,7 @@ export const parseBip321Uri = (uri: string): ParsedDestination => {
 
     return result;
   } catch (error) {
+    log.w("Failed to parse BIP-321 URI", [error]);
     return {
       destinationType: null,
       isAmountEditable: true,
