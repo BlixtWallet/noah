@@ -13,7 +13,14 @@ export function isValidEmail(email: string): boolean {
 }
 
 export const formatNumber = (num: number | string) => {
-  return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+  const numStr = num.toString();
+  const parts = numStr.split(".");
+
+  // Add commas to the integer part only
+  parts[0] = parts[0].replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+
+  // Join back with decimal part if it exists
+  return parts.join(".");
 };
 
 export const satsToBtc = (sats: number) => {

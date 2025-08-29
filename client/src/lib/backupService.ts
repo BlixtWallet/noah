@@ -8,7 +8,6 @@ import {
   loadWalletIfNeeded,
 } from "./walletApi";
 import { useWalletStore } from "~/store/walletStore";
-import RNFSTurbo from "react-native-fs-turbo";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 
@@ -165,7 +164,8 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
     await loadWalletIfNeeded();
     useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
 
-    // Restart the app to reload the restored state from MMKV
+    // The native code handles restoring the files. An app restart is
+    // recommended to ensure all services reload the restored data.
 
     return ok(undefined);
   } catch (e) {

@@ -16,8 +16,11 @@ import {
   boardAllArk,
   offboardAllArk,
 } from "../lib/paymentsApi";
-import { type DestinationTypes } from "~/lib/sendUtils";
 import { queryClient } from "~/queryClient";
+import { addTransaction } from "~/lib/transactionsDb";
+import { Transaction, PaymentTypes } from "~/types/transaction";
+import uuid from "react-native-uuid";
+import { DestinationTypes } from "~/lib/sendUtils";
 
 export function useGenerateOffchainAddress() {
   const { showAlert } = useAlert();
@@ -142,6 +145,21 @@ type SendResult =
   | LnurlPaymentResult
   | OnchainPaymentResult;
 
+const mapDestinationToPaymentType = (destinationType: DestinationTypes): PaymentTypes | null => {
+  switch (destinationType) {
+    case "ark":
+      return "Arkoor";
+    case "lightning":
+      return "Bolt11";
+    case "lnurl":
+      return "Lnurl";
+    case "onchain":
+      return "Onchain";
+    default:
+      return null;
+  }
+};
+
 export function useSend(destinationType: DestinationTypes) {
   const { showAlert } = useAlert();
 
@@ -184,8 +202,23 @@ export function useSend(destinationType: DestinationTypes) {
       }
       return result.value;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
+      const paymentType = mapDestinationToPaymentType(destinationType);
+
+      if (paymentType) {
+        const { destination, amountSat } = variables;
+        const transaction: Transaction = {
+          id: uuid.v4().toString(),
+          txid: "txid" in data ? (data.txid as string) : undefined,
+          type: paymentType,
+          direction: "outgoing",
+          amount: amountSat || 0,
+          date: new Date().toISOString(),
+          destination: destination,
+        };
+        addTransaction(transaction);
+      }
     },
     onError: (error: Error) => {
       showAlert({ title: "Send Failed", description: error.message });

@@ -1,6 +1,7 @@
 package com.margelo.nitro.noahtools
 
 import android.app.Application
+import android.os.Process
 import android.content.Context
 import android.util.Base64
 import android.util.Log
@@ -10,6 +11,8 @@ import java.lang.reflect.Method
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 import java.util.zip.ZipEntry
@@ -62,9 +65,28 @@ class NoahTools : HybridNoahToolsSpec() {
 
   override fun getAppLogs(): Promise<Array<String>> {
     return Promise.async {
-      // This function is not directly used in backup/restore, so we can leave it as is.
-      // For brevity, I'm returning an empty array. The original implementation can be restored if needed.
-      return@async arrayOf<String>()
+      val logcat = ArrayDeque<String>(2000)
+      val pid = Process.myPid().toString()
+      try {
+        val process = Runtime.getRuntime().exec("logcat -d -v threadtime")
+        val bufferedReader = BufferedReader(InputStreamReader(process.inputStream))
+
+        var line: String?
+        while (bufferedReader.readLine().also { line = it } != null) {
+          if (line!!.contains(pid) &&
+              (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
+              !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
+            logcat.addLast(line!!)
+            if (logcat.size > 2000) {
+              logcat.removeFirst()
+            }
+          }
+        }
+        process.waitFor()
+      } catch (e: Exception) {
+        throw Exception("Failed to read logcat: ${e.message}")
+      }
+      return@async logcat.toTypedArray()
     }
   }
 
@@ -119,17 +141,10 @@ class NoahTools : HybridNoahToolsSpec() {
         backupStagingPath.mkdirs()
 
         // 2. Define source paths
-        val mmkvPath = File(documentDirectory, "mmkv")
         val dataPath = File(documentDirectory, "noah-data-${appVariant}")
-        Log.d(TAG, "MMKV path: ${mmkvPath.absolutePath}, Data path: ${dataPath.absolutePath}")
+        Log.d(TAG, "Data path: ${dataPath.absolutePath}")
 
         // 3. Copy directories to staging
-        if (mmkvPath.exists()) {
-          Log.d(TAG, "Copying MMKV directory")
-          mmkvPath.copyRecursively(File(backupStagingPath, "mmkv"))
-        } else {
-          Log.w(TAG, "MMKV directory not found")
-        }
         if (dataPath.exists()) {
           Log.d(TAG, "Copying data directory")
           dataPath.copyRecursively(File(backupStagingPath, "noah-data-${appVariant}"))
@@ -187,26 +202,16 @@ class NoahTools : HybridNoahToolsSpec() {
         unzipFile(tempZipPath.absolutePath, unzipDirectory.absolutePath)
 
         // 4. Define source and destination paths for restore
-        val mmkvSourcePath = File(unzipDirectory, "backup_staging/mmkv")
         val dataSourcePath = File(unzipDirectory, "backup_staging/noah-data-${appVariant}")
 
-        val mmkvDestPath = File(documentDirectory, "mmkv")
         val dataDestPath = File(documentDirectory, "noah-data-${appVariant}")
 
         // 5. Clean up existing directories at destination
-        if (mmkvDestPath.exists()) {
-          mmkvDestPath.deleteRecursively()
-        }
         if (dataDestPath.exists()) {
           dataDestPath.deleteRecursively()
         }
 
         // 6. Move files from unzipped backup to final destination
-        if (mmkvSourcePath.exists()) {
-          if (!mmkvSourcePath.renameTo(mmkvDestPath)) {
-            throw Exception("Failed to move mmkv directory")
-          }
-        }
         if (dataSourcePath.exists()) {
           if (!dataSourcePath.renameTo(dataDestPath)) {
             throw Exception("Failed to move noah-data directory")

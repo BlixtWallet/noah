@@ -2,6 +2,7 @@ import { memo, useEffect, useState } from "react";
 import { useSyncManager } from "~/hooks/useSyncManager";
 import { useServerRegistration } from "~/hooks/useServerRegistration";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
+import { useTransactionStore } from "~/store/transactionStore";
 
 const AppServices = memo(() => {
   const [isReady, setIsReady] = useState(false);
@@ -13,6 +14,7 @@ const AppServices = memo(() => {
 
   useEffect(() => {
     setIsReady(true);
+    useTransactionStore.getState().loadTransactions();
   }, []);
 
   return null;

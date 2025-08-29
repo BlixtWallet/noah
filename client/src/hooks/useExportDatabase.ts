@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { zipDirectory } from "noah-tools";
 import Share from "react-native-share";
 import RNFSTurbo from "react-native-fs-turbo";
-import { Result, ResultAsync } from "neverthrow";
-import { CACHES_DIRECTORY_PATH, DOCUMENT_DIRECTORY_PATH } from "~/constants";
+import { ResultAsync } from "neverthrow";
+import { CACHES_DIRECTORY_PATH } from "~/constants";
+import { createBackup } from "noah-tools";
+import { getMnemonic } from "~/lib/crypto";
 
 export const useExportDatabase = () => {
   const [isExporting, setIsExporting] = useState(false);
@@ -11,84 +12,78 @@ export const useExportDatabase = () => {
   const [showExportError, setShowExportError] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  const exportDatabaseToZip = async () => {
-    const now = new Date();
-    const timestamp = now.toISOString().replace(/[:.]/g, "-").split("T")[0];
-    const timeComponent = now.toISOString().replace(/[:.]/g, "-").split("T")[1].split(".")[0];
-    const randomId = Math.random().toString(36).substring(2, 8);
-    const filename = `noah_database_export_${timestamp}_${timeComponent}_${randomId}.zip`;
-    const outputPath = `${CACHES_DIRECTORY_PATH}/${filename}`;
-
-    // Use DocumentDirectoryPath to include both noah-data-* and mmkv folders
-    // Create zip file using the native zipDirectory method
-    const zipResult = await ResultAsync.fromPromise(
-      zipDirectory(DOCUMENT_DIRECTORY_PATH, outputPath),
-      (e) => e as Error,
-    );
-
-    if (zipResult.isErr()) {
-      console.error("Error creating zip file:", zipResult.error);
-      setExportError("Failed to create zip file. Please try again.");
-      setShowExportError(true);
-      setTimeout(() => {
-        setShowExportError(false);
-        setExportError(null);
-      }, 5000);
-      return zipResult;
-    }
-
-    return zipResult.map(() => ({ outputPath, filename }));
-  };
-
   const exportDatabase = async () => {
     setIsExporting(true);
 
-    const zipResult = await exportDatabaseToZip();
-
-    if (zipResult.isErr()) {
+    const mnemonicResult = await getMnemonic();
+    if (mnemonicResult.isErr()) {
+      setExportError("Could not retrieve mnemonic to encrypt backup.");
+      setShowExportError(true);
       setIsExporting(false);
       return;
     }
 
-    const { outputPath, filename } = zipResult.value;
+    const backupResult = await ResultAsync.fromPromise(
+      createBackup(mnemonicResult.value),
+      (e) => e as Error,
+    );
 
-    // Share the zip file
+    if (backupResult.isErr()) {
+      console.error("Error creating backup:", backupResult.error);
+      setExportError("Failed to create backup file. Please try again.");
+      setShowExportError(true);
+      setIsExporting(false);
+      return;
+    }
+
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, "-").split("T")[0];
+    const filename = `noah_backup_${timestamp}.txt`;
+    const outputPath = `${CACHES_DIRECTORY_PATH}/${filename}`;
+
+    const writeResult = await ResultAsync.fromPromise(
+      new Promise<void>((resolve, reject) => {
+        try {
+          RNFSTurbo.writeFile(outputPath, backupResult.value, "base64");
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }),
+      (e) => e as Error,
+    );
+
+    if (writeResult.isErr()) {
+      console.error("Error writing backup file:", writeResult.error);
+      setExportError("Failed to save backup file. Please try again.");
+      setShowExportError(true);
+      setIsExporting(false);
+      return;
+    }
+
     const shareResult = await ResultAsync.fromPromise(
       Share.open({
-        title: "Export Database",
+        title: "Export Encrypted Backup",
         url: `file://${outputPath}`,
-        type: "application/zip",
+        type: "text/plain",
         filename: filename,
-        subject: "Noah Wallet Database Export",
+        subject: "Noah Wallet Encrypted Backup",
       }),
       (e) => e as Error,
     );
 
     if (shareResult.isErr()) {
       if (!shareResult.error.message.includes("User did not share")) {
-        console.error("Error sharing zip file:", shareResult.error);
-        setExportError("Failed to share the export file. Please try again.");
+        console.error("Error sharing backup file:", shareResult.error);
+        setExportError("Failed to share the backup file. Please try again.");
         setShowExportError(true);
-        setTimeout(() => {
-          setShowExportError(false);
-          setExportError(null);
-        }, 5000);
       }
     } else {
       setShowExportSuccess(true);
-      setTimeout(() => {
-        setShowExportSuccess(false);
-      }, 3000);
+      setTimeout(() => setShowExportSuccess(false), 3000);
     }
 
-    // Clean up the temporary file
-    Result.fromThrowable(
-      () => {
-        return RNFSTurbo.unlink(outputPath);
-      },
-      (e) => e as Error,
-    )();
-
+    await RNFSTurbo.unlink(outputPath);
     setIsExporting(false);
   };
 
@@ -98,6 +93,5 @@ export const useExportDatabase = () => {
     showExportError,
     exportError,
     exportDatabase,
-    exportDatabaseToZip,
   };
 };

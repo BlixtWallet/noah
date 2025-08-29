@@ -237,7 +237,7 @@ const SettingsScreen = () => {
                   </Button>
                 }
                 title="Export Database"
-                description="This will create a zip file containing all your wallet data including transactions, keys, and configuration. Keep this file secure as it contains sensitive information."
+                description="This will create an encrypted backup file containing your wallet's databases. Keep this file secure, as it can be used to restore your wallet."
                 onConfirm={exportDatabase}
                 confirmText="Export"
                 confirmVariant="default"

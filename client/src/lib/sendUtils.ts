@@ -27,7 +27,31 @@ export type ParsedDestination = {
 };
 
 export const isValidDestination = (dest: string): boolean => {
-  const cleanedDest = dest.replace(/^(bitcoin:|lightning:)/i, "");
+  if (dest.toLowerCase().startsWith("bitcoin:")) {
+    try {
+      const url = new URL(dest);
+      // For BIP-321 URIs, the onchain address is optional
+      // Check if we have at least one valid payment method
+      const onchainAddress = url.pathname;
+      const arkAddress = url.searchParams.get("ark") || url.searchParams.get("ARK");
+      const lightningInvoice =
+        url.searchParams.get("lightning") || url.searchParams.get("LIGHTNING");
+
+      // Valid if we have at least one payment method
+      const hasOnchain = !!(onchainAddress && isValidBitcoinAddress(onchainAddress));
+      const hasArk = !!(
+        arkAddress &&
+        (isArkPublicKey(arkAddress) || isValidArkAddress(arkAddress))
+      );
+      const hasLightning = !!(lightningInvoice && isValidBolt11(lightningInvoice));
+
+      return hasOnchain || hasArk || hasLightning;
+    } catch (e) {
+      log.w("Failed to parse BIP-321 URI", [e]);
+      return false;
+    }
+  }
+  const cleanedDest = dest.replace(/^(lightning:)/i, "");
   return (
     isArkPublicKey(cleanedDest) ||
     isValidBitcoinAddress(cleanedDest) ||
@@ -38,16 +62,16 @@ export const isValidDestination = (dest: string): boolean => {
 };
 
 const btcToSats = (btc: number) => {
-  return btc * 100_000_000;
+  return Math.round(btc * 100_000_000);
 };
 
 export const parseBip321Uri = (uri: string): ParsedDestination => {
   try {
     const url = new URL(uri);
     const onchainAddress = url.pathname;
-    const amountBtc = url.searchParams.get("amount");
-    const arkAddress = url.searchParams.get("ark");
-    const lightningInvoice = url.searchParams.get("lightning");
+    const amountBtc = url.searchParams.get("amount") || url.searchParams.get("AMOUNT");
+    const arkAddress = url.searchParams.get("ark") || url.searchParams.get("ARK");
+    const lightningInvoice = url.searchParams.get("lightning") || url.searchParams.get("LIGHTNING");
 
     const bip321: ParsedBip321 = { onchainAddress };
     if (arkAddress) bip321.arkAddress = arkAddress;
@@ -75,7 +99,7 @@ export const parseBip321Uri = (uri: string): ParsedDestination => {
 };
 
 export const parseDestination = (destination: string): ParsedDestination => {
-  if (destination.startsWith("bitcoin:")) {
+  if (destination.toLowerCase().startsWith("bitcoin:")) {
     return parseBip321Uri(destination);
   }
 

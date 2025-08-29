@@ -1,5 +1,6 @@
 import { ARK_DATA_PATH } from "../constants";
-import { useTransactionStore } from "../store/transactionStore";
+import { useTransactionStore } from "~/store/transactionStore";
+import { addTransaction, getTransactions } from "./transactionsDb";
 import type { Transaction } from "../types/transaction";
 import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
@@ -19,8 +20,6 @@ type ReceivedVtxos = {
 
 export const syncArkReceives = async () => {
   const db = await SQLite.openDatabaseAsync("db.sqlite", { useNewConnection: true }, ARK_DATA_PATH);
-  const { addTransaction } = useTransactionStore.getState();
-
   const rowsResult = await ResultAsync.fromPromise(
     db.getAllAsync<ReceivedVtxos>(
       `SELECT id, amount_sat, created_at FROM bark_vtxo WHERE received_in NOT IN (SELECT DISTINCT spent_in FROM bark_vtxo WHERE spent_in IS NOT NULL);`,
@@ -37,9 +36,14 @@ export const syncArkReceives = async () => {
   const rows = rowsResult.value;
 
   if (rows && rows.length > 0) {
-    const currentTransactions = useTransactionStore
-      .getState()
-      .transactions.filter((tx) => tx.type === "Arkoor");
+    const currentTransactionsResult = await getTransactions();
+    if (currentTransactionsResult.isErr()) {
+      log.w("Could not get current transactions", [currentTransactionsResult.error]);
+      return;
+    }
+    const currentTransactions = currentTransactionsResult.value.filter(
+      (tx) => tx.type === "Arkoor",
+    );
 
     for (const tx of rows) {
       const existingTx = currentTransactions.find(
@@ -65,11 +69,12 @@ export const syncArkReceives = async () => {
           description: "",
           destination: "",
         };
-        addTransaction(newTransaction);
+        await addTransaction(newTransaction);
       }
     }
   }
 
   log.d("Successfully synced Ark transactions from SQLite");
+  useTransactionStore.getState().loadTransactions();
   db.closeSync();
 };

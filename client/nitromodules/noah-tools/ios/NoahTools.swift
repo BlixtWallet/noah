@@ -22,9 +22,32 @@ class NoahTools: HybridNoahToolsSpec {
 
   func getAppLogs() throws -> Promise<[String]> {
     return Promise.async {
-      // This function is not directly used in backup/restore, so we can leave it as is.
-      // For brevity, I'm returning an empty array. The original implementation can be restored if needed.
-      return []
+      let store = try OSLogStore(scope: .currentProcessIdentifier)
+
+      // Start from 24 hours ago (adjust as needed, e.g., -3600 for 1 hour or Date.distantPast for all)
+      let position = store.position(date: Date().addingTimeInterval(-3600 * 24))
+
+      // Subsystems to include in the logs
+      let rustSubsystem = "com.nitro.ark"
+      let jsSubsystem = "com.facebook.react.log"
+
+      // Debug logging
+      let debugLogger = Logger(subsystem: "com.noah.logfetcher", category: "debug")
+      debugLogger.info("Filtering for subsystems: \(rustSubsystem), \(jsSubsystem)")
+
+      // Predicate: Filter for entries from either the Rust subsystem or the JavaScript subsystem
+      let predicate = NSPredicate(
+        format: "subsystem == %@ OR subsystem == %@", rustSubsystem, jsSubsystem)
+
+      // Fetch entries with the predicate (efficient filtering)
+      let rawEntries = try store.getEntries(at: position, matching: predicate)
+      let filteredEntries = rawEntries.compactMap { $0 as? OSLogEntryLog }
+
+      let formattedEntries = filteredEntries.map {
+        "[\($0.date.formatted())] \($0.composedMessage)"
+      }
+
+      return formattedEntries
     }
   }
 
@@ -56,13 +79,9 @@ class NoahTools: HybridNoahToolsSpec {
           at: backupStagingURL, withIntermediateDirectories: true, attributes: nil)
 
         // 2. Define source paths
-        let mmkvURL = documentDirectory.deletingLastPathComponent().appendingPathComponent("mmkv")
         let dataURL = documentDirectory.appendingPathComponent("noah-data-\(appVariant)")
 
         // 3. Copy directories to staging
-        if fileManager.fileExists(atPath: mmkvURL.path) {
-          try fileManager.copyItem(at: mmkvURL, to: backupStagingURL.appendingPathComponent("mmkv"))
-        }
         if fileManager.fileExists(atPath: dataURL.path) {
           try fileManager.copyItem(
             at: dataURL, to: backupStagingURL.appendingPathComponent("noah-data-\(appVariant)"))
@@ -130,26 +149,17 @@ class NoahTools: HybridNoahToolsSpec {
         try fileManager.unzipItem(at: tempZipURL, to: unzipDirectoryURL)
 
         // 4. Define source and destination paths for restore
-        let mmkvSourceURL = unzipDirectoryURL.appendingPathComponent("backup_staging/mmkv")
         let dataSourceURL = unzipDirectoryURL.appendingPathComponent(
           "backup_staging/noah-data-\(appVariant)")
 
-        let mmkvDestURL = documentDirectory.deletingLastPathComponent().appendingPathComponent(
-          "mmkv")
         let dataDestURL = documentDirectory.appendingPathComponent("noah-data-\(appVariant)")
 
         // 5. Clean up existing directories at destination
-        if fileManager.fileExists(atPath: mmkvDestURL.path) {
-          try fileManager.removeItem(at: mmkvDestURL)
-        }
         if fileManager.fileExists(atPath: dataDestURL.path) {
           try fileManager.removeItem(at: dataDestURL)
         }
 
         // 6. Move files from unzipped backup to final destination
-        if fileManager.fileExists(atPath: mmkvSourceURL.path) {
-          try fileManager.moveItem(at: mmkvSourceURL, to: mmkvDestURL)
-        }
         if fileManager.fileExists(atPath: dataSourceURL.path) {
           try fileManager.moveItem(at: dataSourceURL, to: dataDestURL)
         }
