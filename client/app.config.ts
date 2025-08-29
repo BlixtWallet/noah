@@ -57,6 +57,7 @@ const config: { expo: ExpoConfig } = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anonymous.noah",
+      scheme: "Noah-Signet",
       infoPlist: {
         UIBackgroundModes: ["remote-notification", "fetch"],
       },

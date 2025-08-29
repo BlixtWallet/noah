@@ -1,5 +1,4 @@
 import { syncWallet } from "~/lib/sync";
-import { logger as sentryLogger } from "@sentry/react-native";
 import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice } from "./paymentsApi";
@@ -27,8 +26,6 @@ export async function backgroundSync() {
   const { public_key: pubkey } = peakResult.value;
 
   log.d("[Background Job] wallet synced in background", [pubkey]);
-
-  sentryLogger.info("Background notification task executed and wallet synced", { pubkey });
 }
 
 export async function maintenance() {
