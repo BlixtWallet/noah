@@ -14,6 +14,7 @@ import {
 import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 import { queryClient } from "~/queryClient";
+import { useTransactionStore } from "../store/transactionStore";
 
 export function useCreateWallet() {
   const { showAlert } = useAlert();
@@ -152,15 +153,26 @@ export function useDeleteWallet() {
 
   return useMutation({
     mutationFn: async () => {
+      // Reset stores BEFORE deleting files to avoid storage errors
+      try {
+        reset();
+        resetRegistration();
+
+        // Also reset transaction store
+        useTransactionStore.getState().reset();
+
+        // Clear query cache
+        queryClient.clear();
+      } catch (error) {
+        // If store reset fails, log but continue with deletion
+        console.warn("Store reset failed during wallet deletion:", error);
+      }
+
+      // Now delete the wallet files
       const result = await deleteWalletAction();
       if (result.isErr()) {
         throw result.error;
       }
-    },
-    onSuccess: () => {
-      reset();
-      resetRegistration();
-      queryClient.clear();
     },
     onError: (error: Error) => {
       showAlert({ title: "Deletion Failed", description: error.message });

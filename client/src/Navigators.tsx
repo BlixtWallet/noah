@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform } from "react-native";
+import { Platform, View, ActivityIndicator, Text } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
 import HomeScreen from "~/screens/HomeScreen";
@@ -26,6 +26,7 @@ import { COLORS } from "~/lib/styleConstants";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
 import { Transaction } from "~/types/transaction";
+import { getMnemonic } from "~/lib/crypto";
 
 // Param list types
 export type SettingsStackParamList = {
@@ -237,6 +238,46 @@ const AppTabs = () => {
 
 const AppNavigation = () => {
   const { isInitialized } = useWalletStore();
+  const [isCheckingWallet, setIsCheckingWallet] = useState(true);
+
+  // Check for existing wallet on app start
+  useEffect(() => {
+    const checkExistingWallet = async () => {
+      if (isInitialized) {
+        setIsCheckingWallet(false);
+        return; // Already initialized, no need to check
+      }
+
+      try {
+        const mnemonicResult = await getMnemonic();
+
+        if (mnemonicResult.isOk() && mnemonicResult.value) {
+          console.log("Found existing wallet on app start, initializing...");
+          useWalletStore.getState().finishOnboarding();
+        }
+      } catch (error) {
+        console.error("Error checking for existing wallet:", error);
+      } finally {
+        setIsCheckingWallet(false);
+      }
+    };
+
+    checkExistingWallet();
+  }, [isInitialized]);
+
+  // Show loading screen while checking for existing wallet
+  if (isCheckingWallet) {
+    return (
+      <NavigationContainer theme={DarkTheme}>
+        <StatusBar style="light" />
+        <View className="flex-1 items-center justify-center bg-background">
+          <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+          <Text style={{ marginTop: 10, color: "white" }}>Loading...</Text>
+        </View>
+        <PortalHost />
+      </NavigationContainer>
+    );
+  }
 
   return (
     <NavigationContainer theme={DarkTheme}>

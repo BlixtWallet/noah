@@ -9,14 +9,39 @@ const storage = new MMKV({
 
 const zustandStorage = createJSONStorage(() => ({
   setItem: (name, value) => {
-    return storage.set(name, value);
+    try {
+      return storage.set(name, value);
+    } catch (error) {
+      // Silently fail to prevent error loops and crashes
+      // Only log in development
+      if (__DEV__) {
+        console.warn("Transaction storage setItem failed:", error);
+      }
+      return;
+    }
   },
   getItem: (name) => {
-    const value = storage.getString(name);
-    return value ?? null;
+    try {
+      const value = storage.getString(name);
+      return value ?? null;
+    } catch (error) {
+      // Silently fail and return null
+      if (__DEV__) {
+        console.warn("Transaction storage getItem failed:", error);
+      }
+      return null;
+    }
   },
   removeItem: (name) => {
-    return storage.delete(name);
+    try {
+      return storage.delete(name);
+    } catch (error) {
+      // Silently fail
+      if (__DEV__) {
+        console.warn("Transaction storage removeItem failed:", error);
+      }
+      return;
+    }
   },
 }));
 
