@@ -32,7 +32,7 @@ const HomeScreen = () => {
   const { walletError } = useWalletStore();
   const { data: balance, isFetching, refetch, error } = useBalance();
   const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
-  const { mutate: loadWallet } = useLoadWallet();
+  const { mutateAsync: loadWallet } = useLoadWallet();
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const [fact, setFact] = useState("");
@@ -48,13 +48,12 @@ const HomeScreen = () => {
   }, [getRandomFact]);
 
   const onRefresh = useCallback(async () => {
-    if (walletError) {
-      loadWallet();
-    }
+    await loadWallet();
+
     await balanceSync();
     await refetch();
     getRandomFact();
-  }, [balanceSync, refetch, getRandomFact, walletError, loadWallet]);
+  }, [balanceSync, refetch, getRandomFact, loadWallet]);
 
   const onchainBalance = balance
     ? balance.onchain.confirmed +
