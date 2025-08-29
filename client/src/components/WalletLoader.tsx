@@ -27,26 +27,28 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     const checkAndLoadWallet = async () => {
       if (!isInitialized) return;
 
+      let actuallyLoaded = false;
       try {
         // Always check the actual wallet state from native module
-        const actuallyLoaded = await isWalletLoadedNitro();
-
-        // If the persisted state says loaded but wallet isn't actually loaded, fix the state
-        if (isWalletLoaded && !actuallyLoaded) {
-          useWalletStore.getState().setWalletUnloaded();
-          return;
-        }
-
-        // If wallet isn't loaded, load it
-        if (!actuallyLoaded) {
-          loadWallet();
-        }
+        actuallyLoaded = await isWalletLoadedNitro();
       } catch (error) {
         console.error("Error checking wallet state:", error);
         // If we can't check, try to load anyway
         if (!isWalletLoaded) {
           loadWallet();
         }
+        return;
+      }
+
+      // If the persisted state says loaded but wallet isn't actually loaded, fix the state
+      if (isWalletLoaded && !actuallyLoaded) {
+        useWalletStore.getState().setWalletUnloaded();
+        return;
+      }
+
+      // If wallet isn't loaded, load it
+      if (!actuallyLoaded) {
+        loadWallet();
       }
     };
 
@@ -56,16 +58,12 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
   // Additional effect to handle app initialization and wallet existence check
   useEffect(() => {
     const checkWalletExistence = async () => {
-      try {
-        const mnemonicResult = await getMnemonic();
+      const mnemonicResult = await getMnemonic();
 
-        // If we have a mnemonic but isInitialized is false, fix the state
-        if (mnemonicResult.isOk() && mnemonicResult.value && !isInitialized) {
-          console.log("Found existing wallet, setting initialized to true");
-          useWalletStore.getState().finishOnboarding();
-        }
-      } catch (error) {
-        console.error("Error checking wallet existence:", error);
+      // If we have a mnemonic but isInitialized is false, fix the state
+      if (mnemonicResult.isOk() && mnemonicResult.value && !isInitialized) {
+        console.log("Found existing wallet, setting initialized to true");
+        useWalletStore.getState().finishOnboarding();
       }
     };
 

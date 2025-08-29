@@ -7,7 +7,7 @@ const AppServices = memo(() => {
   const [isReady, setIsReady] = useState(false);
 
   // Initialize all app-level services here
-  useSyncManager(60_000);
+  useSyncManager(30_000);
   useServerRegistration(isReady);
   usePushNotifications(isReady);
 

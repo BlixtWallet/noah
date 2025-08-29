@@ -1,44 +1,36 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
-import { MMKV } from "react-native-mmkv";
 import { APP_VARIANT } from "../config";
 import { ACTIVE_WALLET_CONFIG } from "~/constants";
-
-const storage = new MMKV();
+import { mmkv } from "~/lib/mmkv";
 
 const zustandStorage: StateStorage = {
   setItem: (name: string, value: string) => {
     try {
-      return storage.set(name, value);
+      return mmkv.set(name, value);
     } catch (error) {
       // Silently fail to prevent error loops and crashes
       // Only log in development
-      if (__DEV__) {
-        console.warn("Wallet storage setItem failed:", error);
-      }
+      console.warn("Wallet storage setItem failed:", error);
       return;
     }
   },
   getItem: (name: string) => {
     try {
-      const value = storage.getString(name);
+      const value = mmkv.getString(name);
       return value ?? null;
     } catch (error) {
       // Silently fail and return null
-      if (__DEV__) {
-        console.warn("Wallet storage getItem failed:", error);
-      }
+      console.warn("Wallet storage getItem failed:", error);
       return null;
     }
   },
   removeItem: (name: string) => {
     try {
-      return storage.delete(name);
+      return mmkv.delete(name);
     } catch (error) {
       // Silently fail
-      if (__DEV__) {
-        console.warn("Wallet storage removeItem failed:", error);
-      }
+      console.warn("Wallet storage removeItem failed:", error);
       return;
     }
   },

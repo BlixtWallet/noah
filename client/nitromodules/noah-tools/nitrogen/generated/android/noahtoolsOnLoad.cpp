@@ -35,8 +35,7 @@ int initialize(JavaVM* vm) {
       []() -> std::shared_ptr<HybridObject> {
         static DefaultConstructableObject<JHybridNoahToolsSpec::javaobject> object("com/margelo/nitro/noahtools/NoahTools");
         auto instance = object.create();
-        auto globalRef = jni::make_global(instance);
-        return globalRef->cthis()->shared();
+        return instance->cthis()->shared();
       }
     );
   });

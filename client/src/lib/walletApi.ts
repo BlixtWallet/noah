@@ -23,6 +23,9 @@ import { ARK_DATA_PATH, DOCUMENT_DIRECTORY_PATH, MNEMONIC_KEYCHAIN_SERVICE } fro
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
+import logger from "~/lib/log";
+
+const log = logger("walletApi");
 
 const createWalletFromMnemonic = async (
   mnemonic: string,
@@ -202,6 +205,7 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
   // Remove the existing documents directory if it exists
   const arkDataExists = RNFSTurbo.exists(ARK_DATA_PATH);
   if (arkDataExists) {
+    log.d("Removing existing data directory");
     // Delete the Data path
     const deleteResult = Result.fromThrowable(
       () => {
@@ -216,6 +220,7 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
   // Remove the mmkv directory if it exists
   const mmkvExists = RNFSTurbo.exists(`${DOCUMENT_DIRECTORY_PATH}/mmkv`);
   if (mmkvExists) {
+    log.d("Removing existing mmkv directory");
     // Delete the Data path
     const deleteResult = Result.fromThrowable(
       () => {

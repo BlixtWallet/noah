@@ -248,16 +248,16 @@ const AppNavigation = () => {
         return; // Already initialized, no need to check
       }
 
-      try {
-        const mnemonicResult = await getMnemonic();
+      let shouldCheckWallet = true;
+      const mnemonicResult = await getMnemonic();
 
-        if (mnemonicResult.isOk() && mnemonicResult.value) {
-          console.log("Found existing wallet on app start, initializing...");
-          useWalletStore.getState().finishOnboarding();
-        }
-      } catch (error) {
-        console.error("Error checking for existing wallet:", error);
-      } finally {
+      if (mnemonicResult.isOk() && mnemonicResult.value) {
+        console.log("Found existing wallet on app start, initializing...");
+        useWalletStore.getState().finishOnboarding();
+        shouldCheckWallet = false;
+      }
+
+      if (shouldCheckWallet) {
         setIsCheckingWallet(false);
       }
     };

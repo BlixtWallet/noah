@@ -75,32 +75,16 @@ namespace margelo::nitro::noahtools {
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::shared_ptr<Promise<std::string>> zipDirectory(const std::string& sourceDirectory, const std::string& outputZipPath) override {
-      auto __result = _swiftPart.zipDirectory(sourceDirectory, outputZipPath);
+    inline std::shared_ptr<Promise<std::string>> createBackup(const std::string& mnemonic) override {
+      auto __result = _swiftPart.createBackup(mnemonic);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::shared_ptr<Promise<std::string>> unzipFile(const std::string& zipPath, const std::string& outputDirectory) override {
-      auto __result = _swiftPart.unzipFile(zipPath, outputDirectory);
-      if (__result.hasError()) [[unlikely]] {
-        std::rethrow_exception(__result.error());
-      }
-      auto __value = std::move(__result.value());
-      return __value;
-    }
-    inline std::shared_ptr<Promise<std::string>> encryptBackup(const std::string& backupPath, const std::string& mnemonic) override {
-      auto __result = _swiftPart.encryptBackup(backupPath, mnemonic);
-      if (__result.hasError()) [[unlikely]] {
-        std::rethrow_exception(__result.error());
-      }
-      auto __value = std::move(__result.value());
-      return __value;
-    }
-    inline std::shared_ptr<Promise<std::string>> decryptBackup(const std::string& encryptedData, const std::string& mnemonic, const std::string& outputPath) override {
-      auto __result = _swiftPart.decryptBackup(encryptedData, mnemonic, outputPath);
+    inline std::shared_ptr<Promise<bool>> restoreBackup(const std::string& encryptedData, const std::string& mnemonic) override {
+      auto __result = _swiftPart.restoreBackup(encryptedData, mnemonic);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

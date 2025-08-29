@@ -11,22 +11,10 @@ export function getAppLogs(): Promise<string[]> {
   return NoahToolsHybridObject.getAppLogs();
 }
 
-export function zipDirectory(sourceDirectory: string, outputZipPath: string): Promise<string> {
-  return NoahToolsHybridObject.zipDirectory(sourceDirectory, outputZipPath);
+export function createBackup(mnemonic: string): Promise<string> {
+  return NoahToolsHybridObject.createBackup(mnemonic);
 }
 
-export function unzipFile(zipPath: string, outputDirectory: string): Promise<string> {
-  return NoahToolsHybridObject.unzipFile(zipPath, outputDirectory);
-}
-
-export function encryptBackup(backupPath: string, mnemonic: string): Promise<string> {
-  return NoahToolsHybridObject.encryptBackup(backupPath, mnemonic);
-}
-
-export function decryptBackup(
-  encryptedData: string,
-  mnemonic: string,
-  outputPath: string,
-): Promise<string> {
-  return NoahToolsHybridObject.decryptBackup(encryptedData, mnemonic, outputPath);
+export function restoreBackup(encryptedData: string, mnemonic: string): Promise<boolean> {
+  return NoahToolsHybridObject.restoreBackup(encryptedData, mnemonic);
 }

@@ -37,6 +37,14 @@ namespace margelo::nitro::noahtools::bridge::swift {
     };
   }
   
+  // pragma MARK: std::function<void(bool /* result */)>
+  Func_void_bool create_Func_void_bool(void* _Nonnull swiftClosureWrapper) noexcept {
+    auto swiftClosure = NoahTools::Func_void_bool::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](bool result) mutable -> void {
+      swiftClosure.call(result);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridNoahToolsSpec>
   std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* _Nonnull swiftUnsafePointer) noexcept {
     NoahTools::HybridNoahToolsSpec_cxx swiftPart = NoahTools::HybridNoahToolsSpec_cxx::fromUnsafe(swiftUnsafePointer);

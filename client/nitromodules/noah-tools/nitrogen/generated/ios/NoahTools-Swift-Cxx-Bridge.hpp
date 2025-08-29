@@ -133,6 +133,40 @@ namespace margelo::nitro::noahtools::bridge::swift {
     return Func_void_std__string_Wrapper(std::move(value));
   }
   
+  // pragma MARK: std::shared_ptr<Promise<bool>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<bool>>`.
+   */
+  using std__shared_ptr_Promise_bool__ = std::shared_ptr<Promise<bool>>;
+  inline std::shared_ptr<Promise<bool>> create_std__shared_ptr_Promise_bool__() noexcept {
+    return Promise<bool>::create();
+  }
+  inline PromiseHolder<bool> wrap_std__shared_ptr_Promise_bool__(std::shared_ptr<Promise<bool>> promise) noexcept {
+    return PromiseHolder<bool>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void(bool /* result */)>
+  /**
+   * Specialized version of `std::function<void(bool)>`.
+   */
+  using Func_void_bool = std::function<void(bool /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(bool / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_bool_Wrapper final {
+  public:
+    explicit Func_void_bool_Wrapper(std::function<void(bool /* result */)>&& func): _function(std::make_unique<std::function<void(bool /* result */)>>(std::move(func))) {}
+    inline void call(bool result) const noexcept {
+      _function->operator()(result);
+    }
+  private:
+    std::unique_ptr<std::function<void(bool /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_bool create_Func_void_bool(void* _Nonnull swiftClosureWrapper) noexcept;
+  inline Func_void_bool_Wrapper wrap_Func_void_bool(Func_void_bool value) noexcept {
+    return Func_void_bool_Wrapper(std::move(value));
+  }
+  
   // pragma MARK: std::shared_ptr<HybridNoahToolsSpec>
   /**
    * Specialized version of `std::shared_ptr<HybridNoahToolsSpec>`.
@@ -170,6 +204,15 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   inline Result_std__shared_ptr_Promise_std__string___ create_Result_std__shared_ptr_Promise_std__string___(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<std::string>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<bool>>>
+  using Result_std__shared_ptr_Promise_bool___ = Result<std::shared_ptr<Promise<bool>>>;
+  inline Result_std__shared_ptr_Promise_bool___ create_Result_std__shared_ptr_Promise_bool___(const std::shared_ptr<Promise<bool>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<bool>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_bool___ create_Result_std__shared_ptr_Promise_bool___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<bool>>>::withError(error);
   }
 
 } // namespace margelo::nitro::noahtools::bridge::swift
