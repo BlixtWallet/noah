@@ -40,9 +40,9 @@ const TransactionsScreen = () => {
     setDialogOpen(true);
   };
 
-  const deleteTransaction = () => {
+  const deleteTransaction = async () => {
     if (selectedTransactionId) {
-      removeTransaction(selectedTransactionId);
+      await removeTransaction(selectedTransactionId);
       setSelectedTransactionId(null);
       setDialogOpen(false);
     }

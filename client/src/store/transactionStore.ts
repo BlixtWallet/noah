@@ -1,12 +1,16 @@
 import { create } from "zustand";
 import type { Transaction } from "../types/transaction";
-import { getTransactions, addTransaction as addTransactionDb } from "~/lib/transactionsDb";
+import {
+  getTransactions,
+  addTransaction as addTransactionDb,
+  removeTransaction as removeTransactionDb,
+} from "~/lib/transactionsDb";
 
 interface TransactionState {
   transactions: Transaction[];
   loadTransactions: () => Promise<void>;
   addTransaction: (transaction: Transaction) => Promise<void>;
-  removeTransaction: (id: string) => void;
+  removeTransaction: (id: string) => Promise<void>;
   reset: () => void;
   deleteAllTransactions: () => void;
 }
@@ -25,8 +29,13 @@ export const useTransactionStore = create<TransactionState>((set) => ({
       transactions: [transaction, ...state.transactions],
     }));
   },
-  removeTransaction: (id: string) => {
-    // TODO: Implement this
+  removeTransaction: async (id: string) => {
+    const result = await removeTransactionDb(id);
+    if (result.isOk()) {
+      set((state) => ({
+        transactions: state.transactions.filter((tx) => tx.id !== id),
+      }));
+    }
   },
   reset: () => set({ transactions: [] }),
   deleteAllTransactions: () => {

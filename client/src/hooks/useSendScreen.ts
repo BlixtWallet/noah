@@ -208,7 +208,7 @@ export const useSendScreen = () => {
           id: uuid.v4().toString(),
           type: result.payment_type,
           amount: displayResult.amount_sat,
-          date: new Date().toISOString(),
+          date: new Date(Date.now()).toISOString(),
           direction: "outgoing",
           description: comment,
           txid: displayResult.txid,

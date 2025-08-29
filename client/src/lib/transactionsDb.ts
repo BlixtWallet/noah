@@ -84,3 +84,11 @@ export const getTransactions = async (): Promise<ResultAsync<Transaction[], Erro
     },
   );
 };
+
+export const removeTransaction = async (id: string) => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(db.runAsync("DELETE FROM transactions WHERE id = ?;", id), (e) => {
+    log.e("Failed to remove transaction", [e]);
+    return e as Error;
+  });
+};

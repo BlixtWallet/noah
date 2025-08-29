@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Text } from "../components/ui/text";
 import { NoahButton } from "../components/ui/NoahButton";
+import { Button } from "~/components/ui/button";
 
 import {
   useGenerateLightningInvoice,
@@ -25,61 +26,126 @@ import { satsToBtc, formatNumber } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { FontAwesome } from "@expo/vector-icons";
 import { COLORS } from "~/lib/styleConstants";
+import { ReceiveMethodPicker, type ReceiveMethod } from "~/components/ReceiveMethodPicker";
 
 const ReceiveScreen = () => {
   const navigation = useNavigation();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const [copied, setCopied] = useState(false);
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
+  const [showMethodPicker, setShowMethodPicker] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<ReceiveMethod>("lightning");
 
   const {
     mutate: generateOffchainAddress,
     data: vtxoPubkey,
     isPending: isGeneratingVtxo,
+    reset: resetOffchainAddress,
   } = useGenerateOffchainAddress();
 
   const {
     mutate: generateOnchainAddress,
     data: onchainAddress,
     isPending: isGeneratingOnchain,
+    reset: resetOnchainAddress,
   } = useGenerateOnchainAddress();
 
   const {
     mutate: generateLightningInvoice,
     data: lightningInvoice,
     isPending: isGeneratingLightning,
+    reset: resetLightningInvoice,
   } = useGenerateLightningInvoice();
 
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
 
   useEffect(() => {
-    generateOnchainAddress();
-    generateOffchainAddress();
-    generateLightningInvoice(0);
-  }, [generateLightningInvoice, generateOffchainAddress, generateOnchainAddress]);
+    // Generate URI if we have at least one payment method
+    if (onchainAddress || vtxoPubkey || lightningInvoice) {
+      let uri = "";
 
-  useEffect(() => {
-    if (onchainAddress && vtxoPubkey && lightningInvoice) {
-      let uri = `bitcoin:${onchainAddress}?ark=${vtxoPubkey}&lightning=${lightningInvoice}`;
-      if (amountSat >= 330) {
-        const amountInBtc = satsToBtc(amountSat);
-        uri += `&amount=${amountInBtc}`;
+      if (onchainAddress) {
+        uri = `bitcoin:${onchainAddress}`;
+        const params = [];
+
+        if (vtxoPubkey) {
+          params.push(`ark=${vtxoPubkey}`);
+        }
+        if (lightningInvoice) {
+          params.push(`lightning=${lightningInvoice}`);
+        }
+        if (amountSat >= 330) {
+          const amountInBtc = satsToBtc(amountSat);
+          params.push(`amount=${amountInBtc}`);
+        }
+
+        if (params.length > 0) {
+          uri += `?${params.join("&")}`;
+        }
+      } else if (lightningInvoice) {
+        // If only lightning invoice, use the invoice directly
+        uri = lightningInvoice;
+      } else if (vtxoPubkey) {
+        // If only ark address, use it directly
+        uri = vtxoPubkey;
       }
+
       setBip321Uri(uri.toUpperCase());
     }
   }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
-  const handleGenerate = () => {
+  const handleGenerate = (method: ReceiveMethod = "bip321") => {
     if (amountSat && amountSat < 330) {
       Alert.alert("Invalid Amount", "The minimum amount is 330 sats.");
       return;
     }
 
-    if (amountSat >= 330) {
-      generateLightningInvoice(amountSat);
-    } else {
-      generateLightningInvoice(0);
+    // Generate based on selected method
+    switch (method) {
+      case "bip321":
+        generateOnchainAddress();
+        generateOffchainAddress();
+        if (amountSat >= 330) {
+          generateLightningInvoice(amountSat);
+        } else {
+          generateLightningInvoice(0);
+        }
+        break;
+      case "ark":
+        generateOffchainAddress();
+        break;
+      case "lightning":
+        if (amountSat >= 330) {
+          generateLightningInvoice(amountSat);
+        } else {
+          generateLightningInvoice(0);
+        }
+        break;
+      case "onchain":
+        generateOnchainAddress();
+        break;
     }
+  };
+
+  const handleLongPress = () => {
+    setShowMethodPicker(true);
+  };
+
+  const handleMethodSelect = (method: ReceiveMethod) => {
+    setSelectedMethod(method);
+    setShowMethodPicker(false);
+    handleGenerate(method);
+  };
+
+  const handleClear = () => {
+    setBip321Uri(undefined);
+    setAmount("");
+    setSelectedMethod("lightning");
+    setShowMethodPicker(false);
+    // Reset all mutations to clear their data
+    resetOffchainAddress();
+    resetOnchainAddress();
+    resetLightningInvoice();
   };
 
   const handleCopyToClipboard = (value: string) => {
@@ -133,14 +199,31 @@ const ReceiveScreen = () => {
               : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
           </Text>
 
-          <NoahButton
-            onPress={handleGenerate}
-            isLoading={isLoading}
-            disabled={isLoading}
-            className="mt-8"
-          >
-            Generate
-          </NoahButton>
+          {showMethodPicker ? (
+            <View className="mt-8">
+              <ReceiveMethodPicker selectedMethod={selectedMethod} onSelect={handleMethodSelect} />
+            </View>
+          ) : (
+            <View className="flex-row items-center justify-between mt-8 gap-4">
+              {bip321Uri ? (
+                <View className="flex-1">
+                  <Button onPress={handleClear} variant="outline">
+                    <Text>Clear</Text>
+                  </Button>
+                </View>
+              ) : null}
+              <View className="flex-1">
+                <NoahButton
+                  onPress={() => handleGenerate()}
+                  onLongPress={handleLongPress}
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                >
+                  Generate
+                </NoahButton>
+              </View>
+            </View>
+          )}
 
           {bip321Uri && (
             <View className="mt-8 p-4 bg-card rounded-lg items-center">

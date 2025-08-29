@@ -15,7 +15,7 @@ const log = logger("useSyncManager");
 type ReceivedVtxos = {
   id: string;
   amount_sat: number;
-  created_at: number;
+  created_at: string;
 };
 
 export const syncArkReceives = async () => {
@@ -53,7 +53,9 @@ export const syncArkReceives = async () => {
       if (!existingTx) {
         log.d(`Syncing new Ark transaction from sqlite: ${tx.id}`, [tx]);
 
-        const btcPriceResult = await getHistoricalBtcToUsdRate(String(tx.created_at));
+        const btcPriceResult = await getHistoricalBtcToUsdRate(
+          new Date(tx.created_at + "Z").toISOString(),
+        );
         if (btcPriceResult.isErr()) {
           log.w("Could not get historical BTC price", [btcPriceResult.error]);
           continue;
@@ -62,7 +64,7 @@ export const syncArkReceives = async () => {
           id: uuid.v4().toString(),
           txid: tx.id as string,
           amount: tx.amount_sat as number,
-          date: new Date(tx.created_at as number).toISOString(),
+          date: new Date(tx.created_at + "Z").toISOString(),
           direction: "incoming",
           type: "Arkoor",
           btcPrice: btcPriceResult.value,
