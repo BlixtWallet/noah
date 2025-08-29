@@ -239,7 +239,7 @@ export const useSendScreen = () => {
 
       send({
         destination: destinationToSend,
-        amountSat: newDestinationType === "lightning" ? undefined : amountSat,
+        amountSat: newDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
         comment: comment || null,
       });
       return;
@@ -262,7 +262,7 @@ export const useSendScreen = () => {
 
     send({
       destination: cleanedDestination,
-      amountSat: finalDestinationType === "lightning" ? undefined : amountSat,
+      amountSat: finalDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
       comment: comment || null,
     });
   };

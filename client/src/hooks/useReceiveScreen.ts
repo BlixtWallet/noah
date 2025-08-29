@@ -9,12 +9,18 @@ export const useReceiveScreen = () => {
   const toggleCurrency = () => {
     if (currency === "SATS") {
       if (btcPrice && amount) {
-        setAmount(((parseInt(amount, 10) * btcPrice) / 100000000).toFixed(2));
+        const sats = parseInt(amount, 10);
+        if (!isNaN(sats)) {
+          setAmount(((sats * btcPrice) / 100000000).toFixed(2));
+        }
       }
       setCurrency("USD");
     } else {
       if (btcPrice && amount) {
-        setAmount(Math.round((parseFloat(amount) / btcPrice) * 100000000).toString());
+        const usd = parseFloat(amount);
+        if (!isNaN(usd)) {
+          setAmount(Math.round((usd / btcPrice) * 100000000).toString());
+        }
       }
       setCurrency("SATS");
     }
