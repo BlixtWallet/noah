@@ -61,28 +61,56 @@ const SendStack = createNativeStackNavigator();
 
 const SettingsStackNav = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="SettingsList" component={SettingsScreen} />
-    <Stack.Screen name="Mnemonic" component={MnemonicScreen} />
-    <Stack.Screen name="Logs" component={LogScreen} />
-    <Stack.Screen name="LightningAddress" component={LightningAddressScreen} />
-    <Stack.Screen name="BackupSettings" component={BackupSettingsScreen} />
+    <Stack.Screen
+      name="SettingsList"
+      component={SettingsScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <Stack.Screen
+      name="Mnemonic"
+      component={MnemonicScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <Stack.Screen name="Logs" component={LogScreen} options={{ animation: "slide_from_right" }} />
+    <Stack.Screen
+      name="LightningAddress"
+      component={LightningAddressScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <Stack.Screen
+      name="BackupSettings"
+      component={BackupSettingsScreen}
+      options={{ animation: "slide_from_right" }}
+    />
   </Stack.Navigator>
 );
 
 const HomeStackScreen = () => (
   <HomeStack.Navigator>
-    <HomeStack.Screen name="HomeStack" component={HomeScreen} options={{ headerShown: false }} />
-    <HomeStack.Screen name="BoardArk" component={BoardArkScreen} options={{ headerShown: false }} />
-    <HomeStack.Screen name="Send" component={SendScreen} options={{ headerShown: false }} />
+    <HomeStack.Screen
+      name="HomeStack"
+      component={HomeScreen}
+      options={{ headerShown: false, animation: "slide_from_right" }}
+    />
+    <HomeStack.Screen
+      name="BoardArk"
+      component={BoardArkScreen}
+      options={{ headerShown: false, animation: "slide_from_right" }}
+    />
+    <HomeStack.Screen
+      name="Send"
+      component={SendScreen}
+      options={{ headerShown: false, animation: "slide_from_right" }}
+    />
     <HomeStack.Screen
       name="Transactions"
       component={TransactionsScreen}
-      options={{ headerShown: false }}
+      options={{ headerShown: false, animation: "slide_from_right" }}
     />
     <HomeStack.Screen
       name="TransactionDetail"
       component={TransactionDetailScreen}
-      options={{ headerShown: false }}
+      options={{ headerShown: false, animation: "slide_from_right" }}
     />
   </HomeStack.Navigator>
 );
@@ -92,24 +120,48 @@ const ReceiveStackScreen = () => (
     <ReceiveStack.Screen
       name="ReceiveStack"
       component={ReceiveScreen}
-      options={{ headerShown: false }}
+      options={{ headerShown: false, animation: "slide_from_right" }}
     />
   </ReceiveStack.Navigator>
 );
 
 const SendStackScreen = () => (
   <SendStack.Navigator>
-    <SendStack.Screen name="SendStack" component={SendScreen} options={{ headerShown: false }} />
+    <SendStack.Screen
+      name="SendStack"
+      component={SendScreen}
+      options={{ headerShown: false, animation: "slide_from_right" }}
+    />
   </SendStack.Navigator>
 );
 
 const OnboardingStackScreen = () => (
   <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
-    <OnboardingStack.Screen name="Onboarding" component={OnboardingScreen} />
-    <OnboardingStack.Screen name="Configuration" component={SettingsScreen} />
-    <OnboardingStack.Screen name="EditConfiguration" component={EditSettingScreen} />
-    <OnboardingStack.Screen name="Mnemonic" component={MnemonicScreen} />
-    <OnboardingStack.Screen name="RestoreWallet" component={RestoreWalletScreen} />
+    <OnboardingStack.Screen
+      name="Onboarding"
+      component={OnboardingScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <OnboardingStack.Screen
+      name="Configuration"
+      component={SettingsScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <OnboardingStack.Screen
+      name="EditConfiguration"
+      component={EditSettingScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <OnboardingStack.Screen
+      name="Mnemonic"
+      component={MnemonicScreen}
+      options={{ animation: "slide_from_right" }}
+    />
+    <OnboardingStack.Screen
+      name="RestoreWallet"
+      component={RestoreWalletScreen}
+      options={{ animation: "slide_from_right" }}
+    />
   </OnboardingStack.Navigator>
 );
 
@@ -122,7 +174,7 @@ const AppTabs = () => {
         backgroundColor: COLORS.TAB_BAR_BACKGROUND,
       }}
       tabBarInactiveTintColor={COLORS.TAB_BAR_INACTIVE}
-      disablePageAnimations
+      hapticFeedbackEnabled
       screenOptions={{
         tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
       }}
