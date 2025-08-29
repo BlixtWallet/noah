@@ -152,6 +152,8 @@ export function useSend(destinationType: DestinationTypes) {
         throw new Error("Amount is required");
       }
 
+      console.log(destinationType, destination, amountSat, comment);
+
       let result;
       switch (destinationType) {
         case "onchain":

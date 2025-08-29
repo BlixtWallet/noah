@@ -3,14 +3,17 @@ import { useSendScreen } from "../hooks/useSendScreen";
 import { SendSuccess } from "../components/SendSuccess";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, TextInput, TouchableOpacity } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import Icon from "@react-native-vector-icons/ionicons";
+import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { COLORS } from "~/lib/styleConstants";
 import { formatNumber } from "~/lib/utils";
 import { useNavigation } from "@react-navigation/native";
+import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
+import { Text } from "~/components/ui/text";
 
 const SendScreen = () => {
   const navigation = useNavigation();
@@ -35,6 +38,10 @@ const SendScreen = () => {
     amountSat,
     btcPrice,
     parsedAmount,
+    bip321Data,
+    selectedPaymentMethod,
+    setSelectedPaymentMethod,
+    handleClear,
   } = useSendScreen();
 
   const handlePaste = async () => {
@@ -97,30 +104,50 @@ const SendScreen = () => {
               : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
         </Text>
 
-        <View className="mt-8">
-          <View className="flex-row items-center border border-border bg-card p-4 rounded-lg">
-            <TextInput
-              className="flex-1 text-white"
-              placeholder="Address, invoice, or lightning address"
-              placeholderTextColor="#6b7280"
-              value={destination}
-              onChangeText={setDestination}
-            />
-            <TouchableOpacity onPress={handlePaste} className="p-2">
-              <Text className="text-white">Paste</Text>
-            </TouchableOpacity>
-          </View>
-          <TextInput
-            className="border border-border bg-card p-4 rounded-lg text-foreground mt-4"
-            placeholder="Add a note (optional)"
-            placeholderTextColor="#6b7280"
-            value={comment}
-            onChangeText={setComment}
+        {bip321Data ? (
+          <Bip321Picker
+            bip321Data={bip321Data}
+            selectedPaymentMethod={selectedPaymentMethod}
+            onSelect={setSelectedPaymentMethod}
           />
+        ) : (
+          <View className="mt-8 ml-4 mr-4">
+            <View className="flex-row items-center border border-border bg-card p-4 rounded-lg">
+              <TextInput
+                className="flex-1 text-white"
+                placeholder="Address, invoice, or lightning address"
+                placeholderTextColor="#6b7280"
+                value={destination}
+                onChangeText={setDestination}
+              />
+              <TouchableOpacity onPress={handlePaste} className="p-2">
+                <Text className="text-white">Paste</Text>
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              className="border border-border bg-card p-4 rounded-lg text-foreground mt-4"
+              placeholder="Add a note (optional)"
+              placeholderTextColor="#6b7280"
+              value={comment}
+              onChangeText={setComment}
+            />
+          </View>
+        )}
+        <View className="flex-row items-center justify-between mt-9 mr-4 ml-4 gap-4">
+          {destination ? (
+            <Button onPress={handleClear} variant="outline" className="flex-1">
+              <Text>Cancel</Text>
+            </Button>
+          ) : null}
+          <NoahButton
+            onPress={handleSend}
+            disabled={!destination || isSending}
+            isLoading={isSending}
+            className="flex-1"
+          >
+            Send
+          </NoahButton>
         </View>
-        <NoahButton onPress={handleSend} isLoading={isSending} className="mt-9">
-          Send
-        </NoahButton>
       </View>
     </NoahSafeAreaView>
   );
