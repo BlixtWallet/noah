@@ -15,6 +15,9 @@ import {
   UploadUrlResponse,
   ReportJobStatusPayload,
 } from "~/types/serverTypes";
+import logger from "~/lib/log";
+
+const log = logger("api");
 
 const API_URL = getServerEndpoint();
 
@@ -38,12 +41,14 @@ async function post<T, U>(
 
       const peakResult = await peakKeyPair(0);
       if (peakResult.isErr()) {
+        log.d("Failed to derive public key for authentication", [peakResult.error]);
         return err(peakResult.error);
       }
       const { public_key: key } = peakResult.value;
 
       const signatureResult = await signMessage(k1, 0);
       if (signatureResult.isErr()) {
+        log.d("Failed to sign message for authentication", [signatureResult.error]);
         return err(signatureResult.error);
       }
       const sig = signatureResult.value;
@@ -55,20 +60,32 @@ async function post<T, U>(
 
     const body = JSON.stringify(payload);
 
-    const response = await fetch(`${API_URL}/v0${endpoint}`, {
-      method: "POST",
-      headers,
-      body,
-    });
+    const response = await ResultAsync.fromPromise(
+      fetch(`${API_URL}/v0${endpoint}`, {
+        method: "POST",
+        headers,
+        body,
+      }),
+      (e) => e as Error,
+    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return err(new Error(`API Error: ${response.status} ${errorText}`));
+    if (response.isErr()) {
+      log.d("Failed to send request", [response.error]);
+      return err(response.error);
+    }
+
+    const responseValue = response.value;
+
+    if (!responseValue.ok) {
+      log.d("API Error", [responseValue.status, responseValue.statusText]);
+      const errorText = await responseValue.text();
+      return err(new Error(`API Error: ${responseValue.status} ${errorText}`));
     }
 
     // Handle cases where response might be empty
-    const responseText = await response.text();
+    const responseText = await responseValue.text();
     if (!responseText) {
+      log.d("Empty response from server");
       return ok(undefined as U);
     }
 

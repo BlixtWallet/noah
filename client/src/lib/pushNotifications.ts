@@ -9,10 +9,37 @@ import { captureException } from "@sentry/react-native";
 import { backgroundSync, maintenance, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
+import { ReportType } from "~/types/serverTypes";
 
 const log = logger("pushNotifications");
 
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
+async function handleTaskCompletion(report_type: ReportType, result: Result<void, Error>) {
+  if (result.isErr()) {
+    log.d(`Failed to trigger ${report_type} task, reporting failure`);
+    const jobStatusResult = await reportJobStatus({
+      report_type,
+      status: "failure",
+      error_message: result.error.message,
+    });
+
+    if (jobStatusResult.isErr()) {
+      log.d("Failed to report job status", [jobStatusResult.error]);
+    }
+    throw result.error;
+  }
+
+  log.d(`Triggered ${report_type} task, reporting success`);
+  const jobStatusResult = await reportJobStatus({
+    report_type,
+    status: "success",
+    error_message: null,
+  });
+
+  if (jobStatusResult.isErr()) {
+    log.d("Failed to report job status", [jobStatusResult.error]);
+  }
+}
 
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
@@ -57,38 +84,14 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           await backgroundSync();
         } else if (notificationData.type === "maintenance") {
           const result = await maintenance();
-          if (result.isErr()) {
-            await reportJobStatus({
-              report_type: "maintenance",
-              status: "failure",
-              error_message: result.error.message,
-            });
-            throw result.error;
-          }
-          await reportJobStatus({
-            report_type: "maintenance",
-            status: "success",
-            error_message: null,
-          });
+          await handleTaskCompletion("maintenance", result);
         } else if (notificationData.type === "lightning-invoice-request") {
           log.d("Received lightning invoice request", [notificationData]);
           const amountMsat = parseInt(notificationData.amount);
           await submitInvoice(notificationData.request_id, amountMsat);
         } else if (notificationData.type === "backup-trigger") {
           const result = await triggerBackupTask();
-          if (result.isErr()) {
-            await reportJobStatus({
-              report_type: "backup",
-              status: "failure",
-              error_message: result.error.message,
-            });
-            throw result.error;
-          }
-          await reportJobStatus({
-            report_type: "backup",
-            status: "success",
-            error_message: null,
-          });
+          await handleTaskCompletion("backup", result);
         }
       })(),
       (e) =>
