@@ -1,4 +1,3 @@
-use anyhow::Context;
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
 use futures_util::{StreamExt, stream};
 use serde::Serialize;
@@ -20,11 +19,8 @@ pub async fn send_push_notification(
     data: PushNotificationData,
     pubkey: Option<String>,
 ) -> anyhow::Result<(), ApiError> {
-    let access_token = std::env::var("EXPO_ACCESS_TOKEN")
-        .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
-
     let expo = Expo::new(ExpoClientOptions {
-        access_token: Some(access_token),
+        access_token: Some(app_state.expo_access_token.clone()),
     });
 
     let mut push_tokens = Vec::new();

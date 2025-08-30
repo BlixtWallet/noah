@@ -21,6 +21,7 @@ async fn setup_test_app() -> (Router, AppState) {
         db: Arc::new(db),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
+        expo_access_token: "test-expo-access-token".to_string(),
     });
 
     let app = Router::new()

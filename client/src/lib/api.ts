@@ -1,6 +1,7 @@
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import { getServerEndpoint } from "~/constants";
 import { peakKeyPair, signMessage } from "./crypto";
+import { loadWalletIfNeeded } from "./walletApi";
 import {
   BackupInfo,
   BackupSettingsPayload,
@@ -17,7 +18,7 @@ import {
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 
-const log = logger("api");
+const log = logger("serverApi");
 
 const API_URL = getServerEndpoint();
 
@@ -34,6 +35,12 @@ async function post<T, U>(
     log.d("Sending request to server", [endpoint, payload]);
 
     if (authenticated) {
+      const walletResult = await loadWalletIfNeeded();
+      log.d("Wallet load result", [walletResult]);
+      if (walletResult.isErr()) {
+        return err(walletResult.error);
+      }
+
       const k1Result = await getK1();
       if (k1Result.isErr()) {
         return err(k1Result.error);
@@ -124,6 +131,7 @@ export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
 
 export const registerPushToken = (payload: RegisterPushToken) =>
   post("/register_push_token", payload);
+
 export const reportJobStatus = (payload: ReportJobStatusPayload) =>
   post("/report_job_status", payload);
 
