@@ -48,12 +48,6 @@ pub async fn send_push_notification(
         }
     }
 
-    tracing::debug!(
-        "send_push_notification: Preparing to send push notification to tokens: {:?} {:?}",
-        push_tokens,
-        data.data
-    );
-
     if push_tokens.is_empty() {
         return Ok(());
     }
