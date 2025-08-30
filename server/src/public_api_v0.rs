@@ -1,4 +1,4 @@
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 use axum::{
     Json,
@@ -36,9 +36,7 @@ const COMMENT_ALLOWED_SIZE: u16 = 280;
 /// to be used once for a login or registration attempt. This endpoint also manages
 /// the size of the `k1` cache to prevent it from growing indefinitely.
 pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
-    let k1 = make_k1();
-
-    state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(state.k1_values.clone());
 
     // Keep the map size around 100
     if state.k1_values.len() > MAX_K1_VALUES {
@@ -179,9 +177,8 @@ pub async fn lnurlp_request(
     // One is signed from server, the other to just manage channel requests
     // Probably need a better solution
 
-    let k1 = make_k1();
+    let k1 = make_k1(state.k1_values.clone());
     state.invoice_data_transmitters.insert(k1.clone(), tx);
-    state.k1_values.insert(k1.clone(), SystemTime::now());
 
     let state_clone = state.clone();
     tokio::spawn(async move {

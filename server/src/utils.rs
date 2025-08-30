@@ -1,5 +1,7 @@
+use std::{str::FromStr, sync::Arc, time::SystemTime};
+
+use dashmap::DashMap;
 use rand::RngCore;
-use std::str::FromStr;
 
 use crate::errors::ApiError;
 
@@ -27,13 +29,15 @@ pub async fn verify_auth(
     Ok(is_valid)
 }
 
-pub fn make_k1() -> String {
+pub fn make_k1(k1_values: Arc<DashMap<String, SystemTime>>) -> String {
     let mut k1_bytes = [0u8; 32];
     rand::rng().fill_bytes(&mut k1_bytes);
     let k1 = hex::encode(k1_bytes);
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
+    let timestamp = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs();
-    format!("{}_{}", k1, timestamp)
+    let k1_with_timestamp = format!("{}_{}", k1, timestamp);
+    k1_values.insert(k1_with_timestamp.clone(), SystemTime::now());
+    k1_with_timestamp
 }

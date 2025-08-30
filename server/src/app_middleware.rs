@@ -84,6 +84,9 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidSignature.into_response());
     }
 
+    // Remove the k1 value to prevent reuse
+    state.k1_values.remove(&payload.k1);
+
     request.extensions_mut().insert(payload);
     Ok(next.run(request).await)
 }

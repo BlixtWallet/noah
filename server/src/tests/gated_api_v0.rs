@@ -30,7 +30,7 @@ async fn setup_test_app() -> (Router, AppState) {
         std::env::set_var("AWS_REGION", "us-east-1");
     }
 
-    let db_path = format!("/tmp/test-{}.db", make_k1());
+    let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
     let conn = db.connect().unwrap();
     crate::migrations::migrate(&conn).await.unwrap();
@@ -68,8 +68,7 @@ async fn setup_test_app() -> (Router, AppState) {
 async fn test_register_new_user() {
     let (app, app_state) = setup_test_app().await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
 
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
@@ -109,8 +108,7 @@ async fn test_register_new_user() {
 async fn test_register_existing_user() {
     let (app, app_state) = setup_test_app().await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
 
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
@@ -161,8 +159,7 @@ async fn test_register_existing_user() {
 async fn test_register_invalid_signature() {
     let (app, app_state) = setup_test_app().await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
 
     let user = TestUser::new();
     let mut auth_payload = user.auth_payload(&k1);
@@ -194,9 +191,9 @@ async fn test_register_invalid_signature() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_k1() {
-    let (app, _) = setup_test_app().await;
+    let (app, app_state) = setup_test_app().await;
 
-    let k1 = make_k1();
+    let k1 = make_k1(app_state.k1_values.clone());
 
     let user = TestUser::new();
     let mut auth_payload = user.auth_payload(&k1);
@@ -240,8 +237,7 @@ async fn test_register_push_token() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -294,8 +290,7 @@ async fn test_get_user_info() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -336,8 +331,7 @@ async fn test_update_ln_address() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -395,8 +389,7 @@ async fn test_get_upload_url() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -441,8 +434,7 @@ async fn test_complete_upload() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
@@ -498,8 +490,7 @@ async fn test_complete_upload_upsert() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
@@ -531,8 +522,7 @@ async fn test_complete_upload_upsert() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Second upload with same version (should update)
-    let k1_2 = make_k1();
-    app_state.k1_values.insert(k1_2.clone(), SystemTime::now());
+    let k1_2 = make_k1(app_state.k1_values.clone());
     let auth_payload_2 = user.auth_payload(&k1_2);
 
     let response = app
@@ -584,8 +574,7 @@ async fn test_list_backups_empty() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -633,8 +622,7 @@ async fn test_list_backups_with_data() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -685,8 +673,7 @@ async fn test_get_download_url_specific_version() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -744,8 +731,7 @@ async fn test_get_download_url_latest() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -782,8 +768,7 @@ async fn test_get_download_url_not_found() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -826,8 +811,7 @@ async fn test_delete_backup() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -878,8 +862,7 @@ async fn test_delete_backup_not_found() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -912,8 +895,7 @@ async fn test_update_backup_settings_enable() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -969,8 +951,7 @@ async fn test_update_backup_settings_disable() {
     .await
     .unwrap();
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -1018,8 +999,7 @@ async fn test_backup_endpoints_invalid_auth() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let mut auth_payload = user.auth_payload(&k1);
     auth_payload.sig = "invalid_signature".to_string();
 
@@ -1068,10 +1048,10 @@ async fn test_backup_endpoints_invalid_auth() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_backup_endpoints_missing_k1() {
-    let (app, _app_state) = setup_test_app().await;
+    let (app, _) = setup_test_app().await;
     let user = TestUser::new();
 
-    let k1 = make_k1();
+    let k1 = "k1_not_in_state".to_string();
     let auth_payload = user.auth_payload(&k1);
 
     let endpoints = vec![
@@ -1121,8 +1101,7 @@ async fn test_backup_endpoints_missing_k1() {
 async fn test_backup_endpoints_malformed_json() {
     let (app, app_state) = setup_test_app().await;
     let user = TestUser::new();
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let endpoints = vec![
@@ -1166,8 +1145,7 @@ async fn test_complete_upload_missing_fields() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     // Test missing s3_key
@@ -1211,8 +1189,7 @@ async fn test_get_upload_url_missing_fields() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     // Test missing backup_version
@@ -1253,8 +1230,7 @@ async fn test_delete_backup_missing_version() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -1292,8 +1268,7 @@ async fn test_update_backup_settings_missing_enabled() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -1372,8 +1347,7 @@ async fn test_report_job_status() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1();
-    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 
     // Test success report
@@ -1403,8 +1377,7 @@ async fn test_report_job_status() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Test failure report
-    let k1_2 = make_k1();
-    app_state.k1_values.insert(k1_2.clone(), SystemTime::now());
+    let k1_2 = make_k1(app_state.k1_values.clone());
     let auth_payload_2 = user.auth_payload(&k1_2);
 
     let response = app

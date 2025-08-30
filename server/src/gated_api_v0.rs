@@ -84,8 +84,6 @@ pub async fn register(
     )
     .await?;
 
-    state.k1_values.remove(&auth_payload.k1);
-
     Ok(Json(LNUrlAuthResponse {
         status: "OK".to_string(),
         event: Some(AuthEvent::Registered),
@@ -146,8 +144,6 @@ pub async fn submit_invoice(
     );
 
     if let Some((_, tx)) = state.invoice_data_transmitters.remove(&auth_payload.k1) {
-        state.k1_values.remove(&auth_payload.k1);
-
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
 
