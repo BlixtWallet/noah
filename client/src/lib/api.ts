@@ -13,6 +13,7 @@ import {
   RegisterPushToken,
   UpdateLnAddressPayload,
   UploadUrlResponse,
+  ReportJobStatusPayload,
 } from "~/types/serverTypes";
 
 const API_URL = getServerEndpoint();
@@ -101,6 +102,8 @@ export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
 
 export const registerPushToken = (payload: RegisterPushToken) =>
   post("/register_push_token", payload);
+export const reportJobStatus = (payload: ReportJobStatusPayload) =>
+  post("/report_job_status", payload);
 
 export const getK1 = async () => {
   const k1Result = await ResultAsync.fromPromise(

@@ -7,7 +7,7 @@ import { PLATFORM } from "~/constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
 import { backgroundSync, maintenance, submitInvoice, triggerBackupTask } from "./tasks";
-import { registerPushToken } from "~/lib/api";
+import { registerPushToken, reportJobStatus } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 
 const log = logger("pushNotifications");
@@ -56,13 +56,39 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         if (notificationData.type === "background-sync") {
           await backgroundSync();
         } else if (notificationData.type === "maintenance") {
-          await maintenance();
+          const result = await maintenance();
+          if (result.isErr()) {
+            await reportJobStatus({
+              report_type: "maintenance",
+              status: "failure",
+              error_message: result.error.message,
+            });
+            throw result.error;
+          }
+          await reportJobStatus({
+            report_type: "maintenance",
+            status: "success",
+            error_message: null,
+          });
         } else if (notificationData.type === "lightning-invoice-request") {
           log.d("Received lightning invoice request", [notificationData]);
           const amountMsat = parseInt(notificationData.amount);
           await submitInvoice(notificationData.request_id, amountMsat);
         } else if (notificationData.type === "backup-trigger") {
-          await triggerBackupTask();
+          const result = await triggerBackupTask();
+          if (result.isErr()) {
+            await reportJobStatus({
+              report_type: "backup",
+              status: "failure",
+              error_message: result.error.message,
+            });
+            throw result.error;
+          }
+          await reportJobStatus({
+            report_type: "backup",
+            status: "success",
+            error_message: null,
+          });
         }
       })(),
       (e) =>

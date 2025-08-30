@@ -3,7 +3,7 @@ import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice } from "./paymentsApi";
 import { getServerEndpoint } from "~/constants";
-import { ResultAsync } from "neverthrow";
+import { ResultAsync, err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import { peakKeyPair, signMessage } from "./crypto";
 
@@ -28,20 +28,22 @@ export async function backgroundSync() {
   log.d("[Background Job] wallet synced in background", [pubkey]);
 }
 
-export async function maintenance() {
+export async function maintenance(): Promise<Result<void, Error>> {
   log.d("[Maintenance Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
-    log.e("Failed to load wallet for maintenance", [loadResult.error]);
-    return;
+    const e = new Error("Failed to load wallet for maintenance");
+    log.e(e.message, [loadResult.error]);
+    return err(e);
   }
 
   const maintenanceResult = await maintanance();
   if (maintenanceResult.isErr()) {
     log.e("Maintenance failed", [maintenanceResult.error]);
-    return;
+    return err(maintenanceResult.error);
   }
   log.d("[Maintenance Job] completed");
+  return ok(undefined);
 }
 
 export async function submitInvoice(requestId: string, amountMsat: number) {
@@ -113,12 +115,13 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
 
 // Shared backup function that can be used by both hooks and background tasks
 
-export async function triggerBackupTask() {
+export async function triggerBackupTask(): Promise<Result<void, Error>> {
   log.d("[Backup Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
-    log.e("Failed to load wallet for backup", [loadResult.error]);
-    return;
+    const e = new Error("Failed to load wallet for backup");
+    log.e(e.message, [loadResult.error]);
+    return err(e);
   }
 
   const backupService = new BackupService();
@@ -126,8 +129,9 @@ export async function triggerBackupTask() {
   const backupResult = await backupService.performBackup();
   if (backupResult.isErr()) {
     log.e("Backup job failed", [backupResult.error]);
-    return;
+    return err(backupResult.error);
   }
 
   log.d("[Backup Job] completed successfully");
+  return ok(undefined);
 }

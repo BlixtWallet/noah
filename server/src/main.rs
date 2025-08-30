@@ -20,8 +20,8 @@ use crate::{
     cron::cron_scheduler,
     gated_api_v0::{
         complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info,
-        list_backups, register, register_push_token, submit_invoice, update_backup_settings,
-        update_ln_address,
+        list_backups, register, register_push_token, report_job_status, submit_invoice,
+        update_backup_settings, update_ln_address,
     },
     private_api_v0::health_check,
     public_api_v0::{get_k1, lnurlp_request},
@@ -123,6 +123,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/backup/download_url", post(get_download_url))
         .route("/backup/delete", post(delete_backup))
         .route("/backup/settings", post(update_backup_settings))
+        .route("/report_job_status", post(report_job_status))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             app_middleware::auth_middleware,

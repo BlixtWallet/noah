@@ -1,7 +1,8 @@
 use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DeleteBackupPayload,
-    DownloadUrlResponse, GetDownloadUrlPayload, SubmitInvoicePayload, UserInfoResponse,
+    DownloadUrlResponse, GetDownloadUrlPayload, ReportJobStatusPayload, SubmitInvoicePayload,
+    UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -331,6 +332,21 @@ pub async fn delete_backup(
         libsql::params![auth_payload.key.clone(), payload.backup_version],
     )
     .await?;
+
+    Ok(())
+}
+
+pub async fn report_job_status(
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<ReportJobStatusPayload>,
+) -> Result<(), ApiError> {
+    tracing::info!(
+        "Received job status report from pubkey: {}. Report type: {:?}, Status: {:?}, Error: {:?}",
+        auth_payload.key,
+        payload.report_type,
+        payload.status,
+        payload.error_message
+    );
 
     Ok(())
 }

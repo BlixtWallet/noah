@@ -60,6 +60,12 @@ export type RegisterPushToken = {
  */
 push_token: string, };
 
+export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
+
+export type ReportStatus = "success" | "failure";
+
+export type ReportType = "maintenance" | "backup";
+
 /**
  * Defines the payload for submitting a BOLT11 invoice.
  */

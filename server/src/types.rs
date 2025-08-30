@@ -133,3 +133,27 @@ pub struct DeleteBackupPayload {
 pub struct BackupSettingsPayload {
     pub backup_enabled: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+#[serde(rename_all = "camelCase")]
+pub enum ReportType {
+    Maintenance,
+    Backup,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+#[serde(rename_all = "camelCase")]
+pub enum ReportStatus {
+    Success,
+    Failure,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct ReportJobStatusPayload {
+    pub report_type: ReportType,
+    pub status: ReportStatus,
+    pub error_message: Option<String>,
+}
