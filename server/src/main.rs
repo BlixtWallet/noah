@@ -8,12 +8,15 @@ mod private_api_v0;
 mod public_api_v0;
 mod types;
 use dashmap::DashMap;
+use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
 use std::{
     net::{Ipv4Addr, SocketAddr},
     str::FromStr,
     sync::Arc,
 };
+use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
+use tracing::error;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -50,18 +53,7 @@ pub struct AppStruct {
     pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    dotenv::dotenv().ok();
-
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "server=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-
+async fn start_server() -> anyhow::Result<()> {
     let host =
         Ipv4Addr::from_str(&std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string()))?;
     let port = std::env::var("PORT")
@@ -141,7 +133,11 @@ async fn main() -> anyhow::Result<()> {
         .nest("/v0", v0_router)
         .merge(lnurl_router)
         .with_state(app_state.clone())
-        .layer(TraceLayer::new_for_http());
+        .layer(
+            ServiceBuilder::new()
+                .layer(TraceLayer::new_for_http())
+                .layer(NewSentryLayer::new_from_top()),
+        );
 
     let addr = SocketAddr::from((host, port));
     tracing::debug!("server started listening on {}", addr);
@@ -160,6 +156,50 @@ async fn main() -> anyhow::Result<()> {
     });
 
     axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+fn main() -> anyhow::Result<()> {
+    dotenv::dotenv().ok();
+
+    let sentry_token = std::env::var("SENTRY_TOKEN")
+        .context("SENTRY_TOKEN must be set in the environment variables")?;
+
+    let _guard = sentry::init((
+        sentry_token,
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            enable_logs: true,
+            send_default_pii: false,
+            ..Default::default()
+        },
+    ));
+
+    let sentry_layer =
+        sentry::integrations::tracing::layer().event_filter(|md| match *md.level() {
+            tracing::Level::ERROR => EventFilter::Log,
+            tracing::Level::WARN => EventFilter::Log,
+            tracing::Level::INFO => EventFilter::Log,
+            _ => EventFilter::Ignore,
+        });
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "server=debug,tower_http=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .with(sentry_layer)
+        .init();
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(async {
+            if let Err(e) = start_server().await {
+                error!("Failed to start server: {}", e);
+            }
+        });
 
     Ok(())
 }
