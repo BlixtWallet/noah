@@ -44,6 +44,7 @@ async function handleTaskCompletion(report_type: ReportType, result: Result<void
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error, executionInfo }) => {
+    log.d("[Background Job] dataReceived", [data, typeof data]);
     if (error) {
       log.e("[Background Job] error", [error]);
       captureException(error);

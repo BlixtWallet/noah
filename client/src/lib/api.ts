@@ -31,6 +31,8 @@ async function post<T, U>(
       "Content-Type": "application/json",
     };
 
+    log.d("Sending request to server", [endpoint, payload]);
+
     if (authenticated) {
       const k1Result = await getK1();
       if (k1Result.isErr()) {
@@ -38,6 +40,8 @@ async function post<T, U>(
       }
 
       const k1 = k1Result.value;
+
+      log.d("k1 is", [k1]);
 
       const peakResult = await peakKeyPair(0);
       if (peakResult.isErr()) {
@@ -47,6 +51,7 @@ async function post<T, U>(
       const { public_key: key } = peakResult.value;
 
       const signatureResult = await signMessage(k1, 0);
+
       if (signatureResult.isErr()) {
         log.d("Failed to sign message for authentication", [signatureResult.error]);
         return err(signatureResult.error);

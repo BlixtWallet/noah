@@ -5,6 +5,7 @@ import {
 } from "~/lib/pushNotifications";
 import { useServerStore } from "~/store/serverStore";
 import logger from "~/lib/log";
+import { loadWalletIfNeeded } from "~/lib/walletApi";
 
 const log = logger("usePushNotifications");
 
@@ -16,6 +17,8 @@ export const usePushNotifications = (isReady: boolean) => {
       if (!isReady || !isRegisteredWithServer) {
         return;
       }
+
+      await loadWalletIfNeeded();
 
       const tokenResult = await registerForPushNotificationsAsync();
       if (tokenResult.isErr()) {
