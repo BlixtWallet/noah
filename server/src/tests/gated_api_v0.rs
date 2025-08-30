@@ -12,7 +12,7 @@ use tower::ServiceExt;
 use crate::app_middleware::auth_middleware;
 use crate::gated_api_v0::{
     complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info, list_backups,
-    register, register_push_token, update_backup_settings, update_ln_address,
+    register, register_push_token, report_job_status, update_backup_settings, update_ln_address,
 };
 use crate::tests::common::TestUser;
 use crate::types::{
@@ -53,6 +53,7 @@ async fn setup_test_app() -> (Router, AppState) {
         .route("/backup/download_url", post(get_download_url))
         .route("/backup/delete", post(delete_backup))
         .route("/backup/settings", post(update_backup_settings))
+        .route("/report_job_status", post(report_job_status))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_middleware,
@@ -1362,4 +1363,71 @@ async fn test_register_expired_k1() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_job_status() {
+    let (app, app_state) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user).await;
+
+    let k1 = make_k1();
+    app_state.k1_values.insert(k1.clone(), SystemTime::now());
+    let auth_payload = user.auth_payload(&k1);
+
+    // Test success report
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_job_status")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "report_type": "maintenance",
+                        "status": "success",
+                        "error_message": null
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Test failure report
+    let k1_2 = make_k1();
+    app_state.k1_values.insert(k1_2.clone(), SystemTime::now());
+    let auth_payload_2 = user.auth_payload(&k1_2);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_job_status")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_2.key)
+                .header("x-auth-sig", auth_payload_2.sig)
+                .header("x-auth-k1", auth_payload_2.k1)
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "report_type": "maintenance",
+                        "status": "failure",
+                        "error_message": "Something went wrong"
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
 }
