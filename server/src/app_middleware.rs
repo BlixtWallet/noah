@@ -12,7 +12,7 @@ pub async fn auth_middleware(
     mut request: Request,
     next: Next,
 ) -> Result<Response, impl IntoResponse> {
-    tracing::info!("auth_middleware: request for uri: {}", request.uri());
+    tracing::debug!("auth_middleware: request for uri: {}", request.uri());
 
     let k1 = request
         .headers()

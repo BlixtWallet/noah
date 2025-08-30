@@ -90,8 +90,7 @@ pub async fn send_push_notification(
         .await;
 
     tracing::debug!(
-        "send_push_notification: Sent push notification to tokens: {:?} {:?}",
-        push_tokens,
+        "send_push_notification: Sent push notification with data: {:?}",
         data.data
     );
 

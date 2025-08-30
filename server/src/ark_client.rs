@@ -35,10 +35,14 @@ pub async fn connect_to_ark_server(
         if let Ok(round_event) = item {
             if let Some(event) = round_event.event {
                 match event {
-                    round_event::Event::Start(_) => {
+                    round_event::Event::Start(event) => {
                         round_counter += 1;
                         if round_counter >= maintenance_interval_rounds {
-                            tracing::info!("Round started, triggering maintenance task");
+                            tracing::info!(
+                                "Round started, triggering maintenance task for round_seq: {}, offboard_feerate: {}",
+                                event.round_seq,
+                                event.offboard_feerate_sat_vkb
+                            );
                             let app_state_clone = app_state.clone();
                             tokio::spawn(async move {
                                 maintenance(app_state_clone).await;

@@ -181,6 +181,7 @@ fn main() -> anyhow::Result<()> {
             tracing::Level::ERROR => EventFilter::Log,
             tracing::Level::WARN => EventFilter::Log,
             tracing::Level::INFO => EventFilter::Log,
+            tracing::Level::DEBUG => EventFilter::Log,
             _ => EventFilter::Ignore,
         });
     tracing_subscriber::registry()
