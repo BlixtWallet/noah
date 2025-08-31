@@ -35,7 +35,7 @@ export const openDatabase = async () => {
 
   await newDb.withTransactionAsync(async () => {
     const result = await newDb.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
-    let version = result?.user_version ?? 0;
+    const version = result?.user_version ?? 0;
 
     if (version < migrations.length) {
       for (let i = version; i < migrations.length; i++) {

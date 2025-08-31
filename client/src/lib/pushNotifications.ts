@@ -10,6 +10,7 @@ import { backgroundSync, maintenance, submitInvoice, triggerBackupTask } from ".
 import { registerPushToken, reportJobStatus } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { ReportType } from "~/types/serverTypes";
+import { NotificationData } from "~/types/notifications";
 
 const log = logger("pushNotifications");
 
@@ -55,7 +56,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
     const notificationDataResult = Result.fromThrowable(
       () => {
-        let notificationData = (data as any)?.data?.body;
+        const notificationData = (data as unknown as { data: { body: NotificationData } })?.data
+          ?.body;
         if (typeof notificationData === "string") {
           return JSON.parse(notificationData);
         }

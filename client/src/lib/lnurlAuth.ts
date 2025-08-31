@@ -78,6 +78,11 @@ export const lnurlAuth = async (lnUrlStr: string): Promise<Result<boolean, Error
     });
 };
 
-const isLNUrlPayResponseError = (subject: any): subject is ILNUrlPayResponseError => {
-  return typeof subject === "object" && subject.status && subject.status === "ERROR";
+const isLNUrlPayResponseError = (subject: unknown): subject is ILNUrlPayResponseError => {
+  return (
+    typeof subject === "object" &&
+    subject !== null &&
+    "status" in subject &&
+    (subject as { status: string }).status === "ERROR"
+  );
 };

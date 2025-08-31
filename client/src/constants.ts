@@ -18,13 +18,13 @@ export const PLATFORM = Platform.OS;
 export const DOCUMENT_DIRECTORY_PATH = RNFSTurbo.DocumentDirectoryPath;
 export const CACHES_DIRECTORY_PATH = RNFSTurbo.CachesDirectoryPath;
 
-const REGTEST_URL = !!process.env.EXPO_PUBLIC_REGTEST_URL
+const REGTEST_URL = process.env.EXPO_PUBLIC_REGTEST_URL
   ? process.env.EXPO_PUBLIC_REGTEST_URL
   : PLATFORM === "android"
     ? "10.0.2.2"
     : "localhost";
 
-const REGTEST_SERVER_URL = !!process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
+const REGTEST_SERVER_URL = process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
   ? process.env.EXPO_PUBLIC_REGTEST_SERVER_URL
   : PLATFORM === "android"
     ? "http://10.0.2.2:3000"
@@ -173,7 +173,7 @@ export const isValidLightningAddress = (url: string): boolean => {
     return false;
   }
 
-  if (!!isOnion(domain)) {
+  if (isOnion(domain)) {
     return false;
   }
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Pressable, StyleSheet } from "react-native";
-import { Camera, useCameraDevice } from "react-native-vision-camera";
+import { Camera, CodeScanner, useCameraDevice } from "react-native-vision-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { NoahSafeAreaView } from "./NoahSafeAreaView";
 import { Text } from "./ui/text";
@@ -9,7 +9,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "@react-native-vector-icons/ionicons";
 
 type QRCodeScannerProps = {
-  codeScanner: any;
+  codeScanner: CodeScanner;
   onClose: () => void;
 };
 

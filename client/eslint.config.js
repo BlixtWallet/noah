@@ -1,25 +1,32 @@
-// https://docs.expo.dev/guides/using-eslint/
-const { defineConfig } = require("eslint/config");
+// @ts-check
+
+const eslint = require("@eslint/js");
+const tseslint = require("typescript-eslint");
 const expoConfig = require("eslint-config-expo/flat");
 const reactCompilerPlugin = require("eslint-plugin-react-compiler");
 const importPlugin = require("eslint-plugin-import");
 
-module.exports = defineConfig([
-  expoConfig,
+module.exports = tseslint.config(
   {
-    ignores: ["dist/*"],
+    ignores: ["dist/*", "node_modules/*", "**/*.js", "ios/*", "android/*"],
+  },
+  ...expoConfig,
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
     plugins: {
       "react-compiler": reactCompilerPlugin,
     },
-    extends: [importPlugin.flatConfigs.recommended],
+    rules: {
+      "react-compiler/react-compiler": "error",
+      "no-return-await": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+    },
     settings: {
       "import/resolver": {
         node: true,
         typescript: true,
       },
     },
-    rules: {
-      "react-compiler/react-compiler": "error",
-    },
   },
-]);
+);

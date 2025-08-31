@@ -22,7 +22,8 @@ type MnemonicScreenRouteProp = RouteProp<
 >;
 
 const MnemonicScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<OnboardingStackParamList & SettingsStackParamList>>();
   const route = useRoute<MnemonicScreenRouteProp>();
   const { fromOnboarding } = route.params || {};
 

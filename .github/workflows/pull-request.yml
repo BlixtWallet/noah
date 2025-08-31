@@ -45,6 +45,9 @@ jobs:
       - name: Lint code
         run: nix develop .# --command bash -c "bun client lint"
 
+      - name: Typecheck code
+        run: nix develop .# --command bash -c "bun client typecheck"
+
   android_build:
     runs-on: self-hosted
     needs: lint

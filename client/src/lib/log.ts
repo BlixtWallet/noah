@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO(hsjoberg): we don't have got code to know if it's debug mode or not
 const Debug = true;
 
