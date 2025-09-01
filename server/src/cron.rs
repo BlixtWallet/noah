@@ -1,11 +1,22 @@
-use crate::{AppState, push::send_push_notification};
+use crate::{AppState, push::send_push_notification, utils::make_k1};
+use serde::{Deserialize, Serialize};
 use tokio_cron_scheduler::{Job, JobScheduler};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct BackgroundSyncNotificationData {
+    notification_type: String,
+    k1: Option<String>,
+}
 
 async fn background_sync(app_state: AppState) {
     let data = crate::push::PushNotificationData {
         title: None,
         body: None,
-        data: r#"{"type": "background-sync"}"#.to_string(),
+        data: serde_json::to_string(&BackgroundSyncNotificationData {
+            notification_type: "background_sync".to_string(),
+            k1: None,
+        })
+        .unwrap(),
         priority: "high".to_string(),
         content_available: true,
     };
@@ -18,7 +29,15 @@ async fn background_sync(app_state: AppState) {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct BackupNotificationData {
+    notification_type: String,
+    k1: Option<String>,
+}
+
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
+    let k1 = make_k1(app_state.k1_values.clone());
+
     let conn = app_state.db.connect()?;
     let mut rows = conn
         .query(
@@ -32,7 +51,10 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
         let data = crate::push::PushNotificationData {
             title: None,
             body: None,
-            data: r#"{"type": "backup-trigger"}"#.to_string(),
+            data: serde_json::to_string(&BackupNotificationData {
+                notification_type: "backup_trigger".to_string(),
+                k1: Some(k1.clone()),
+            })?,
             priority: "high".to_string(),
             content_available: true,
         };

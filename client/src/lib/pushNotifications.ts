@@ -15,13 +15,18 @@ import { NotificationData } from "~/types/notifications";
 const log = logger("pushNotifications");
 
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
-async function handleTaskCompletion(report_type: ReportType, result: Result<void, Error>) {
+async function handleTaskCompletion(
+  report_type: ReportType,
+  result: Result<void, Error>,
+  k1?: string,
+) {
   if (result.isErr()) {
     log.d(`Failed to trigger ${report_type} task, reporting failure`);
     const jobStatusResult = await reportJobStatus({
       report_type,
       status: "failure",
       error_message: result.error.message,
+      k1,
     });
 
     if (jobStatusResult.isErr()) {
@@ -35,6 +40,7 @@ async function handleTaskCompletion(report_type: ReportType, result: Result<void
     report_type,
     status: "success",
     error_message: null,
+    k1,
   });
 
   if (jobStatusResult.isErr()) {
@@ -56,12 +62,11 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
     const notificationDataResult = Result.fromThrowable(
       () => {
-        const notificationData = (data as unknown as { data: { body: NotificationData } })?.data
-          ?.body;
-        if (typeof notificationData === "string") {
-          return JSON.parse(notificationData);
+        const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
+        if (typeof rawBody === "string") {
+          return JSON.parse(rawBody) as NotificationData;
         }
-        return notificationData;
+        return rawBody as NotificationData;
       },
       (e) => new Error(`Failed to parse notification data: ${e}`),
     )();
@@ -76,25 +81,30 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
     log.d("[Background Job] notificationData", [notificationData, typeof notificationData]);
 
-    if (!notificationData || !notificationData.type) {
+    if (!notificationData || !notificationData.notification_type) {
       log.w("[Background Job] No data or type received", [notificationData]);
       return;
     }
 
     const taskResult = await ResultAsync.fromPromise(
       (async () => {
-        if (notificationData.type === "background-sync") {
+        if (notificationData.notification_type === "background_sync") {
           await backgroundSync();
-        } else if (notificationData.type === "maintenance") {
+        } else if (notificationData.notification_type === "maintenance") {
           const result = await maintenance();
-          await handleTaskCompletion("maintenance", result);
-        } else if (notificationData.type === "lightning-invoice-request") {
+          await handleTaskCompletion("maintenance", result, notificationData.k1);
+        } else if (notificationData.notification_type === "lightning_invoice_request") {
           log.d("Received lightning invoice request", [notificationData]);
+          if (!notificationData.amount || !notificationData.request_id) {
+            log.w("Invalid lightning invoice request", [notificationData]);
+            return;
+          }
+
           const amountMsat = parseInt(notificationData.amount);
           await submitInvoice(notificationData.request_id, amountMsat);
-        } else if (notificationData.type === "backup-trigger") {
+        } else if (notificationData.notification_type === "backup_trigger") {
           const result = await triggerBackupTask();
-          await handleTaskCompletion("backup", result);
+          await handleTaskCompletion("backup", result, notificationData.k1);
         }
       })(),
       (e) =>

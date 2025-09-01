@@ -1,6 +1,7 @@
-use crate::{AppState, push::send_push_notification};
+use crate::{AppState, push::send_push_notification, utils::make_k1};
 
 use futures_util::stream::StreamExt;
+use serde::{Deserialize, Serialize};
 use server_rpc::{
     ArkServiceClient,
     protos::{Empty, HandshakeRequest, round_event},
@@ -59,11 +60,22 @@ pub async fn connect_to_ark_server(
     Ok(())
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct MaintenancePushNotificationData {
+    notification_type: String,
+    k1: Option<String>,
+}
+
 pub async fn maintenance(app_state: AppState) {
+    let k1 = make_k1(app_state.k1_values.clone());
     let data = crate::push::PushNotificationData {
         title: None,
         body: None,
-        data: r#"{"type": "maintenance"}"#.to_string(),
+        data: serde_json::to_string(&MaintenancePushNotificationData {
+            notification_type: "maintenance".to_string(),
+            k1: Some(k1),
+        })
+        .unwrap(),
         priority: "high".to_string(),
         content_available: true,
     };

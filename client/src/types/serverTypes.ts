@@ -5,64 +5,71 @@
  */
 export type AuthEvent = "REGISTERED";
 
-export type AuthPayload = { key: string, sig: string, k1: string, };
+export type AuthPayload = { key: string; sig: string; k1: string };
 
-export type BackupInfo = { backup_version: number, created_at: string, backup_size: number, };
+export type BackupInfo = { backup_version: number; created_at: string; backup_size: number };
 
-export type BackupSettingsPayload = { backup_enabled: boolean, };
+export type BackupSettingsPayload = { backup_enabled: boolean };
 
-export type CompleteUploadPayload = { s3_key: string, backup_version: number, backup_size: number, };
+export type CompleteUploadPayload = { s3_key: string; backup_version: number; backup_size: number };
 
-export type DefaultSuccessPayload = { success: boolean, };
+export type DefaultSuccessPayload = { success: boolean };
 
-export type DeleteBackupPayload = { backup_version: number, };
+export type DeleteBackupPayload = { backup_version: number };
 
-export type DownloadUrlResponse = { download_url: string, backup_size: number, };
+export type DownloadUrlResponse = { download_url: string; backup_size: number };
 
-export type GetDownloadUrlPayload = { backup_version: number | null, };
+export type GetDownloadUrlPayload = { backup_version: number | null };
 
-export type GetUploadUrlPayload = { backup_version: number, };
+export type GetUploadUrlPayload = { backup_version: number };
 
 /**
  * Represents the response for an LNURL-auth request.
  */
-export type LNUrlAuthResponse = { 
-/**
- * The status of the request, either "OK" or "ERROR".
- */
-status: string, 
-/**
- * An optional event indicating the outcome of the authentication.
- */
-event: AuthEvent | null, 
-/**
- * An optional reason for an error, if one occurred.
- */
-reason: string | null, 
-/**
- * The user's lightning address.
- */
-lightning_address: string | null, };
+export type LNUrlAuthResponse = {
+  /**
+   * The status of the request, either "OK" or "ERROR".
+   */
+  status: string;
+  /**
+   * An optional event indicating the outcome of the authentication.
+   */
+  event: AuthEvent | null;
+  /**
+   * An optional reason for an error, if one occurred.
+   */
+  reason: string | null;
+  /**
+   * The user's lightning address.
+   */
+  lightning_address: string | null;
+};
 
 /**
  * Defines the payload for a user registration request.
  */
-export type RegisterPayload = { 
-/**
- * User chosen lightning address
- */
-ln_address: string | null, };
+export type RegisterPayload = {
+  /**
+   * User chosen lightning address
+   */
+  ln_address: string | null;
+};
 
 /**
  * Defines the payload for registering a push notification token.
  */
-export type RegisterPushToken = { 
-/**
- * The Expo push token for the user's device.
- */
-push_token: string, };
+export type RegisterPushToken = {
+  /**
+   * The Expo push token for the user's device.
+   */
+  push_token: string;
+};
 
-export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
+export type ReportJobStatusPayload = {
+  report_type: ReportType;
+  status: ReportStatus;
+  error_message: string | null;
+};
 
 export type ReportStatus = "success" | "failure";
 
@@ -71,19 +78,21 @@ export type ReportType = "maintenance" | "backup";
 /**
  * Defines the payload for submitting a BOLT11 invoice.
  */
-export type SubmitInvoicePayload = { 
-/**
- * The BOLT11 invoice to be paid.
- */
-invoice: string, };
+export type SubmitInvoicePayload = {
+  /**
+   * The BOLT11 invoice to be paid.
+   */
+  invoice: string;
+};
 
 /**
  * Defines the payload for updating a user's lightning address.
  */
-export type UpdateLnAddressPayload = { 
-/**
- * The new lightning address for the user.
- */
-ln_address: string, };
+export type UpdateLnAddressPayload = {
+  /**
+   * The new lightning address for the user.
+   */
+  ln_address: string;
+};
 
-export type UploadUrlResponse = { upload_url: string, s3_key: string, };
+export type UploadUrlResponse = { upload_url: string; s3_key: string };

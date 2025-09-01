@@ -186,7 +186,7 @@ pub async fn lnurlp_request(
             title: None,
             body: None,
             data: format!(
-                r#"{{"type": "lightning-invoice-request", "request_id": "{}", "amount": {}}}"#,
+                r#"{{"type": "lightning_invoice_request", "request_id": "{}", "amount": {}}}"#,
                 k1, amount
             ),
             priority: "high".to_string(),
