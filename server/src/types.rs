@@ -157,3 +157,9 @@ pub struct ReportJobStatusPayload {
     pub status: ReportStatus,
     pub error_message: Option<String>,
 }
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct DefaultSuccessPayload {
+    pub success: bool,
+}

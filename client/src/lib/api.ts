@@ -15,6 +15,7 @@ import {
   UpdateLnAddressPayload,
   UploadUrlResponse,
   ReportJobStatusPayload,
+  DefaultSuccessPayload,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 
@@ -24,15 +25,13 @@ const API_URL = getServerEndpoint();
 
 async function post<T, U>(
   endpoint: string,
-  payload: T,
+  payload: T & { k1?: string },
   authenticated = true,
 ): Promise<Result<U, Error>> {
   try {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
     };
-
-    log.d("Sending request to server", [endpoint, payload]);
 
     if (authenticated) {
       const walletResult = await loadWalletIfNeeded();
@@ -41,21 +40,25 @@ async function post<T, U>(
         return err(walletResult.error);
       }
 
-      const k1Result = await getK1();
-      if (k1Result.isErr()) {
-        return err(k1Result.error);
-      }
+      log.d("Payload", [payload]);
 
-      const k1 = k1Result.value;
+      const k1 = payload.k1 ?? (await getK1()).unwrapOr(undefined);
+
+      if (!k1) {
+        return err(new Error("Failed to get k1 for authentication"));
+      }
 
       log.d("k1 is", [k1]);
 
       const peakResult = await peakKeyPair(0);
+
       if (peakResult.isErr()) {
         log.d("Failed to derive public key for authentication", [peakResult.error]);
         return err(peakResult.error);
       }
       const { public_key: key } = peakResult.value;
+
+      log.d("Derived public key", [key]);
 
       const signatureResult = await signMessage(k1, 0);
 
@@ -64,6 +67,8 @@ async function post<T, U>(
         return err(signatureResult.error);
       }
       const sig = signatureResult.value;
+
+      log.d("Signature", [sig]);
 
       headers["x-auth-k1"] = k1;
       headers["x-auth-sig"] = sig;
@@ -94,15 +99,21 @@ async function post<T, U>(
       return err(new Error(`API Error: ${responseValue.status} ${errorText}`));
     }
 
+    if (responseValue.status === 204) {
+      log.d("Empty response from server (204 No Content)");
+      return ok(undefined as U);
+    }
+
     // Handle cases where response might be empty
-    const responseText = await responseValue.text();
-    if (!responseText) {
+    const responseJson = await responseValue.json();
+    if (!responseJson) {
       log.d("Empty response from server");
       return ok(undefined as U);
     }
 
-    const data = JSON.parse(responseText);
-    return ok(data);
+    log.d("Response from server", [responseJson]);
+
+    return ok(responseJson);
   } catch (e) {
     return err(e as Error);
   }
@@ -119,21 +130,25 @@ export const listBackups = () => post<object, BackupInfo[]>("/backup/list", {});
 export const getDownloadUrl = (payload: GetDownloadUrlPayload) =>
   post<GetDownloadUrlPayload, DownloadUrlResponse>("/backup/download_url", payload);
 
-export const deleteBackup = (payload: DeleteBackupPayload) => post("/backup/delete", payload);
+export const deleteBackup = (payload: DeleteBackupPayload) =>
+  post<DeleteBackupPayload, DefaultSuccessPayload>("/backup/delete", payload);
 
 export const updateBackupSettings = (payload: BackupSettingsPayload) =>
-  post("/backup/settings", payload);
+  post<BackupSettingsPayload, DefaultSuccessPayload>("/backup/settings", payload);
 
 export const registerWithServer = () => post<object, LNUrlAuthResponse>("/register", {});
 
 export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
-  post("/update_ln_address", payload);
+  post<UpdateLnAddressPayload, DefaultSuccessPayload>("/update_ln_address", payload);
 
 export const registerPushToken = (payload: RegisterPushToken) =>
-  post("/register_push_token", payload);
+  post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);
 
-export const reportJobStatus = (payload: ReportJobStatusPayload) =>
-  post("/report_job_status", payload);
+export const reportJobStatus = (payload: ReportJobStatusPayload & { k1?: string }) =>
+  post<ReportJobStatusPayload & { k1?: string }, DefaultSuccessPayload>(
+    "/report_job_status",
+    payload,
+  );
 
 export const getK1 = async () => {
   const k1Result = await ResultAsync.fromPromise(
