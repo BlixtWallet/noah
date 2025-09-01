@@ -1,8 +1,8 @@
 use crate::s3_client::S3BackupClient;
 use crate::types::{
-    BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DeleteBackupPayload,
-    DownloadUrlResponse, GetDownloadUrlPayload, ReportJobStatusPayload, SubmitInvoicePayload,
-    UserInfoResponse,
+    BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
+    DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, ReportJobStatusPayload,
+    SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -100,7 +100,7 @@ pub async fn register_push_token(
     State(app_state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPushToken>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     tracing::debug!(
         "Received push token registration request for pubkey: {}",
         auth_payload.key
@@ -125,7 +125,7 @@ pub async fn register_push_token(
         )
         .await?;
 
-    Ok(())
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
 /// Receives and processes a BOLT11 invoice from a user's device.
@@ -136,7 +136,7 @@ pub async fn submit_invoice(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<SubmitInvoicePayload>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     tracing::info!(
         "Received submit invoice request for pubkey: {} and k1: {}",
         auth_payload.key,
@@ -147,7 +147,7 @@ pub async fn submit_invoice(
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
 
-        Ok(())
+        Ok(Json(DefaultSuccessPayload { success: true }))
     } else {
         Err(ApiError::InvalidArgument(
             "Payment request transaction not found".to_string(),
@@ -185,7 +185,7 @@ pub async fn update_ln_address(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<UpdateLnAddressPayload>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     if let Err(e) = payload.validate() {
         return Err(ApiError::InvalidArgument(e.to_string()));
     }
@@ -211,7 +211,7 @@ pub async fn update_ln_address(
     )
     .await?;
 
-    Ok(())
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
 pub async fn get_upload_url(
@@ -233,7 +233,7 @@ pub async fn complete_upload(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<CompleteUploadPayload>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
     conn.execute(
         "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
@@ -242,7 +242,7 @@ pub async fn complete_upload(
     )
     .await?;
 
-    Ok(())
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
 pub async fn list_backups(
@@ -304,7 +304,7 @@ pub async fn delete_backup(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<DeleteBackupPayload>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
     let s3_key: String = {
         let mut row = conn
@@ -329,13 +329,13 @@ pub async fn delete_backup(
     )
     .await?;
 
-    Ok(())
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
 pub async fn report_job_status(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<ReportJobStatusPayload>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     tracing::info!(
         "Received job status report from pubkey: {}. Report type: {:?}, Status: {:?}, Error: {:?}",
         auth_payload.key,
@@ -344,14 +344,14 @@ pub async fn report_job_status(
         payload.error_message
     );
 
-    Ok(())
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
 pub async fn update_backup_settings(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<BackupSettingsPayload>,
-) -> Result<(), ApiError> {
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
     conn.execute(
         "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)
@@ -360,5 +360,5 @@ pub async fn update_backup_settings(
     )
     .await?;
 
-    Ok(())
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }

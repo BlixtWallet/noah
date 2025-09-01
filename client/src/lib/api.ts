@@ -15,6 +15,7 @@ import {
   UpdateLnAddressPayload,
   UploadUrlResponse,
   ReportJobStatusPayload,
+  DefaultSuccessPayload,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 
@@ -95,14 +96,15 @@ async function post<T, U>(
     }
 
     // Handle cases where response might be empty
-    const responseText = await responseValue.text();
-    if (!responseText) {
+    const responseJson = await responseValue.json();
+    if (!responseJson) {
       log.d("Empty response from server");
       return ok(undefined as U);
     }
 
-    const data = JSON.parse(responseText);
-    return ok(data);
+    log.d("Response text", [responseJson]);
+
+    return ok(responseJson);
   } catch (e) {
     return err(e as Error);
   }
@@ -119,21 +121,22 @@ export const listBackups = () => post<object, BackupInfo[]>("/backup/list", {});
 export const getDownloadUrl = (payload: GetDownloadUrlPayload) =>
   post<GetDownloadUrlPayload, DownloadUrlResponse>("/backup/download_url", payload);
 
-export const deleteBackup = (payload: DeleteBackupPayload) => post("/backup/delete", payload);
+export const deleteBackup = (payload: DeleteBackupPayload) =>
+  post<DeleteBackupPayload, DefaultSuccessPayload>("/backup/delete", payload);
 
 export const updateBackupSettings = (payload: BackupSettingsPayload) =>
-  post("/backup/settings", payload);
+  post<BackupSettingsPayload, DefaultSuccessPayload>("/backup/settings", payload);
 
 export const registerWithServer = () => post<object, LNUrlAuthResponse>("/register", {});
 
 export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
-  post("/update_ln_address", payload);
+  post<UpdateLnAddressPayload, DefaultSuccessPayload>("/update_ln_address", payload);
 
 export const registerPushToken = (payload: RegisterPushToken) =>
-  post("/register_push_token", payload);
+  post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);
 
 export const reportJobStatus = (payload: ReportJobStatusPayload) =>
-  post("/report_job_status", payload);
+  post<ReportJobStatusPayload, DefaultSuccessPayload>("/report_job_status", payload);
 
 export const getK1 = async () => {
   const k1Result = await ResultAsync.fromPromise(

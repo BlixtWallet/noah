@@ -13,6 +13,8 @@ export type BackupSettingsPayload = { backup_enabled: boolean, };
 
 export type CompleteUploadPayload = { s3_key: string, backup_version: number, backup_size: number, };
 
+export type DefaultSuccessPayload = { success: boolean, };
+
 export type DeleteBackupPayload = { backup_version: number, };
 
 export type DownloadUrlResponse = { download_url: string, backup_size: number, };
