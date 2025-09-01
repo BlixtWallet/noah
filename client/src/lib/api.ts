@@ -99,6 +99,11 @@ async function post<T, U>(
       return err(new Error(`API Error: ${responseValue.status} ${errorText}`));
     }
 
+    if (responseValue.status === 204) {
+      log.d("Empty response from server (204 No Content)");
+      return ok(undefined as U);
+    }
+
     // Handle cases where response might be empty
     const responseJson = await responseValue.json();
     if (!responseJson) {
@@ -106,7 +111,7 @@ async function post<T, U>(
       return ok(undefined as U);
     }
 
-    log.d("Response text", [responseJson]);
+    log.d("Response from server", [responseJson]);
 
     return ok(responseJson);
   } catch (e) {
