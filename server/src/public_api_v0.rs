@@ -190,6 +190,7 @@ pub async fn lnurlp_request(
                 notification_type: NotificationTypes::LightningInvoiceRequest,
                 k1: Some(k1),
                 amount: Some(amount),
+                offboarding_request_id: None,
             })
             .unwrap(),
             priority: "high".to_string(),

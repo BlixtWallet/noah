@@ -23,8 +23,8 @@ use crate::{
     cron::cron_scheduler,
     gated_api_v0::{
         complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info,
-        list_backups, register, register_push_token, report_job_status, submit_invoice,
-        update_backup_settings, update_ln_address,
+        list_backups, register, register_offboarding_request, register_push_token,
+        report_job_status, submit_invoice, update_backup_settings, update_ln_address,
     },
     private_api_v0::health_check,
     public_api_v0::{get_k1, lnurlp_request},
@@ -200,6 +200,10 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let auth_router = Router::new()
         .route("/register", post(register))
         .route("/register_push_token", post(register_push_token))
+        .route(
+            "/register_offboarding_request",
+            post(register_offboarding_request),
+        )
         .route("/lnurlp/submit_invoice", post(submit_invoice))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))

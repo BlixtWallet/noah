@@ -1,11 +1,12 @@
 import { syncWallet } from "~/lib/sync";
 import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
-import { bolt11Invoice } from "./paymentsApi";
+import { bolt11Invoice, offboardAllArk, onchainAddress } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import { peakKeyPair } from "./crypto";
 import { submitInvoice as submitInvoiceApi } from "./api";
+import { updateOffboardingRequestStatus } from "./transactionsDb";
 
 const log = logger("tasks");
 
@@ -96,5 +97,43 @@ export async function triggerBackupTask(): Promise<Result<void, Error>> {
   }
 
   log.d("[Backup Job] completed successfully");
+  return ok(undefined);
+}
+
+export async function offboardTask(requestId: string): Promise<Result<void, Error>> {
+  log.d("[Offboard Job] running");
+  const loadResult = await loadWalletIfNeeded();
+  if (loadResult.isErr()) {
+    const e = new Error("Failed to load wallet for offboarding");
+    log.e(e.message, [loadResult.error]);
+    return err(e);
+  }
+
+  log.d("[Offboard Job] offboarding request id is ", [requestId]);
+
+  const address = await onchainAddress();
+  if (address.isErr()) {
+    const e = new Error("Failed to get onchain address");
+    log.e(e.message, [address.error]);
+    return err(e);
+  }
+
+  log.d("[Offboard Job] onchain address is ", [address.value]);
+
+  const offboardResult = await offboardAllArk(address.value);
+  if (offboardResult.isErr()) {
+    log.e("Offboarding failed", [offboardResult.error]);
+    return err(offboardResult.error);
+  }
+
+  log.d("[Offboard Job] offboarding result is ", [offboardResult.value]);
+
+  const updateResult = await updateOffboardingRequestStatus(requestId, "completed");
+  if (updateResult.isErr()) {
+    log.e("Failed to update offboarding request status", [updateResult.error]);
+    return err(updateResult.error);
+  }
+  log.d("[Offboard Job] completed", [requestId]);
+
   return ok(undefined);
 }

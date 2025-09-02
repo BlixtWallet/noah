@@ -1,8 +1,8 @@
 use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
-    DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, ReportJobStatusPayload,
-    SubmitInvoicePayload, UserInfoResponse,
+    DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, RegisterOffboardingResponse,
+    ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -15,6 +15,7 @@ use crate::{
 use axum::{Extension, Json, extract::State};
 use rand::Rng;
 use random_word::Lang;
+use uuid::Uuid;
 use validator::Validate;
 
 /// Handles user registration via LNURL-auth.
@@ -361,4 +362,28 @@ pub async fn update_backup_settings(
     .await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
+}
+
+pub async fn register_offboarding_request(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+) -> anyhow::Result<Json<RegisterOffboardingResponse>, ApiError> {
+    tracing::info!(
+        "Received offboarding request for pubkey: {}",
+        auth_payload.key
+    );
+
+    let request_id = Uuid::new_v4().to_string();
+
+    let conn = state.db.connect()?;
+    conn.execute(
+        "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
+        libsql::params![request_id.clone(), auth_payload.key],
+    )
+    .await?;
+
+    Ok(Json(RegisterOffboardingResponse {
+        success: true,
+        request_id,
+    }))
 }

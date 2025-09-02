@@ -29,6 +29,13 @@ export const openDatabase = async () => {
         btcPrice REAL
       );
     `,
+    `
+      CREATE TABLE IF NOT EXISTS offboarding_requests (
+        request_id TEXT PRIMARY KEY NOT NULL,
+        date TEXT NOT NULL,
+        status TEXT NOT NULL
+      );
+    `,
     // In the future, add new migrations here. For example:
     // `ALTER TABLE transactions ADD COLUMN new_column TEXT;`,
   ];
@@ -91,4 +98,59 @@ export const removeTransaction = async (id: string) => {
     log.e("Failed to remove transaction", [e]);
     return e as Error;
   });
+};
+
+// Offboarding request functions
+export type OffboardingRequest = {
+  request_id: string;
+  date: string;
+  status: "pending" | "completed" | "failed";
+};
+
+export const addOffboardingRequest = async (request: OffboardingRequest) => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(
+    db.runAsync(
+      `INSERT INTO offboarding_requests (request_id, date, status)
+       VALUES (?, ?, ?);`,
+      request.request_id,
+      request.date,
+      request.status,
+    ),
+    (e) => {
+      log.e("Failed to add offboarding request", [e]);
+      return e as Error;
+    },
+  );
+};
+
+export const getOffboardingRequests = async (): Promise<
+  ResultAsync<OffboardingRequest[], Error>
+> => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(
+    db.getAllAsync<OffboardingRequest>("SELECT * FROM offboarding_requests ORDER BY date DESC;"),
+    (e) => {
+      log.e("Failed to get offboarding requests", [e]);
+      return e as Error;
+    },
+  );
+};
+
+export const updateOffboardingRequestStatus = async (
+  requestId: string,
+  status: OffboardingRequest["status"],
+) => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(
+    db.runAsync(
+      "UPDATE offboarding_requests SET status = ? WHERE request_id = ?;",
+      status,
+      requestId,
+    ),
+    (e) => {
+      log.e("Failed to update offboarding request status", [e]);
+      return e as Error;
+    },
+  );
 };

@@ -140,6 +140,7 @@ pub struct BackupSettingsPayload {
 pub enum ReportType {
     Maintenance,
     Backup,
+    Offboarding,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -158,6 +159,7 @@ pub enum NotificationTypes {
     Maintenance,
     LightningInvoiceRequest,
     BackupTrigger,
+    Offboarding,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -167,6 +169,7 @@ pub struct NotificationsData {
     pub k1: Option<String>,
     #[ts(type = "number | null")]
     pub amount: Option<u64>,
+    pub offboarding_request_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, TS)]
@@ -181,4 +184,11 @@ pub struct ReportJobStatusPayload {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct DefaultSuccessPayload {
     pub success: bool,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct RegisterOffboardingResponse {
+    pub success: bool,
+    pub request_id: String,
 }

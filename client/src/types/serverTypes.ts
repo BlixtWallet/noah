@@ -44,9 +44,11 @@ reason: string | null,
  */
 lightning_address: string | null, };
 
-export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger";
+export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding";
 
-export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, };
+export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, offboarding_request_id: string | null, };
+
+export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
 
 /**
  * Defines the payload for a user registration request.
@@ -70,7 +72,7 @@ export type ReportJobStatusPayload = { report_type: ReportType, status: ReportSt
 
 export type ReportStatus = "success" | "failure";
 
-export type ReportType = "maintenance" | "backup";
+export type ReportType = "maintenance" | "backup" | "offboarding";
 
 /**
  * Defines the payload for submitting a BOLT11 invoice.

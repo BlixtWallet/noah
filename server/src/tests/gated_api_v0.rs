@@ -12,11 +12,13 @@ use tower::ServiceExt;
 use crate::app_middleware::auth_middleware;
 use crate::gated_api_v0::{
     complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info, list_backups,
-    register, register_push_token, report_job_status, update_backup_settings, update_ln_address,
+    register, register_offboarding_request, register_push_token, report_job_status,
+    update_backup_settings, update_ln_address,
 };
 use crate::tests::common::TestUser;
 use crate::types::{
-    BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, UploadUrlResponse, UserInfoResponse,
+    BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, RegisterOffboardingResponse,
+    UploadUrlResponse, UserInfoResponse,
 };
 use crate::utils::make_k1;
 use crate::{AppState, AppStruct};
@@ -46,6 +48,10 @@ async fn setup_test_app() -> (Router, AppState) {
     let app = Router::new()
         .route("/register", post(register))
         .route("/register_push_token", post(register_push_token))
+        .route(
+            "/register_offboarding_request",
+            post(register_offboarding_request),
+        )
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
         .route("/backup/upload_url", post(get_upload_url))
@@ -1333,6 +1339,88 @@ async fn test_register_expired_k1() {
                     }))
                     .unwrap(),
                 ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_register_offboarding_request() {
+    let (app, app_state) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user).await;
+
+    let k1 = make_k1(app_state.k1_values.clone());
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register_offboarding_request")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let res: RegisterOffboardingResponse = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(res.success, true);
+    assert!(!res.request_id.is_empty());
+
+    // Verify the offboarding request was stored in the database
+    let conn = app_state.db.connect().unwrap();
+    let mut rows = conn
+        .query(
+            "SELECT request_id, pubkey, status FROM offboarding_requests WHERE pubkey = ?",
+            libsql::params![user.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+
+    let row = rows.next().await.unwrap().unwrap();
+    let stored_request_id: String = row.get(0).unwrap();
+    let stored_pubkey: String = row.get(1).unwrap();
+    let stored_status: String = row.get(2).unwrap();
+
+    assert_eq!(stored_request_id, res.request_id);
+    assert_eq!(stored_pubkey, user.pubkey().to_string());
+    assert_eq!(stored_status, "pending");
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_register_offboarding_request_invalid_auth() {
+    let (app, app_state) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user).await;
+
+    let k1 = make_k1(app_state.k1_values.clone());
+    let mut auth_payload = user.auth_payload(&k1);
+    auth_payload.sig = "invalid_signature".to_string();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register_offboarding_request")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
                 .unwrap(),
         )
         .await

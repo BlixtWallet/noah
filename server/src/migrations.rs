@@ -59,6 +59,26 @@ const MIGRATIONS: &[&str] = &[
        FOREIGN KEY (pubkey) REFERENCES users(pubkey)
    );
    "#,
+    r#"
+   CREATE TABLE offboarding_requests (
+       request_id TEXT PRIMARY KEY,
+       pubkey TEXT NOT NULL,
+       status TEXT NOT NULL DEFAULT 'pending',
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       FOREIGN KEY (pubkey) REFERENCES users(pubkey)
+   );
+
+   CREATE INDEX idx_offboarding_requests_pubkey ON offboarding_requests(pubkey);
+   CREATE INDEX idx_offboarding_requests_status ON offboarding_requests(status);
+
+   CREATE TRIGGER update_offboarding_requests_updated_at
+   AFTER UPDATE ON offboarding_requests
+   FOR EACH ROW
+   BEGIN
+       UPDATE offboarding_requests SET updated_at = CURRENT_TIMESTAMP WHERE request_id = OLD.request_id;
+   END;
+   "#,
 ];
 
 /// Applies all pending migrations to the database.
