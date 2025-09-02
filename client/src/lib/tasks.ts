@@ -2,10 +2,10 @@ import { syncWallet } from "~/lib/sync";
 import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice } from "./paymentsApi";
-import { getServerEndpoint } from "~/constants";
-import { ResultAsync, err, ok, Result } from "neverthrow";
+import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
-import { peakKeyPair, signMessage } from "./crypto";
+import { peakKeyPair } from "./crypto";
+import { submitInvoice as submitInvoiceApi } from "./api";
 
 const log = logger("tasks");
 
@@ -46,31 +46,13 @@ export async function maintenance(): Promise<Result<void, Error>> {
   return ok(undefined);
 }
 
-export async function submitInvoice(requestId: string, amountMsat: number) {
+export async function submitInvoice(k1: string, amountMsat: number) {
   log.d("[submitInvoice Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
     log.e("Failed to load wallet for submitting invoice", [loadResult.error]);
     return;
   }
-
-  const serverEndpoint = getServerEndpoint();
-  const url = `${serverEndpoint}/v0/lnurlp/submit_invoice`;
-
-  const index = 0;
-  const peakResult = await peakKeyPair(index);
-  if (peakResult.isErr()) {
-    log.e("Failed to peak key pair for submitting invoice", [peakResult.error]);
-    return;
-  }
-  const { public_key: key } = peakResult.value;
-
-  const signatureResult = await signMessage(requestId, index);
-  if (signatureResult.isErr()) {
-    log.e("Failed to sign message for submitting invoice", [signatureResult.error]);
-    return;
-  }
-  const signature = signatureResult.value;
 
   const sats = amountMsat / 1000;
 
@@ -81,32 +63,13 @@ export async function submitInvoice(requestId: string, amountMsat: number) {
   }
   const invoice = invoiceResult.value;
 
-  const responseResult = await ResultAsync.fromPromise(
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        k1: requestId,
-        invoice,
-        key,
-        sig: signature,
-      }),
-    }),
-    (e) => e as Error,
-  );
+  const responseResult = await submitInvoiceApi({
+    invoice,
+    k1,
+  });
 
   if (responseResult.isErr()) {
     log.e("Failed to submit invoice", [responseResult.error]);
-    return;
-  }
-
-  const response = responseResult.value;
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    log.e("Failed to submit invoice", [response.status, errorBody]);
     return;
   }
 

@@ -95,13 +95,13 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           await handleTaskCompletion("maintenance", result, notificationData.k1);
         } else if (notificationData.notification_type === "lightning_invoice_request") {
           log.d("Received lightning invoice request", [notificationData]);
-          if (!notificationData.amount || !notificationData.request_id) {
+          if (!notificationData.amount || !notificationData.k1) {
             log.w("Invalid lightning invoice request", [notificationData]);
             return;
           }
 
           const amountMsat = parseInt(notificationData.amount);
-          await submitInvoice(notificationData.request_id, amountMsat);
+          await submitInvoice(notificationData.k1, amountMsat);
         } else if (notificationData.notification_type === "backup_trigger") {
           const result = await triggerBackupTask();
           await handleTaskCompletion("backup", result, notificationData.k1);

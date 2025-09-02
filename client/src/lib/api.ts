@@ -16,6 +16,7 @@ import {
   UploadUrlResponse,
   ReportJobStatusPayload,
   DefaultSuccessPayload,
+  SubmitInvoicePayload,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 
@@ -147,6 +148,12 @@ export const registerPushToken = (payload: RegisterPushToken) =>
 export const reportJobStatus = (payload: ReportJobStatusPayload & { k1?: string }) =>
   post<ReportJobStatusPayload & { k1?: string }, DefaultSuccessPayload>(
     "/report_job_status",
+    payload,
+  );
+
+export const submitInvoice = (payload: SubmitInvoicePayload & { k1?: string }) =>
+  post<SubmitInvoicePayload & { k1?: string }, DefaultSuccessPayload>(
+    "/lnurlp/submit_invoice",
     payload,
   );
 

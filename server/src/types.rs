@@ -150,6 +150,16 @@ pub enum ReportStatus {
     Failure,
 }
 
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+#[serde(rename_all = "snake_case")]
+pub enum NotificationTypes {
+    BackgroundSync,
+    Maintenance,
+    LightningInvoiceRequest,
+    BackupTrigger,
+}
+
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct ReportJobStatusPayload {
