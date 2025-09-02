@@ -9,8 +9,7 @@ import { captureException } from "@sentry/react-native";
 import { backgroundSync, maintenance, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
-import { ReportType } from "~/types/serverTypes";
-import { NotificationData } from "~/types/notifications";
+import { NotificationsData, ReportType } from "~/types/serverTypes";
 
 const log = logger("pushNotifications");
 
@@ -64,9 +63,9 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
       () => {
         const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
         if (typeof rawBody === "string") {
-          return JSON.parse(rawBody) as NotificationData;
+          return JSON.parse(rawBody) as NotificationsData;
         }
-        return rawBody as NotificationData;
+        return rawBody as NotificationsData;
       },
       (e) => new Error(`Failed to parse notification data: ${e}`),
     )();
@@ -91,6 +90,10 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         if (notificationData.notification_type === "background_sync") {
           await backgroundSync();
         } else if (notificationData.notification_type === "maintenance") {
+          if (!notificationData.k1) {
+            log.w("Invalid maintenance notification", [notificationData]);
+            return;
+          }
           const result = await maintenance();
           await handleTaskCompletion("maintenance", result, notificationData.k1);
         } else if (notificationData.notification_type === "lightning_invoice_request") {
@@ -100,9 +103,12 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
             return;
           }
 
-          const amountMsat = parseInt(notificationData.amount);
-          await submitInvoice(notificationData.k1, amountMsat);
+          await submitInvoice(notificationData.k1, notificationData.amount);
         } else if (notificationData.notification_type === "backup_trigger") {
+          if (!notificationData.k1) {
+            log.w("Invalid backup trigger notification", [notificationData]);
+            return;
+          }
           const result = await triggerBackupTask();
           await handleTaskCompletion("backup", result, notificationData.k1);
         }

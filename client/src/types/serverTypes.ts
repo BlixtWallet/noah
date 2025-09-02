@@ -46,6 +46,8 @@ lightning_address: string | null, };
 
 export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger";
 
+export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, };
+
 /**
  * Defines the payload for a user registration request.
  */

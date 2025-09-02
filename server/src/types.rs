@@ -165,6 +165,7 @@ pub enum NotificationTypes {
 pub struct NotificationsData {
     pub notification_type: NotificationTypes,
     pub k1: Option<String>,
+    #[ts(type = "number | null")]
     pub amount: Option<u64>,
 }
 
