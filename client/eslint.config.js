@@ -21,6 +21,8 @@ module.exports = tseslint.config(
       "react-compiler/react-compiler": "error",
       "no-return-await": "error",
       "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "no-unused-vars": "warn",
     },
     settings: {
       "import/resolver": {
