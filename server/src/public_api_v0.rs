@@ -12,6 +12,7 @@ use crate::{
     AppState,
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
+    types::{NotificationTypes, NotificationsData},
     utils::make_k1,
 };
 
@@ -102,13 +103,6 @@ pub struct LnurlpRequestQuery {
     amount: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct LnurlRequestNotificationData {
-    notification_type: String,
-    k1: Option<String>,
-    amount: Option<u64>,
-}
-
 /// Handles LNURL-pay requests.
 ///
 /// This endpoint manages the two-step LNURL-pay flow. The first request (without an amount)
@@ -192,8 +186,8 @@ pub async fn lnurlp_request(
         let data = PushNotificationData {
             title: None,
             body: None,
-            data: serde_json::to_string(&LnurlRequestNotificationData {
-                notification_type: "lightning_invoice_request".to_string(),
+            data: serde_json::to_string(&NotificationsData {
+                notification_type: NotificationTypes::LightningInvoiceRequest,
                 k1: Some(k1),
                 amount: Some(amount),
             })

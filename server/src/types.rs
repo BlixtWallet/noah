@@ -160,6 +160,14 @@ pub enum NotificationTypes {
     BackupTrigger,
 }
 
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct NotificationsData {
+    pub notification_type: NotificationTypes,
+    pub k1: Option<String>,
+    pub amount: Option<u64>,
+}
+
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct ReportJobStatusPayload {

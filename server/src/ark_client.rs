@@ -1,4 +1,9 @@
-use crate::{AppState, push::send_push_notification, utils::make_k1};
+use crate::{
+    AppState,
+    push::send_push_notification,
+    types::{NotificationTypes, NotificationsData},
+    utils::make_k1,
+};
 
 use futures_util::stream::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -71,9 +76,10 @@ pub async fn maintenance(app_state: AppState) {
     let data = crate::push::PushNotificationData {
         title: None,
         body: None,
-        data: serde_json::to_string(&MaintenancePushNotificationData {
-            notification_type: "maintenance".to_string(),
+        data: serde_json::to_string(&NotificationsData {
+            notification_type: NotificationTypes::Maintenance,
             k1: Some(k1),
+            amount: None,
         })
         .unwrap(),
         priority: "high".to_string(),
