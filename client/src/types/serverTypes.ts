@@ -48,6 +48,8 @@ export type NotificationTypes = "background_sync" | "maintenance" | "lightning_i
 
 export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, };
 
+export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
+
 /**
  * Defines the payload for a user registration request.
  */

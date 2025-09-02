@@ -184,3 +184,10 @@ pub struct ReportJobStatusPayload {
 pub struct DefaultSuccessPayload {
     pub success: bool,
 }
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct RegisterOffboardingResponse {
+    pub success: bool,
+    pub request_id: String,
+}

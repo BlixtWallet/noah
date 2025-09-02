@@ -340,10 +340,10 @@ const BoardArkScreen = () => {
       return;
     }
 
+    const { request_id } = result.value;
     showAlert({
       title: "Offboarding Request Registered",
-      description:
-        "Your offboarding request has been registered. It will be processed when the next Ark round starts.",
+      description: `Your offboarding request has been registered with ID: ${request_id}. It will be processed when the next Ark round starts.`,
     });
   };
 

@@ -61,7 +61,7 @@ const MIGRATIONS: &[&str] = &[
    "#,
     r#"
    CREATE TABLE offboarding_requests (
-       id INTEGER PRIMARY KEY AUTOINCREMENT,
+       request_id TEXT PRIMARY KEY,
        pubkey TEXT NOT NULL,
        status TEXT NOT NULL DEFAULT 'pending',
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -76,7 +76,7 @@ const MIGRATIONS: &[&str] = &[
    AFTER UPDATE ON offboarding_requests
    FOR EACH ROW
    BEGIN
-       UPDATE offboarding_requests SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+       UPDATE offboarding_requests SET updated_at = CURRENT_TIMESTAMP WHERE request_id = OLD.request_id;
    END;
    "#,
 ];

@@ -106,22 +106,26 @@ pub async fn handle_offboarding_requests(app_state: AppState) {
     // Handle offboarding requests
     let mut rows = conn
         .query(
-            "SELECT id, pubkey FROM offboarding_requests WHERE status = 'pending'",
+            "SELECT request_id, pubkey FROM offboarding_requests WHERE status = 'pending'",
             (),
         )
         .await
         .unwrap();
 
     while let Some(row) = rows.next().await.unwrap() {
-        let id: i64 = row.get(0).unwrap();
+        let request_id: String = row.get(0).unwrap();
         let pubkey: String = row.get(1).unwrap();
 
-        tracing::info!("Processing offboarding request for pubkey: {}", pubkey);
+        tracing::info!(
+            "Processing offboarding request {} for pubkey: {}",
+            request_id,
+            pubkey
+        );
 
         // Update status to processing
         conn.execute(
-            "UPDATE offboarding_requests SET status = 'processing' WHERE id = ?",
-            libsql::params![id],
+            "UPDATE offboarding_requests SET status = 'processing' WHERE request_id = ?",
+            libsql::params![request_id.clone()],
         )
         .await
         .unwrap();
@@ -146,16 +150,16 @@ pub async fn handle_offboarding_requests(app_state: AppState) {
             tracing::error!("Failed to send push notification for offboarding: {}", e);
             // Reset status to pending if failed
             conn.execute(
-                "UPDATE offboarding_requests SET status = 'pending' WHERE id = ?",
-                libsql::params![id],
+                "UPDATE offboarding_requests SET status = 'pending' WHERE request_id = ?",
+                libsql::params![request_id],
             )
             .await
             .unwrap();
         } else {
             // Mark as sent
             conn.execute(
-                "UPDATE offboarding_requests SET status = 'sent' WHERE id = ?",
-                libsql::params![id],
+                "UPDATE offboarding_requests SET status = 'sent' WHERE request_id = ?",
+                libsql::params![request_id],
             )
             .await
             .unwrap();
