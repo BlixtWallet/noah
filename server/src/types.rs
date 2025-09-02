@@ -140,6 +140,7 @@ pub struct BackupSettingsPayload {
 pub enum ReportType {
     Maintenance,
     Backup,
+    Offboarding,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -158,6 +159,7 @@ pub enum NotificationTypes {
     Maintenance,
     LightningInvoiceRequest,
     BackupTrigger,
+    Offboarding,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]

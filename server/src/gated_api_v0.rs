@@ -362,3 +362,22 @@ pub async fn update_backup_settings(
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
+
+pub async fn register_offboarding_request(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    tracing::info!(
+        "Received offboarding request for pubkey: {}",
+        auth_payload.key
+    );
+
+    let conn = state.db.connect()?;
+    conn.execute(
+        "INSERT INTO offboarding_requests (pubkey) VALUES (?)",
+        libsql::params![auth_payload.key],
+    )
+    .await?;
+
+    Ok(Json(DefaultSuccessPayload { success: true }))
+}

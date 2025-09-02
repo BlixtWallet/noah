@@ -6,7 +6,13 @@ import Constants from "expo-constants";
 import { PLATFORM } from "~/constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { backgroundSync, maintenance, submitInvoice, triggerBackupTask } from "./tasks";
+import {
+  backgroundSync,
+  maintenance,
+  offboardTask,
+  submitInvoice,
+  triggerBackupTask,
+} from "./tasks";
 import { registerPushToken, reportJobStatus } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationsData, ReportType } from "~/types/serverTypes";
@@ -111,6 +117,13 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           }
           const result = await triggerBackupTask();
           await handleTaskCompletion("backup", result, notificationData.k1);
+        } else if (notificationData.notification_type === "offboarding") {
+          if (!notificationData.k1) {
+            log.w("Invalid offboarding notification", [notificationData]);
+            return;
+          }
+          const result = await offboardTask();
+          await handleTaskCompletion("offboarding", result, notificationData.k1);
         }
       })(),
       (e) =>

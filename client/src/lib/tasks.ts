@@ -1,7 +1,7 @@
 import { syncWallet } from "~/lib/sync";
 import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
-import { bolt11Invoice } from "./paymentsApi";
+import { bolt11Invoice, offboardAllArk, onchainAddress } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import { peakKeyPair } from "./crypto";
@@ -96,5 +96,30 @@ export async function triggerBackupTask(): Promise<Result<void, Error>> {
   }
 
   log.d("[Backup Job] completed successfully");
+  return ok(undefined);
+}
+
+export async function offboardTask(): Promise<Result<void, Error>> {
+  log.d("[Offboard Job] running");
+  const loadResult = await loadWalletIfNeeded();
+  if (loadResult.isErr()) {
+    const e = new Error("Failed to load wallet for offboarding");
+    log.e(e.message, [loadResult.error]);
+    return err(e);
+  }
+
+  const address = await onchainAddress();
+  if (address.isErr()) {
+    const e = new Error("Failed to get onchain address");
+    log.e(e.message, [address.error]);
+    return err(e);
+  }
+
+  const offboardResult = await offboardAllArk(address.value);
+  if (offboardResult.isErr()) {
+    log.e("Offboarding failed", [offboardResult.error]);
+    return err(offboardResult.error);
+  }
+  log.d("[Offboard Job] completed");
   return ok(undefined);
 }

@@ -43,6 +43,14 @@ pub async fn connect_to_ark_server(
                 match event {
                     round_event::Event::Start(event) => {
                         round_counter += 1;
+
+                        // Handle offboarding requests for every round
+                        let app_state_clone = app_state.clone();
+                        tokio::spawn(async move {
+                            handle_offboarding_requests(app_state_clone).await;
+                        });
+
+                        // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
                         if round_counter >= maintenance_interval_rounds {
                             tracing::info!(
                                 "Round started, triggering maintenance task for round_seq: {}, offboard_feerate: {}",
@@ -72,6 +80,7 @@ struct MaintenancePushNotificationData {
 }
 
 pub async fn maintenance(app_state: AppState) {
+    // Send maintenance notification
     let k1 = make_k1(app_state.k1_values.clone());
     let data = crate::push::PushNotificationData {
         title: None,
@@ -86,7 +95,70 @@ pub async fn maintenance(app_state: AppState) {
         content_available: true,
     };
 
-    if let Err(e) = send_push_notification(app_state.clone(), data, None).await {
+    if let Err(e) = send_push_notification(app_state, data, None).await {
         tracing::error!("Failed to send push notification for maintenance: {}", e);
+    }
+}
+
+pub async fn handle_offboarding_requests(app_state: AppState) {
+    let conn = app_state.db.connect().unwrap();
+
+    // Handle offboarding requests
+    let mut rows = conn
+        .query(
+            "SELECT id, pubkey FROM offboarding_requests WHERE status = 'pending'",
+            (),
+        )
+        .await
+        .unwrap();
+
+    while let Some(row) = rows.next().await.unwrap() {
+        let id: i64 = row.get(0).unwrap();
+        let pubkey: String = row.get(1).unwrap();
+
+        tracing::info!("Processing offboarding request for pubkey: {}", pubkey);
+
+        // Update status to processing
+        conn.execute(
+            "UPDATE offboarding_requests SET status = 'processing' WHERE id = ?",
+            libsql::params![id],
+        )
+        .await
+        .unwrap();
+
+        // Send push notification for offboarding
+        let k1 = make_k1(app_state.k1_values.clone());
+        let offboard_data = crate::push::PushNotificationData {
+            title: Some("Offboarding Round Started".to_string()),
+            body: Some("Your offboarding request is being processed.".to_string()),
+            data: serde_json::to_string(&NotificationsData {
+                notification_type: NotificationTypes::Offboarding,
+                k1: Some(k1),
+                amount: None,
+            })
+            .unwrap(),
+            priority: "high".to_string(),
+            content_available: true,
+        };
+
+        if let Err(e) = send_push_notification(app_state.clone(), offboard_data, Some(pubkey)).await
+        {
+            tracing::error!("Failed to send push notification for offboarding: {}", e);
+            // Reset status to pending if failed
+            conn.execute(
+                "UPDATE offboarding_requests SET status = 'pending' WHERE id = ?",
+                libsql::params![id],
+            )
+            .await
+            .unwrap();
+        } else {
+            // Mark as sent
+            conn.execute(
+                "UPDATE offboarding_requests SET status = 'sent' WHERE id = ?",
+                libsql::params![id],
+            )
+            .await
+            .unwrap();
+        }
     }
 }

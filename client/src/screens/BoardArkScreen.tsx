@@ -14,12 +14,8 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
 import { useBalance } from "../hooks/useWallet";
-import {
-  useBoardAllAmountArk,
-  useBoardArk,
-  useOffboardAllArk,
-  useGenerateOnchainAddress,
-} from "../hooks/usePayments";
+import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
+import { registerOffboardingRequest } from "../lib/api";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { cn } from "../lib/utils";
 import { COLORS } from "../lib/styleConstants";
@@ -306,24 +302,18 @@ const BoardArkScreen = () => {
     data: boardAllResult,
     error: boardAllError,
   } = useBoardAllAmountArk();
-  const {
-    mutateAsync: offboardAllArk,
-    isPending: isOffboarding,
-    data: offboardResult,
-    error: offboardError,
-  } = useOffboardAllArk();
-  const { mutateAsync: generateOnchainAddress } = useGenerateOnchainAddress();
 
   const [flow, setFlow] = useState<Flow>("onboard");
   const [amount, setAmount] = useState("");
   const [isMaxAmount, setIsMaxAmount] = useState(false);
   const [offboardAddress, setOffboardAddress] = useState("");
+  const [isRegisteringOffboard, setIsRegisteringOffboard] = useState(false);
 
   // Use custom hook for parsing results
   const { parsedData, setParsedData } = useParsedBoardingResult(
     boardResult,
     boardAllResult,
-    offboardResult,
+    undefined,
   );
 
   const onchainBalance = balance?.onchain.confirmed ?? 0;
@@ -338,21 +328,23 @@ const BoardArkScreen = () => {
   };
 
   const handleOffboard = async () => {
-    setParsedData(null);
-    let address = offboardAddress;
-    if (!address) {
-      const generatedAddress = await generateOnchainAddress();
-      if (generatedAddress) {
-        address = generatedAddress;
-      } else {
-        showAlert({
-          title: "Error",
-          description: "Could not generate an on-chain address.",
-        });
-        return;
-      }
+    setIsRegisteringOffboard(true);
+
+    const result = await registerOffboardingRequest();
+    setIsRegisteringOffboard(false);
+    if (result.isErr()) {
+      showAlert({
+        title: "Error",
+        description: "Failed to register offboarding request.",
+      });
+      return;
     }
-    offboardAllArk(address);
+
+    showAlert({
+      title: "Offboarding Request Registered",
+      description:
+        "Your offboarding request has been registered. It will be processed when the next Ark round starts.",
+    });
   };
 
   const handleBoard = () => {
@@ -387,8 +379,7 @@ const BoardArkScreen = () => {
 
   const errorMessage =
     (boardError instanceof Error ? boardError.message : String(boardError ?? "")) ||
-    (boardAllError instanceof Error ? boardAllError.message : String(boardAllError ?? "")) ||
-    (offboardError instanceof Error ? offboardError.message : String(offboardError ?? ""));
+    (boardAllError instanceof Error ? boardAllError.message : String(boardAllError ?? ""));
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -434,7 +425,8 @@ const BoardArkScreen = () => {
           ) : (
             <>
               <Text className="text-muted-foreground text-center mb-8">
-                Swap your VTXOS by exiting Ark back to onchain bitcoin.
+                Register your offboarding request. It will be processed automatically when the next
+                Ark round starts.
               </Text>
               <BalanceDisplay
                 title="Confirmed Off-chain Balance"
@@ -451,17 +443,17 @@ const BoardArkScreen = () => {
           {/* Action Button */}
           <NoahButton
             onPress={handlePress}
-            isLoading={isBoarding || isBoardingAll || isOffboarding}
+            isLoading={isBoarding || isBoardingAll || isRegisteringOffboard}
             disabled={
               isBoarding ||
               isBoardingAll ||
-              isOffboarding ||
+              isRegisteringOffboard ||
               (flow === "onboard" && (!amount || onchainBalance === 0)) ||
               (flow === "offboard" && offchainBalance === 0)
             }
             className="mt-8"
           >
-            {flow === "onboard" ? "Board Ark" : "Offboard All"}
+            {flow === "onboard" ? "Board Ark" : "Register Offboard Request"}
           </NoahButton>
 
           {/* Transaction Result */}
@@ -474,9 +466,7 @@ const BoardArkScreen = () => {
           )}
 
           {/* Error Display */}
-          {(boardError || boardAllError || offboardError) && (
-            <ErrorDisplay errorMessage={errorMessage} />
-          )}
+          {(boardError || boardAllError) && <ErrorDisplay errorMessage={errorMessage} />}
         </ScrollView>
       </TouchableWithoutFeedback>
     </NoahSafeAreaView>
