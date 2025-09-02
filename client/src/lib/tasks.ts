@@ -109,6 +109,8 @@ export async function offboardTask(requestId: string): Promise<Result<void, Erro
     return err(e);
   }
 
+  log.d("[Offboard Job] offboarding request id is ", [requestId]);
+
   const address = await onchainAddress();
   if (address.isErr()) {
     const e = new Error("Failed to get onchain address");
@@ -116,11 +118,15 @@ export async function offboardTask(requestId: string): Promise<Result<void, Erro
     return err(e);
   }
 
+  log.d("[Offboard Job] onchain address is ", [address.value]);
+
   const offboardResult = await offboardAllArk(address.value);
   if (offboardResult.isErr()) {
     log.e("Offboarding failed", [offboardResult.error]);
     return err(offboardResult.error);
   }
+
+  log.d("[Offboard Job] offboarding result is ", [offboardResult.value]);
 
   const updateResult = await updateOffboardingRequestStatus(requestId, "completed");
   if (updateResult.isErr()) {
