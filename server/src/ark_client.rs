@@ -46,7 +46,7 @@ pub async fn connect_to_ark_server(
                         // Handle offboarding requests for every round
                         let app_state_clone = app_state.clone();
                         tokio::spawn(async move {
-                            handle_offboarding_requests(app_state_clone).await;
+                            let _ = handle_offboarding_requests(app_state_clone).await;
                         });
 
                         // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
@@ -94,8 +94,8 @@ pub async fn maintenance(app_state: AppState) {
     }
 }
 
-pub async fn handle_offboarding_requests(app_state: AppState) {
-    let conn = app_state.db.connect().unwrap();
+pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<()> {
+    let conn = app_state.db.connect()?;
 
     // Handle offboarding requests
     let mut rows = conn
@@ -103,19 +103,17 @@ pub async fn handle_offboarding_requests(app_state: AppState) {
             "SELECT request_id, pubkey FROM offboarding_requests WHERE status = 'pending'",
             (),
         )
-        .await
-        .unwrap();
+        .await?;
 
-    while let Some(row) = rows.next().await.unwrap() {
-        let request_id: String = row.get(0).unwrap();
-        let pubkey: String = row.get(1).unwrap();
+    while let Some(row) = rows.next().await? {
+        let request_id: String = row.get(0)?;
+        let pubkey: String = row.get(1)?;
 
         tracing::info!(
             "Processing offboarding request {} for pubkey: {}",
             request_id,
             pubkey
         );
-
         // Update status to processing
         conn.execute(
             "UPDATE offboarding_requests SET status = 'processing' WHERE request_id = ?",
@@ -160,4 +158,5 @@ pub async fn handle_offboarding_requests(app_state: AppState) {
             .unwrap();
         }
     }
+    Ok(())
 }
