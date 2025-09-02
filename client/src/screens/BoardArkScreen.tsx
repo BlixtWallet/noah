@@ -171,25 +171,6 @@ const OnboardForm = ({
   </View>
 );
 
-// Offboard input form component
-const OffboardForm = ({
-  offboardAddress,
-  setOffboardAddress,
-}: {
-  offboardAddress: string;
-  setOffboardAddress: (address: string) => void;
-}) => (
-  <View className="mb-4">
-    <Text className="text-lg text-muted-foreground mb-2">Destination Address (optional)</Text>
-    <Input
-      value={offboardAddress}
-      onChangeText={setOffboardAddress}
-      placeholder="Defaults to internal address"
-      className="border-border bg-card p-4 rounded-lg text-foreground"
-    />
-  </View>
-);
-
 // Transaction result component
 const TransactionResult = ({
   parsedData,
@@ -342,7 +323,6 @@ const BoardArkScreen = () => {
   const [flow, setFlow] = useState<Flow>("onboard");
   const [amount, setAmount] = useState("");
   const [isMaxAmount, setIsMaxAmount] = useState(false);
-  const [offboardAddress, setOffboardAddress] = useState("");
   const [isRegisteringOffboard, setIsRegisteringOffboard] = useState(false);
   const [offboardingRequestId, setOffboardingRequestId] = useState<string | null>(null);
 
@@ -478,10 +458,6 @@ const BoardArkScreen = () => {
                 title="Confirmed Off-chain Balance"
                 amount={offchainBalance}
                 isLoading={isBalanceLoading}
-              />
-              <OffboardForm
-                offboardAddress={offboardAddress}
-                setOffboardAddress={setOffboardAddress}
               />
             </>
           )}

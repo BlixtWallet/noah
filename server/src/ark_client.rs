@@ -58,7 +58,7 @@ pub async fn connect_to_ark_server(
                             );
                             let app_state_clone = app_state.clone();
                             tokio::spawn(async move {
-                                maintenance(app_state_clone).await;
+                                let _ = maintenance(app_state_clone).await;
                             });
                             round_counter = 0;
                         }
@@ -72,7 +72,7 @@ pub async fn connect_to_ark_server(
     Ok(())
 }
 
-pub async fn maintenance(app_state: AppState) {
+pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     // Send maintenance notification
     let k1 = make_k1(app_state.k1_values.clone());
     let data = crate::push::PushNotificationData {
@@ -83,8 +83,7 @@ pub async fn maintenance(app_state: AppState) {
             k1: Some(k1),
             amount: None,
             offboarding_request_id: None,
-        })
-        .unwrap(),
+        })?,
         priority: "high".to_string(),
         content_available: true,
     };
@@ -92,6 +91,8 @@ pub async fn maintenance(app_state: AppState) {
     if let Err(e) = send_push_notification(app_state, data, None).await {
         tracing::error!("Failed to send push notification for maintenance: {}", e);
     }
+
+    Ok(())
 }
 
 pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<()> {
@@ -119,8 +120,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
             "UPDATE offboarding_requests SET status = 'processing' WHERE request_id = ?",
             libsql::params![request_id.clone()],
         )
-        .await
-        .unwrap();
+        .await?;
 
         // Send push notification for offboarding
         let k1 = make_k1(app_state.k1_values.clone());
@@ -132,8 +132,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
                 k1: Some(k1),
                 amount: None,
                 offboarding_request_id: Some(request_id.clone()),
-            })
-            .unwrap(),
+            })?,
             priority: "high".to_string(),
             content_available: true,
         };
@@ -146,16 +145,14 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
                 "UPDATE offboarding_requests SET status = 'pending' WHERE request_id = ?",
                 libsql::params![request_id],
             )
-            .await
-            .unwrap();
+            .await?;
         } else {
             // Mark as sent
             conn.execute(
                 "UPDATE offboarding_requests SET status = 'sent' WHERE request_id = ?",
                 libsql::params![request_id],
             )
-            .await
-            .unwrap();
+            .await?;
         }
     }
     Ok(())

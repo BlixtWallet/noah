@@ -137,7 +137,10 @@ export const getOffboardingRequests = async (): Promise<
   );
 };
 
-export const updateOffboardingRequestStatus = async (requestId: string, status: string) => {
+export const updateOffboardingRequestStatus = async (
+  requestId: string,
+  status: OffboardingRequest["status"],
+) => {
   const db = await openDatabase();
   return ResultAsync.fromPromise(
     db.runAsync(
