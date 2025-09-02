@@ -6,6 +6,7 @@ import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import { peakKeyPair } from "./crypto";
 import { submitInvoice as submitInvoiceApi } from "./api";
+import { updateOffboardingRequestStatus } from "./transactionsDb";
 
 const log = logger("tasks");
 
@@ -99,7 +100,7 @@ export async function triggerBackupTask(): Promise<Result<void, Error>> {
   return ok(undefined);
 }
 
-export async function offboardTask(): Promise<Result<void, Error>> {
+export async function offboardTask(requestId: string): Promise<Result<void, Error>> {
   log.d("[Offboard Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
@@ -120,6 +121,13 @@ export async function offboardTask(): Promise<Result<void, Error>> {
     log.e("Offboarding failed", [offboardResult.error]);
     return err(offboardResult.error);
   }
-  log.d("[Offboard Job] completed");
+
+  const updateResult = await updateOffboardingRequestStatus(requestId, "completed");
+  if (updateResult.isErr()) {
+    log.e("Failed to update offboarding request status", [updateResult.error]);
+    return err(updateResult.error);
+  }
+  log.d("[Offboard Job] completed", [requestId]);
+
   return ok(undefined);
 }

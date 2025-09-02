@@ -169,6 +169,7 @@ pub struct NotificationsData {
     pub k1: Option<String>,
     #[ts(type = "number | null")]
     pub amount: Option<u64>,
+    pub offboarding_request_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, TS)]

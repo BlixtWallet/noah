@@ -46,7 +46,7 @@ lightning_address: string | null, };
 
 export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding";
 
-export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, };
+export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, offboarding_request_id: string | null, };
 
 export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
 

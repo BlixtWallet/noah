@@ -16,6 +16,7 @@ import { NoahButton } from "../components/ui/NoahButton";
 import { useBalance } from "../hooks/useWallet";
 import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
 import { registerOffboardingRequest } from "../lib/api";
+import { addOffboardingRequest } from "../lib/transactionsDb";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { cn } from "../lib/utils";
 import { COLORS } from "../lib/styleConstants";
@@ -23,6 +24,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
 import { Result } from "neverthrow";
+import logger from "~/lib/log";
+
+const log = logger("BoardArkScreen");
 
 type Vtxo = {
   id: string;
@@ -240,6 +244,38 @@ const TransactionResult = ({
   </View>
 );
 
+// Offboarding request result component
+const OffboardingRequestResult = ({
+  requestId,
+  onCopyRequestId,
+}: {
+  requestId: string;
+  onCopyRequestId: (id: string) => void;
+}) => (
+  <View className="mt-8 space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg text-green-500">Offboarding Request Registered!</CardTitle>
+        <CardDescription>Request ID</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Pressable onPress={() => onCopyRequestId(requestId)}>
+          <Text
+            className="text-base text-primary break-words"
+            numberOfLines={1}
+            ellipsizeMode="middle"
+          >
+            {requestId}
+          </Text>
+        </Pressable>
+        <Text className="text-sm text-muted-foreground mt-2">
+          Your request will be processed when the next Ark round starts.
+        </Text>
+      </CardContent>
+    </Card>
+  </View>
+);
+
 // Error display component
 const ErrorDisplay = ({ errorMessage }: { errorMessage: string }) => (
   <Card className="mt-8 bg-destructive">
@@ -308,6 +344,7 @@ const BoardArkScreen = () => {
   const [isMaxAmount, setIsMaxAmount] = useState(false);
   const [offboardAddress, setOffboardAddress] = useState("");
   const [isRegisteringOffboard, setIsRegisteringOffboard] = useState(false);
+  const [offboardingRequestId, setOffboardingRequestId] = useState<string | null>(null);
 
   // Use custom hook for parsing results
   const { parsedData, setParsedData } = useParsedBoardingResult(
@@ -341,10 +378,19 @@ const BoardArkScreen = () => {
     }
 
     const { request_id } = result.value;
-    showAlert({
-      title: "Offboarding Request Registered",
-      description: `Your offboarding request has been registered with ID: ${request_id}. It will be processed when the next Ark round starts.`,
+
+    // Store in local database
+    const dbResult = await addOffboardingRequest({
+      request_id,
+      date: new Date().toISOString(),
+      status: "pending",
     });
+
+    if (dbResult.isErr()) {
+      log.e("Failed to store offboarding request in local database", [dbResult.error]);
+    }
+
+    setOffboardingRequestId(request_id);
   };
 
   const handleBoard = () => {
@@ -462,6 +508,14 @@ const BoardArkScreen = () => {
               parsedData={parsedData}
               flow={flow}
               onCopyTxid={handleCopyToClipboard}
+            />
+          )}
+
+          {/* Offboarding Request Result */}
+          {offboardingRequestId && (
+            <OffboardingRequestResult
+              requestId={offboardingRequestId}
+              onCopyRequestId={handleCopyToClipboard}
             />
           )}
 

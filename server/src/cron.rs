@@ -15,6 +15,7 @@ async fn background_sync(app_state: AppState) {
             notification_type: NotificationTypes::BackgroundSync,
             k1: None,
             amount: None,
+            offboarding_request_id: None,
         })
         .unwrap(),
         priority: "high".to_string(),
@@ -55,6 +56,7 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
                 notification_type: NotificationTypes::BackupTrigger,
                 k1: Some(k1.clone()),
                 amount: None,
+                offboarding_request_id: None,
             })?,
             priority: "high".to_string(),
             content_available: true,

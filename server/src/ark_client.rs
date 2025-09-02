@@ -6,7 +6,6 @@ use crate::{
 };
 
 use futures_util::stream::StreamExt;
-use serde::{Deserialize, Serialize};
 use server_rpc::{
     ArkServiceClient,
     protos::{Empty, HandshakeRequest, round_event},
@@ -73,12 +72,6 @@ pub async fn connect_to_ark_server(
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct MaintenancePushNotificationData {
-    notification_type: String,
-    k1: Option<String>,
-}
-
 pub async fn maintenance(app_state: AppState) {
     // Send maintenance notification
     let k1 = make_k1(app_state.k1_values.clone());
@@ -89,6 +82,7 @@ pub async fn maintenance(app_state: AppState) {
             notification_type: NotificationTypes::Maintenance,
             k1: Some(k1),
             amount: None,
+            offboarding_request_id: None,
         })
         .unwrap(),
         priority: "high".to_string(),
@@ -133,12 +127,13 @@ pub async fn handle_offboarding_requests(app_state: AppState) {
         // Send push notification for offboarding
         let k1 = make_k1(app_state.k1_values.clone());
         let offboard_data = crate::push::PushNotificationData {
-            title: Some("Offboarding Round Started".to_string()),
-            body: Some("Your offboarding request is being processed.".to_string()),
+            title: None,
+            body: None,
             data: serde_json::to_string(&NotificationsData {
                 notification_type: NotificationTypes::Offboarding,
                 k1: Some(k1),
                 amount: None,
+                offboarding_request_id: Some(request_id.clone()),
             })
             .unwrap(),
             priority: "high".to_string(),

@@ -118,11 +118,11 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           const result = await triggerBackupTask();
           await handleTaskCompletion("backup", result, notificationData.k1);
         } else if (notificationData.notification_type === "offboarding") {
-          if (!notificationData.k1) {
+          if (!notificationData.k1 || !notificationData.offboarding_request_id) {
             log.w("Invalid offboarding notification", [notificationData]);
             return;
           }
-          const result = await offboardTask();
+          const result = await offboardTask(notificationData.offboarding_request_id);
           await handleTaskCompletion("offboarding", result, notificationData.k1);
         }
       })(),
