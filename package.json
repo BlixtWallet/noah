@@ -11,6 +11,6 @@
     "android:regtest:debug": "bun client android:regtest:debug",
     "android:clean": "bun client android:clean",
     "ios:clean": "bun client ios:clean",
-    "postinstall": "bun scripts/download_ark_binaries.js"
+    "postinstall": "bun scripts/download_ark_binaries.js && patch-package"
   }
 }
