@@ -42,6 +42,7 @@ abstract_target 'noah-common' do
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
+  pod 'MMKVCore', :modular_headers => true
 
   post_install do |installer|
     react_native_post_install(
@@ -50,6 +51,7 @@ abstract_target 'noah-common' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => podfile_properties['apple.ccacheEnabled'] == 'true',
     )
+  end
 
   # Define the actual app targets. They will inherit all the settings from the abstract target.
   target 'Noah' do
