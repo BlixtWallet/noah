@@ -13,7 +13,7 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
 import { useTransactionStore } from "../store/transactionStore";
-import { useState, useRef } from "react";
+import { useState, useRef, createRef } from "react";
 import { LegendList } from "@legendapp/list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -33,7 +33,14 @@ const TransactionsScreen = () => {
   const [filter, setFilter] = useState<PaymentTypes | "all" | "Lightning">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
-  const swipeableRefs = useRef<Record<string, SwipeableMethods>>({});
+  const swipeableRefs = useRef<Record<string, React.RefObject<SwipeableMethods | null>>>({});
+
+  const getSwipeableRef = (itemId: string) => {
+    if (!swipeableRefs.current[itemId]) {
+      swipeableRefs.current[itemId] = createRef<SwipeableMethods>();
+    }
+    return swipeableRefs.current[itemId];
+  };
 
   const handleDeleteRequest = (id: string) => {
     setSelectedTransactionId(id);
@@ -127,7 +134,7 @@ const TransactionsScreen = () => {
 
   const onCancelDelete = () => {
     if (selectedTransactionId && swipeableRefs.current[selectedTransactionId]) {
-      swipeableRefs.current[selectedTransactionId].close();
+      swipeableRefs.current[selectedTransactionId].current?.close();
     }
     setDialogOpen(false);
     setSelectedTransactionId(null);
@@ -219,13 +226,7 @@ const TransactionsScreen = () => {
             renderItem={({ item }) => (
               <View style={{ marginBottom: 8 }}>
                 <Swipeable
-                  ref={(ref) => {
-                    if (ref) {
-                      swipeableRefs.current[item.id] = ref;
-                    } else {
-                      delete swipeableRefs.current[item.id];
-                    }
-                  }}
+                  ref={getSwipeableRef(item.id)}
                   renderRightActions={renderRightActions(item.id)}
                   overshootRight={false}
                   rightThreshold={40}
