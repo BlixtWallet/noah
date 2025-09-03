@@ -3,14 +3,12 @@
     "version": ">= 16.15.0"
   },
   "build": {
-    "base": {
+    "development": {
       "ios": {
         "scheme": "Noah-Signet",
         "buildConfiguration": "Release",
         "bundleIdentifier": "com.anonymous.noah.signet"
-      }
-    },
-    "development": {
+      },
       "developmentClient": true,
       "distribution": "internal"
     },
