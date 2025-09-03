@@ -144,7 +144,7 @@
           ];
 
           darwinPackages = with pkgs; [
-            ruby_3_1
+            cocoapods
             bundler
             (darwinDerivations.xcode-wrapper pkgs)
           ];

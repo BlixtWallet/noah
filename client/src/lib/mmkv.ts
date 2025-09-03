@@ -1,4 +1,4 @@
-import { MMKV } from "react-native-mmkv";
+import { createMMKV } from "react-native-mmkv";
 import { Platform } from "react-native";
 import RNFSTurbo from "react-native-fs-turbo";
 
@@ -13,7 +13,7 @@ if (!RNFSTurbo.exists(mmkvPath)) {
   RNFSTurbo.mkdir(mmkvPath);
 }
 
-export const mmkv = new MMKV({
+export const mmkv = createMMKV({
   id: "noah-wallet-storage",
   path: mmkvPath,
 });

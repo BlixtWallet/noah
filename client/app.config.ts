@@ -17,6 +17,7 @@ const config: { expo: ExpoConfig } = {
       },
     },
     plugins: [
+      "expo-sqlite",
       [
         "react-native-share",
         {

@@ -25,7 +25,7 @@ const zustandStorage: StateStorage = {
   },
   removeItem: (name: string) => {
     try {
-      return mmkv.delete(name);
+      return mmkv.remove(name);
     } catch (error) {
       // Silently fail
       console.warn("Server storage removeItem failed:", error);
