@@ -6,8 +6,7 @@
     "development": {
       "ios": {
         "scheme": "Noah-Signet",
-        "buildConfiguration": "Release",
-        "bundleIdentifier": "com.anonymous.noah.signet"
+        "buildConfiguration": "Release"
       },
       "developmentClient": true,
       "distribution": "internal"
