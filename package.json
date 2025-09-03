@@ -11,6 +11,9 @@
     "android:regtest:debug": "bun client android:regtest:debug",
     "android:clean": "bun client android:clean",
     "ios:clean": "bun client ios:clean",
-    "postinstall": "bun scripts/download_ark_binaries.js && patch-package"
+    "postinstall": "bun scripts/download_ark_binaries.js"
+  },
+  "patchedDependencies": {
+    "react-native-fs-turbo@0.3.6": "patches/react-native-fs-turbo@0.3.6.patch"
   }
 }

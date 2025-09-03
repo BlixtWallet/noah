@@ -1,0 +1,13 @@
+diff --git a/android/CMakeLists.txt b/android/CMakeLists.txt
+index 9d2fe655cb15f915c36f2dba9ff99577f74bcdf2..34b9fbfc1c918ea48f7df27c7e8e192516040f05 100644
+--- a/android/CMakeLists.txt
++++ b/android/CMakeLists.txt
+@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9.0)
+ project(RNFSTurbo)
+ 
+ set(CMAKE_VERBOSE_MAKEFILE ON)
+-set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD 20)
+ 
+ # Compile sources
+ add_library(
