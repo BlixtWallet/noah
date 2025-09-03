@@ -8,7 +8,6 @@
         "scheme": "Noah-Signet",
         "buildConfiguration": "Release"
       },
-      "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
