@@ -14,7 +14,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { useTransactionStore } from "../store/transactionStore";
 import { useState, useRef, createRef } from "react";
-import { LegendList } from "@legendapp/list";
+import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -221,9 +221,9 @@ const TransactionsScreen = () => {
               </Pressable>
             ))}
           </View>
-          <LegendList
+          <FlashList
             data={filteredTransactions}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: Transaction }) => (
               <View style={{ marginBottom: 8 }}>
                 <Swipeable
                   ref={getSwipeableRef(item.id)}
@@ -266,8 +266,8 @@ const TransactionsScreen = () => {
                 </Swipeable>
               </View>
             )}
-            keyExtractor={(item) => item.id}
-            recycleItems
+            keyExtractor={(item: Transaction) => item.id}
+            showsVerticalScrollIndicator={false}
           />
         </View>
       </NoahSafeAreaView>
