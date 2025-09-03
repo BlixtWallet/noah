@@ -65,23 +65,19 @@ const SettingsStackNav = () => (
     <Stack.Screen
       name="SettingsList"
       component={SettingsScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
-    <Stack.Screen
-      name="Mnemonic"
-      component={MnemonicScreen}
-      options={{ animation: "slide_from_right" }}
-    />
-    <Stack.Screen name="Logs" component={LogScreen} options={{ animation: "slide_from_right" }} />
+    <Stack.Screen name="Mnemonic" component={MnemonicScreen} options={{ animation: "default" }} />
+    <Stack.Screen name="Logs" component={LogScreen} options={{ animation: "default" }} />
     <Stack.Screen
       name="LightningAddress"
       component={LightningAddressScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
     <Stack.Screen
       name="BackupSettings"
       component={BackupSettingsScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
   </Stack.Navigator>
 );
@@ -91,27 +87,27 @@ const HomeStackScreen = () => (
     <HomeStack.Screen
       name="HomeStack"
       component={HomeScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
     <HomeStack.Screen
       name="BoardArk"
       component={BoardArkScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
     <HomeStack.Screen
       name="Send"
       component={SendScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
     <HomeStack.Screen
       name="Transactions"
       component={TransactionsScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
     <HomeStack.Screen
       name="TransactionDetail"
       component={TransactionDetailScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
   </HomeStack.Navigator>
 );
@@ -121,7 +117,7 @@ const ReceiveStackScreen = () => (
     <ReceiveStack.Screen
       name="ReceiveStack"
       component={ReceiveScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
   </ReceiveStack.Navigator>
 );
@@ -131,7 +127,7 @@ const SendStackScreen = () => (
     <SendStack.Screen
       name="SendStack"
       component={SendScreen}
-      options={{ headerShown: false, animation: "slide_from_right" }}
+      options={{ headerShown: false, animation: "default" }}
     />
   </SendStack.Navigator>
 );
@@ -141,27 +137,27 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen
       name="Onboarding"
       component={OnboardingScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
     <OnboardingStack.Screen
       name="Configuration"
       component={SettingsScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
     <OnboardingStack.Screen
       name="EditConfiguration"
       component={EditSettingScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
     <OnboardingStack.Screen
       name="Mnemonic"
       component={MnemonicScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
     <OnboardingStack.Screen
       name="RestoreWallet"
       component={RestoreWalletScreen}
-      options={{ animation: "slide_from_right" }}
+      options={{ animation: "default" }}
     />
   </OnboardingStack.Navigator>
 );

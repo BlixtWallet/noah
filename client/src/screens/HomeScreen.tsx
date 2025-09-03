@@ -44,8 +44,9 @@ const HomeScreen = () => {
   }, []);
 
   useEffect(() => {
+    loadWallet();
     getRandomFact();
-  }, [getRandomFact]);
+  }, [getRandomFact, loadWallet]);
 
   const onRefresh = useCallback(async () => {
     await loadWallet();
