@@ -1,28 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { mempoolPriceEndpoint, mempoolHistoricalPriceEndpoint } from "~/constants";
+import ky from "ky";
 
 import { err, ok, ResultAsync } from "neverthrow";
 export const getBtcToUsdRate = (): ResultAsync<number, Error> => {
   return ResultAsync.fromPromise(
-    fetch(mempoolPriceEndpoint),
+    ky.get(mempoolPriceEndpoint).json<{ USD?: number }>(),
     (e) => new Error(`Failed to fetch BTC to USD rate: ${e}`),
-  )
-    .andThen((response) => {
-      if (!response.ok) {
-        return err(new Error("Network response was not ok"));
-      }
-      return ResultAsync.fromPromise(
-        response.json(),
-        (e) => new Error(`Failed to parse response: ${e}`),
-      );
-    })
-    .andThen((data) => {
-      const rate = (data as { USD?: number }).USD;
-      if (rate) {
-        return ok(rate);
-      }
-      return err(new Error("Invalid response from exchange rate API"));
-    });
+  ).andThen((data) => {
+    const rate = data.USD;
+    if (rate) {
+      return ok(rate);
+    }
+    return err(new Error("Invalid response from exchange rate API"));
+  });
 };
 
 export function useBtcToUsdRate() {
@@ -42,20 +33,18 @@ export function useBtcToUsdRate() {
 export const getHistoricalBtcToUsdRate = (date: string): ResultAsync<number, Error> => {
   const timestamp = Math.floor(new Date(date).getTime() / 1000);
   return ResultAsync.fromPromise(
-    fetch(`${mempoolHistoricalPriceEndpoint}?currency=USD&timestamp=${timestamp}`),
+    ky
+      .get(mempoolHistoricalPriceEndpoint, {
+        searchParams: {
+          currency: "USD",
+          timestamp: timestamp.toString(),
+        },
+      })
+      .json<{ prices?: { USD?: number }[] }>(),
     (e) => new Error(`Failed to fetch historical BTC to USD rate: ${e}`),
   )
-    .andThen((response) => {
-      if (!response.ok) {
-        return err(new Error("Network response was not ok"));
-      }
-      return ResultAsync.fromPromise(
-        response.json(),
-        (e) => new Error(`Failed to parse historical response: ${e}`),
-      );
-    })
     .andThen((data) => {
-      const prices = (data as { prices?: { USD?: number }[] }).prices;
+      const prices = data.prices;
       if (prices && prices.length > 0 && prices[0].USD) {
         return ok(prices[0].USD);
       }

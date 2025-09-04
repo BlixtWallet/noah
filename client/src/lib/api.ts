@@ -20,6 +20,7 @@ import {
   SubmitInvoicePayload,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
+import ky from "ky";
 
 const log = logger("serverApi");
 
@@ -79,43 +80,20 @@ async function post<T, U>(
 
     const body = JSON.stringify(payload);
 
-    const response = await ResultAsync.fromPromise(
-      fetch(`${API_URL}/v0${endpoint}`, {
-        method: "POST",
+    try {
+      const response = await ky.post(`${API_URL}/v0${endpoint}`, {
         headers,
-        body,
-      }),
-      (e) => e as Error,
-    );
+        json: JSON.parse(body),
+      });
 
-    if (response.isErr()) {
-      log.d("Failed to send request", [response.error]);
-      return err(response.error);
+      const responseJson = await response.json<U>();
+      log.d("Response from server", [responseJson]);
+
+      return ok(responseJson);
+    } catch (e) {
+      log.d("Failed to send request", [e as Error]);
+      return err(e as Error);
     }
-
-    const responseValue = response.value;
-
-    if (!responseValue.ok) {
-      log.d("API Error", [responseValue.status, responseValue.statusText]);
-      const errorText = await responseValue.text();
-      return err(new Error(`API Error: ${responseValue.status} ${errorText}`));
-    }
-
-    if (responseValue.status === 204) {
-      log.d("Empty response from server (204 No Content)");
-      return ok(undefined as U);
-    }
-
-    // Handle cases where response might be empty
-    const responseJson = await responseValue.json();
-    if (!responseJson) {
-      log.d("Empty response from server");
-      return ok(undefined as U);
-    }
-
-    log.d("Response from server", [responseJson]);
-
-    return ok(responseJson);
   } catch (e) {
     return err(e as Error);
   }
@@ -163,7 +141,7 @@ export const submitInvoice = (payload: SubmitInvoicePayload & { k1?: string }) =
 
 export const getK1 = async () => {
   const k1Result = await ResultAsync.fromPromise(
-    fetch(`${API_URL}/v0/getk1`).then((res) => res.json()),
+    ky.get(`${API_URL}/v0/getk1`).json<{ k1: string }>(),
     (e) => e as Error,
   );
 
@@ -190,26 +168,14 @@ export const getDownloadUrlForRestore = async (payload: {
       "x-auth-key": key,
     };
 
-    const body = JSON.stringify(restPayload);
+    const response = await ky
+      .post(`${API_URL}/v0/backup/download_url`, {
+        headers,
+        json: restPayload,
+      })
+      .json<DownloadUrlResponse>();
 
-    const response = await fetch(`${API_URL}/v0/backup/download_url`, {
-      method: "POST",
-      headers,
-      body,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return err(new Error(`API Error: ${response.status} ${errorText}`));
-    }
-
-    const responseText = await response.text();
-    if (!responseText) {
-      return err(new Error("API Error: Empty response from server"));
-    }
-
-    const data = JSON.parse(responseText);
-    return ok(data);
+    return ok(response);
   } catch (e) {
     return err(e as Error);
   }

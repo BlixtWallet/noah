@@ -77,6 +77,7 @@
     "expo-status-bar": "~3.0.7",
     "expo-system-ui": "~6.0.6",
     "expo-task-manager": "~14.0.6",
+    "ky": "^1.9.1",
     "light-bolt11-decoder": "^3.2.0",
     "lucide-react-native": "^0.525.0",
     "nativewind": "^4.1.23",

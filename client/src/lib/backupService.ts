@@ -10,6 +10,7 @@ import {
 import { useWalletStore } from "~/store/walletStore";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
+import ky from "ky";
 
 const log = logger("backupService");
 
@@ -50,8 +51,7 @@ export class BackupService {
 
     // Upload the encrypted backup to S3
     const uploadResult = await ResultAsync.fromPromise(
-      fetch(upload_url, {
-        method: "PUT",
+      ky.put(upload_url, {
         headers: {
           "Content-Type": "application/octet-stream",
         },
@@ -65,9 +65,6 @@ export class BackupService {
     }
 
     const response = uploadResult.value;
-    if (!response.ok) {
-      return err(new Error(`Upload failed: ${response.status} ${response.statusText}`));
-    }
 
     log.d("response", [response]);
 
@@ -126,15 +123,15 @@ export class BackupService {
     const { download_url } = downloadUrlResult.value;
 
     // Download the backup file
-    const responseResult = await ResultAsync.fromPromise(fetch(download_url), (e) => e as Error);
+    const responseResult = await ResultAsync.fromPromise(
+      ky.get(download_url).text(),
+      (e) => e as Error,
+    );
     if (responseResult.isErr()) {
       return err(responseResult.error);
     }
-    if (!responseResult.value.ok) {
-      return err(new Error(`Download failed: ${responseResult.value.statusText}`));
-    }
 
-    const encryptedData = await responseResult.value.text();
+    const encryptedData = responseResult.value;
     log.d("Downloaded data length:", [encryptedData.length]);
 
     // Decrypt, unzip, and restore the backup natively

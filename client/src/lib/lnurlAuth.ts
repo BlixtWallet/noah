@@ -1,6 +1,7 @@
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 import { peakKeyPair, signMessage } from "./crypto";
+import ky from "ky";
 
 const log = logger("lnurlAuth");
 
@@ -61,21 +62,16 @@ export const lnurlAuth = async (lnUrlStr: string): Promise<Result<boolean, Error
   const finalUrl = url.toString();
   log.d("Fetching URL:", [finalUrl]);
 
-  return ResultAsync.fromPromise(fetch(finalUrl), (e) => e as Error)
-    .andThen((response) => {
-      log.d("result", [JSON.stringify(response)]);
-      return ResultAsync.fromPromise(
-        response.json() as Promise<ILNUrlAuthResponse | ILNUrlError>,
-        (e) => e as Error,
-      );
-    })
-    .andThen((response) => {
-      log.d("response", [response]);
-      if (isLNUrlPayResponseError(response)) {
-        return err(new Error(response.reason));
-      }
-      return ok(true);
-    });
+  return ResultAsync.fromPromise(
+    ky.get(finalUrl).json<ILNUrlAuthResponse | ILNUrlError>(),
+    (e) => e as Error,
+  ).andThen((response) => {
+    log.d("response", [response]);
+    if (isLNUrlPayResponseError(response)) {
+      return err(new Error(response.reason));
+    }
+    return ok(true);
+  });
 };
 
 const isLNUrlPayResponseError = (subject: unknown): subject is ILNUrlPayResponseError => {
