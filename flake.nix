@@ -144,6 +144,7 @@
           ];
 
           darwinPackages = with pkgs; [
+            bundler
             cocoapods
             (darwinDerivations.xcode-wrapper pkgs)
           ];
