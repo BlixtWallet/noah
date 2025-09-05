@@ -28,7 +28,7 @@
     "build:android:regtest:debug": "cd android && ./gradlew assembleRegtestDebug",
     "build:android:mainnet:debug": "cd android && ./gradlew assembleMainnetDebug",
     "build:android:ci": "cd android && ./gradlew assembleSignetRelease -PreactNativeArchitectures=arm64-v8a",
-    "ios:prebuild": "cd ios && pod install",
+    "ios:prebuild": "cd ios && pod install --clean-install",
     "build:ios:mainnet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Debug -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:mainnet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:signet:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Debug -sdk iphonesimulator -quiet ARCHS=arm64",
