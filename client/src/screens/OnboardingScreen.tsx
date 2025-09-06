@@ -31,12 +31,7 @@ const OnboardingScreen = () => {
         </View>
       ) : (
         <View className="flex-row">
-          <NoahButton
-            onPress={() => createWallet()}
-            onLongPress={() => navigation.navigate("Configuration")}
-            delayLongPress={200}
-            size="lg"
-          >
+          <NoahButton onPress={() => createWallet()} size="lg">
             Create Wallet
           </NoahButton>
           <View style={{ width: 20 }} />
