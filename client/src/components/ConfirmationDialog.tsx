@@ -1,4 +1,5 @@
 import React from "react";
+import * as Haptics from "expo-haptics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +59,12 @@ type ConfirmationDialogProps = {
   isConfirmDisabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Haptic feedback type for confirm action (default: Success for default variant, Warning for destructive) */
+  confirmHapticType?: Haptics.NotificationFeedbackType;
+  /** Haptic feedback type for cancel action (default: Light) */
+  cancelHapticType?: Haptics.ImpactFeedbackStyle;
+  /** Whether to enable haptic feedback (default: true) */
+  enableHaptics?: boolean;
 };
 
 export const ConfirmationDialog = ({
@@ -72,7 +79,31 @@ export const ConfirmationDialog = ({
   isConfirmDisabled,
   open,
   onOpenChange,
+  confirmHapticType,
+  cancelHapticType = Haptics.ImpactFeedbackStyle.Light,
+  enableHaptics = true,
 }: ConfirmationDialogProps) => {
+  // Set default haptic type based on variant
+  const defaultConfirmHapticType =
+    confirmVariant === "destructive"
+      ? Haptics.NotificationFeedbackType.Warning
+      : Haptics.NotificationFeedbackType.Success;
+
+  const finalConfirmHapticType = confirmHapticType ?? defaultConfirmHapticType;
+
+  const handleConfirm = async () => {
+    if (enableHaptics) {
+      await Haptics.notificationAsync(finalConfirmHapticType);
+    }
+    onConfirm();
+  };
+
+  const handleCancel = async () => {
+    if (enableHaptics) {
+      await Haptics.impactAsync(cancelHapticType);
+    }
+    onCancel?.();
+  };
   const content = (
     <AlertDialogContent>
       <AlertDialogHeader>
@@ -81,12 +112,12 @@ export const ConfirmationDialog = ({
       </AlertDialogHeader>
       {children}
       <AlertDialogFooter className="flex-row space-x-2">
-        <AlertDialogCancel onPress={onCancel} className="flex-1">
+        <AlertDialogCancel onPress={handleCancel} className="flex-1">
           <Text>Cancel</Text>
         </AlertDialogCancel>
         <AlertDialogAction
           variant={confirmVariant}
-          onPress={onConfirm}
+          onPress={handleConfirm}
           className="flex-1"
           disabled={isConfirmDisabled}
         >
