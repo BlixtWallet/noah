@@ -18,7 +18,7 @@ import {
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
-import { type WalletConfig } from "../store/walletStore";
+import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { ARK_DATA_PATH, DOCUMENT_DIRECTORY_PATH, MNEMONIC_KEYCHAIN_SERVICE } from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
@@ -26,6 +26,9 @@ import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 
 const log = logger("walletApi");
+
+const vtxoRefreshExpiryThreshold = 288;
+const fallBackFeeRate = 10000;
 
 const createWalletFromMnemonic = async (
   mnemonic: string,
@@ -42,8 +45,8 @@ const createWalletFromMnemonic = async (
             ark: config.ark,
             bitcoind_user: config.bitcoind_user,
             bitcoind_pass: config.bitcoind_pass,
-            vtxo_refresh_expiry_threshold: 288,
-            fallback_fee_rate: 10000,
+            vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
+            fallback_fee_rate: fallBackFeeRate,
           },
         }
       : {
@@ -53,8 +56,8 @@ const createWalletFromMnemonic = async (
           config: {
             esplora: config.esplora,
             ark: config.ark,
-            vtxo_refresh_expiry_threshold: 288,
-            fallback_fee_rate: 10000,
+            vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
+            fallback_fee_rate: fallBackFeeRate,
           },
         };
 
@@ -82,7 +85,13 @@ const createWalletFromMnemonic = async (
   }
 
   const loadResult = await ResultAsync.fromPromise(
-    loadWalletNitro(ARK_DATA_PATH, mnemonic),
+    loadWalletNitro(ARK_DATA_PATH, {
+      mnemonic,
+      bitcoin: creationConfig.bitcoin,
+      signet: creationConfig.signet,
+      regtest: creationConfig.regtest,
+      config: creationConfig.config,
+    }),
     (e) => e as Error,
   );
   if (loadResult.isErr()) {
@@ -110,20 +119,45 @@ export const createWallet = async (config: WalletConfig): Promise<Result<void, E
   return createWalletFromMnemonic(mnemonicResult.value, config);
 };
 
-const loadWallet = async (): Promise<Result<boolean, Error>> => {
-  const credentialsResult = await getMnemonic();
+export const restoreWallet = async (
+  mnemonic: string,
+  config: WalletConfig,
+): Promise<Result<boolean, Error>> => {
+  const setResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
+  if (setResult.isErr()) {
+    return err(setResult.error);
+  }
+  return loadWallet(config);
+};
 
-  if (credentialsResult.isErr()) {
-    return err(credentialsResult.error);
+const loadWallet = async (config: WalletConfig): Promise<Result<boolean, Error>> => {
+  const mnemonicResult = await getMnemonic();
+
+  if (mnemonicResult.isErr()) {
+    return err(mnemonicResult.error);
   }
 
-  const credentials = credentialsResult.value;
-  if (!credentials) {
+  const mnemonic = mnemonicResult.value;
+  if (!mnemonic) {
     return err(new Error("No wallet found. Please create a wallet first."));
   }
 
   const loadResult = await ResultAsync.fromPromise(
-    loadWalletNitro(ARK_DATA_PATH, credentials),
+    loadWalletNitro(ARK_DATA_PATH, {
+      mnemonic,
+      bitcoin: false,
+      signet: APP_VARIANT === "signet",
+      regtest: APP_VARIANT === "regtest",
+      config: {
+        esplora: config.esplora,
+        ark: config.ark,
+        vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
+        fallback_fee_rate: fallBackFeeRate,
+        bitcoind: config.bitcoind,
+        bitcoind_pass: config.bitcoind_pass,
+        bitcoind_user: config.bitcoind_user,
+      },
+    }),
     (e) => e as Error,
   );
 
@@ -144,7 +178,8 @@ export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
     return ok(true);
   }
 
-  return loadWallet();
+  const config = useWalletStore.getState().config;
+  return loadWallet(config);
 };
 
 export const fetchOnchainBalance = async (): Promise<Result<OnchainBalanceResult, Error>> => {

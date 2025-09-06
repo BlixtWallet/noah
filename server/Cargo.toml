@@ -8,7 +8,7 @@ axum = { version = "0.8.4", features = ["json"] }
 anyhow = "1.0.99"
 tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tower-http = { version = "0.6.6", features = ["trace"] }
 dotenv = "0.15.0"
 libsql = "0.9.20"
@@ -24,7 +24,7 @@ tokio-cron-scheduler = { version = "0.14.0", features = ["english"] }
 serde_json = "1.0.142"
 random_word = { version = "0.5.0", features = ["en"] }
 futures-util = "0.3.30"
-bark-server-rpc = { git = "https://codeberg.org/ark-bitcoin/bark", tag = "server-0.0.0-alpha.19" }
+bark-server-rpc = { git = "https://codeberg.org/ark-bitcoin/bark", tag = "server-0.0.0-alpha.20" }
 
 async-trait = "0.1.80"
 http-body-util = "0.1.1"
