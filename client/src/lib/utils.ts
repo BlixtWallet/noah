@@ -26,3 +26,11 @@ export const formatNumber = (num: number | string) => {
 export const satsToBtc = (sats: number) => {
   return sats / 100_000_000;
 };
+
+export const satsToUsd = (sats: number, btcPrice: number): string => {
+  return ((sats * btcPrice) / 100_000_000).toFixed(2);
+};
+
+export const usdToSats = (usd: number, btcPrice: number): number => {
+  return Math.round((usd / btcPrice) * 100_000_000);
+};

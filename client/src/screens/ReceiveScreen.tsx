@@ -7,6 +7,7 @@ import {
   Alert,
   TextInput,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { Text } from "../components/ui/text";
 import { NoahButton } from "../components/ui/NoahButton";
@@ -17,7 +18,7 @@ import {
   useGenerateOnchainAddress,
   useGenerateOffchainAddress,
 } from "../hooks/usePayments";
-import Clipboard from "@react-native-clipboard/clipboard";
+import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useNavigation } from "@react-navigation/native";
@@ -26,15 +27,54 @@ import { satsToBtc, formatNumber } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { FontAwesome } from "@expo/vector-icons";
 import { COLORS } from "~/lib/styleConstants";
-import { ReceiveMethodPicker, type ReceiveMethod } from "~/components/ReceiveMethodPicker";
+
+const truncateAddress = (addr: string) => {
+  if (addr.length <= 40) {
+    return addr;
+  }
+  return `${addr.slice(0, 15)}...${addr.slice(-15)}`;
+};
+
+const CopyableDetail = ({
+  label,
+  value,
+  onCopy,
+  isCopied,
+}: {
+  label: string;
+  value: string;
+  onCopy: () => void;
+  isCopied: boolean;
+}) => {
+  return (
+    <Pressable
+      onPress={onCopy}
+      className="flex-row items-center justify-between p-3 bg-card rounded-lg mb-2"
+    >
+      <Text className="text-muted-foreground text-sm">{label}:</Text>
+      <View className="flex-row items-center gap-x-2 flex-1 justify-end">
+        <Text
+          className="text-foreground text-sm text-right"
+          ellipsizeMode="middle"
+          numberOfLines={1}
+        >
+          {truncateAddress(value)}
+        </Text>
+        {isCopied ? (
+          <Icon name="checkmark-circle-outline" size={16} color={COLORS.SUCCESS} />
+        ) : (
+          <Icon name="copy-outline" size={16} color="white" />
+        )}
+      </View>
+    </Pressable>
+  );
+};
 
 const ReceiveScreen = () => {
   const navigation = useNavigation();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
-  const [copied, setCopied] = useState(false);
+  const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
-  const [showMethodPicker, setShowMethodPicker] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<ReceiveMethod>("lightning");
 
   const {
     mutate: generateOffchainAddress,
@@ -60,105 +100,57 @@ const ReceiveScreen = () => {
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
 
   useEffect(() => {
-    // Generate URI if we have at least one payment method
-    if (onchainAddress || vtxoPubkey || lightningInvoice) {
-      let uri = "";
+    let uri = "";
 
-      if (onchainAddress) {
-        uri = `bitcoin:${onchainAddress}`;
-        const params = [];
+    if (onchainAddress && vtxoPubkey && lightningInvoice) {
+      uri = `bitcoin:${onchainAddress.toUpperCase()}`;
+      const params = [];
 
-        if (vtxoPubkey) {
-          params.push(`ark=${vtxoPubkey}`);
-        }
-        if (lightningInvoice) {
-          params.push(`lightning=${lightningInvoice}`);
-        }
-        if (amountSat >= 330) {
-          const amountInBtc = satsToBtc(amountSat);
-          params.push(`amount=${amountInBtc}`);
-        }
-
-        if (params.length > 0) {
-          uri += `?${params.join("&")}`;
-        }
-      } else if (lightningInvoice) {
-        // If only lightning invoice, use the invoice directly
-        uri = lightningInvoice;
-      } else if (vtxoPubkey) {
-        // If only ark address, use it directly
-        uri = vtxoPubkey;
+      if (vtxoPubkey) {
+        params.push(`ark=${vtxoPubkey.toUpperCase()}`);
+      }
+      if (lightningInvoice) {
+        params.push(`lightning=${lightningInvoice.toUpperCase()}`);
+      }
+      if (amountSat >= 330) {
+        const amountInBtc = satsToBtc(amountSat);
+        params.push(`amount=${amountInBtc}`);
       }
 
-      setBip321Uri(uri.toUpperCase());
+      if (params.length > 0) {
+        uri += `?${params.join("&")}`;
+      }
+
+      setBip321Uri(uri);
     }
   }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
-  const handleGenerate = (method: ReceiveMethod = "bip321") => {
+  const handleGenerate = () => {
     if (amountSat && amountSat < 330) {
       Alert.alert("Invalid Amount", "The minimum amount is 330 sats.");
       return;
     }
 
-    // Generate based on selected method
-    switch (method) {
-      case "bip321":
-        generateOnchainAddress();
-        generateOffchainAddress();
-        if (amountSat >= 330) {
-          generateLightningInvoice(amountSat);
-        } else {
-          generateLightningInvoice(0);
-        }
-        break;
-      case "ark":
-        generateOffchainAddress();
-        break;
-      case "lightning":
-        if (amountSat >= 330) {
-          generateLightningInvoice(amountSat);
-        } else {
-          generateLightningInvoice(0);
-        }
-        break;
-      case "onchain":
-        generateOnchainAddress();
-        break;
+    generateOnchainAddress();
+    generateOffchainAddress();
+    if (amountSat >= 330) {
+      generateLightningInvoice(amountSat);
+    } else {
+      generateLightningInvoice(0);
     }
-  };
-
-  const handleLongPress = () => {
-    setShowMethodPicker(true);
-  };
-
-  const handleMethodSelect = (method: ReceiveMethod) => {
-    setSelectedMethod(method);
-    setShowMethodPicker(false);
-    handleGenerate(method);
   };
 
   const handleClear = () => {
     setBip321Uri(undefined);
     setAmount("");
-    setSelectedMethod("lightning");
-    setShowMethodPicker(false);
     // Reset all mutations to clear their data
     resetOffchainAddress();
     resetOnchainAddress();
     resetLightningInvoice();
   };
 
-  const handleCopyToClipboard = (value: string) => {
-    Clipboard.setString(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1000);
-  };
-
-  const truncateAddress = (addr: string) => {
-    if (addr.length <= 100) {
-      return addr;
-    }
-    return `${addr.slice(0, 20)}...${addr.slice(-20)}`;
+  const handleCopyToClipboard = (value: string, type: string) => {
+    copyWithState(value, type);
   };
 
   return (
@@ -199,54 +191,66 @@ const ReceiveScreen = () => {
               : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
           </Text>
 
-          {showMethodPicker ? (
-            <View className="mt-8">
-              <ReceiveMethodPicker selectedMethod={selectedMethod} onSelect={handleMethodSelect} />
-            </View>
-          ) : (
-            <View className="flex-row items-center justify-between mt-8 gap-4">
-              {bip321Uri ? (
-                <View className="flex-1">
-                  <Button onPress={handleClear} variant="outline">
-                    <Text>Clear</Text>
-                  </Button>
-                </View>
-              ) : null}
+          <View className="flex-row items-center justify-between mt-8 gap-4">
+            {bip321Uri ? (
               <View className="flex-1">
-                <NoahButton
-                  onPress={() => handleGenerate()}
-                  onLongPress={handleLongPress}
-                  isLoading={isLoading}
-                  disabled={isLoading}
-                >
-                  Generate
-                </NoahButton>
+                <Button onPress={handleClear} variant="outline">
+                  <Text>Clear</Text>
+                </Button>
               </View>
+            ) : null}
+            <View className="flex-1">
+              <NoahButton onPress={handleGenerate} isLoading={isLoading} disabled={isLoading}>
+                Generate
+              </NoahButton>
             </View>
-          )}
+          </View>
 
           {bip321Uri && (
-            <View className="mt-8 p-4 bg-card rounded-lg items-center">
-              <View className="p-2 bg-white rounded-lg">
-                <QRCode value={bip321Uri} size={200} backgroundColor="white" color="black" />
+            <ScrollView className="mt-8">
+              <View className="p-4 bg-card rounded-lg items-center">
+                <View className="p-2 bg-white rounded-lg">
+                  <QRCode value={bip321Uri} size={200} backgroundColor="white" color="black" />
+                </View>
+                <Pressable
+                  onPress={() => handleCopyToClipboard(bip321Uri, "bip321")}
+                  className="mt-4 p-2"
+                >
+                  <Text className="text-sm text-center text-primary">
+                    {isCopied("bip321") ? "Copied!" : "Tap to copy BIP321"}
+                  </Text>
+                </Pressable>
               </View>
-              <Pressable onPress={() => handleCopyToClipboard(bip321Uri)} className="mt-4 p-2">
-                <Text
-                  className={`text-base text-center break-words ${
-                    copied ? "text-muted-foreground" : "text-foreground"
-                  }`}
-                >
-                  {truncateAddress(bip321Uri)}
-                </Text>
-                <Text
-                  className={`text-sm text-center mt-2 ${
-                    copied ? "text-muted-foreground" : "text-primary"
-                  }`}
-                >
-                  {copied ? "Copied!" : "Tap to copy"}
-                </Text>
-              </Pressable>
-            </View>
+
+              <View className="mt-4">
+                {onchainAddress && (
+                  <CopyableDetail
+                    label="On-chain"
+                    value={onchainAddress}
+                    onCopy={() => handleCopyToClipboard(onchainAddress, "onchain")}
+                    isCopied={isCopied("onchain")}
+                  />
+                )}
+
+                {vtxoPubkey && (
+                  <CopyableDetail
+                    label="Ark"
+                    value={vtxoPubkey}
+                    onCopy={() => handleCopyToClipboard(vtxoPubkey, "ark")}
+                    isCopied={isCopied("ark")}
+                  />
+                )}
+
+                {lightningInvoice && (
+                  <CopyableDetail
+                    label="Lightning"
+                    value={lightningInvoice}
+                    onCopy={() => handleCopyToClipboard(lightningInvoice, "lightning")}
+                    isCopied={isCopied("lightning")}
+                  />
+                )}
+              </View>
+            </ScrollView>
           )}
         </View>
       </TouchableWithoutFeedback>

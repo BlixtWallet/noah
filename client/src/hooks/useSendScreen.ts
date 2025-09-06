@@ -19,6 +19,7 @@ import {
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { useTransactionStore } from "~/store/transactionStore";
 import { useBtcToUsdRate } from "./useMarketData";
+import { satsToUsd, usdToSats } from "../lib/utils";
 import uuid from "react-native-uuid";
 
 type DisplayResult = {
@@ -64,7 +65,7 @@ export const useSendScreen = () => {
         isAmountEditable: newIsAmountEditable,
         error: parseError,
         bip321,
-      } = parseDestination(destination);
+      } = parseDestination(destination.toLowerCase());
 
       if (parseError) {
         showAlert({ title: "Invalid Destination", description: parseError });
@@ -118,7 +119,7 @@ export const useSendScreen = () => {
       return parseInt(amount, 10) || 0;
     }
     if (btcPrice) {
-      return Math.round((parseFloat(amount) / btcPrice) * 100000000);
+      return usdToSats(parseFloat(amount), btcPrice);
     }
     return 0;
   }, [amount, currency, btcPrice]);
@@ -126,12 +127,12 @@ export const useSendScreen = () => {
   const toggleCurrency = useCallback(() => {
     if (currency === "SATS") {
       if (btcPrice && amount) {
-        setAmount(((parseInt(amount, 10) * btcPrice) / 100000000).toFixed(2));
+        setAmount(satsToUsd(parseInt(amount, 10), btcPrice));
       }
       setCurrency("USD");
     } else {
       if (btcPrice && amount) {
-        setAmount(Math.round((parseFloat(amount) / btcPrice) * 100000000).toString());
+        setAmount(usdToSats(parseFloat(amount), btcPrice).toString());
       }
       setCurrency("SATS");
     }

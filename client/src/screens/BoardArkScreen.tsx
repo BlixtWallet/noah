@@ -17,7 +17,7 @@ import { useBalance } from "../hooks/useWallet";
 import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
 import { registerOffboardingRequest } from "../lib/api";
 import { addOffboardingRequest } from "../lib/transactionsDb";
-import Clipboard from "@react-native-clipboard/clipboard";
+import { copyToClipboard } from "../lib/clipboardUtils";
 import { cn } from "../lib/utils";
 import { COLORS } from "../lib/styleConstants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -282,9 +282,12 @@ const DetailRow = ({
 
   const { showAlert } = useAlert();
 
-  const handleCopy = () => {
-    Clipboard.setString(displayValue);
-    showAlert({ title: "Copied to Clipboard", description: `${label} has been copied.` });
+  const handleCopy = async () => {
+    await copyToClipboard(displayValue, {
+      onCopy: () => {
+        showAlert({ title: "Copied to Clipboard", description: `${label} has been copied.` });
+      },
+    });
   };
 
   return (
@@ -398,9 +401,12 @@ const BoardArkScreen = () => {
     boardArk(amountSat);
   };
 
-  const handleCopyToClipboard = (value: string) => {
-    Clipboard.setString(value);
-    showAlert({ title: "Copied!", description: "TXID copied to clipboard." });
+  const handleCopyToClipboard = async (value: string) => {
+    await copyToClipboard(value, {
+      onCopy: () => {
+        showAlert({ title: "Copied!", description: "TXID copied to clipboard." });
+      },
+    });
   };
 
   const errorMessage =

@@ -15,7 +15,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { COLORS } from "~/lib/styleConstants";
-import { formatNumber } from "~/lib/utils";
+import { formatNumber, satsToUsd } from "~/lib/utils";
 import { useNavigation } from "@react-navigation/native";
 import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
@@ -52,7 +52,7 @@ const SendScreen = () => {
 
   const handlePaste = async () => {
     const text = await Clipboard.getStringAsync();
-    setDestination(text.toLowerCase());
+    setDestination(text);
   };
 
   if (parsedResult?.success) {
@@ -103,14 +103,12 @@ const SendScreen = () => {
             <Text className="text-gray-400 text-center text-xl">
               {parsedAmount
                 ? `${formatNumber(parsedAmount)} sats ($${
-                    btcPrice
-                      ? formatNumber(((parsedAmount * btcPrice) / 100000000).toFixed(2))
-                      : "0.00"
+                    btcPrice ? formatNumber(satsToUsd(parsedAmount, btcPrice)) : "0.00"
                   })`
                 : currency === "SATS"
                   ? `$${
                       btcPrice && amountSat && !isNaN(amountSat)
-                        ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
+                        ? formatNumber(satsToUsd(amountSat, btcPrice))
                         : "0.00"
                     }`
                   : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
@@ -129,7 +127,7 @@ const SendScreen = () => {
                     className="flex-1 text-white"
                     placeholder="Address, invoice, or lightning address"
                     placeholderTextColor="#6b7280"
-                    value={destination.toLowerCase()}
+                    value={destination}
                     onChangeText={setDestination}
                   />
                   <TouchableOpacity onPress={handlePaste} className="p-2">
