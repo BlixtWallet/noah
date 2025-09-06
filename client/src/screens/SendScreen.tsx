@@ -52,7 +52,7 @@ const SendScreen = () => {
 
   const handlePaste = async () => {
     const text = await Clipboard.getStringAsync();
-    setDestination(text.toLowerCase());
+    setDestination(text);
   };
 
   if (parsedResult?.success) {
@@ -129,7 +129,7 @@ const SendScreen = () => {
                     className="flex-1 text-white"
                     placeholder="Address, invoice, or lightning address"
                     placeholderTextColor="#6b7280"
-                    value={destination.toLowerCase()}
+                    value={destination}
                     onChangeText={setDestination}
                   />
                   <TouchableOpacity onPress={handlePaste} className="p-2">

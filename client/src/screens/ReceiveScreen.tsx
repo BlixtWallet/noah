@@ -100,11 +100,9 @@ const ReceiveScreen = () => {
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
 
   useEffect(() => {
-    // Generate URI if we have at least one payment method
-
     let uri = "";
 
-    if (onchainAddress) {
+    if (onchainAddress && vtxoPubkey && lightningInvoice) {
       uri = `bitcoin:${onchainAddress.toUpperCase()}`;
       const params = [];
 
