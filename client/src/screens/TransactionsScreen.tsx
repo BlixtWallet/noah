@@ -1,19 +1,9 @@
 import { View, Pressable } from "react-native";
-import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Share from "react-native-share";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
+import { ConfirmationDialog } from "~/components/ConfirmationDialog";
 import { useTransactionStore } from "../store/transactionStore";
-import { useState, useRef, createRef } from "react";
+import { useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -33,14 +23,6 @@ const TransactionsScreen = () => {
   const [filter, setFilter] = useState<PaymentTypes | "all" | "Lightning">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
-  const swipeableRefs = useRef<Record<string, React.RefObject<SwipeableMethods | null>>>({});
-
-  const getSwipeableRef = (itemId: string) => {
-    if (!swipeableRefs.current[itemId]) {
-      swipeableRefs.current[itemId] = createRef<SwipeableMethods>();
-    }
-    return swipeableRefs.current[itemId];
-  };
 
   const handleDeleteRequest = (id: string) => {
     setSelectedTransactionId(id);
@@ -53,20 +35,6 @@ const TransactionsScreen = () => {
       setSelectedTransactionId(null);
       setDialogOpen(false);
     }
-  };
-
-  const renderRightActions = (itemId: string) => {
-    function DeleteAction() {
-      return (
-        <Pressable
-          onPress={() => handleDeleteRequest(itemId)}
-          className="w-20 bg-red-500 justify-center items-center"
-        >
-          <Icon name="trash-outline" size={24} color="white" />
-        </Pressable>
-      );
-    }
-    return DeleteAction;
   };
 
   const exportToCSV = async () => {
@@ -133,9 +101,6 @@ const TransactionsScreen = () => {
   };
 
   const onCancelDelete = () => {
-    if (selectedTransactionId && swipeableRefs.current[selectedTransactionId]) {
-      swipeableRefs.current[selectedTransactionId].current?.close();
-    }
     setDialogOpen(false);
     setSelectedTransactionId(null);
   };
@@ -164,28 +129,15 @@ const TransactionsScreen = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NoahSafeAreaView className="flex-1 bg-background">
-        <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this transaction? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex-row space-x-2">
-              <AlertDialogCancel onPress={onCancelDelete} className="flex-1">
-                <Text>Cancel</Text>
-              </AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                onPress={deleteTransaction}
-                className="flex-1"
-              >
-                <Text>Delete</Text>
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmationDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          title="Delete Transaction"
+          description="Are you sure you want to delete this transaction? This action cannot be undone."
+          onConfirm={deleteTransaction}
+          onCancel={onCancelDelete}
+          confirmText="Delete"
+        />
         <View className="p-4 flex-1">
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
@@ -225,45 +177,39 @@ const TransactionsScreen = () => {
             data={filteredTransactions}
             renderItem={({ item }: { item: Transaction }) => (
               <View style={{ marginBottom: 8 }}>
-                <Swipeable
-                  ref={getSwipeableRef(item.id)}
-                  renderRightActions={renderRightActions(item.id)}
-                  overshootRight={false}
-                  rightThreshold={40}
+                <Pressable
+                  onPress={() => navigation.navigate("TransactionDetail", { transaction: item })}
+                  onLongPress={() => handleDeleteRequest(item.id)}
                 >
-                  <Pressable
-                    onPress={() => navigation.navigate("TransactionDetail", { transaction: item })}
-                  >
-                    <View className="flex-row items-center p-4 bg-card rounded-lg">
-                      <View className="mr-4">
-                        <Icon
-                          name={getIconForType(item.type)}
-                          size={24}
-                          color={item.direction === "outgoing" ? "red" : "green"}
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <View className="flex-row justify-between">
-                          <Label className="text-foreground text-base">
-                            {item.type === "Bolt11" || item.type === "Lnurl"
-                              ? "Lightning"
-                              : item.type}
-                          </Label>
-                          <Text
-                            className={`text-base font-bold ${
-                              item.direction === "outgoing" ? "text-red-500" : "text-green-500"
-                            }`}
-                          >
-                            {item.direction === "outgoing" ? "-" : "+"} {item.amount} sats
-                          </Text>
-                        </View>
-                        <Text className="text-muted-foreground text-sm mt-1">
-                          {new Date(item.date).toLocaleString()}
+                  <View className="flex-row items-center p-4 bg-card rounded-lg">
+                    <View className="mr-4">
+                      <Icon
+                        name={getIconForType(item.type)}
+                        size={24}
+                        color={item.direction === "outgoing" ? "red" : "green"}
+                      />
+                    </View>
+                    <View className="flex-1">
+                      <View className="flex-row justify-between">
+                        <Label className="text-foreground text-base">
+                          {item.type === "Bolt11" || item.type === "Lnurl"
+                            ? "Lightning"
+                            : item.type}
+                        </Label>
+                        <Text
+                          className={`text-base font-bold ${
+                            item.direction === "outgoing" ? "text-red-500" : "text-green-500"
+                          }`}
+                        >
+                          {item.direction === "outgoing" ? "-" : "+"} {item.amount} sats
                         </Text>
                       </View>
+                      <Text className="text-muted-foreground text-sm mt-1">
+                        {new Date(item.date).toLocaleString()}
+                      </Text>
                     </View>
-                  </Pressable>
-                </Swipeable>
+                  </View>
+                </Pressable>
               </View>
             )}
             keyExtractor={(item: Transaction) => item.id}

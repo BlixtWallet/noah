@@ -47,14 +47,17 @@ export const DangerZoneRow = ({
 };
 
 type ConfirmationDialogProps = {
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
   title: string;
   description: string;
   onConfirm: () => void;
+  onCancel?: () => void;
   children?: React.ReactNode;
   confirmText?: string;
   confirmVariant?: "default" | "destructive";
   isConfirmDisabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export const ConfirmationDialog = ({
@@ -62,34 +65,49 @@ export const ConfirmationDialog = ({
   title,
   description,
   onConfirm,
+  onCancel,
   children,
   confirmText = "Confirm",
   confirmVariant = "destructive",
   isConfirmDisabled,
+  open,
+  onOpenChange,
 }: ConfirmationDialogProps) => {
+  const content = (
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{title}</AlertDialogTitle>
+        <AlertDialogDescription>{description}</AlertDialogDescription>
+      </AlertDialogHeader>
+      {children}
+      <AlertDialogFooter className="flex-row space-x-2">
+        <AlertDialogCancel onPress={onCancel} className="flex-1">
+          <Text>Cancel</Text>
+        </AlertDialogCancel>
+        <AlertDialogAction
+          variant={confirmVariant}
+          onPress={onConfirm}
+          className="flex-1"
+          disabled={isConfirmDisabled}
+        >
+          <Text>{confirmText}</Text>
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  );
+
+  if (trigger) {
+    return (
+      <AlertDialog open={open} onOpenChange={onOpenChange}>
+        <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+        {content}
+      </AlertDialog>
+    );
+  }
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        {children}
-        <AlertDialogFooter className="flex-row space-x-2">
-          <AlertDialogCancel className="flex-1">
-            <Text>Cancel</Text>
-          </AlertDialogCancel>
-          <AlertDialogAction
-            variant={confirmVariant}
-            onPress={onConfirm}
-            className="flex-1"
-            disabled={isConfirmDisabled}
-          >
-            <Text>{confirmText}</Text>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {content}
     </AlertDialog>
   );
 };

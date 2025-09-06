@@ -99,18 +99,6 @@ const SettingsScreen = () => {
         isPressable: false,
       },
       { id: "ark", title: "Ark Server", value: config.ark, isPressable: false },
-      {
-        id: "bitcoind_user",
-        title: "RPC User",
-        value: config.bitcoind_user,
-        isPressable: false,
-      },
-      {
-        id: "bitcoind_pass",
-        title: "RPC Pass",
-        value: config.bitcoind_pass,
-        isPressable: false,
-      },
     );
   } else {
     data.push(
