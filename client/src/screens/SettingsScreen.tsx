@@ -75,11 +75,8 @@ const SettingsScreen = () => {
       // This is handled by the AlertDialog now
     } else if (item.id === "backup") {
       navigation.navigate("BackupSettings");
-    } else {
-      navigation.navigate("EditConfiguration", {
-        item: item as { id: keyof WalletConfig; title: string; value?: string },
-      });
     }
+    // Removed EditConfiguration navigation - settings are now read-only
   };
 
   const data: Setting[] = [];
@@ -99,20 +96,20 @@ const SettingsScreen = () => {
         id: "bitcoind",
         title: "Bitcoind RPC",
         value: config.bitcoind,
-        isPressable: !isInitialized,
+        isPressable: false,
       },
-      { id: "ark", title: "Ark Server", value: config.ark, isPressable: !isInitialized },
+      { id: "ark", title: "Ark Server", value: config.ark, isPressable: false },
       {
         id: "bitcoind_user",
         title: "RPC User",
         value: config.bitcoind_user,
-        isPressable: !isInitialized,
+        isPressable: false,
       },
       {
         id: "bitcoind_pass",
         title: "RPC Pass",
         value: config.bitcoind_pass,
-        isPressable: !isInitialized,
+        isPressable: false,
       },
     );
   } else {
@@ -121,9 +118,9 @@ const SettingsScreen = () => {
         id: "esplora",
         title: "Esplora Server",
         value: config.esplora,
-        isPressable: !isInitialized,
+        isPressable: false,
       },
-      { id: "ark", title: "Ark Server", value: config.ark, isPressable: !isInitialized },
+      { id: "ark", title: "Ark Server", value: config.ark, isPressable: false },
     );
   }
 

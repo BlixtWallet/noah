@@ -11,7 +11,6 @@ import OnboardingScreen from "~/screens/OnboardingScreen";
 import ReceiveScreen from "~/screens/ReceiveScreen";
 import SendScreen from "~/screens/SendScreen";
 import SettingsScreen from "~/screens/SettingsScreen";
-import EditSettingScreen from "~/screens/EditSettingScreen";
 import BoardArkScreen from "~/screens/BoardArkScreen";
 import MnemonicScreen from "~/screens/MnemonicScreen";
 import LogScreen from "~/screens/LogScreen";
@@ -40,7 +39,6 @@ export type SettingsStackParamList = {
 export type OnboardingStackParamList = {
   Onboarding: undefined;
   Configuration: undefined;
-  EditConfiguration: { item: { id: string; title: string; value?: string } };
   Mnemonic: { fromOnboarding: boolean };
   RestoreWallet: undefined;
 };
@@ -142,11 +140,6 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen
       name="Configuration"
       component={SettingsScreen}
-      options={{ animation: "default" }}
-    />
-    <OnboardingStack.Screen
-      name="EditConfiguration"
-      component={EditSettingScreen}
       options={{ animation: "default" }}
     />
     <OnboardingStack.Screen
