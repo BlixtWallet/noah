@@ -18,7 +18,7 @@ import {
   useGenerateOnchainAddress,
   useGenerateOffchainAddress,
 } from "../hooks/usePayments";
-import Clipboard from "@react-native-clipboard/clipboard";
+import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useNavigation } from "@react-navigation/native";
@@ -73,7 +73,7 @@ const CopyableDetail = ({
 const ReceiveScreen = () => {
   const navigation = useNavigation();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
-  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
 
   const {
@@ -150,9 +150,7 @@ const ReceiveScreen = () => {
   };
 
   const handleCopyToClipboard = (value: string, type: string) => {
-    Clipboard.setString(value);
-    setCopiedValue(type);
-    setTimeout(() => setCopiedValue(null), 2000);
+    copyWithState(value, type);
   };
 
   return (
@@ -219,7 +217,7 @@ const ReceiveScreen = () => {
                   className="mt-4 p-2"
                 >
                   <Text className="text-sm text-center text-primary">
-                    {copiedValue === "bip321" ? "Copied!" : "Tap to copy BIP321"}
+                    {isCopied("bip321") ? "Copied!" : "Tap to copy BIP321"}
                   </Text>
                 </Pressable>
               </View>
@@ -230,7 +228,7 @@ const ReceiveScreen = () => {
                     label="On-chain"
                     value={onchainAddress}
                     onCopy={() => handleCopyToClipboard(onchainAddress, "onchain")}
-                    isCopied={copiedValue === "onchain"}
+                    isCopied={isCopied("onchain")}
                   />
                 )}
 
@@ -239,7 +237,7 @@ const ReceiveScreen = () => {
                     label="Ark"
                     value={vtxoPubkey}
                     onCopy={() => handleCopyToClipboard(vtxoPubkey, "ark")}
-                    isCopied={copiedValue === "ark"}
+                    isCopied={isCopied("ark")}
                   />
                 )}
 
@@ -248,7 +246,7 @@ const ReceiveScreen = () => {
                     label="Lightning"
                     value={lightningInvoice}
                     onCopy={() => handleCopyToClipboard(lightningInvoice, "lightning")}
-                    isCopied={copiedValue === "lightning"}
+                    isCopied={isCopied("lightning")}
                   />
                 )}
               </View>

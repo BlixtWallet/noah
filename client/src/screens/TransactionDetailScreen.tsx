@@ -3,7 +3,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
-import Clipboard from "@react-native-clipboard/clipboard";
+import { copyToClipboard } from "../lib/clipboardUtils";
 import { type Transaction } from "../types/transaction";
 import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
@@ -19,10 +19,13 @@ const TransactionDetailRow = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const onCopy = () => {
-    Clipboard.setString(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1000);
+  const onCopy = async () => {
+    await copyToClipboard(value, {
+      onCopy: () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1000);
+      },
+    });
   };
 
   return (

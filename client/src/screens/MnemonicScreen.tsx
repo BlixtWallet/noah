@@ -3,7 +3,7 @@ import { View, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Clipboard from "@react-native-clipboard/clipboard";
+import { copyToClipboard } from "../lib/clipboardUtils";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { NoahButton } from "../components/ui/NoahButton";
@@ -48,9 +48,12 @@ const MnemonicScreen = () => {
     fetchMnemonic();
   }, [showAlert, navigation]);
 
-  const handleCopy = () => {
-    Clipboard.setString(mnemonic);
-    showAlert({ title: "Copied!", description: "Recovery phrase copied to clipboard." });
+  const handleCopy = async () => {
+    await copyToClipboard(mnemonic, {
+      onCopy: () => {
+        showAlert({ title: "Copied!", description: "Mnemonic phrase copied to clipboard." });
+      },
+    });
   };
 
   const handleContinue = () => {

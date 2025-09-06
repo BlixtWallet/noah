@@ -14,7 +14,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
 import { useExportDatabase } from "../hooks/useExportDatabase";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import Clipboard from "@react-native-clipboard/clipboard";
+import { copyToClipboard } from "../lib/clipboardUtils";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
@@ -37,10 +37,13 @@ type Setting = {
 const CopyableSettingRow = ({ label, value }: { label: string; value: string }) => {
   const [copied, setCopied] = useState(false);
 
-  const onCopy = () => {
-    Clipboard.setString(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1000);
+  const onCopy = async () => {
+    await copyToClipboard(value, {
+      onCopy: () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1000);
+      },
+    });
   };
 
   return (
