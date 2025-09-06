@@ -93,7 +93,7 @@ const createWalletFromMnemonic = async (
     return err(setMnemonicResult.error);
   }
 
-  const loadResult = await ResultAsync.fromPromise(loadWalletIfNeeded(), (e) => e as Error);
+  const loadResult = await loadWallet(mnemonic, config);
   if (loadResult.isErr()) {
     return err(loadResult.error);
   }
@@ -127,21 +127,13 @@ export const restoreWallet = async (
   if (setResult.isErr()) {
     return err(setResult.error);
   }
-  return loadWallet(config);
+  return loadWallet(mnemonic, config);
 };
 
-const loadWallet = async (config: WalletConfig): Promise<Result<boolean, Error>> => {
-  const mnemonicResult = await getMnemonic();
-
-  if (mnemonicResult.isErr()) {
-    return err(mnemonicResult.error);
-  }
-
-  const mnemonic = mnemonicResult.value;
-  if (!mnemonic) {
-    return err(new Error("No wallet found. Please create a wallet first."));
-  }
-
+const loadWallet = async (
+  mnemonic: string,
+  config: WalletConfig,
+): Promise<Result<boolean, Error>> => {
   const loadConfig = createWalletConfig(config);
   const loadResult = await ResultAsync.fromPromise(
     loadWalletNitro(ARK_DATA_PATH, {
@@ -158,6 +150,21 @@ const loadWallet = async (config: WalletConfig): Promise<Result<boolean, Error>>
   return ok(true);
 };
 
+const loadWalletFromStorage = async (config: WalletConfig): Promise<Result<boolean, Error>> => {
+  const mnemonicResult = await getMnemonic();
+
+  if (mnemonicResult.isErr()) {
+    return err(mnemonicResult.error);
+  }
+
+  const mnemonic = mnemonicResult.value;
+  if (!mnemonic) {
+    return err(new Error("No wallet found. Please create a wallet first."));
+  }
+
+  return loadWallet(mnemonic, config);
+};
+
 export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
   const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
   if (isLoadedResult.isErr()) {
@@ -169,7 +176,7 @@ export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
   }
 
   const config = useWalletStore.getState().config;
-  return loadWallet(config);
+  return loadWalletFromStorage(config);
 };
 
 export const fetchOnchainBalance = async (): Promise<Result<OnchainBalanceResult, Error>> => {
