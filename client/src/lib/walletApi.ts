@@ -30,36 +30,45 @@ const log = logger("walletApi");
 const vtxoRefreshExpiryThreshold = 288;
 const fallBackFeeRate = 10000;
 
+// Helper function to create network configuration
+const createNetworkConfig = (config: WalletConfig) => {
+  const baseConfig = {
+    vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
+    fallback_fee_rate: fallBackFeeRate,
+  };
+
+  if (APP_VARIANT === "regtest") {
+    return {
+      ...baseConfig,
+      bitcoind: config.bitcoind,
+      ark: config.ark,
+      bitcoind_user: config.bitcoind_user,
+      bitcoind_pass: config.bitcoind_pass,
+    };
+  } else {
+    return {
+      ...baseConfig,
+      esplora: config.esplora,
+      ark: config.ark,
+    };
+  }
+};
+
+// Helper function to create wallet creation configuration
+const createWalletConfig = (config: WalletConfig) => {
+  return {
+    regtest: APP_VARIANT === "regtest",
+    signet: APP_VARIANT === "signet",
+    bitcoin: APP_VARIANT === "mainnet",
+    config: createNetworkConfig(config),
+  };
+};
+
 const createWalletFromMnemonic = async (
   mnemonic: string,
   config: WalletConfig,
 ): Promise<Result<void, Error>> => {
-  const creationConfig =
-    APP_VARIANT === "regtest"
-      ? {
-          regtest: true,
-          signet: false,
-          bitcoin: false,
-          config: {
-            bitcoind: config.bitcoind,
-            ark: config.ark,
-            bitcoind_user: config.bitcoind_user,
-            bitcoind_pass: config.bitcoind_pass,
-            vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
-            fallback_fee_rate: fallBackFeeRate,
-          },
-        }
-      : {
-          regtest: false,
-          signet: APP_VARIANT === "signet",
-          bitcoin: APP_VARIANT === "mainnet",
-          config: {
-            esplora: config.esplora,
-            ark: config.ark,
-            vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
-            fallback_fee_rate: fallBackFeeRate,
-          },
-        };
+  const creationConfig = createWalletConfig(config);
 
   const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
   if (isLoadedResult.isErr()) return err(isLoadedResult.error);
@@ -78,22 +87,13 @@ const createWalletFromMnemonic = async (
     return err(createResult.error);
   }
 
-  const setResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
+  const setMnemonicResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
 
-  if (setResult.isErr()) {
-    return err(setResult.error);
+  if (setMnemonicResult.isErr()) {
+    return err(setMnemonicResult.error);
   }
 
-  const loadResult = await ResultAsync.fromPromise(
-    loadWalletNitro(ARK_DATA_PATH, {
-      mnemonic,
-      bitcoin: creationConfig.bitcoin,
-      signet: creationConfig.signet,
-      regtest: creationConfig.regtest,
-      config: creationConfig.config,
-    }),
-    (e) => e as Error,
-  );
+  const loadResult = await ResultAsync.fromPromise(loadWalletIfNeeded(), (e) => e as Error);
   if (loadResult.isErr()) {
     return err(loadResult.error);
   }
@@ -142,21 +142,11 @@ const loadWallet = async (config: WalletConfig): Promise<Result<boolean, Error>>
     return err(new Error("No wallet found. Please create a wallet first."));
   }
 
+  const loadConfig = createWalletConfig(config);
   const loadResult = await ResultAsync.fromPromise(
     loadWalletNitro(ARK_DATA_PATH, {
       mnemonic,
-      bitcoin: false,
-      signet: APP_VARIANT === "signet",
-      regtest: APP_VARIANT === "regtest",
-      config: {
-        esplora: config.esplora,
-        ark: config.ark,
-        vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
-        fallback_fee_rate: fallBackFeeRate,
-        bitcoind: config.bitcoind,
-        bitcoind_pass: config.bitcoind_pass,
-        bitcoind_user: config.bitcoind_user,
-      },
+      ...loadConfig,
     }),
     (e) => e as Error,
   );
