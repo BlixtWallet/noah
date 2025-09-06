@@ -76,7 +76,6 @@ const SettingsScreen = () => {
     } else if (item.id === "backup") {
       navigation.navigate("BackupSettings");
     }
-    // Removed EditConfiguration navigation - settings are now read-only
   };
 
   const data: Setting[] = [];
