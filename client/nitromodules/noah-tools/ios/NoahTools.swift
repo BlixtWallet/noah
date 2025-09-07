@@ -6,6 +6,17 @@ import OSLog
 import ZIPFoundation
 
 class NoahTools: HybridNoahToolsSpec {
+  // Shared URLSession for all network requests
+  private let session: URLSession = {
+    let config = URLSessionConfiguration.ephemeral
+    config.timeoutIntervalForResource = 60.0
+    config.waitsForConnectivity = false
+    config.allowsCellularAccess = true
+    config.allowsExpensiveNetworkAccess = true
+    config.allowsConstrainedNetworkAccess = true
+    return URLSession(configuration: config)
+  }()
+  
   func nativePost(url: String, body: String, headers: [String: String], timeoutSeconds: Double) throws -> Promise<HttpResponse> {
     return Promise.async {
       guard let requestUrl = URL(string: url) else {
@@ -15,17 +26,6 @@ class NoahTools: HybridNoahToolsSpec {
           userInfo: [NSLocalizedDescriptionKey: "Invalid URL: \(url)"]
         )
       }
-      
-      // Create URLSession configuration for background-compatible requests
-      let config = URLSessionConfiguration.ephemeral
-      config.timeoutIntervalForRequest = timeoutSeconds
-      config.timeoutIntervalForResource = timeoutSeconds
-      config.waitsForConnectivity = false
-      config.allowsCellularAccess = true
-      config.allowsExpensiveNetworkAccess = true
-      config.allowsConstrainedNetworkAccess = true
-      
-      let session = URLSession(configuration: config)
       
       var request = URLRequest(url: requestUrl)
       request.httpMethod = "POST"
@@ -37,9 +37,9 @@ class NoahTools: HybridNoahToolsSpec {
         request.setValue(value, forHTTPHeaderField: key)
       }
       
-      // Use async/await for the network request
+      // Use async/await for the network request with the shared session
       do {
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await self.session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse else {
           throw NSError(
@@ -51,10 +51,15 @@ class NoahTools: HybridNoahToolsSpec {
         
         let responseBody = String(data: data, encoding: .utf8) ?? ""
         
-        // Convert headers to dictionary
+        // Convert headers to dictionary, handling both single values and arrays
         var responseHeaders: [String: String] = [:]
-        if let allHeaders = httpResponse.allHeaderFields as? [String: String] {
-          responseHeaders = allHeaders
+        for (key, value) in httpResponse.allHeaderFields {
+          guard let keyString = key as? String else { continue }
+          if let valueString = value as? String {
+            responseHeaders[keyString] = valueString
+          } else if let valueArray = value as? [String] {
+            responseHeaders[keyString] = valueArray.joined(separator: ", ")
+          }
         }
         
         return HttpResponse(

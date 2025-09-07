@@ -96,9 +96,19 @@ async function post<T, U>(
       log.d("Native HTTP response status", [response.status]);
 
       if (response.status >= 200 && response.status < 300) {
-        const responseJson = JSON.parse(response.body) as U;
-        log.d("Response from server", [responseJson]);
-        return ok(responseJson);
+        // Handle successful responses with no body (e.g. 204 No Content)
+        if (!response.body || response.body === "") {
+          return ok(undefined as unknown as U);
+        }
+
+        try {
+          const responseJson = JSON.parse(response.body) as U;
+          log.d("Response from server", [responseJson]);
+          return ok(responseJson);
+        } catch (e) {
+          log.e("Failed to parse JSON response", [e as Error, response.body]);
+          return err(new Error(`Failed to parse JSON response: ${(e as Error).message}`));
+        }
       } else {
         return err(new Error(`HTTP ${response.status}: ${response.body}`));
       }

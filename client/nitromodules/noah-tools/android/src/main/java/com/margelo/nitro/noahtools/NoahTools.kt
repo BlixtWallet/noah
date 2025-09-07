@@ -84,24 +84,24 @@ class NoahTools : HybridNoahToolsSpec() {
           .writeTimeout(timeoutSeconds.toLong(), TimeUnit.SECONDS)
           .build()
         
-        // Execute the request
-        val response = client.newCall(request).execute()
-        
-        // Extract response data
-        val responseBody = response.body?.string() ?: ""
-        val responseHeaders = mutableMapOf<String, String>()
-        
-        response.headers.forEach { pair ->
-          responseHeaders[pair.first] = pair.second
+        // Execute the request and properly close the response
+        client.newCall(request).execute().use { response ->
+          // Extract response data
+          val responseBody = response.body?.string() ?: ""
+          val responseHeaders = mutableMapOf<String, String>()
+          
+          response.headers.forEach { pair ->
+            responseHeaders[pair.first] = pair.second
+          }
+          
+          Log.d(TAG, "Background request completed with status: ${response.code}")
+          
+          return@async HttpResponse(
+            status = response.code.toDouble(),
+            body = responseBody,
+            headers = responseHeaders
+          )
         }
-        
-        Log.d(TAG, "Background request completed with status: ${response.code}")
-        
-        return@async HttpResponse(
-          status = response.code.toDouble(),
-          body = responseBody,
-          headers = responseHeaders
-        )
       } catch (e: Exception) {
         Log.e(TAG, "Background request failed", e)
         throw Exception("Background request failed: ${e.message}", e)
