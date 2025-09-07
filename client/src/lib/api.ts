@@ -21,6 +21,7 @@ import {
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 import ky from "ky";
+import { nativePost } from "noah-tools";
 
 const log = logger("serverApi");
 
@@ -32,7 +33,7 @@ async function post<T, U>(
   authenticated = true,
 ): Promise<Result<U, Error>> {
   try {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
@@ -79,18 +80,38 @@ async function post<T, U>(
     }
 
     const body = JSON.stringify(payload);
+    const url = `${API_URL}/v0${endpoint}`;
 
     try {
-      log.d("Calling endpoint", [`${API_URL}/v0${endpoint}`]);
-      const response = await ky.post(`${API_URL}/v0${endpoint}`, {
+      log.d("Calling endpoint", [url]);
+
+      // Always use native HTTP client for all requests
+      const response = await nativePost(
+        url,
+        body,
         headers,
-        json: JSON.parse(body),
-      });
+        30, // 30 second timeout
+      );
 
-      const responseJson = await response.json<U>();
-      log.d("Response from server", [responseJson]);
+      log.d("Native HTTP response status", [response.status]);
 
-      return ok(responseJson);
+      if (response.status >= 200 && response.status < 300) {
+        // Handle successful responses with no body (e.g. 204 No Content)
+        if (!response.body || response.body === "") {
+          return ok(undefined as unknown as U);
+        }
+
+        try {
+          const responseJson = JSON.parse(response.body) as U;
+          log.d("Response from server", [responseJson]);
+          return ok(responseJson);
+        } catch (e) {
+          log.e("Failed to parse JSON response", [e as Error, response.body]);
+          return err(new Error(`Failed to parse JSON response: ${(e as Error).message}`));
+        }
+      } else {
+        return err(new Error(`HTTP ${response.status}: ${response.body}`));
+      }
     } catch (e) {
       log.d("Failed to send request", [e as Error]);
       return err(e as Error);

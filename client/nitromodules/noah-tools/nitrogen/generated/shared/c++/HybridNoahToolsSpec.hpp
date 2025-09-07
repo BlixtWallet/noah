@@ -13,11 +13,14 @@
 #error NitroModules cannot be found! Are you sure you installed NitroModules properly?
 #endif
 
-
+// Forward declaration of `HttpResponse` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct HttpResponse; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
+#include "HttpResponse.hpp"
+#include <unordered_map>
 
 namespace margelo::nitro::noahtools {
 
@@ -54,6 +57,7 @@ namespace margelo::nitro::noahtools {
       virtual std::shared_ptr<Promise<std::vector<std::string>>> getAppLogs() = 0;
       virtual std::shared_ptr<Promise<std::string>> createBackup(const std::string& mnemonic) = 0;
       virtual std::shared_ptr<Promise<bool>> restoreBackup(const std::string& encryptedData, const std::string& mnemonic) = 0;
+      virtual std::shared_ptr<Promise<HttpResponse>> nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) = 0;
 
     protected:
       // Hybrid Setup

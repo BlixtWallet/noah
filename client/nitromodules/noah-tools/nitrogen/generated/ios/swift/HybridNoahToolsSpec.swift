@@ -18,6 +18,7 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func getAppLogs() throws -> Promise<[String]>
   func createBackup(mnemonic: String) throws -> Promise<String>
   func restoreBackup(encryptedData: String, mnemonic: String) throws -> Promise<Bool>
+  func nativePost(url: String, body: String, headers: Dictionary<String, String>, timeoutSeconds: Double) throws -> Promise<HttpResponse>
 }
 
 /// See ``HybridNoahToolsSpec``

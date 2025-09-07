@@ -7,12 +7,16 @@
 
 #include "JHybridNoahToolsSpec.hpp"
 
-
+// Forward declaration of `HttpResponse` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct HttpResponse; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/JPromise.hpp>
+#include "HttpResponse.hpp"
+#include "JHttpResponse.hpp"
+#include <unordered_map>
 
 namespace margelo::nitro::noahtools {
 
@@ -94,6 +98,28 @@ namespace margelo::nitro::noahtools {
       __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
         auto __result = jni::static_ref_cast<jni::JBoolean>(__boxedResult);
         __promise->resolve(static_cast<bool>(__result->value()));
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<HttpResponse>> JHybridNoahToolsSpec::nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* url */, jni::alias_ref<jni::JString> /* body */, jni::alias_ref<jni::JMap<jni::JString, jni::JString>> /* headers */, double /* timeoutSeconds */)>("nativePost");
+    auto __result = method(_javaPart, jni::make_jstring(url), jni::make_jstring(body), [&]() -> jni::local_ref<jni::JMap<jni::JString, jni::JString>> {
+      auto __map = jni::JHashMap<jni::JString, jni::JString>::create(headers.size());
+      for (const auto& __entry : headers) {
+        __map->put(jni::make_jstring(__entry.first), jni::make_jstring(__entry.second));
+      }
+      return __map;
+    }(), timeoutSeconds);
+    return [&]() {
+      auto __promise = Promise<HttpResponse>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<JHttpResponse>(__boxedResult);
+        __promise->resolve(__result->toCpp());
       });
       __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
         jni::JniException __jniError(__throwable);
