@@ -81,6 +81,7 @@ async function post<T, U>(
     const body = JSON.stringify(payload);
 
     try {
+      log.d("Calling endpoint", [`${API_URL}/v0${endpoint}`]);
       const response = await ky.post(`${API_URL}/v0${endpoint}`, {
         headers,
         json: JSON.parse(body),

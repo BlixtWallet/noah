@@ -7,6 +7,7 @@ mod gated_api_v0;
 mod private_api_v0;
 mod public_api_v0;
 mod types;
+use bitcoin::Network;
 use dashmap::DashMap;
 use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
 use std::{
@@ -64,7 +65,7 @@ struct Config {
     turso_api_key: String,
     expo_access_token: String,
     ark_server_url: String,
-    server_network: String,
+    server_network: Network,
     sentry_token: Option<String>,
 }
 
@@ -79,7 +80,7 @@ fn main() -> anyhow::Result<()> {
         )
         .with(tracing_subscriber::fmt::layer());
 
-    if config.server_network == "signet" || config.server_network == "mainnet" {
+    if config.server_network == Network::Bitcoin || config.server_network == Network::Signet {
         if let Some(sentry_token) = config.sentry_token.clone() {
             let _guard = sentry::init((
                 sentry_token,
@@ -137,7 +138,9 @@ fn load_config() -> anyhow::Result<Config> {
         .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
     let ark_server_url = std::env::var("ARK_SERVER_URL")
         .context("ARK_SERVER_URL must be set in the environment variables")?;
-    let server_network = std::env::var("SERVER_NETWORK").unwrap_or_else(|_| "regtest".to_string());
+    let server_network = Network::from_str(
+        &std::env::var("SERVER_NETWORK").unwrap_or_else(|_| "regtest".to_string()),
+    )?;
     let sentry_token = std::env::var("SENTRY_TOKEN").ok();
 
     Ok(Config {
@@ -155,9 +158,22 @@ fn load_config() -> anyhow::Result<Config> {
 }
 
 async fn start_server(config: Config) -> anyhow::Result<()> {
-    let db = libsql::Builder::new_remote(config.turso_url.clone(), config.turso_api_key.clone())
-        .build()
-        .await?;
+    let db = match config.server_network {
+        Network::Bitcoin | Network::Signet => {
+            libsql::Builder::new_remote(config.turso_url.clone(), config.turso_api_key.clone())
+                .build()
+                .await?
+        }
+        Network::Regtest => {
+            libsql::Builder::new_local("noah-regtest.db")
+                .build()
+                .await?
+        }
+        _ => {
+            bail!("Unsupported network: {}", config.server_network);
+        }
+    };
+
     let conn = db.connect()?;
     migrations::migrate(&conn).await?;
 
