@@ -72,7 +72,7 @@ async function post<T, U>(
       }
       const sig = signatureResult.value;
 
-      log.d("Signature", [sig]);
+      log.d("Signature", [sig.length]);
 
       headers["x-auth-k1"] = k1;
       headers["x-auth-sig"] = sig;

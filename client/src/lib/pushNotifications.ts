@@ -188,7 +188,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     }
 
     const nativePushToken = nativePushTokenResult.value;
-    log.d(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken]);
+    log.d(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken.data.length]);
 
     const pushTokenResult = await ResultAsync.fromPromise(
       Notifications.getExpoPushTokenAsync({
@@ -202,7 +202,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     }
 
     const pushTokenString = pushTokenResult.value.data;
-    log.d("push token string is ", [pushTokenString]);
+    log.d("push token string is ", [pushTokenString.length]);
     return ok(pushTokenString);
   } else {
     return err(new Error("Must use physical device for push notifications"));
