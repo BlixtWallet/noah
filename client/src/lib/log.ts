@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { nativeLog, LogLevel } from "noah-tools";
+
 // TODO(hsjoberg): we don't have got code to know if it's debug mode or not
 const Debug = true;
 
-export type LogLevel = "Verbose" | "Debug" | "Info" | "Warning" | "Error";
 export const logEntries: [LogLevel, string][] = [];
 
 // TODO: maybe make array observable in order trigger re-render for hook
@@ -17,35 +20,55 @@ const log = (tag?: string) => {
     v: (message: string, data: any[] = []) => {
       if (Debug) {
         const msg = fixMessage(message, data);
-        logEntries.push(["Debug", `${tag}: ${msg}`]);
-        console.debug(`${tag}: ${msg}`);
+        logEntries.push(["verbose", `${tag}: ${msg}`]);
+        try {
+          nativeLog("verbose", tag, msg);
+        } catch (e) {
+          console.debug(`${tag}: ${msg}`);
+        }
       }
     },
 
     d: (message: string, data: any[] = []) => {
       if (Debug) {
         const msg = fixMessage(message, data);
-        logEntries.push(["Debug", `${tag}: ${msg}`]);
-        console.debug(`${tag}: ${msg}`);
+        logEntries.push(["debug", `${tag}: ${msg}`]);
+        try {
+          nativeLog("debug", tag, msg);
+        } catch (e) {
+          console.debug(`${tag}: ${msg}`);
+        }
       }
     },
 
     i: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      logEntries.push(["Info", `${tag}: ${msg}`]);
-      console.log(`${tag}: ${msg}`);
+      logEntries.push(["info", `${tag}: ${msg}`]);
+      try {
+        nativeLog("info", tag, msg);
+      } catch (e) {
+        console.log(`${tag}: ${msg}`);
+      }
     },
 
     w: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      logEntries.push(["Warning", `${tag}: ${msg}`]);
-      console.warn(`${tag}: ${msg}`);
+      logEntries.push(["warn", `${tag}: ${msg}`]);
+      try {
+        nativeLog("warn", tag, msg);
+      } catch (e) {
+        console.warn(`${tag}: ${msg}`);
+      }
     },
 
     e: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      logEntries.push(["Error", `${tag}: ${msg}`]);
-      console.log(`${tag}: ${msg}`);
+      logEntries.push(["error", `${tag}: ${msg}`]);
+      try {
+        nativeLog("error", tag, msg);
+      } catch (e) {
+        console.error(`${tag}: ${msg}`);
+      }
     },
   };
 };

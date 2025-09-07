@@ -17,6 +17,9 @@ class NoahTools: HybridNoahToolsSpec {
     return URLSession(configuration: config)
   }()
   
+  // Logger for native logging
+  private let logger = Logger(subsystem: "com.facebook.react.log", category: "NoahTools")
+  
   func nativePost(url: String, body: String, headers: [String: String], timeoutSeconds: Double) throws -> Promise<HttpResponse> {
     return Promise.async {
       guard let requestUrl = URL(string: url) else {
@@ -327,5 +330,24 @@ class NoahTools: HybridNoahToolsSpec {
         userInfo: [NSLocalizedDescriptionKey: "Key derivation failed"])
     }
     return derivedKey
+  }
+  
+  func nativeLog(level: String, tag: String, message: String) throws {
+    let logMessage = "[\(tag)] \(message)"
+    
+    switch level.lowercased() {
+    case "verbose":
+      logger.debug("\(logMessage, privacy: .public)")
+    case "debug":
+      logger.debug("\(logMessage, privacy: .public)")
+    case "info":
+      logger.info("\(logMessage, privacy: .public)")
+    case "warn":
+      logger.warning("\(logMessage, privacy: .public)")
+    case "error":
+      logger.error("\(logMessage, privacy: .public)")
+    default:
+      logger.info("\(logMessage, privacy: .public)")
+    }
   }
 }

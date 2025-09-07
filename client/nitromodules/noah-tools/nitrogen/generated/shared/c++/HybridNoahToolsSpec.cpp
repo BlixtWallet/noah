@@ -19,6 +19,7 @@ namespace margelo::nitro::noahtools {
       prototype.registerHybridMethod("createBackup", &HybridNoahToolsSpec::createBackup);
       prototype.registerHybridMethod("restoreBackup", &HybridNoahToolsSpec::restoreBackup);
       prototype.registerHybridMethod("nativePost", &HybridNoahToolsSpec::nativePost);
+      prototype.registerHybridMethod("nativeLog", &HybridNoahToolsSpec::nativeLog);
     });
   }
 

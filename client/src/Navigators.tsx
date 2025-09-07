@@ -241,7 +241,6 @@ const AppNavigation = () => {
       const mnemonicResult = await getMnemonic();
 
       if (mnemonicResult.isOk() && mnemonicResult.value) {
-        console.log("Found existing wallet on app start, initializing...");
         useWalletStore.getState().finishOnboarding();
         shouldCheckWallet = false;
       }

@@ -441,10 +441,24 @@ class NoahTools : HybridNoahToolsSpec() {
               output.write(buffer, 0, length)
             }
           }
+          zipIn.closeEntry()
+          entry = zipIn.nextEntry
         }
-        zipIn.closeEntry()
-        entry = zipIn.nextEntry
       }
     }
   }
-}
+  
+    override fun nativeLog(level: String, tag: String, message: String) {
+      val logTag = "ReactNativeJS"
+      val logMessage = "[$tag] $message"
+      
+      when (level.lowercase()) {
+        "verbose" -> Log.v(logTag, logMessage)
+        "debug" -> Log.d(logTag, logMessage)
+        "info" -> Log.i(logTag, logMessage)
+        "warn" -> Log.w(logTag, logMessage)
+        "error" -> Log.e(logTag, logMessage)
+        else -> Log.i(logTag, logMessage)
+      }
+    }
+  }

@@ -62,7 +62,6 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
 
       // If we have a mnemonic but isInitialized is false, fix the state
       if (mnemonicResult.isOk() && mnemonicResult.value && !isInitialized) {
-        console.log("Found existing wallet, setting initialized to true");
         useWalletStore.getState().finishOnboarding();
       }
     };

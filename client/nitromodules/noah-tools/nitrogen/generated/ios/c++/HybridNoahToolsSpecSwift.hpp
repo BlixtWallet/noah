@@ -102,6 +102,12 @@ namespace margelo::nitro::noahtools {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline void nativeLog(const std::string& level, const std::string& tag, const std::string& message) override {
+      auto __result = _swiftPart.nativeLog(level, tag, message);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
 
   private:
     NoahTools::HybridNoahToolsSpec_cxx _swiftPart;

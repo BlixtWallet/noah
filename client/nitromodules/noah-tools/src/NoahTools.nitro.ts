@@ -19,4 +19,7 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
     headers: Record<string, string>,
     timeoutSeconds: number,
   ): Promise<HttpResponse>;
+
+  // Native logging
+  nativeLog(level: string, tag: string, message: string): void;
 }

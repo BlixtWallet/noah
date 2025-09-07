@@ -210,4 +210,15 @@ open class HybridNoahToolsSpec_cxx {
       return bridge.create_Result_std__shared_ptr_Promise_HttpResponse___(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func nativeLog(level: std.string, tag: std.string, message: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.nativeLog(level: String(level), tag: String(tag), message: String(message))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
 }

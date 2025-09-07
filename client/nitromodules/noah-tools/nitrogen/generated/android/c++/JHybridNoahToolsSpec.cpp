@@ -128,5 +128,9 @@ namespace margelo::nitro::noahtools {
       return __promise;
     }();
   }
+  void JHybridNoahToolsSpec::nativeLog(const std::string& level, const std::string& tag, const std::string& message) {
+    static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* level */, jni::alias_ref<jni::JString> /* tag */, jni::alias_ref<jni::JString> /* message */)>("nativeLog");
+    method(_javaPart, jni::make_jstring(level), jni::make_jstring(tag), jni::make_jstring(message));
+  }
 
 } // namespace margelo::nitro::noahtools
