@@ -1,8 +1,7 @@
 use crate::{
     AppState,
-    push::send_push_notification,
+    push::send_push_notification_with_unique_k1,
     types::{NotificationTypes, NotificationsData},
-    utils::make_k1,
 };
 
 use futures_util::stream::StreamExt;
@@ -73,22 +72,16 @@ pub async fn connect_to_ark_server(
 }
 
 pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
-    // Send maintenance notification
-    let k1 = make_k1(app_state.k1_values.clone());
-    let data = crate::push::PushNotificationData {
-        title: None,
-        body: None,
-        data: serde_json::to_string(&NotificationsData {
-            notification_type: NotificationTypes::Maintenance,
-            k1: Some(k1),
-            amount: None,
-            offboarding_request_id: None,
-        })?,
-        priority: "high".to_string(),
-        content_available: true,
+    // Send maintenance notification with unique k1 for each device
+    let notification_data = NotificationsData {
+        notification_type: NotificationTypes::Maintenance,
+        k1: None, // Will be generated uniquely for each device
+        amount: None,
+        offboarding_request_id: None,
     };
 
-    if let Err(e) = send_push_notification(app_state, data, None).await {
+    if let Err(e) = send_push_notification_with_unique_k1(app_state, notification_data, None).await
+    {
         tracing::error!("Failed to send push notification for maintenance: {}", e);
     }
 
@@ -122,22 +115,20 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
         )
         .await?;
 
-        // Send push notification for offboarding
-        let k1 = make_k1(app_state.k1_values.clone());
-        let offboard_data = crate::push::PushNotificationData {
-            title: None,
-            body: None,
-            data: serde_json::to_string(&NotificationsData {
-                notification_type: NotificationTypes::Offboarding,
-                k1: Some(k1),
-                amount: None,
-                offboarding_request_id: Some(request_id.clone()),
-            })?,
-            priority: "high".to_string(),
-            content_available: true,
+        // Send push notification for offboarding with unique k1 for each device
+        let notification_data = NotificationsData {
+            notification_type: NotificationTypes::Offboarding,
+            k1: None, // Will be generated uniquely for each device
+            amount: None,
+            offboarding_request_id: Some(request_id.clone()),
         };
 
-        if let Err(e) = send_push_notification(app_state.clone(), offboard_data, Some(pubkey)).await
+        if let Err(e) = send_push_notification_with_unique_k1(
+            app_state.clone(),
+            notification_data,
+            Some(pubkey),
+        )
+        .await
         {
             tracing::error!("Failed to send push notification for offboarding: {}", e);
             // Reset status to pending if failed

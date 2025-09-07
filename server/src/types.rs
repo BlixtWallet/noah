@@ -151,7 +151,7 @@ pub enum ReportStatus {
     Failure,
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum NotificationTypes {
@@ -162,7 +162,7 @@ pub enum NotificationTypes {
     Offboarding,
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct NotificationsData {
     pub notification_type: NotificationTypes,
