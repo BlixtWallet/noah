@@ -6,6 +6,76 @@ import OSLog
 import ZIPFoundation
 
 class NoahTools: HybridNoahToolsSpec {
+  func nativePost(url: String, body: String, headers: [String: String], timeoutSeconds: Double) throws -> Promise<HttpResponse> {
+    return Promise.async {
+      guard let requestUrl = URL(string: url) else {
+        throw NSError(
+          domain: "NoahTools",
+          code: 100,
+          userInfo: [NSLocalizedDescriptionKey: "Invalid URL: \(url)"]
+        )
+      }
+      
+      // Create URLSession configuration for background-compatible requests
+      let config = URLSessionConfiguration.ephemeral
+      config.timeoutIntervalForRequest = timeoutSeconds
+      config.timeoutIntervalForResource = timeoutSeconds
+      config.waitsForConnectivity = false
+      config.allowsCellularAccess = true
+      config.allowsExpensiveNetworkAccess = true
+      config.allowsConstrainedNetworkAccess = true
+      
+      let session = URLSession(configuration: config)
+      
+      var request = URLRequest(url: requestUrl)
+      request.httpMethod = "POST"
+      request.httpBody = body.data(using: .utf8)
+      request.timeoutInterval = timeoutSeconds
+      
+      // Set headers
+      for (key, value) in headers {
+        request.setValue(value, forHTTPHeaderField: key)
+      }
+      
+      // Use async/await for the network request
+      do {
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+          throw NSError(
+            domain: "NoahTools",
+            code: 102,
+            userInfo: [NSLocalizedDescriptionKey: "No HTTP response received"]
+          )
+        }
+        
+        let responseBody = String(data: data, encoding: .utf8) ?? ""
+        
+        // Convert headers to dictionary
+        var responseHeaders: [String: String] = [:]
+        if let allHeaders = httpResponse.allHeaderFields as? [String: String] {
+          responseHeaders = allHeaders
+        }
+        
+        return HttpResponse(
+          status: Double(httpResponse.statusCode),
+          body: responseBody,
+          headers: responseHeaders
+        )
+      } catch {
+        // Handle timeout or other errors
+        if (error as NSError).code == NSURLErrorTimedOut {
+          throw NSError(
+            domain: "NoahTools",
+            code: 101,
+            userInfo: [NSLocalizedDescriptionKey: "Request timed out after \(timeoutSeconds) seconds"]
+          )
+        }
+        throw error
+      }
+    }
+  }
+  
   func getAppVariant() throws -> String {
     guard let appVariant = Bundle.main.object(forInfoDictionaryKey: "APP_VARIANT") as? String else {
       throw NSError(

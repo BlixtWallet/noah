@@ -55,6 +55,10 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun restoreBackup(encryptedData: String, mnemonic: String): Promise<Boolean>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun nativePost(url: String, body: String, headers: Map<String, String>, timeoutSeconds: Double): Promise<HttpResponse>
 
   private external fun initHybrid(): HybridData
 

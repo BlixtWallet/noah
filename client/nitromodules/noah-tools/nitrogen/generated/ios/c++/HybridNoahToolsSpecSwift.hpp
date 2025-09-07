@@ -12,11 +12,14 @@
 // Forward declaration of `HybridNoahToolsSpec_cxx` to properly resolve imports.
 namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
-
+// Forward declaration of `HttpResponse` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct HttpResponse; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
+#include "HttpResponse.hpp"
+#include <unordered_map>
 
 #include "NoahTools-Swift-Cxx-Umbrella.hpp"
 
@@ -85,6 +88,14 @@ namespace margelo::nitro::noahtools {
     }
     inline std::shared_ptr<Promise<bool>> restoreBackup(const std::string& encryptedData, const std::string& mnemonic) override {
       auto __result = _swiftPart.restoreBackup(encryptedData, mnemonic);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<HttpResponse>> nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) override {
+      auto __result = _swiftPart.nativePost(url, body, headers, std::forward<decltype(timeoutSeconds)>(timeoutSeconds));
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }
