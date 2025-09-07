@@ -39,12 +39,12 @@ async function post<T, U>(
 
     if (authenticated) {
       const walletResult = await loadWalletIfNeeded();
-      log.d("Wallet load result", [walletResult]);
+      log.i("Wallet load result", [walletResult]);
       if (walletResult.isErr()) {
         return err(walletResult.error);
       }
 
-      log.d("Payload", [payload]);
+      log.i("Payload", [payload]);
 
       const k1 = payload.k1 ?? (await getK1()).unwrapOr(undefined);
 
@@ -52,27 +52,27 @@ async function post<T, U>(
         return err(new Error("Failed to get k1 for authentication"));
       }
 
-      log.d("k1 is", [k1]);
+      log.i("k1 is", [k1]);
 
       const peakResult = await peakKeyPair(0);
 
       if (peakResult.isErr()) {
-        log.d("Failed to derive public key for authentication", [peakResult.error]);
+        log.i("Failed to derive public key for authentication", [peakResult.error]);
         return err(peakResult.error);
       }
       const { public_key: key } = peakResult.value;
 
-      log.d("Derived public key", [key]);
+      log.i("Derived public key", [key]);
 
       const signatureResult = await signMessage(k1, 0);
 
       if (signatureResult.isErr()) {
-        log.d("Failed to sign message for authentication", [signatureResult.error]);
+        log.i("Failed to sign message for authentication", [signatureResult.error]);
         return err(signatureResult.error);
       }
       const sig = signatureResult.value;
 
-      log.d("Signature", [sig.length]);
+      log.i("Signature", [sig.length]);
 
       headers["x-auth-k1"] = k1;
       headers["x-auth-sig"] = sig;
@@ -83,7 +83,7 @@ async function post<T, U>(
     const url = `${API_URL}/v0${endpoint}`;
 
     try {
-      log.d("Calling endpoint", [url]);
+      log.i("Calling endpoint", [url]);
 
       // Always use native HTTP client for all requests
       const response = await nativePost(
@@ -93,7 +93,7 @@ async function post<T, U>(
         30, // 30 second timeout
       );
 
-      log.d("Native HTTP response status", [response.status]);
+      log.i("Native HTTP response status", [response.status]);
 
       if (response.status >= 200 && response.status < 300) {
         // Handle successful responses with no body (e.g. 204 No Content)
@@ -103,7 +103,7 @@ async function post<T, U>(
 
         try {
           const responseJson = JSON.parse(response.body) as U;
-          log.d("Response from server", [responseJson]);
+          log.i("Response from server", [responseJson]);
           return ok(responseJson);
         } catch (e) {
           log.e("Failed to parse JSON response", [e as Error, response.body]);
@@ -113,7 +113,7 @@ async function post<T, U>(
         return err(new Error(`HTTP ${response.status}: ${response.body}`));
       }
     } catch (e) {
-      log.d("Failed to send request", [e as Error]);
+      log.i("Failed to send request", [e as Error]);
       return err(e as Error);
     }
   } catch (e) {

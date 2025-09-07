@@ -26,7 +26,7 @@ async function handleTaskCompletion(
   k1?: string,
 ) {
   if (result.isErr()) {
-    log.d(`Failed to trigger ${report_type} task, reporting failure`);
+    log.i(`Failed to trigger ${report_type} task, reporting failure`);
     const jobStatusResult = await reportJobStatus({
       report_type,
       status: "failure",
@@ -35,12 +35,12 @@ async function handleTaskCompletion(
     });
 
     if (jobStatusResult.isErr()) {
-      log.d("Failed to report job status", [jobStatusResult.error]);
+      log.i("Failed to report job status", [jobStatusResult.error]);
     }
     throw result.error;
   }
 
-  log.d(`Triggered ${report_type} task, reporting success`);
+  log.i(`Triggered ${report_type} task, reporting success`);
   const jobStatusResult = await reportJobStatus({
     report_type,
     status: "success",
@@ -49,21 +49,21 @@ async function handleTaskCompletion(
   });
 
   if (jobStatusResult.isErr()) {
-    log.d("Failed to report job status", [jobStatusResult.error]);
+    log.i("Failed to report job status", [jobStatusResult.error]);
   }
 }
 
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error, executionInfo }) => {
-    log.d("[Background Job] dataReceived", [data, typeof data]);
+    log.i("[Background Job] dataReceived", [data, typeof data]);
     if (error) {
       log.e("[Background Job] error", [error]);
       captureException(error);
       return;
     }
 
-    log.d("[Background Job] dataReceived", [data, typeof data]);
+    log.i("[Background Job] dataReceived", [data, typeof data]);
 
     const notificationDataResult = Result.fromThrowable(
       () => {
@@ -84,7 +84,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
     const notificationData = notificationDataResult.value;
 
-    log.d("[Background Job] notificationData", [notificationData, typeof notificationData]);
+    log.i("[Background Job] notificationData", [notificationData, typeof notificationData]);
 
     if (!notificationData || !notificationData.notification_type) {
       log.w("[Background Job] No data or type received", [notificationData]);
@@ -103,7 +103,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           const result = await maintenance();
           await handleTaskCompletion("maintenance", result, notificationData.k1);
         } else if (notificationData.notification_type === "lightning_invoice_request") {
-          log.d("Received lightning invoice request", [notificationData]);
+          log.i("Received lightning invoice request", [notificationData]);
           if (!notificationData.amount || !notificationData.k1) {
             log.w("Invalid lightning invoice request", [notificationData]);
             return;
@@ -167,7 +167,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
-      log.d("status", [status]);
+      log.i("status", [status]);
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
@@ -188,7 +188,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     }
 
     const nativePushToken = nativePushTokenResult.value;
-    log.d(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken.data.length]);
+    log.i(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken.data.length]);
 
     const pushTokenResult = await ResultAsync.fromPromise(
       Notifications.getExpoPushTokenAsync({
@@ -202,7 +202,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     }
 
     const pushTokenString = pushTokenResult.value.data;
-    log.d("push token string is ", [pushTokenString.length]);
+    log.i("push token string is ", [pushTokenString.length]);
     return ok(pushTokenString);
   } else {
     return err(new Error("Must use physical device for push notifications"));
