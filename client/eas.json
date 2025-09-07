@@ -6,7 +6,7 @@
     "development": {
       "ios": {
         "scheme": "Noah-Signet",
-        "buildConfiguration": "Release",
+        "buildConfiguration": "Debug",
         "developmentClient": true
       },
       "distribution": "internal"
