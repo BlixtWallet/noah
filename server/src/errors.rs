@@ -27,6 +27,8 @@ pub enum ApiError {
     NotFound(String),
     #[error("K1 expired")]
     K1Expired,
+    #[error("User not found")]
+    UserNotFound,
 }
 
 #[derive(Serialize)]
@@ -59,6 +61,7 @@ impl IntoResponse for ApiError {
             }
             ApiError::NotFound(e) => (StatusCode::NOT_FOUND, e.to_string()),
             ApiError::K1Expired => (StatusCode::UNAUTHORIZED, "K1 expired".to_string()),
+            ApiError::UserNotFound => (StatusCode::UNAUTHORIZED, "User not found".to_string()),
         };
 
         let body = Json(ErrorResponse {

@@ -41,3 +41,22 @@ pub fn make_k1(k1_values: Arc<DashMap<String, SystemTime>>) -> String {
     k1_values.insert(k1_with_timestamp.clone(), SystemTime::now());
     k1_with_timestamp
 }
+
+pub async fn verify_user_exists(conn: &libsql::Connection, pubkey: &str) -> Result<bool, ApiError> {
+    let mut rows = conn
+        .query("SELECT pubkey FROM users WHERE pubkey = ?", [pubkey])
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to query user: {}", e);
+            ApiError::Database(e)
+        })?;
+
+    Ok(rows
+        .next()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get next row: {}", e);
+            ApiError::Database(e)
+        })?
+        .is_some())
+}

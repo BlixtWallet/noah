@@ -11,6 +11,7 @@ use crate::{
         AuthEvent, AuthPayload, GetUploadUrlPayload, LNUrlAuthResponse, RegisterPayload,
         RegisterPushToken, UpdateLnAddressPayload, UploadUrlResponse,
     },
+    utils::verify_user_exists,
 };
 use axum::{Extension, Json, extract::State};
 use rand::Rng;
@@ -144,6 +145,11 @@ pub async fn submit_invoice(
         auth_payload.k1
     );
 
+    let conn = state.db.connect()?;
+    if !verify_user_exists(&conn, &auth_payload.key).await? {
+        return Err(ApiError::UserNotFound);
+    }
+
     if let Some((_, tx)) = state.invoice_data_transmitters.remove(&auth_payload.k1) {
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
@@ -216,9 +222,15 @@ pub async fn update_ln_address(
 }
 
 pub async fn get_upload_url(
+    State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<GetUploadUrlPayload>,
 ) -> Result<Json<UploadUrlResponse>, ApiError> {
+    let conn = state.db.connect()?;
+    if !verify_user_exists(&conn, &auth_payload.key).await? {
+        return Err(ApiError::UserNotFound);
+    }
+
     let s3_client = S3BackupClient::new().await?;
     let s3_key = format!(
         "{}/backup_v{}.db",
@@ -236,6 +248,10 @@ pub async fn complete_upload(
     Json(payload): Json<CompleteUploadPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
+    if !verify_user_exists(&conn, &auth_payload.key).await? {
+        return Err(ApiError::UserNotFound);
+    }
+
     conn.execute(
         "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
          ON CONFLICT(pubkey, backup_version) DO UPDATE SET s3_key = excluded.s3_key, backup_size = excluded.backup_size, created_at = CURRENT_TIMESTAMP",
@@ -334,9 +350,15 @@ pub async fn delete_backup(
 }
 
 pub async fn report_job_status(
+    State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    let conn = state.db.connect()?;
+    if !verify_user_exists(&conn, &auth_payload.key).await? {
+        return Err(ApiError::UserNotFound);
+    }
+
     tracing::info!(
         "Received job status report from pubkey: {}. Report type: {:?}, Status: {:?}, Error: {:?}",
         auth_payload.key,
@@ -354,6 +376,9 @@ pub async fn update_backup_settings(
     Json(payload): Json<BackupSettingsPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
+    if !verify_user_exists(&conn, &auth_payload.key).await? {
+        return Err(ApiError::UserNotFound);
+    }
     conn.execute(
         "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)
          ON CONFLICT(pubkey) DO UPDATE SET backup_enabled = excluded.backup_enabled",
@@ -376,6 +401,9 @@ pub async fn register_offboarding_request(
     let request_id = Uuid::new_v4().to_string();
 
     let conn = state.db.connect()?;
+    if !verify_user_exists(&conn, &auth_payload.key).await? {
+        return Err(ApiError::UserNotFound);
+    }
     conn.execute(
         "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
         libsql::params![request_id.clone(), auth_payload.key],
