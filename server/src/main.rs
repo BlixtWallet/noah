@@ -71,7 +71,7 @@ struct Config {
 }
 
 fn main() -> anyhow::Result<()> {
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
     let config = load_config()?;
 
     let subscriber = tracing_subscriber::registry()
