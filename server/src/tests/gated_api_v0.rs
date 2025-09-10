@@ -12,9 +12,10 @@ use tower::ServiceExt;
 use crate::app_middleware::auth_middleware;
 use crate::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
-    list_backups, register, register_offboarding_request, register_push_token, report_job_status,
+    list_backups, register_offboarding_request, register_push_token, report_job_status,
     update_backup_settings, update_ln_address,
 };
+use crate::public_api_v0::register;
 use crate::tests::common::TestUser;
 use crate::types::{
     BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, RegisterOffboardingResponse,
@@ -1109,6 +1110,7 @@ async fn test_backup_endpoints_missing_k1() {
 async fn test_backup_endpoints_malformed_json() {
     let (app, app_state) = setup_test_app().await;
     let user = TestUser::new();
+    create_test_user(&app_state, &user).await;
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
 

@@ -24,11 +24,11 @@ use crate::{
     cron::cron_scheduler,
     gated_api_v0::{
         complete_upload, delete_backup, deregister, get_download_url, get_upload_url,
-        get_user_info, list_backups, register, register_offboarding_request, register_push_token,
+        get_user_info, list_backups, register_offboarding_request, register_push_token,
         report_job_status, submit_invoice, update_backup_settings, update_ln_address,
     },
     private_api_v0::health_check,
-    public_api_v0::{get_k1, lnurlp_request},
+    public_api_v0::{get_k1, lnurlp_request, register},
 };
 
 mod app_middleware;
@@ -214,7 +214,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     // Gated routes, need auth
     let auth_router = Router::new()
-        .route("/register", post(register))
         .route("/register_push_token", post(register_push_token))
         .route(
             "/register_offboarding_request",
@@ -239,6 +238,13 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     // Public route
     let v0_router = Router::new()
         .route("/getk1", get(get_k1))
+        .route(
+            "/register",
+            post(register).route_layer(middleware::from_fn_with_state(
+                app_state.clone(),
+                app_middleware::auth_middleware,
+            )),
+        )
         .merge(auth_router);
 
     // Public route

@@ -4,7 +4,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::{AppState, errors::ApiError, types::AuthPayload, utils::verify_auth};
+use crate::{
+    AppState, errors::ApiError, types::AuthPayload, utils::verify_auth, utils::verify_user_exists,
+};
 use std::time::SystemTime;
 
 pub async fn auth_middleware(
@@ -50,6 +52,9 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidArgument("Invalid k1".to_string()).into_response());
     }
 
+    // Remove the k1 value to prevent reuse
+    state.k1_values.remove(&payload.k1);
+
     let k1_parts: Vec<&str> = payload.k1.split('_').collect();
     if k1_parts.len() != 2 {
         return Err(ApiError::InvalidArgument("Invalid k1 format".to_string()).into_response());
@@ -84,8 +89,18 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidSignature.into_response());
     }
 
-    // Remove the k1 value to prevent reuse
-    state.k1_values.remove(&payload.k1);
+    if request.uri().path() != "/register" {
+        let conn = state.db.connect().map_err(|_| {
+            ApiError::ServerErr("Failed to connect to database".to_string()).into_response()
+        })?;
+
+        if !verify_user_exists(&conn, &payload.key)
+            .await
+            .map_err(|_| ApiError::UserNotFound.into_response())?
+        {
+            return Err(ApiError::UserNotFound.into_response());
+        }
+    }
 
     request.extensions_mut().insert(payload);
     Ok(next.run(request).await)

@@ -1,18 +1,24 @@
 use std::time::Duration;
 
 use axum::{
-    Json,
+    Extension, Json,
     extract::{Path, Query, State},
     http::StatusCode,
 };
+use rand::Rng;
+use random_word::Lang;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::oneshot, time::timeout};
+use validator::Validate;
 
 use crate::{
     AppState,
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
-    types::{NotificationTypes, NotificationsData},
+    types::{
+        AuthEvent, AuthPayload, LNUrlAuthResponse, NotificationTypes, NotificationsData,
+        RegisterPayload,
+    },
     utils::make_k1,
 };
 
@@ -217,4 +223,79 @@ pub async fn lnurlp_request(
     Ok(Json(
         serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
     ))
+}
+
+/// Handles user registration via LNURL-auth.
+///
+/// This endpoint receives a user's public key, a signature, and a `k1` value.
+/// It verifies the signature against the `k1` value and, if valid, registers
+/// the user in the database.
+pub async fn register(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<RegisterPayload>,
+) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
+    if let Some(_ln_address) = &payload.ln_address {
+        if let Err(e) = payload.validate() {
+            return Err(ApiError::InvalidArgument(e.to_string()));
+        }
+    }
+
+    let lnurl_domain = &state.lnurl_domain;
+
+    let conn = state.db.connect()?;
+
+    tracing::debug!(
+        "Registering user with pubkey: {} and k1: {}",
+        auth_payload.key,
+        auth_payload.k1,
+    );
+
+    let mut rows = conn
+        .query(
+            "SELECT pubkey FROM users WHERE pubkey = ?",
+            libsql::params![auth_payload.key.clone()],
+        )
+        .await?;
+
+    if rows.next().await?.is_some() {
+        tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
+        let mut rows = conn
+            .query(
+                "SELECT lightning_address FROM users WHERE pubkey = ?",
+                libsql::params![auth_payload.key.clone()],
+            )
+            .await?;
+
+        let lightning_address: Option<String> = if let Some(row) = rows.next().await? {
+            Some(row.get(0)?)
+        } else {
+            None
+        };
+
+        return Ok(Json(LNUrlAuthResponse {
+            status: "OK".to_string(),
+            event: None,
+            reason: Some("User already registered".to_string()),
+            lightning_address,
+        }));
+    }
+
+    let ln_address = payload.ln_address.unwrap_or_else(|| {
+        let number = rand::rng().random_range(0..1000);
+        format!("{}{}@{}", random_word::get(Lang::En), number, lnurl_domain)
+    });
+
+    conn.execute(
+        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
+        libsql::params![auth_payload.key, ln_address.clone()],
+    )
+    .await?;
+
+    Ok(Json(LNUrlAuthResponse {
+        status: "OK".to_string(),
+        event: Some(AuthEvent::Registered),
+        reason: None,
+        lightning_address: Some(ln_address),
+    }))
 }

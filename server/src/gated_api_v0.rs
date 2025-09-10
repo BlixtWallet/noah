@@ -8,91 +8,13 @@ use crate::{
     AppState,
     errors::ApiError,
     types::{
-        AuthEvent, AuthPayload, GetUploadUrlPayload, LNUrlAuthResponse, RegisterPayload,
-        RegisterPushToken, UpdateLnAddressPayload, UploadUrlResponse,
+        AuthPayload, GetUploadUrlPayload, RegisterPushToken, UpdateLnAddressPayload,
+        UploadUrlResponse,
     },
-    utils::verify_user_exists,
 };
 use axum::{Extension, Json, extract::State};
-use rand::Rng;
-use random_word::Lang;
 use uuid::Uuid;
 use validator::Validate;
-
-/// Handles user registration via LNURL-auth.
-///
-/// This endpoint receives a user's public key, a signature, and a `k1` value.
-/// It verifies the signature against the `k1` value and, if valid, registers
-/// the user in the database.
-pub async fn register(
-    State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
-    Json(payload): Json<RegisterPayload>,
-) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
-    if let Some(_ln_address) = &payload.ln_address {
-        if let Err(e) = payload.validate() {
-            return Err(ApiError::InvalidArgument(e.to_string()));
-        }
-    }
-
-    let lnurl_domain = &state.lnurl_domain;
-
-    let conn = state.db.connect()?;
-
-    tracing::debug!(
-        "Registering user with pubkey: {} and k1: {}",
-        auth_payload.key,
-        auth_payload.k1,
-    );
-
-    let mut rows = conn
-        .query(
-            "SELECT pubkey FROM users WHERE pubkey = ?",
-            libsql::params![auth_payload.key.clone()],
-        )
-        .await?;
-
-    if rows.next().await?.is_some() {
-        tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
-        let mut rows = conn
-            .query(
-                "SELECT lightning_address FROM users WHERE pubkey = ?",
-                libsql::params![auth_payload.key.clone()],
-            )
-            .await?;
-
-        let lightning_address: Option<String> = if let Some(row) = rows.next().await? {
-            Some(row.get(0)?)
-        } else {
-            None
-        };
-
-        return Ok(Json(LNUrlAuthResponse {
-            status: "OK".to_string(),
-            event: None,
-            reason: Some("User already registered".to_string()),
-            lightning_address,
-        }));
-    }
-
-    let ln_address = payload.ln_address.unwrap_or_else(|| {
-        let number = rand::rng().random_range(0..1000);
-        format!("{}{}@{}", random_word::get(Lang::En), number, lnurl_domain)
-    });
-
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![auth_payload.key, ln_address.clone()],
-    )
-    .await?;
-
-    Ok(Json(LNUrlAuthResponse {
-        status: "OK".to_string(),
-        event: Some(AuthEvent::Registered),
-        reason: None,
-        lightning_address: Some(ln_address),
-    }))
-}
 
 /// Registers a push notification token for a user.
 ///
@@ -144,11 +66,6 @@ pub async fn submit_invoice(
         auth_payload.key,
         auth_payload.k1
     );
-
-    let conn = state.db.connect()?;
-    if !verify_user_exists(&conn, &auth_payload.key).await? {
-        return Err(ApiError::UserNotFound);
-    }
 
     if let Some((_, tx)) = state.invoice_data_transmitters.remove(&auth_payload.k1) {
         tx.send(payload.invoice)
@@ -222,15 +139,10 @@ pub async fn update_ln_address(
 }
 
 pub async fn get_upload_url(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<GetUploadUrlPayload>,
 ) -> Result<Json<UploadUrlResponse>, ApiError> {
-    let conn = state.db.connect()?;
-    if !verify_user_exists(&conn, &auth_payload.key).await? {
-        return Err(ApiError::UserNotFound);
-    }
-
     let s3_client = S3BackupClient::new().await?;
     let s3_key = format!(
         "{}/backup_v{}.db",
@@ -248,10 +160,6 @@ pub async fn complete_upload(
     Json(payload): Json<CompleteUploadPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
-    if !verify_user_exists(&conn, &auth_payload.key).await? {
-        return Err(ApiError::UserNotFound);
-    }
-
     conn.execute(
         "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
          ON CONFLICT(pubkey, backup_version) DO UPDATE SET s3_key = excluded.s3_key, backup_size = excluded.backup_size, created_at = CURRENT_TIMESTAMP",
@@ -350,15 +258,10 @@ pub async fn delete_backup(
 }
 
 pub async fn report_job_status(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    let conn = state.db.connect()?;
-    if !verify_user_exists(&conn, &auth_payload.key).await? {
-        return Err(ApiError::UserNotFound);
-    }
-
     tracing::info!(
         "Received job status report from pubkey: {}. Report type: {:?}, Status: {:?}, Error: {:?}",
         auth_payload.key,
@@ -376,9 +279,6 @@ pub async fn update_backup_settings(
     Json(payload): Json<BackupSettingsPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
-    if !verify_user_exists(&conn, &auth_payload.key).await? {
-        return Err(ApiError::UserNotFound);
-    }
     conn.execute(
         "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)
          ON CONFLICT(pubkey) DO UPDATE SET backup_enabled = excluded.backup_enabled",
@@ -401,9 +301,6 @@ pub async fn register_offboarding_request(
     let request_id = Uuid::new_v4().to_string();
 
     let conn = state.db.connect()?;
-    if !verify_user_exists(&conn, &auth_payload.key).await? {
-        return Err(ApiError::UserNotFound);
-    }
     conn.execute(
         "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
         libsql::params![request_id.clone(), auth_payload.key],
