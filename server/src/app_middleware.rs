@@ -14,7 +14,7 @@ pub async fn auth_middleware(
     mut request: Request,
     next: Next,
 ) -> Result<Response, impl IntoResponse> {
-    tracing::debug!("auth_middleware: request for uri: {}", request.uri());
+    let uri_path = request.uri().path().to_string();
 
     let k1 = request
         .headers()
@@ -35,6 +35,10 @@ pub async fn auth_middleware(
     let (k1, sig, key) = match (k1, sig, key) {
         (Some(k1), Some(sig), Some(key)) => (k1, sig, key),
         _ => {
+            tracing::warn!(
+                uri = %uri_path,
+                "Auth failed: Missing or invalid auth headers"
+            );
             return Err(
                 ApiError::InvalidArgument("Missing or invalid auth headers".to_string())
                     .into_response(),
@@ -49,11 +53,21 @@ pub async fn auth_middleware(
     };
 
     if !state.k1_values.contains_key(&payload.k1) {
+        tracing::warn!(
+            uri = %uri_path,
+            k1 = %payload.k1,
+            "Auth failed: Invalid k1 (not found in cache)"
+        );
         return Err(ApiError::InvalidArgument("Invalid k1".to_string()).into_response());
     }
 
     let k1_parts: Vec<&str> = payload.k1.split('_').collect();
     if k1_parts.len() != 2 {
+        tracing::warn!(
+            uri = %uri_path,
+            k1 = %payload.k1,
+            "Auth failed: Invalid k1 format"
+        );
         return Err(ApiError::InvalidArgument("Invalid k1 format".to_string()).into_response());
     }
 
@@ -61,6 +75,11 @@ pub async fn auth_middleware(
     let timestamp = match timestamp_str.parse::<u64>() {
         Ok(t) => t,
         Err(_) => {
+            tracing::warn!(
+                uri = %uri_path,
+                k1 = %payload.k1,
+                "Auth failed: Invalid timestamp in k1"
+            );
             return Err(
                 ApiError::InvalidArgument("Invalid timestamp in k1".to_string()).into_response(),
             );
@@ -73,28 +92,62 @@ pub async fn auth_middleware(
         .as_secs();
 
     if now.saturating_sub(timestamp) > 600 {
+        tracing::warn!(
+            uri = %uri_path,
+            k1 = %payload.k1,
+            age_seconds = %(now.saturating_sub(timestamp)),
+            "Auth failed: K1 expired"
+        );
         return Err(ApiError::K1Expired.into_response());
     }
 
     let is_valid =
         match verify_auth(payload.k1.clone(), payload.sig.clone(), payload.key.clone()).await {
             Ok(valid) => valid,
-            Err(_) => return Err(ApiError::InvalidSignature.into_response()),
+            Err(e) => {
+                tracing::warn!(
+                    uri = %uri_path,
+                    key = %payload.key,
+                    error = %e,
+                    "Auth failed: Signature verification error"
+                );
+                return Err(ApiError::InvalidSignature.into_response());
+            }
         };
 
     if !is_valid {
+        tracing::warn!(
+            uri = %uri_path,
+            key = %payload.key,
+            "Auth failed: Invalid signature"
+        );
         return Err(ApiError::InvalidSignature.into_response());
     }
 
     if request.uri().path() != "/register" {
-        let conn = state.db.connect().map_err(|_| {
+        let conn = state.db.connect().map_err(|e| {
+            tracing::error!(
+                uri = %uri_path,
+                error = %e,
+                "Auth failed: Database connection error"
+            );
             ApiError::ServerErr("Failed to connect to database".to_string()).into_response()
         })?;
 
-        if !verify_user_exists(&conn, &payload.key)
-            .await
-            .map_err(|_| ApiError::UserNotFound.into_response())?
-        {
+        if !verify_user_exists(&conn, &payload.key).await.map_err(|e| {
+            tracing::error!(
+                uri = %uri_path,
+                key = %payload.key,
+                error = %e,
+                "Auth failed: Error checking user existence"
+            );
+            ApiError::UserNotFound.into_response()
+        })? {
+            tracing::warn!(
+                uri = %uri_path,
+                key = %payload.key,
+                "Auth failed: User not found"
+            );
             return Err(ApiError::UserNotFound.into_response());
         }
     }

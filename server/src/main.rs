@@ -40,6 +40,7 @@ mod push;
 mod s3_client;
 #[cfg(test)]
 mod tests;
+mod trace_layer;
 mod utils;
 
 use std::time::SystemTime;
@@ -254,11 +255,8 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .nest("/v0", v0_router)
         .merge(lnurl_router)
         .with_state(app_state.clone())
-        .layer(
-            ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http())
-                .layer(NewSentryLayer::new_from_top()),
-        );
+        .layer(middleware::from_fn(trace_layer::trace_middleware))
+        .layer(ServiceBuilder::new().layer(NewSentryLayer::new_from_top()));
 
     let addr = SocketAddr::from((config.host, config.port));
     tracing::debug!("server started listening on {}", addr);

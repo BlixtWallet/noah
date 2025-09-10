@@ -39,7 +39,7 @@ pub struct ErrorResponse {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let (status, reason) = match self {
+        let (status, reason) = match &self {
             ApiError::InvalidArgument(e) => (StatusCode::BAD_REQUEST, e.to_string()),
             ApiError::SerializeErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
             ApiError::ServerErr(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
@@ -63,6 +63,26 @@ impl IntoResponse for ApiError {
             ApiError::K1Expired => (StatusCode::UNAUTHORIZED, "K1 expired".to_string()),
             ApiError::UserNotFound => (StatusCode::UNAUTHORIZED, "User not found".to_string()),
         };
+
+        // Log the error with appropriate level based on status code
+        match status {
+            StatusCode::BAD_REQUEST | StatusCode::UNAUTHORIZED | StatusCode::NOT_FOUND => {
+                tracing::warn!(
+                    error_type = ?self,
+                    status = %status.as_u16(),
+                    reason = %reason,
+                    "API error (client error)"
+                );
+            }
+            _ => {
+                tracing::error!(
+                    error_type = ?self,
+                    status = %status.as_u16(),
+                    reason = %reason,
+                    "API error (server error)"
+                );
+            }
+        }
 
         let body = Json(ErrorResponse {
             status: "ERROR".to_string(),
