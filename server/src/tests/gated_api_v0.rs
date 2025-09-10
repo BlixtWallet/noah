@@ -11,8 +11,8 @@ use tower::ServiceExt;
 
 use crate::app_middleware::auth_middleware;
 use crate::gated_api_v0::{
-    complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info, list_backups,
-    register, register_offboarding_request, register_push_token, report_job_status,
+    complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
+    list_backups, register, register_offboarding_request, register_push_token, report_job_status,
     update_backup_settings, update_ln_address,
 };
 use crate::tests::common::TestUser;
@@ -54,6 +54,7 @@ async fn setup_test_app() -> (Router, AppState) {
         )
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
+        .route("/deregister", post(deregister))
         .route("/backup/upload_url", post(get_upload_url))
         .route("/backup/complete_upload", post(complete_upload))
         .route("/backup/list", post(list_backups))
@@ -1492,4 +1493,105 @@ async fn test_report_job_status() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_deregister_user() {
+    let (app, app_state) = setup_test_app().await;
+    let user = TestUser::new();
+    let conn = app_state.db.connect().unwrap();
+
+    // 1. Create user and associated data
+    conn.execute(
+        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
+        libsql::params![user.pubkey().to_string(), "test@localhost"],
+    )
+    .await
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?)",
+        libsql::params![user.pubkey().to_string(), "test_push_token"],
+    )
+    .await
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)",
+        libsql::params![user.pubkey().to_string(), "test_s3_key", 1024, 1],
+    )
+    .await
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)",
+        libsql::params![user.pubkey().to_string(), true],
+    )
+    .await
+    .unwrap();
+
+    conn.execute(
+        "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
+        libsql::params!["test_request_id", user.pubkey().to_string()],
+    )
+    .await
+    .unwrap();
+
+    // 2. Call deregister endpoint
+    let k1 = make_k1(app_state.k1_values.clone());
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/deregister")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // 3. Verify data is deleted from correct tables
+    let tables_to_delete = vec!["push_tokens", "offboarding_requests"];
+    for table in tables_to_delete {
+        let mut rows = conn
+            .query(
+                &format!("SELECT COUNT(*) FROM {} WHERE pubkey = ?", table),
+                libsql::params![user.pubkey().to_string()],
+            )
+            .await
+            .unwrap();
+
+        let row = rows.next().await.unwrap().unwrap();
+        let count: i64 = row.get(0).unwrap();
+        assert_eq!(count, 0, "Data not deleted from table: {}", table);
+    }
+
+    // 4. Verify data is NOT deleted from other tables
+    let tables_to_keep = vec!["users", "backup_metadata", "backup_settings"];
+    for table in tables_to_keep {
+        let mut rows = conn
+            .query(
+                &format!("SELECT COUNT(*) FROM {} WHERE pubkey = ?", table),
+                libsql::params![user.pubkey().to_string()],
+            )
+            .await
+            .unwrap();
+
+        let row = rows.next().await.unwrap().unwrap();
+        let count: i64 = row.get(0).unwrap();
+        assert_eq!(
+            count, 1,
+            "Data should not have been deleted from table: {}",
+            table
+        );
+    }
 }

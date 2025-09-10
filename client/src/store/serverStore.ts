@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 import { mmkv } from "~/lib/mmkv";
+import logger from "~/lib/log";
+
+const log = logger("serverStore");
 
 const zustandStorage: StateStorage = {
   setItem: (name: string, value: string) => {
@@ -9,7 +12,7 @@ const zustandStorage: StateStorage = {
     } catch (error) {
       // Silently fail to prevent error loops and crashes
       // Only log in development
-      console.warn("Server storage setItem failed:", error);
+      log.w("Server storage setItem failed:", [error]);
       return;
     }
   },
@@ -19,7 +22,7 @@ const zustandStorage: StateStorage = {
       return value ?? null;
     } catch (error) {
       // Silently fail and return null
-      console.warn("Server storage getItem failed:", error);
+      log.w("Server storage getItem failed:", [error]);
       return null;
     }
   },
@@ -28,7 +31,7 @@ const zustandStorage: StateStorage = {
       return mmkv.remove(name);
     } catch (error) {
       // Silently fail
-      console.warn("Server storage removeItem failed:", error);
+      log.w("Server storage removeItem failed:", [error]);
       return;
     }
   },

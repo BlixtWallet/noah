@@ -156,17 +156,22 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
     return err(restoreResult.error);
   }
 
-  try {
-    await setMnemonic(mnemonic);
-    await loadWalletIfNeeded();
-    useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
+  const setMnemonicResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
 
-    // The native code handles restoring the files. An app restart is
-    // recommended to ensure all services reload the restored data.
-
-    return ok(undefined);
-  } catch (e) {
-    log.e("Error during restore:", [e as Error]);
-    return err(e as Error);
+  if (setMnemonicResult.isErr()) {
+    return err(setMnemonicResult.error);
   }
+
+  const loadWalletResult = await ResultAsync.fromPromise(loadWalletIfNeeded(), (e) => e as Error);
+
+  if (loadWalletResult.isErr()) {
+    return err(loadWalletResult.error);
+  }
+
+  useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
+
+  // The native code handles restoring the files. An app restart is
+  // recommended to ensure all services reload the restored data.
+
+  return ok(undefined);
 };

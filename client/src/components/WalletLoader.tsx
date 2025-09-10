@@ -27,18 +27,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     const checkAndLoadWallet = async () => {
       if (!isInitialized) return;
 
-      let actuallyLoaded = false;
-      try {
-        // Always check the actual wallet state from native module
-        actuallyLoaded = await isWalletLoadedNitro();
-      } catch (error) {
-        console.error("Error checking wallet state:", error);
-        // If we can't check, try to load anyway
-        if (!isWalletLoaded) {
-          loadWallet();
-        }
-        return;
-      }
+      const actuallyLoaded = await isWalletLoadedNitro();
 
       // If the persisted state says loaded but wallet isn't actually loaded, fix the state
       if (isWalletLoaded && !actuallyLoaded) {

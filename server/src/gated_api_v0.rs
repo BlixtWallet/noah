@@ -387,3 +387,31 @@ pub async fn register_offboarding_request(
         request_id,
     }))
 }
+
+pub async fn deregister(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    let conn = state.db.connect()?;
+    let pubkey = auth_payload.key;
+
+    tracing::info!("Deregistering user with pubkey: {}", pubkey);
+
+    // Use a transaction to ensure all or nothing is deleted
+    let tx = conn.transaction().await?;
+
+    tx.execute(
+        "DELETE FROM push_tokens WHERE pubkey = ?",
+        libsql::params![pubkey.clone()],
+    )
+    .await?;
+    tx.execute(
+        "DELETE FROM offboarding_requests WHERE pubkey = ?",
+        libsql::params![pubkey.clone()],
+    )
+    .await?;
+
+    tx.commit().await?;
+
+    Ok(Json(DefaultSuccessPayload { success: true }))
+}

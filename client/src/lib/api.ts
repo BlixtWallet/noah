@@ -82,39 +82,49 @@ async function post<T, U>(
     const body = JSON.stringify(payload);
     const url = `${API_URL}/v0${endpoint}`;
 
-    try {
-      log.i("Calling endpoint", [url]);
+    log.i("Calling endpoint", [url]);
 
-      // Always use native HTTP client for all requests
-      const response = await nativePost(
+    // Always use native HTTP client for all requests
+    const responseResult = await ResultAsync.fromPromise(
+      nativePost(
         url,
         body,
         headers,
         30, // 30 second timeout
-      );
+      ),
+      (e) => e as Error,
+    );
 
-      log.i("Native HTTP response status", [response.status]);
+    if (responseResult.isErr()) {
+      return err(responseResult.error);
+    }
 
-      if (response.status >= 200 && response.status < 300) {
-        // Handle successful responses with no body (e.g. 204 No Content)
-        if (!response.body || response.body === "") {
-          return ok(undefined as unknown as U);
-        }
+    const response = responseResult.value;
 
-        try {
-          const responseJson = JSON.parse(response.body) as U;
-          log.i("Response from server", [responseJson]);
-          return ok(responseJson);
-        } catch (e) {
-          log.e("Failed to parse JSON response", [e as Error, response.body]);
-          return err(new Error(`Failed to parse JSON response: ${(e as Error).message}`));
-        }
-      } else {
-        return err(new Error(`HTTP ${response.status}: ${response.body}`));
+    log.i("Native HTTP response status", [response.status]);
+
+    if (response.status >= 200 && response.status < 300) {
+      // Handle successful responses with no body (e.g. 204 No Content)
+      if (!response.body || response.body === "") {
+        return ok(undefined as unknown as U);
       }
-    } catch (e) {
-      log.i("Failed to send request", [e as Error]);
-      return err(e as Error);
+
+      const responseJson = Result.fromThrowable(
+        () => {
+          return JSON.parse(response.body) as U;
+        },
+        (e) => new Error(`Failed to parse JSON response: ${(e as Error).message}`),
+      )();
+
+      if (responseJson.isErr()) {
+        log.e("Failed to parse JSON response", [responseJson.error, response.body]);
+        return err(responseJson.error);
+      }
+
+      log.i("Response from server", [responseJson]);
+      return ok(responseJson.value);
+    } else {
+      return err(new Error(`HTTP ${response.status}: ${response.body}`));
     }
   } catch (e) {
     return err(e as Error);
@@ -202,3 +212,5 @@ export const getDownloadUrlForRestore = async (payload: {
     return err(e as Error);
   }
 };
+
+export const deregister = () => post<object, DefaultSuccessPayload>("/deregister", {});

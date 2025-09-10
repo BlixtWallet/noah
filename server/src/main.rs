@@ -23,8 +23,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     cron::cron_scheduler,
     gated_api_v0::{
-        complete_upload, delete_backup, get_download_url, get_upload_url, get_user_info,
-        list_backups, register, register_offboarding_request, register_push_token,
+        complete_upload, delete_backup, deregister, get_download_url, get_upload_url,
+        get_user_info, list_backups, register, register_offboarding_request, register_push_token,
         report_job_status, submit_invoice, update_backup_settings, update_ln_address,
     },
     private_api_v0::health_check,
@@ -223,6 +223,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route("/lnurlp/submit_invoice", post(submit_invoice))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
+        .route("/deregister", post(deregister))
         .route("/backup/upload_url", post(get_upload_url))
         .route("/backup/complete_upload", post(complete_upload))
         .route("/backup/list", post(list_backups))
