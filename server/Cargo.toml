@@ -35,6 +35,8 @@ sentry = { version = "0.42.0", features = ["tracing", "logs", "tower-axum-matche
 tower = "0.5.2"
 uuid = "1.18.1"
 dotenvy = "0.15.7"
+strum_macros = "0.27.2"
+strum = "0.27.2"
 
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["full"] }

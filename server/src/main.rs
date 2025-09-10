@@ -3,6 +3,7 @@ use axum::{
     Router, middleware,
     routing::{get, post},
 };
+mod constants;
 mod gated_api_v0;
 mod private_api_v0;
 mod public_api_v0;
@@ -21,6 +22,7 @@ use tracing::{error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
+    constants::EnvVariables,
     cron::cron_scheduler,
     gated_api_v0::{
         complete_upload, delete_backup, deregister, get_download_url, get_upload_url,
@@ -122,27 +124,31 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn load_config() -> anyhow::Result<Config> {
-    let host =
-        Ipv4Addr::from_str(&std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string()))?;
-    let port = std::env::var("PORT")
-        .unwrap_or_else(|_| "3000".to_string())
+    let host = Ipv4Addr::from_str(
+        &std::env::var(EnvVariables::Host.to_string())
+            .unwrap_or(constants::DEFAULT_HOST.to_string()),
+    )?;
+    let port = std::env::var(EnvVariables::Port.to_string())
+        .unwrap_or(constants::DEFAULT_PORT.to_string())
         .parse::<u16>()?;
-    let private_port = std::env::var("PRIVATE_PORT")
-        .unwrap_or_else(|_| "3099".to_string())
+    let private_port = std::env::var(EnvVariables::PrivatePort.to_string())
+        .unwrap_or(constants::DEFAULT_PRIVATE_PORT.to_string())
         .parse::<u16>()?;
-    let lnurl_domain = std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| "localhost".to_string());
-    let turso_url =
-        std::env::var("TURSO_URL").context("TURSO_URL must be set in the environment variables")?;
-    let turso_api_key = std::env::var("TURSO_API_KEY")
+    let lnurl_domain = std::env::var(EnvVariables::LnurlDomain.to_string())
+        .unwrap_or(constants::DEFAULT_LNURL_DOMAIN.to_string());
+    let turso_url = std::env::var(EnvVariables::TursoUrl.to_string())
+        .context("TURSO_URL must be set in the environment variables")?;
+    let turso_api_key = std::env::var(EnvVariables::TursoApiKey.to_string())
         .context("TURSO_API_KEY must be set in the environment variables")?;
-    let expo_access_token = std::env::var("EXPO_ACCESS_TOKEN")
+    let expo_access_token = std::env::var(EnvVariables::ExpoAccessToken.to_string())
         .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
-    let ark_server_url = std::env::var("ARK_SERVER_URL")
+    let ark_server_url = std::env::var(EnvVariables::ArkServerUrl.to_string())
         .context("ARK_SERVER_URL must be set in the environment variables")?;
     let server_network = Network::from_str(
-        &std::env::var("SERVER_NETWORK").unwrap_or_else(|_| "regtest".to_string()),
+        &std::env::var(EnvVariables::ServerNetwork.to_string())
+            .unwrap_or(constants::DEFAULT_SERVER_NETWORK.to_string()),
     )?;
-    let sentry_token = std::env::var("SENTRY_TOKEN").ok();
+    let sentry_token = std::env::var(EnvVariables::SentryToken.to_string()).ok();
 
     Ok(Config {
         host,
@@ -186,6 +192,11 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         expo_access_token: config.expo_access_token,
     });
 
+    let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
+        .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());
+    let background_sync_cron = std::env::var(EnvVariables::BackgroundSyncCron.to_string())
+        .unwrap_or(constants::DEFAULT_BACKGROUND_SYNC_CRON.to_string());
+
     let server_config = serde_json::json!({
         "HOST": config.host,
         "PORT": config.port,
@@ -193,6 +204,8 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         "LNURL_DOMAIN": config.lnurl_domain,
         "ARK_SERVER_URL": config.ark_server_url,
         "SERVER_ENV": config.server_network,
+        "BACKGROUND_SYNC_CRON": background_sync_cron,
+        "BACKUP_CRON": backup_cron,
     });
 
     info!("Server environment: {}", server_config);

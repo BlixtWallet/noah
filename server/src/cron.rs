@@ -1,5 +1,6 @@
 use crate::{
     AppState,
+    constants::{self, EnvVariables},
     push::send_push_notification,
     types::{NotificationTypes, NotificationsData},
     utils::make_k1,
@@ -72,8 +73,8 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
 pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
 
-    let background_sync_cron =
-        std::env::var("BACKGROUND_SYNC_CRON").unwrap_or_else(|_| "every 2 hours".to_string());
+    let background_sync_cron = std::env::var(EnvVariables::BackgroundSyncCron.to_string())
+        .unwrap_or(constants::DEFAULT_BACKGROUND_SYNC_CRON.to_string());
     let bg_sync_app_state = app_state.clone();
     let bg_job = Job::new_async(&background_sync_cron, move |_, _| {
         let app_state = bg_sync_app_state.clone();
@@ -81,7 +82,8 @@ pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler>
     })?;
     sched.add(bg_job).await?;
 
-    let backup_cron = std::env::var("BACKUP_CRON").unwrap_or_else(|_| "every 2 hours".to_string());
+    let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
+        .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());
     let backup_app_state = app_state.clone();
     let backup_job = Job::new_async(&backup_cron, move |_, _| {
         let app_state = backup_app_state.clone();

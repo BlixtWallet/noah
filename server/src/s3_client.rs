@@ -4,6 +4,8 @@ use aws_sdk_s3::Client;
 use aws_sdk_s3::presigning::PresigningConfig;
 use std::time::Duration;
 
+use crate::constants::EnvVariables;
+
 pub struct S3BackupClient {
     client: Client,
     bucket: String,
@@ -17,7 +19,7 @@ impl S3BackupClient {
             .load()
             .await;
         let client = Client::new(&config);
-        let bucket = std::env::var("S3_BUCKET_NAME")?;
+        let bucket = std::env::var(EnvVariables::S3BucketName.to_string())?;
         Ok(Self { client, bucket })
     }
 
