@@ -52,9 +52,6 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidArgument("Invalid k1".to_string()).into_response());
     }
 
-    // Remove the k1 value to prevent reuse
-    state.k1_values.remove(&payload.k1);
-
     let k1_parts: Vec<&str> = payload.k1.split('_').collect();
     if k1_parts.len() != 2 {
         return Err(ApiError::InvalidArgument("Invalid k1 format".to_string()).into_response());
@@ -101,6 +98,9 @@ pub async fn auth_middleware(
             return Err(ApiError::UserNotFound.into_response());
         }
     }
+
+    // Remove the k1 value to prevent reuse
+    state.k1_values.remove(&payload.k1);
 
     request.extensions_mut().insert(payload);
     Ok(next.run(request).await)
