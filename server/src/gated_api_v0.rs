@@ -258,7 +258,7 @@ pub async fn delete_backup(
 }
 
 pub async fn report_job_status(
-    State(_state): State<AppState>,
+    State(app_state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -269,6 +269,39 @@ pub async fn report_job_status(
         payload.status,
         payload.error_message
     );
+
+    let conn = app_state.db.connect()?;
+
+    let tx = conn.transaction().await?;
+
+    // First, insert the new report
+    tx.execute(
+        "INSERT INTO job_status_reports (pubkey, report_type, status, error_message) VALUES (?, ?, ?, ?)",
+        libsql::params![
+            auth_payload.key.clone(),
+            format!("{:?}", payload.report_type),
+            format!("{:?}", payload.status),
+            payload.error_message
+        ],
+    )
+    .await?;
+
+    // Keep only the last 3 reports by deleting the oldest one if the count exceeds 3.
+    // This is more efficient than counting first.
+    tx.execute(
+        "DELETE FROM job_status_reports
+         WHERE pubkey = ?
+         AND id NOT IN (
+             SELECT id FROM job_status_reports
+             WHERE pubkey = ?
+             ORDER BY created_at DESC, id DESC
+             LIMIT 3
+         )",
+        libsql::params![auth_payload.key.clone(), auth_payload.key.clone()],
+    )
+    .await?;
+
+    tx.commit().await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }

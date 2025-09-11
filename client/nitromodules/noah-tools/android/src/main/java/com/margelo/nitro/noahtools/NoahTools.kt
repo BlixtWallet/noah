@@ -41,7 +41,7 @@ class NoahTools : HybridNoahToolsSpec() {
     private const val PBKDF2_ITERATIONS = 600_000
     private const val GCM_TAG_LENGTH = 128
     private const val BUFFER_SIZE = 8192
-    
+
     // OkHttp client for background requests
     private val backgroundHttpClient = OkHttpClient.Builder()
       .connectTimeout(30, TimeUnit.SECONDS)
@@ -60,42 +60,42 @@ class NoahTools : HybridNoahToolsSpec() {
     return Promise.async {
       try {
         Log.d(TAG, "Starting background POST request to: $url")
-        
+
         // Create request body
         val mediaType = "application/json".toMediaType()
         val requestBody = body.toRequestBody(mediaType)
-        
+
         // Build request with headers
         val requestBuilder = Request.Builder()
           .url(url)
           .post(requestBody)
-        
+
         // Add headers
         headers.forEach { (key, value) ->
           requestBuilder.addHeader(key, value)
         }
-        
+
         val request = requestBuilder.build()
-        
+
         // Create a client with custom timeout for this specific request
         val client = backgroundHttpClient.newBuilder()
           .connectTimeout(timeoutSeconds.toLong(), TimeUnit.SECONDS)
           .readTimeout(timeoutSeconds.toLong(), TimeUnit.SECONDS)
           .writeTimeout(timeoutSeconds.toLong(), TimeUnit.SECONDS)
           .build()
-        
+
         // Execute the request and properly close the response
         client.newCall(request).execute().use { response ->
           // Extract response data
           val responseBody = response.body?.string() ?: ""
           val responseHeaders = mutableMapOf<String, String>()
-          
+
           response.headers.forEach { pair ->
             responseHeaders[pair.first] = pair.second
           }
-          
+
           Log.d(TAG, "Background request completed with status: ${response.code}")
-          
+
           return@async HttpResponse(
             status = response.code.toDouble(),
             body = responseBody,
@@ -108,7 +108,7 @@ class NoahTools : HybridNoahToolsSpec() {
       }
     }
   }
-  
+
   private fun getApplicationContext(): Context? {
     return try {
       val activityThread = Class.forName("android.app.ActivityThread")
@@ -165,33 +165,33 @@ class NoahTools : HybridNoahToolsSpec() {
     return Promise.async {
       var backupStagingPath: File? = null
       var outputZipPath: File? = null
-      
+
       try {
         Log.d(TAG, "Starting backup creation with mnemonic length: ${mnemonic.length}")
-        
+
         if (mnemonic.isBlank()) {
           throw IllegalArgumentException("Mnemonic cannot be empty")
         }
-        
+
         Log.d(TAG, "Mnemonic validation passed")
         val appVariant = getAppVariant()
         Log.d(TAG, "App variant: $appVariant")
-        
+
         Log.d(TAG, "Getting directories...")
-        
+
         // For Nitro modules, we need to get the application context
         val appContext = getApplicationContext()
         Log.d(TAG, "Application context is null: ${appContext == null}")
-        
+
         if (appContext == null) {
           throw IllegalStateException("No application context available")
         }
-        
+
         val documentDirectory = appContext.filesDir
         Log.d(TAG, "Document directory: ${documentDirectory?.absolutePath ?: "null"}")
         val cacheDirectory = appContext.cacheDir
         Log.d(TAG, "Cache directory: ${cacheDirectory?.absolutePath ?: "null"}")
-        
+
         if (documentDirectory == null) {
           throw IllegalStateException("Document directory is null")
         }
@@ -251,10 +251,10 @@ class NoahTools : HybridNoahToolsSpec() {
   override fun restoreBackup(encryptedData: String, mnemonic: String): Promise<Boolean> {
     return Promise.async {
       val appVariant = getAppVariant()
-      
+
       val appContext = getApplicationContext()
         ?: throw IllegalStateException("No application context available")
-      
+
       val documentDirectory = appContext.filesDir
       val cacheDirectory = appContext.cacheDir
 
@@ -447,11 +447,11 @@ class NoahTools : HybridNoahToolsSpec() {
       }
     }
   }
-  
+
     override fun nativeLog(level: String, tag: String, message: String) {
       val logTag = "ReactNativeJS"
       val logMessage = "[$tag] $message"
-      
+
       when (level.lowercase()) {
         "verbose" -> Log.v(logTag, logMessage)
         "debug" -> Log.d(logTag, logMessage)

@@ -79,6 +79,19 @@ const MIGRATIONS: &[&str] = &[
        UPDATE offboarding_requests SET updated_at = CURRENT_TIMESTAMP WHERE request_id = OLD.request_id;
    END;
    "#,
+    r#"
+    CREATE TABLE job_status_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pubkey TEXT NOT NULL,
+        report_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        error_message TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pubkey) REFERENCES users(pubkey)
+    );
+
+    CREATE INDEX idx_job_status_reports_pubkey ON job_status_reports(pubkey);
+    "#,
 ];
 
 /// Applies all pending migrations to the database.

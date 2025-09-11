@@ -9,5 +9,25 @@
         "path": "/run/current-system/sw/bin/nix"
       }
     }
+  },
+  "languages": {
+    "TypeScript": {
+      "format_on_save": "prettier"
+    },
+    "JavaScript": {
+      "format_on_save": "prettier"
+    },
+    "TSX": {
+      "format_on_save": "prettier"
+    },
+    "Rust": {
+      "format_on_save": "on"
+    },
+    "Kotlin": {
+      "format_on_save": "on"
+    },
+    "Swift": {
+      "format_on_save": "on"
+    }
   }
 }

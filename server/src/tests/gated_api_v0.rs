@@ -19,7 +19,7 @@ use crate::public_api_v0::register;
 use crate::tests::common::TestUser;
 use crate::types::{
     BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, RegisterOffboardingResponse,
-    UploadUrlResponse, UserInfoResponse,
+    ReportJobStatusPayload, ReportStatus, ReportType, UploadUrlResponse, UserInfoResponse,
 };
 use crate::utils::make_k1;
 use crate::{AppState, AppStruct};
@@ -1434,71 +1434,6 @@ async fn test_register_offboarding_request_invalid_auth() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
-async fn test_report_job_status() {
-    let (app, app_state) = setup_test_app().await;
-    let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
-
-    let k1 = make_k1(app_state.k1_values.clone());
-    let auth_payload = user.auth_payload(&k1);
-
-    // Test success report
-    let response = app
-        .clone()
-        .oneshot(
-            Request::builder()
-                .method(http::Method::POST)
-                .uri("/report_job_status")
-                .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
-                .body(Body::from(
-                    serde_json::to_vec(&json!({
-                        "report_type": "maintenance",
-                        "status": "success",
-                        "error_message": null
-                    }))
-                    .unwrap(),
-                ))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-
-    // Test failure report
-    let k1_2 = make_k1(app_state.k1_values.clone());
-    let auth_payload_2 = user.auth_payload(&k1_2);
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .method(http::Method::POST)
-                .uri("/report_job_status")
-                .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_2.key)
-                .header("x-auth-sig", auth_payload_2.sig)
-                .header("x-auth-k1", auth_payload_2.k1)
-                .body(Body::from(
-                    serde_json::to_vec(&json!({
-                        "report_type": "maintenance",
-                        "status": "failure",
-                        "error_message": "Something went wrong"
-                    }))
-                    .unwrap(),
-                ))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-}
-
-#[tracing_test::traced_test]
-#[tokio::test]
 async fn test_deregister_user() {
     let (app, app_state) = setup_test_app().await;
     let user = TestUser::new();
@@ -1596,4 +1531,75 @@ async fn test_deregister_user() {
             table
         );
     }
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_job_status_pruning() {
+    let (app, app_state) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user).await;
+
+    // Report job status 5 times
+    for i in 0..5 {
+        let k1 = make_k1(app_state.k1_values.clone());
+        let auth_payload = user.auth_payload(&k1);
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(http::Method::POST)
+                    .uri("/report_job_status")
+                    .header(http::header::CONTENT_TYPE, "application/json")
+                    .header("x-auth-key", auth_payload.key.clone())
+                    .header("x-auth-sig", auth_payload.sig.clone())
+                    .header("x-auth-k1", auth_payload.k1.clone())
+                    .body(Body::from(
+                        serde_json::to_vec(&ReportJobStatusPayload {
+                            report_type: ReportType::Maintenance,
+                            status: ReportStatus::Failure,
+                            error_message: Some(format!("Report {}", i)),
+                        })
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        // Add small delay
+        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    // Verify that only 3 reports are stored in the database
+    let conn = app_state.db.connect().unwrap();
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM job_status_reports WHERE pubkey = ?",
+            libsql::params![user.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+
+    let row = rows.next().await.unwrap().unwrap();
+    let count: i64 = row.get(0).unwrap();
+    assert_eq!(count, 3);
+
+    // Verify that the remaining reports are the last 3
+    let mut rows = conn
+        .query(
+            "SELECT error_message FROM job_status_reports WHERE pubkey = ? ORDER BY created_at ASC, id ASC",
+            libsql::params![user.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+
+    let mut messages = Vec::new();
+    while let Some(row) = rows.next().await.unwrap() {
+        messages.push(row.get::<String>(0).unwrap());
+    }
+
+    assert_eq!(messages, vec!["Report 2", "Report 3", "Report 4"]);
 }
