@@ -1,14 +1,14 @@
 PODS:
   - EXApplication (7.0.6):
     - ExpoModulesCore
-  - EXConstants (18.0.7):
+  - EXConstants (18.0.8):
     - ExpoModulesCore
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.7):
     - ExpoModulesCore
   - EXNotifications (0.32.10):
     - ExpoModulesCore
-  - Expo (54.0.0-preview.15):
+  - Expo (54.0.1):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -33,15 +33,15 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-client (6.0.10):
+  - expo-dev-client (6.0.11):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (6.0.9):
+  - expo-dev-launcher (6.0.10):
     - EXManifests
-    - expo-dev-launcher/Main (= 6.0.9)
+    - expo-dev-launcher/Main (= 6.0.10)
     - expo-dev-menu
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -70,7 +70,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Main (6.0.9):
+  - expo-dev-launcher/Main (6.0.10):
     - EXManifests
     - expo-dev-launcher/Unsafe
     - expo-dev-menu
@@ -101,7 +101,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Unsafe (6.0.9):
+  - expo-dev-launcher/Unsafe (6.0.10):
     - EXManifests
     - expo-dev-menu
     - expo-dev-menu-interface
@@ -131,9 +131,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu (7.0.8):
-    - expo-dev-menu/Main (= 7.0.8)
-    - expo-dev-menu/ReactNativeCompatibles (= 7.0.8)
+  - expo-dev-menu (7.0.10):
+    - expo-dev-menu/Main (= 7.0.10)
+    - expo-dev-menu/ReactNativeCompatibles (= 7.0.10)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -156,7 +156,7 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - expo-dev-menu-interface (2.0.0)
-  - expo-dev-menu/Main (7.0.8):
+  - expo-dev-menu/Main (7.0.10):
     - EXManifests
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -182,7 +182,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu/ReactNativeCompatibles (7.0.8):
+  - expo-dev-menu/ReactNativeCompatibles (7.0.10):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -204,13 +204,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (12.0.7):
+  - ExpoAsset (12.0.8):
     - ExpoModulesCore
   - ExpoClipboard (8.0.6):
     - ExpoModulesCore
   - ExpoDevice (8.0.6):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.9):
+  - ExpoFileSystem (19.0.11):
     - ExpoModulesCore
   - ExpoFont (14.0.7):
     - ExpoModulesCore
@@ -218,7 +218,7 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.6):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.13):
+  - ExpoModulesCore (3.0.15):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -241,9 +241,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoSQLite (16.0.7):
+  - ExpoSQLite (16.0.8):
     - ExpoModulesCore
-  - ExpoSystemUI (6.0.6):
+  - ExpoSystemUI (6.0.7):
     - ExpoModulesCore
   - EXTaskManager (14.0.6):
     - ExpoModulesCore
@@ -303,7 +303,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.29.3):
+  - NitroModules (0.29.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1630,7 +1630,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-bottom-tabs (0.11.0):
+  - react-native-bottom-tabs (0.11.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2397,7 +2397,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.5.0):
+  - RNWorklets (0.5.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2419,9 +2419,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets (= 0.5.0)
+    - RNWorklets/worklets (= 0.5.1)
     - Yoga
-  - RNWorklets/worklets (0.5.0):
+  - RNWorklets/worklets (0.5.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2443,9 +2443,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets/apple (= 0.5.0)
+    - RNWorklets/worklets/apple (= 0.5.1)
     - Yoga
-  - RNWorklets/worklets/apple (0.5.0):
+  - RNWorklets/worklets/apple (0.5.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2832,25 +2832,25 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   EXApplication: 724353e341d7ece0bade87d437926fa8b3132c5d
-  EXConstants: 4d89ce3567191d8c940b0aab5ba7ddd310c59ad2
+  EXConstants: 0246c66e19d755cd9c88504d5c69896bba41d8a6
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 9b19413c322564f3c2dce83006f1d71a4df79ba9
   EXNotifications: 41233e5c2c4a795139d08a9ff8bb3de2536b86f5
-  Expo: 9b728c42366955c6aa95e54a60c601dd02e24cb0
-  expo-dev-client: 0835e70a399f4533b7898eba89bbc7406c7e5027
-  expo-dev-launcher: 9ee38fc973e0003bfead12983e2e844f3f39c26a
-  expo-dev-menu: c722078e5bce28b8c456d5ceb25fce1eaf4223e7
+  Expo: c910d16635fe6a10fe15428120cd383aebfa01c1
+  expo-dev-client: 28ac9b5a71baf3be66b82ea6cf421566d0a13e92
+  expo-dev-launcher: 30f8a8f913bd2bd51820af9cfe821d75d7e01609
+  expo-dev-menu: 66c6dc2ef7642a0b952e05874d60cbaa50c64cce
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
-  ExpoAsset: 6ba39c035bda80b5561acdc7d6e869c0adc571a0
+  ExpoAsset: 4375a46b45b12bbfcf6efac8c8a33aebdb8ba12b
   ExpoClipboard: 9e1809dd6ffdc08ce990f9bf22dcab3791b694aa
   ExpoDevice: 6ba9b52c39f7c659a65a7b44da36d3937ec2c05c
-  ExpoFileSystem: 9ac6cb1f7b1c9026818180df221a7eabb65eb367
+  ExpoFileSystem: 465799accd03c8452d650c1c6e8ce605a6d64584
   ExpoFont: 3cb68f520e9349141a28fed6dd94e6cc6bf1453f
   ExpoHaptics: a8f7720a74b885f8a23e0836e2b91d69883968fe
   ExpoKeepAwake: e5bb3832a4735ee580ac6aa28130d44e1203f11f
-  ExpoModulesCore: f9163891c942f0ef18ba360dadd162b59aae019c
-  ExpoSQLite: 8199fa6d2ac75131781b5a9fba23f7617862feb9
-  ExpoSystemUI: 031356e6df193703437151080704ca81234170c4
+  ExpoModulesCore: c91f6219ddb4386f73fa4650bc66dc51224c28a9
+  ExpoSQLite: f9d1202877e12bfa78a58309a3977ee4ea0b1314
+  ExpoSystemUI: 5e7fbe4b716edb9e3a7bc0441e4a3b6b1f9eb1ea
   EXTaskManager: 19451783dfb545748126ad2d5ecdf535daf8d6da
   EXUpdatesInterface: 1436757deb0d574b84bba063bd024c315e0ec08b
   FBLazyVector: 8da1272845e10a35c1e661a4c8ba644526c014fb
@@ -2858,7 +2858,7 @@ SPEC CHECKSUMS:
   MMKVCore: 6d5cc1bacce539f4c974985dfe646fb65a5d27d2
   NitroArk: dfa0e536a642cbf0a6411ed8cd5f30ebfeb4614d
   NitroMmkv: 827e61ed2d64353e42610ca11ed6ca0157707928
-  NitroModules: 16d8011ec9c5f6b81dd1b65de83a4a90911d4309
+  NitroModules: d140176cc4241d89eec31f938baf07c7527840d9
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: 24056820c873bf5115c0441651440bfde2b82d51
   RCTRequired: d0b6e766be3c17896d92059c917d682433ff8a34
@@ -2893,7 +2893,7 @@ SPEC CHECKSUMS:
   React-logger: 57463ca0b4e2821e99de5d3e169c73bb44747fa8
   React-Mapbuffer: 1c2d763cab246940480c26f7783fea3158328e6e
   React-microtasksnativemodule: fd8ba0661426ff3b0d75420d9735c06d1267a65e
-  react-native-bottom-tabs: e3e1f44b9704e3028ebc973eb3273df0338b7215
+  react-native-bottom-tabs: 86f2da7855cb2fa031a6dea60fc73059b2986e4e
   react-native-safe-area-context: add9b4ba236fe95ec600604d0fc72f395433dd59
   react-native-vector-icons: 2c084b9997443aaf79527ac0454b50cc081c98de
   react-native-vector-icons-ionicons: ad07e944a092a5cf71b8b569d8f5ce2bf674c415
@@ -2937,7 +2937,7 @@ SPEC CHECKSUMS:
   RNSentry: df3e203b367fd9ee4a076dad9fd19859d241e288
   RNShare: 9f53a2b72c01e39cf8756554b6982a3eb89d7655
   RNSVG: 2825ee146e0f6a16221e852299943e4cceef4528
-  RNWorklets: a7a0a7ee6362418b4bab42653d6a7af3369cb070
+  RNWorklets: 0138846284eddd6b0bddba8eb9d6cf60de3a8f2f
   SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
   Sentry: 59993bffde4a1ac297ba6d268dc4bbce068d7c1b
