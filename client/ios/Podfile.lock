@@ -208,7 +208,7 @@ PODS:
     - ExpoModulesCore
   - ExpoClipboard (8.0.6):
     - ExpoModulesCore
-  - ExpoDevice (8.0.6):
+  - ExpoDevice (8.0.7):
     - ExpoModulesCore
   - ExpoFileSystem (19.0.11):
     - ExpoModulesCore
@@ -2843,7 +2843,7 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: 4375a46b45b12bbfcf6efac8c8a33aebdb8ba12b
   ExpoClipboard: 9e1809dd6ffdc08ce990f9bf22dcab3791b694aa
-  ExpoDevice: 6ba9b52c39f7c659a65a7b44da36d3937ec2c05c
+  ExpoDevice: 205f817268e7cc1acdbc354a425626bf328d0004
   ExpoFileSystem: 465799accd03c8452d650c1c6e8ce605a6d64584
   ExpoFont: 3cb68f520e9349141a28fed6dd94e6cc6bf1453f
   ExpoHaptics: a8f7720a74b885f8a23e0836e2b91d69883968fe
