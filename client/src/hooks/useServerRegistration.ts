@@ -15,6 +15,7 @@ export const useServerRegistration = (isReady: boolean) => {
         return;
       }
 
+      // Register with server and pass user device information.
       const result = await registerWithServer({
         device_info: {
           app_version: null,
