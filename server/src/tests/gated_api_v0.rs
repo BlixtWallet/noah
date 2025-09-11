@@ -18,7 +18,7 @@ use crate::gated_api_v0::{
 use crate::public_api_v0::register;
 use crate::tests::common::TestUser;
 use crate::types::{
-    BackupInfo, DownloadUrlResponse, LNUrlAuthResponse, RegisterOffboardingResponse,
+    BackupInfo, DownloadUrlResponse, RegisterOffboardingResponse, RegisterResponse,
     ReportJobStatusPayload, ReportStatus, ReportType, UploadUrlResponse, UserInfoResponse,
 };
 use crate::utils::make_k1;
@@ -105,7 +105,7 @@ async fn test_register_new_user() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let res: LNUrlAuthResponse = serde_json::from_slice(&body).unwrap();
+    let res: RegisterResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(res.status, "OK");
     assert!(res.event.is_some());
@@ -153,7 +153,7 @@ async fn test_register_existing_user() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let res: LNUrlAuthResponse = serde_json::from_slice(&body).unwrap();
+    let res: RegisterResponse = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(res.status, "OK");
     assert!(res.event.is_none());

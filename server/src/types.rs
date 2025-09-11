@@ -19,10 +19,10 @@ pub enum AuthEvent {
     Registered,
 }
 
-/// Represents the response for an LNURL-auth request.
+/// Represents the response for an user registration.
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct LNUrlAuthResponse {
+pub struct RegisterResponse {
     /// The status of the request, either "OK" or "ERROR".
     pub status: String,
     /// An optional event indicating the outcome of the authentication.
@@ -36,6 +36,17 @@ pub struct LNUrlAuthResponse {
     pub lightning_address: Option<String>,
 }
 
+/// Defines device information captured during registration.
+#[derive(Serialize, Deserialize, TS, Debug)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct DeviceInfo {
+    pub device_manufacturer: Option<String>,
+    pub device_model: Option<String>,
+    pub os_name: Option<String>,
+    pub os_version: Option<String>,
+    pub app_version: Option<String>,
+}
+
 /// Defines the payload for a user registration request.
 #[derive(Serialize, Deserialize, TS, Validate)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
@@ -43,6 +54,8 @@ pub struct RegisterPayload {
     /// User chosen lightning address
     #[validate(email)]
     pub ln_address: Option<String>,
+    /// Optional device information.
+    pub device_info: Option<DeviceInfo>,
 }
 
 /// Defines the payload for registering a push notification token.

@@ -92,6 +92,26 @@ const MIGRATIONS: &[&str] = &[
 
     CREATE INDEX idx_job_status_reports_pubkey ON job_status_reports(pubkey);
     "#,
+    r#"
+    CREATE TABLE devices (
+        pubkey TEXT PRIMARY KEY,
+        device_manufacturer TEXT,
+        device_model TEXT,
+        os_name TEXT,
+        os_version TEXT,
+        app_version TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (pubkey) REFERENCES users(pubkey)
+    );
+
+    CREATE TRIGGER update_devices_updated_at
+    AFTER UPDATE ON devices
+    FOR EACH ROW
+    BEGIN
+        UPDATE devices SET updated_at = CURRENT_TIMESTAMP WHERE pubkey = OLD.pubkey;
+    END;
+    "#,
 ];
 
 /// Applies all pending migrations to the database.

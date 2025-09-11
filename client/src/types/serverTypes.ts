@@ -17,16 +17,49 @@ export type DefaultSuccessPayload = { success: boolean, };
 
 export type DeleteBackupPayload = { backup_version: number, };
 
+/**
+ * Defines device information captured during registration.
+ */
+export type DeviceInfo = { device_manufacturer: string | null, device_model: string | null, os_name: string | null, os_version: string | null, app_version: string | null, };
+
 export type DownloadUrlResponse = { download_url: string, backup_size: number, };
 
 export type GetDownloadUrlPayload = { backup_version: number | null, };
 
 export type GetUploadUrlPayload = { backup_version: number, };
 
+export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding";
+
+export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, offboarding_request_id: string | null, };
+
+export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
+
+/**
+ * Defines the payload for a user registration request.
+ */
+export type RegisterPayload = { 
+/**
+ * User chosen lightning address
+ */
+ln_address: string | null, 
+/**
+ * Optional device information.
+ */
+device_info: DeviceInfo | null, };
+
+/**
+ * Defines the payload for registering a push notification token.
+ */
+export type RegisterPushToken = { 
+/**
+ * The Expo push token for the user's device.
+ */
+push_token: string, };
+
 /**
  * Represents the response for an LNURL-auth request.
  */
-export type LNUrlAuthResponse = { 
+export type RegisterResponse = { 
 /**
  * The status of the request, either "OK" or "ERROR".
  */
@@ -43,30 +76,6 @@ reason: string | null,
  * The user's lightning address.
  */
 lightning_address: string | null, };
-
-export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding";
-
-export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, offboarding_request_id: string | null, };
-
-export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
-
-/**
- * Defines the payload for a user registration request.
- */
-export type RegisterPayload = { 
-/**
- * User chosen lightning address
- */
-ln_address: string | null, };
-
-/**
- * Defines the payload for registering a push notification token.
- */
-export type RegisterPushToken = { 
-/**
- * The Expo push token for the user's device.
- */
-push_token: string, };
 
 export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
 

@@ -16,8 +16,8 @@ use crate::{
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
-        AuthEvent, AuthPayload, LNUrlAuthResponse, NotificationTypes, NotificationsData,
-        RegisterPayload,
+        AuthEvent, AuthPayload, NotificationTypes, NotificationsData, RegisterPayload,
+        RegisterResponse,
     },
     utils::make_k1,
 };
@@ -234,7 +234,7 @@ pub async fn register(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPayload>,
-) -> anyhow::Result<Json<LNUrlAuthResponse>, ApiError> {
+) -> anyhow::Result<Json<RegisterResponse>, ApiError> {
     if let Some(_ln_address) = &payload.ln_address {
         if let Err(e) = payload.validate() {
             return Err(ApiError::InvalidArgument(e.to_string()));
@@ -273,7 +273,14 @@ pub async fn register(
             None
         };
 
-        return Ok(Json(LNUrlAuthResponse {
+        if let Some(device_info) = payload.device_info {
+            // For existing users, we'll just register the device in its own transaction
+            let tx = conn.transaction().await?;
+            register_device(&tx, &auth_payload.key, &device_info).await?;
+            tx.commit().await?;
+        }
+
+        return Ok(Json(RegisterResponse {
             status: "OK".to_string(),
             event: None,
             reason: Some("User already registered".to_string()),
@@ -286,16 +293,55 @@ pub async fn register(
         format!("{}{}@{}", random_word::get(Lang::En), number, lnurl_domain)
     });
 
-    conn.execute(
+    let tx = conn.transaction().await?;
+
+    tx.execute(
         "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![auth_payload.key, ln_address.clone()],
+        libsql::params![auth_payload.key.clone(), ln_address.clone()],
     )
     .await?;
 
-    Ok(Json(LNUrlAuthResponse {
+    if let Some(ref device_info) = payload.device_info {
+        register_device(&tx, &auth_payload.key, device_info).await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(Json(RegisterResponse {
         status: "OK".to_string(),
         event: Some(AuthEvent::Registered),
         reason: None,
         lightning_address: Some(ln_address),
     }))
+}
+
+/// Registers a device's information.
+///
+/// This function inserts a new device record into the database within a given transaction.
+async fn register_device(
+    tx: &libsql::Transaction,
+    pubkey: &str,
+    device_info: &crate::types::DeviceInfo,
+) -> anyhow::Result<()> {
+    tx.execute(
+        "INSERT INTO devices (pubkey, device_manufacturer, device_model, os_name, os_version, app_version)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(pubkey) DO UPDATE SET
+             device_manufacturer = excluded.device_manufacturer,
+             device_model = excluded.device_model,
+             os_name = excluded.os_name,
+             os_version = excluded.os_version,
+             app_version = excluded.app_version,
+             updated_at = CURRENT_TIMESTAMP",
+        libsql::params![
+            pubkey,
+            device_info.device_manufacturer.clone(),
+            device_info.device_model.clone(),
+            device_info.os_name.clone(),
+            device_info.os_version.clone(),
+            device_info.app_version.clone()
+        ],
+    )
+    .await?;
+    Ok(())
 }

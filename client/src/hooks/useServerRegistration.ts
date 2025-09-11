@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useServerStore } from "~/store/serverStore";
 import { registerWithServer } from "~/lib/api";
+import * as Device from "expo-device";
 import logger from "~/lib/log";
 
 const log = logger("useServerRegistration");
@@ -14,7 +15,16 @@ export const useServerRegistration = (isReady: boolean) => {
         return;
       }
 
-      const result = await registerWithServer();
+      const result = await registerWithServer({
+        device_info: {
+          app_version: null,
+          os_name: Device.osName,
+          os_version: Device.osVersion,
+          device_model: Device.modelName,
+          device_manufacturer: Device.manufacturer,
+        },
+        ln_address: null,
+      });
 
       if (result.isErr()) {
         log.w("Failed to register with server", [result.error]);

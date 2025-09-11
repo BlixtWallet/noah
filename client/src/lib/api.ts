@@ -10,7 +10,7 @@ import {
   DownloadUrlResponse,
   GetDownloadUrlPayload,
   GetUploadUrlPayload,
-  LNUrlAuthResponse,
+  RegisterResponse,
   RegisterOffboardingResponse,
   RegisterPushToken,
   UpdateLnAddressPayload,
@@ -18,6 +18,7 @@ import {
   ReportJobStatusPayload,
   DefaultSuccessPayload,
   SubmitInvoicePayload,
+  RegisterPayload,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 import ky from "ky";
@@ -148,7 +149,8 @@ export const deleteBackup = (payload: DeleteBackupPayload) =>
 export const updateBackupSettings = (payload: BackupSettingsPayload) =>
   post<BackupSettingsPayload, DefaultSuccessPayload>("/backup/settings", payload);
 
-export const registerWithServer = () => post<object, LNUrlAuthResponse>("/register", {});
+export const registerWithServer = (payload: RegisterPayload) =>
+  post<RegisterPayload, RegisterResponse>("/register", payload);
 
 export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
   post<UpdateLnAddressPayload, DefaultSuccessPayload>("/update_ln_address", payload);
