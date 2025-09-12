@@ -13,6 +13,7 @@ use validator::Validate;
 
 use crate::{
     AppState,
+    db::{device_repo::DeviceRepository, user_repo::UserRepository},
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
@@ -125,17 +126,11 @@ pub async fn lnurlp_request(
     tracing::debug!("Lightning address is {}", lightning_address);
 
     let conn = state.db.connect()?;
-    let mut rows = conn
-        .query(
-            "SELECT pubkey FROM users WHERE lightning_address = ?",
-            libsql::params![lightning_address.clone()],
-        )
-        .await?;
-
-    let pubkey = match rows.next().await? {
-        Some(row) => row.get::<String>(0)?,
-        None => return Err(ApiError::InvalidArgument("User not found".to_string())),
-    };
+    let user_repo = UserRepository::new(&conn);
+    let pubkey = user_repo
+        .find_pubkey_by_lightning_address(&lightning_address)
+        .await?
+        .ok_or_else(|| ApiError::InvalidArgument("User not found".to_string()))?;
 
     if query.amount.is_none() {
         let metadata = serde_json::json!([
@@ -242,8 +237,8 @@ pub async fn register(
     }
 
     let lnurl_domain = &state.lnurl_domain;
-
     let conn = state.db.connect()?;
+    let user_repo = UserRepository::new(&conn);
 
     tracing::debug!(
         "Registering user with pubkey: {} and k1: {}",
@@ -251,32 +246,13 @@ pub async fn register(
         auth_payload.k1,
     );
 
-    let mut rows = conn
-        .query(
-            "SELECT pubkey FROM users WHERE pubkey = ?",
-            libsql::params![auth_payload.key.clone()],
-        )
-        .await?;
-
-    if rows.next().await?.is_some() {
+    if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
         tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
-        let mut rows = conn
-            .query(
-                "SELECT lightning_address FROM users WHERE pubkey = ?",
-                libsql::params![auth_payload.key.clone()],
-            )
-            .await?;
-
-        let lightning_address: Option<String> = if let Some(row) = rows.next().await? {
-            Some(row.get(0)?)
-        } else {
-            None
-        };
 
         if let Some(device_info) = payload.device_info {
             // For existing users, we'll just register the device in its own transaction
             let tx = conn.transaction().await?;
-            register_device(&tx, &auth_payload.key, &device_info).await?;
+            DeviceRepository::upsert(&tx, &auth_payload.key, &device_info).await?;
             tx.commit().await?;
         }
 
@@ -284,7 +260,7 @@ pub async fn register(
             status: "OK".to_string(),
             event: None,
             reason: Some("User already registered".to_string()),
-            lightning_address,
+            lightning_address: user.lightning_address,
         }));
     }
 
@@ -294,15 +270,10 @@ pub async fn register(
     });
 
     let tx = conn.transaction().await?;
-
-    tx.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![auth_payload.key.clone(), ln_address.clone()],
-    )
-    .await?;
+    UserRepository::create(&tx, &auth_payload.key, &ln_address).await?;
 
     if let Some(ref device_info) = payload.device_info {
-        register_device(&tx, &auth_payload.key, device_info).await?;
+        DeviceRepository::upsert(&tx, &auth_payload.key, device_info).await?;
     }
 
     tx.commit().await?;
@@ -313,35 +284,4 @@ pub async fn register(
         reason: None,
         lightning_address: Some(ln_address),
     }))
-}
-
-/// Registers a device's information.
-///
-/// This function inserts a new device record into the database within a given transaction.
-async fn register_device(
-    tx: &libsql::Transaction,
-    pubkey: &str,
-    device_info: &crate::types::DeviceInfo,
-) -> anyhow::Result<()> {
-    tx.execute(
-        "INSERT INTO devices (pubkey, device_manufacturer, device_model, os_name, os_version, app_version)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON CONFLICT(pubkey) DO UPDATE SET
-             device_manufacturer = excluded.device_manufacturer,
-             device_model = excluded.device_model,
-             os_name = excluded.os_name,
-             os_version = excluded.os_version,
-             app_version = excluded.app_version,
-             updated_at = CURRENT_TIMESTAMP",
-        libsql::params![
-            pubkey,
-            device_info.device_manufacturer.clone(),
-            device_info.device_model.clone(),
-            device_info.os_name.clone(),
-            device_info.os_version.clone(),
-            device_info.app_version.clone()
-        ],
-    )
-    .await?;
-    Ok(())
 }

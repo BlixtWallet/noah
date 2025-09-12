@@ -36,6 +36,7 @@ use crate::{
 mod app_middleware;
 mod ark_client;
 mod cron;
+pub mod db;
 mod errors;
 mod migrations;
 mod push;

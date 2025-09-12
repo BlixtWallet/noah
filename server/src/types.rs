@@ -182,7 +182,7 @@ pub struct NotificationsData {
     pub offboarding_request_id: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, TS)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct ReportJobStatusPayload {
     pub report_type: ReportType,
