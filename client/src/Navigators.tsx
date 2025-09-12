@@ -32,7 +32,7 @@ export type SettingsStackParamList = {
   SettingsList: undefined;
   Mnemonic: { fromOnboarding: boolean };
   Logs: undefined;
-  LightningAddress: undefined;
+  LightningAddress: { fromOnboarding?: boolean };
   BackupSettings: undefined;
 };
 
@@ -41,6 +41,7 @@ export type OnboardingStackParamList = {
   Configuration: undefined;
   Mnemonic: { fromOnboarding: boolean };
   RestoreWallet: undefined;
+  LightningAddress: { fromOnboarding: boolean };
 };
 
 export type HomeStackParamList = {
@@ -150,6 +151,11 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen
       name="RestoreWallet"
       component={RestoreWalletScreen}
+      options={{ animation: "default" }}
+    />
+    <OnboardingStack.Screen
+      name="LightningAddress"
+      component={LightningAddressScreen}
       options={{ animation: "default" }}
     />
   </OnboardingStack.Navigator>

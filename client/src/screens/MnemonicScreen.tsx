@@ -10,7 +10,7 @@ import { NoahButton } from "../components/ui/NoahButton";
 import { Button } from "../components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
-import { useWalletStore } from "../store/walletStore";
+
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
 import { COLORS } from "~/lib/styleConstants";
@@ -29,7 +29,6 @@ const MnemonicScreen = () => {
 
   const [mnemonic, setMnemonic] = useState("");
   const { showAlert } = useAlert();
-  const { finishOnboarding } = useWalletStore();
 
   useEffect(() => {
     const fetchMnemonic = async () => {
@@ -58,7 +57,7 @@ const MnemonicScreen = () => {
 
   const handleContinue = () => {
     if (fromOnboarding) {
-      finishOnboarding();
+      navigation.navigate("LightningAddress", { fromOnboarding: true });
     } else {
       navigation.goBack();
     }

@@ -264,6 +264,18 @@ pub async fn register(
         }));
     }
 
+    // Check if lightning address is already registered
+    if let Some(lightning_address) = &payload.ln_address {
+        if user_repo
+            .exists_by_lightning_address(&lightning_address)
+            .await?
+        {
+            return Err(ApiError::InvalidArgument(
+                "Lightning address already taken".to_string(),
+            ));
+        }
+    }
+
     let ln_address = payload.ln_address.unwrap_or_else(|| {
         let number = rand::rng().random_range(0..1000);
         format!("{}{}@{}", random_word::get(Lang::En), number, lnurl_domain)

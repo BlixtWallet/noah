@@ -3,7 +3,7 @@ import { updateLightningAddress } from "~/lib/api";
 import logger from "~/lib/log";
 import { useServerStore } from "~/store/serverStore";
 import { isValidEmail } from "~/lib/utils";
-import { Alert } from "react-native";
+import { useAlert } from "~/contexts/AlertProvider";
 
 const log = logger("useUpdateLightningAddress");
 
@@ -26,6 +26,7 @@ export const useUpdateLightningAddress = (callbacks?: {
   onError?: (error: Error) => void;
 }) => {
   const { setLightningAddress } = useServerStore();
+  const { showAlert } = useAlert();
 
   return useMutation({
     mutationFn: updateLightningAddressWrapper,
@@ -37,7 +38,10 @@ export const useUpdateLightningAddress = (callbacks?: {
     onError: (error: Error) => {
       log.w("Failed to update lightning address", [error]);
       callbacks?.onError?.(error);
-      Alert.alert("Error", error.message);
+      showAlert({
+        title: "Error",
+        description: error.message,
+      });
     },
   });
 };
