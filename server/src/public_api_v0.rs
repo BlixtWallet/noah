@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
 };
 use rand::Rng;
-use random_word::Lang;
+
 use serde::{Deserialize, Serialize};
 use tokio::{sync::oneshot, time::timeout};
 use validator::Validate;
@@ -236,7 +236,6 @@ pub async fn register(
         }
     }
 
-    let lnurl_domain = &state.lnurl_domain;
     let conn = state.db.connect()?;
     let user_repo = UserRepository::new(&conn);
 
@@ -264,28 +263,26 @@ pub async fn register(
         }));
     }
 
-    // Check if lightning address is already registered
-    if let Some(lightning_address) = &payload.ln_address {
-        if user_repo
-            .exists_by_lightning_address(&lightning_address)
-            .await?
-        {
+    let ln_address = payload.ln_address.unwrap_or_else(|| {
+        let number = rand::rng().random_range(0..1000);
+        format!("noah-{}", number)
+    });
+
+    // Create a new user in a transaction
+    let tx = conn.transaction().await?;
+    let result = UserRepository::create(&tx, &auth_payload.key, &ln_address).await;
+
+    if let Err(e) = result {
+        if e.is::<crate::db::user_repo::LightningAddressTakenError>() {
             return Err(ApiError::InvalidArgument(
                 "Lightning address already taken".to_string(),
             ));
         }
+        return Err(e.into());
     }
 
-    let ln_address = payload.ln_address.unwrap_or_else(|| {
-        let number = rand::rng().random_range(0..1000);
-        format!("{}{}@{}", random_word::get(Lang::En), number, lnurl_domain)
-    });
-
-    let tx = conn.transaction().await?;
-    UserRepository::create(&tx, &auth_payload.key, &ln_address).await?;
-
-    if let Some(ref device_info) = payload.device_info {
-        DeviceRepository::upsert(&tx, &auth_payload.key, device_info).await?;
+    if let Some(device_info) = payload.device_info {
+        DeviceRepository::upsert(&tx, &auth_payload.key, &device_info).await?;
     }
 
     tx.commit().await?;

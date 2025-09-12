@@ -1,5 +1,16 @@
 use anyhow::Result;
 
+#[derive(Debug, Clone)]
+pub struct LightningAddressTakenError;
+
+impl std::fmt::Display for LightningAddressTakenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Lightning address already taken")
+    }
+}
+
+impl std::error::Error for LightningAddressTakenError {}
+
 // This struct represents a user record from the database.
 // It's a good practice to have a model struct for each of your database tables.
 #[derive(Debug)]
@@ -61,35 +72,46 @@ impl<'a> UserRepository<'a> {
     /// Creates a new user within a transaction. This is a static method because
     // it operates on a transaction, not a connection owned by the repository instance.
     pub async fn create(tx: &libsql::Transaction, pubkey: &str, ln_address: &str) -> Result<()> {
-        tx.execute(
-            "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-            libsql::params![pubkey, ln_address],
-        )
-        .await?;
-        Ok(())
-    }
-
-    /// Checks if a lightning address is already taken.
-    pub async fn exists_by_lightning_address(&self, ln_address: &str) -> Result<bool> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT 1 FROM users WHERE lightning_address = ?",
-                libsql::params![ln_address],
+        let result = tx
+            .execute(
+                "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
+                libsql::params![pubkey, ln_address],
             )
-            .await?;
+            .await;
 
-        Ok(rows.next().await?.is_some())
+        if let Err(libsql::Error::SqliteFailure(e, _)) = &result {
+            // rusqlite::ffi::SQLITE_CONSTRAINT_UNIQUE (2067)
+            // This is the extended error code for a UNIQUE constraint violation.
+            if *e == 2067 {
+                return Err(LightningAddressTakenError.into());
+            }
+        }
+
+        result?;
+
+        Ok(())
     }
 
     /// Updates a user's lightning address.
     pub async fn update_lightning_address(&self, pubkey: &str, ln_address: &str) -> Result<()> {
-        self.conn
+        let result = self
+            .conn
             .execute(
                 "UPDATE users SET lightning_address = ? WHERE pubkey = ?",
                 libsql::params![ln_address, pubkey],
             )
-            .await?;
+            .await;
+
+        if let Err(libsql::Error::SqliteFailure(e, _)) = &result {
+            // rusqlite::ffi::SQLITE_CONSTRAINT_UNIQUE (2067)
+            // This is the extended error code for a UNIQUE constraint violation.
+            if *e == 2067 {
+                return Err(LightningAddressTakenError.into());
+            }
+        }
+
+        result?;
+
         Ok(())
     }
 

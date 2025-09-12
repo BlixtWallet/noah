@@ -113,18 +113,18 @@ pub async fn update_ln_address(
     let conn = state.db.connect()?;
     let user_repo = UserRepository::new(&conn);
 
-    if user_repo
-        .exists_by_lightning_address(&payload.ln_address)
-        .await?
-    {
-        return Err(ApiError::InvalidArgument(
-            "Lightning address already taken".to_string(),
-        ));
-    }
-
-    user_repo
+    let result = user_repo
         .update_lightning_address(&auth_payload.key, &payload.ln_address)
-        .await?;
+        .await;
+
+    if let Err(e) = result {
+        if e.is::<crate::db::user_repo::LightningAddressTakenError>() {
+            return Err(ApiError::InvalidArgument(
+                "Lightning address already taken".to_string(),
+            ));
+        }
+        return Err(e.into());
+    }
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
