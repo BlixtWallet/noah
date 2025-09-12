@@ -1540,8 +1540,8 @@ async fn test_report_job_status_pruning() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    // Report job status 5 times
-    for i in 0..5 {
+    // Report job status 23 times
+    for i in 0..23 {
         let k1 = make_k1(app_state.k1_values.clone());
         let auth_payload = user.auth_payload(&k1);
         let response = app
@@ -1573,7 +1573,7 @@ async fn test_report_job_status_pruning() {
         assert_eq!(response.status(), StatusCode::OK);
     }
 
-    // Verify that only 3 reports are stored in the database
+    // Verify that only 20 reports are stored in the database
     let conn = app_state.db.connect().unwrap();
     let mut rows = conn
         .query(
@@ -1585,9 +1585,9 @@ async fn test_report_job_status_pruning() {
 
     let row = rows.next().await.unwrap().unwrap();
     let count: i64 = row.get(0).unwrap();
-    assert_eq!(count, 3);
+    assert_eq!(count, 20);
 
-    // Verify that the remaining reports are the last 3
+    // Verify that the remaining reports are the last 20
     let mut rows = conn
         .query(
             "SELECT error_message FROM job_status_reports WHERE pubkey = ? ORDER BY created_at ASC, id ASC",
@@ -1601,5 +1601,29 @@ async fn test_report_job_status_pruning() {
         messages.push(row.get::<String>(0).unwrap());
     }
 
-    assert_eq!(messages, vec!["Report 2", "Report 3", "Report 4"]);
+    assert_eq!(
+        messages,
+        vec![
+            "Report 3",
+            "Report 4",
+            "Report 5",
+            "Report 6",
+            "Report 7",
+            "Report 8",
+            "Report 9",
+            "Report 10",
+            "Report 11",
+            "Report 12",
+            "Report 13",
+            "Report 14",
+            "Report 15",
+            "Report 16",
+            "Report 17",
+            "Report 18",
+            "Report 19",
+            "Report 20",
+            "Report 21",
+            "Report 22"
+        ]
+    );
 }

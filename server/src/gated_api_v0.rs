@@ -286,7 +286,7 @@ pub async fn report_job_status(
     )
     .await?;
 
-    // Keep only the last 3 reports by deleting the oldest one if the count exceeds 3.
+    // Keep only the last 20 reports by deleting the oldest one if the count exceeds 20.
     // This is more efficient than counting first.
     tx.execute(
         "DELETE FROM job_status_reports
@@ -295,7 +295,7 @@ pub async fn report_job_status(
              SELECT id FROM job_status_reports
              WHERE pubkey = ?
              ORDER BY created_at DESC, id DESC
-             LIMIT 3
+             LIMIT 20
          )",
         libsql::params![auth_payload.key.clone(), auth_payload.key.clone()],
     )

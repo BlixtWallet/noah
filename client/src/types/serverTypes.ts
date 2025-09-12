@@ -57,7 +57,7 @@ export type RegisterPushToken = {
 push_token: string, };
 
 /**
- * Represents the response for an LNURL-auth request.
+ * Represents the response for an user registration.
  */
 export type RegisterResponse = { 
 /**

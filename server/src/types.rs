@@ -26,13 +26,10 @@ pub struct RegisterResponse {
     /// The status of the request, either "OK" or "ERROR".
     pub status: String,
     /// An optional event indicating the outcome of the authentication.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub event: Option<AuthEvent>,
     /// An optional reason for an error, if one occurred.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,
     /// The user's lightning address.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub lightning_address: Option<String>,
 }
 
