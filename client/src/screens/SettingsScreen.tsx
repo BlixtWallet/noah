@@ -156,7 +156,7 @@ const SettingsScreen = () => {
           <BackupStatusCard />
           {lightningAddress && (
             <Pressable
-              onPress={() => navigation.navigate("LightningAddress")}
+              onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
               className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
             >
               <View>

@@ -62,7 +62,7 @@ export const getServerEndpoint = (): string => {
 export const getLnurlDomain = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
-      return "localhost";
+      return "localhost.com";
     case "signet":
       return "noah.noderunner.wtf";
     case "mainnet":
