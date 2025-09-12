@@ -3,7 +3,7 @@ const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
 
-const NITRO_ARK_VERSION = "v0.0.55";
+const NITRO_ARK_VERSION = "v0.0.56";
 
 // --- Configuration ---
 const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
@@ -14,7 +14,7 @@ const projectRoot = process.cwd();
 const nitroArkPath = path.resolve(
   projectRoot,
   "node_modules",
-  "react-native-nitro-ark"
+  "react-native-nitro-ark",
 );
 const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
 
@@ -23,21 +23,21 @@ const xcFrameworkZipPath = path.join(tempDir, "Ark.xcframework.zip");
 const xcFrameworkDestPath = path.join(nitroArkPath, "Ark.xcframework");
 const xcFrameworkCxxBridgeZipPath = path.join(
   tempDir,
-  "ArkCxxBridge.xcframework.zip"
+  "ArkCxxBridge.xcframework.zip",
 );
 const xcFrameworkCxxBrigeDestPath = path.join(
   nitroArkPath,
-  "ArkCxxBridge.xcframework"
+  "ArkCxxBridge.xcframework",
 );
 const unzippedFrameworkContainer = path.join(tempDir, "target");
 const unzippedFrameworkPath = path.join(
   unzippedFrameworkContainer,
-  "Ark.xcframework"
+  "Ark.xcframework",
 );
 const unzippedFrameworkCxxBrigeContainer = path.join(tempDir, "target");
 const unzippedCxxBridgeFrameworkPath = path.join(
   unzippedFrameworkContainer,
-  "ArkCxxBridge.xcframework"
+  "ArkCxxBridge.xcframework",
 );
 
 // Android paths
@@ -47,7 +47,7 @@ const jniLibsDestPath = path.resolve(
   "android",
   "src",
   "main",
-  "jniLibs"
+  "jniLibs",
 );
 const unzippedJniLibsPath = path.join(tempDir, "jniLibs");
 
@@ -76,8 +76,8 @@ function download(url, dest) {
         if (response.statusCode !== 200) {
           return reject(
             new Error(
-              `Failed to download '${url}' (status: ${response.statusCode})`
-            )
+              `Failed to download '${url}' (status: ${response.statusCode})`,
+            ),
           );
         }
         response.pipe(file);
@@ -119,12 +119,12 @@ async function setupIos() {
 
   if (fs.existsSync(xcFrameworkCxxBrigeDestPath)) {
     console.log(
-      `Removing existing framework at ${xcFrameworkCxxBrigeDestPath}`
+      `Removing existing framework at ${xcFrameworkCxxBrigeDestPath}`,
     );
     fs.rmSync(xcFrameworkCxxBrigeDestPath, { recursive: true, force: true });
   }
   console.log(
-    `Downloading iOS CxxBridge framework from ${XC_FRAMEWORK_CXX_BRIDGE_URL}...`
+    `Downloading iOS CxxBridge framework from ${XC_FRAMEWORK_CXX_BRIDGE_URL}...`,
   );
   await download(XC_FRAMEWORK_CXX_BRIDGE_URL, xcFrameworkCxxBridgeZipPath);
   console.log("iOS CxxBridge download complete.");
@@ -133,7 +133,7 @@ async function setupIos() {
   console.log("iOS CxxBridge unzip complete.");
   if (!fs.existsSync(unzippedFrameworkCxxBrigeContainer)) {
     throw new Error(
-      `Expected framework not found at ${unzippedFrameworkCxxBrigeContainer}`
+      `Expected framework not found at ${unzippedFrameworkCxxBrigeContainer}`,
     );
   }
   console.log(`Moving ArkCxxBridge.xcframework to ${nitroArkPath}`);
@@ -172,7 +172,7 @@ async function main() {
   // Ensure node_modules/react-native-nitro-ark exists
   if (!fs.existsSync(nitroArkPath)) {
     console.log(
-      "react-native-nitro-ark not found in node_modules, skipping script."
+      "react-native-nitro-ark not found in node_modules, skipping script.",
     );
     return;
   }
@@ -184,7 +184,7 @@ async function main() {
     await Promise.all([setupIos(), setupAndroid()]);
 
     console.log(
-      "Postinstall script for react-native-nitro-ark finished successfully!"
+      "Postinstall script for react-native-nitro-ark finished successfully!",
     );
   } catch (error) {
     console.error("An error occurred during the postinstall script:");
