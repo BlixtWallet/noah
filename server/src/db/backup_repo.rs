@@ -121,6 +121,7 @@ impl<'a> BackupRepository<'a> {
     }
 
     /// Finds the full metadata for a specific backup version.
+    #[cfg(test)]
     pub async fn find_by_pubkey_and_version(
         &self,
         pubkey: &str,
@@ -166,6 +167,7 @@ impl<'a> BackupRepository<'a> {
     }
 
     /// Gets the backup settings for a user.
+    #[cfg(test)]
     pub async fn get_settings(&self, pubkey: &str) -> Result<Option<bool>> {
         let mut rows = self
             .conn

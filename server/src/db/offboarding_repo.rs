@@ -31,6 +31,7 @@ impl<'a> OffboardingRepository<'a> {
 
     /// Finds an offboarding request by the user's public key.
     /// Note: A user could theoretically have multiple, so this just finds the first one.
+    #[cfg(test)]
     pub async fn find_by_pubkey(&self, pubkey: &str) -> Result<Option<OffboardingRequest>> {
         let mut rows = self
             .conn
