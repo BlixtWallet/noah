@@ -167,7 +167,6 @@ impl<'a> BackupRepository<'a> {
     }
 
     /// Gets the backup settings for a user.
-    #[cfg(test)]
     pub async fn get_settings(&self, pubkey: &str) -> Result<Option<bool>> {
         let mut rows = self
             .conn
@@ -181,5 +180,22 @@ impl<'a> BackupRepository<'a> {
             Some(row) => Ok(Some(row.get(0)?)),
             None => Ok(None),
         }
+    }
+
+    /// Finds all pubkeys that have backups enabled.
+    pub async fn find_pubkeys_with_backup_enabled(&self) -> Result<Vec<String>> {
+        let mut rows = self
+            .conn
+            .query(
+                "SELECT pubkey FROM backup_settings WHERE backup_enabled = TRUE",
+                (),
+            )
+            .await?;
+
+        let mut pubkeys = Vec::new();
+        while let Some(row) = rows.next().await? {
+            pubkeys.push(row.get(0)?);
+        }
+        Ok(pubkeys)
     }
 }
