@@ -1,6 +1,7 @@
 use crate::{
     AppState,
     constants::EnvVariables,
+    db::offboarding_repo::OffboardingRepository,
     push::send_push_notification_with_unique_k1,
     types::{NotificationTypes, NotificationsData},
 };
@@ -97,60 +98,48 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
 
 pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<()> {
     let conn = app_state.db.connect()?;
+    let offboarding_repo = OffboardingRepository::new(&conn);
 
-    // Handle offboarding requests
-    let mut rows = conn
-        .query(
-            "SELECT request_id, pubkey FROM offboarding_requests WHERE status = 'pending'",
-            (),
-        )
-        .await?;
+    // Find all pending offboarding requests
+    let pending_requests = offboarding_repo.find_all_pending().await?;
 
-    while let Some(row) = rows.next().await? {
-        let request_id: String = row.get(0)?;
-        let pubkey: String = row.get(1)?;
-
+    for request in pending_requests {
         tracing::info!(
             "Processing offboarding request {} for pubkey: {}",
-            request_id,
-            pubkey
+            request.request_id,
+            request.pubkey
         );
-        // Update status to processing
-        conn.execute(
-            "UPDATE offboarding_requests SET status = 'processing' WHERE request_id = ?",
-            libsql::params![request_id.clone()],
-        )
-        .await?;
 
-        // Send push notification for offboarding with unique k1 for each device
+        // Update status to processing
+        offboarding_repo
+            .update_status(&request.request_id, "processing")
+            .await?;
+
+        // Send push notification for offboarding
         let notification_data = NotificationsData {
             notification_type: NotificationTypes::Offboarding,
             k1: None, // Will be generated uniquely for each device
             amount: None,
-            offboarding_request_id: Some(request_id.clone()),
+            offboarding_request_id: Some(request.request_id.clone()),
         };
 
         if let Err(e) = send_push_notification_with_unique_k1(
             app_state.clone(),
             notification_data,
-            Some(pubkey),
+            Some(request.pubkey),
         )
         .await
         {
             tracing::error!("Failed to send push notification for offboarding: {}", e);
             // Reset status to pending if failed
-            conn.execute(
-                "UPDATE offboarding_requests SET status = 'pending' WHERE request_id = ?",
-                libsql::params![request_id],
-            )
-            .await?;
+            offboarding_repo
+                .update_status(&request.request_id, "pending")
+                .await?;
         } else {
             // Mark as sent
-            conn.execute(
-                "UPDATE offboarding_requests SET status = 'sent' WHERE request_id = ?",
-                libsql::params![request_id],
-            )
-            .await?;
+            offboarding_repo
+                .update_status(&request.request_id, "sent")
+                .await?;
         }
     }
     Ok(())

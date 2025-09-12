@@ -1,3 +1,8 @@
+use crate::db::backup_repo::BackupRepository;
+use crate::db::job_status_repo::JobStatusRepository;
+use crate::db::offboarding_repo::OffboardingRepository;
+use crate::db::push_token_repo::PushTokenRepository;
+use crate::db::user_repo::UserRepository;
 use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
@@ -31,22 +36,14 @@ pub async fn register_push_token(
     );
 
     let conn = app_state.db.connect()?;
-    let mut rows = conn
-        .query(
-            "SELECT pubkey FROM users WHERE pubkey = ?",
-            libsql::params![auth_payload.key.clone()],
-        )
-        .await?;
-
-    if rows.next().await?.is_none() {
+    let user_repo = UserRepository::new(&conn);
+    if user_repo.find_by_pubkey(&auth_payload.key).await?.is_none() {
         return Err(ApiError::InvalidArgument("User not registered".to_string()));
     }
 
-    conn
-        .execute(
-            "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?) ON CONFLICT(pubkey) DO UPDATE SET push_token = excluded.push_token",
-            libsql::params![auth_payload.key, payload.push_token],
-        )
+    let push_token_repo = PushTokenRepository::new(&conn);
+    push_token_repo
+        .upsert(&auth_payload.key, &payload.push_token)
         .await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
@@ -87,19 +84,18 @@ pub async fn get_user_info(
     Extension(auth_payload): Extension<AuthPayload>,
 ) -> anyhow::Result<Json<UserInfoResponse>, ApiError> {
     let conn = state.db.connect()?;
-    let mut rows = conn
-        .query(
-            "SELECT lightning_address FROM users WHERE pubkey = ?",
-            libsql::params![auth_payload.key.clone()],
-        )
-        .await?;
+    let user_repo = UserRepository::new(&conn);
 
-    if let Some(row) = rows.next().await? {
-        let lightning_address: String = row.get(0)?;
-        Ok(Json(UserInfoResponse { lightning_address }))
-    } else {
-        Err(ApiError::InvalidArgument("User not found".to_string()))
-    }
+    let user = user_repo
+        .find_by_pubkey(&auth_payload.key)
+        .await?
+        .ok_or(ApiError::NotFound("User not found".to_string()))?;
+
+    let lightning_address = user.lightning_address.ok_or(ApiError::NotFound(
+        "User does not have a lightning address".to_string(),
+    ))?;
+
+    Ok(Json(UserInfoResponse { lightning_address }))
 }
 
 /// Updates a user's lightning address.
@@ -115,25 +111,20 @@ pub async fn update_ln_address(
     }
 
     let conn = state.db.connect()?;
-    let mut rows = conn
-        .query(
-            "SELECT pubkey FROM users WHERE lightning_address = ?",
-            libsql::params![payload.ln_address.clone()],
-        )
-        .await?;
+    let user_repo = UserRepository::new(&conn);
 
-    if rows.next().await?.is_some() {
+    if user_repo
+        .exists_by_lightning_address(&payload.ln_address)
+        .await?
+    {
         return Err(ApiError::InvalidArgument(
             "Lightning address already taken".to_string(),
         ));
     }
 
-    let conn = state.db.connect()?;
-    conn.execute(
-        "UPDATE users SET lightning_address = ? WHERE pubkey = ?",
-        libsql::params![payload.ln_address, auth_payload.key],
-    )
-    .await?;
+    user_repo
+        .update_lightning_address(&auth_payload.key, &payload.ln_address)
+        .await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
@@ -160,12 +151,15 @@ pub async fn complete_upload(
     Json(payload): Json<CompleteUploadPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
-         ON CONFLICT(pubkey, backup_version) DO UPDATE SET s3_key = excluded.s3_key, backup_size = excluded.backup_size, created_at = CURRENT_TIMESTAMP",
-        libsql::params![auth_payload.key.clone(), payload.s3_key, payload.backup_size, payload.backup_version],
-    )
-    .await?;
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_metadata(
+            &auth_payload.key,
+            &payload.s3_key,
+            payload.backup_size,
+            payload.backup_version,
+        )
+        .await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
@@ -175,22 +169,8 @@ pub async fn list_backups(
     Extension(auth_payload): Extension<AuthPayload>,
 ) -> Result<Json<Vec<BackupInfo>>, ApiError> {
     let conn = state.db.connect()?;
-    let mut rows = conn
-        .query(
-            "SELECT backup_version, created_at, backup_size FROM backup_metadata WHERE pubkey = ?",
-            libsql::params![auth_payload.key.clone()],
-        )
-        .await?;
-
-    let mut backups = Vec::new();
-    while let Some(row) = rows.next().await? {
-        backups.push(BackupInfo {
-            backup_version: row.get(0)?,
-            created_at: row.get(1)?,
-            backup_size: row.get(2)?,
-        });
-    }
-
+    let backup_repo = BackupRepository::new(&conn);
+    let backups = backup_repo.list(&auth_payload.key).await?;
     Ok(Json(backups))
 }
 
@@ -200,20 +180,18 @@ pub async fn get_download_url(
     Json(payload): Json<GetDownloadUrlPayload>,
 ) -> Result<Json<DownloadUrlResponse>, ApiError> {
     let conn = state.db.connect()?;
-    let (s3_key, backup_size): (String, u64) = if let Some(version) = payload.backup_version {
-        let mut row = conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? AND backup_version = ?", libsql::params![auth_payload.key.clone(), version]).await?;
-        if let Some(row) = row.next().await? {
-            (row.get(0)?, row.get(1)?)
-        } else {
-            return Err(ApiError::NotFound("Backup not found".to_string()));
-        }
+    let backup_repo = BackupRepository::new(&conn);
+
+    let (s3_key, backup_size) = if let Some(version) = payload.backup_version {
+        backup_repo
+            .find_by_version(&auth_payload.key, version)
+            .await?
+            .ok_or(ApiError::NotFound("Backup not found".to_string()))?
     } else {
-        let mut row = conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? ORDER BY created_at DESC LIMIT 1", libsql::params![auth_payload.key.clone()]).await?;
-        if let Some(row) = row.next().await? {
-            (row.get(0)?, row.get(1)?)
-        } else {
-            return Err(ApiError::NotFound("Backup not found".to_string()));
-        }
+        backup_repo
+            .find_latest(&auth_payload.key)
+            .await?
+            .ok_or(ApiError::NotFound("Backup not found".to_string()))?
     };
 
     let s3_client = S3BackupClient::new().await?;
@@ -231,28 +209,19 @@ pub async fn delete_backup(
     Json(payload): Json<DeleteBackupPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
-    let s3_key: String = {
-        let mut row = conn
-            .query(
-                "SELECT s3_key FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-                libsql::params![auth_payload.key.clone(), payload.backup_version],
-            )
-            .await?;
-        if let Some(row) = row.next().await? {
-            row.get(0)?
-        } else {
-            return Err(ApiError::NotFound("Backup not found".to_string()));
-        }
-    };
+    let backup_repo = BackupRepository::new(&conn);
+
+    let s3_key = backup_repo
+        .find_s3_key_by_version(&auth_payload.key, payload.backup_version)
+        .await?
+        .ok_or(ApiError::NotFound("Backup not found".to_string()))?;
 
     let s3_client = S3BackupClient::new().await?;
     s3_client.delete_object(&s3_key).await?;
 
-    conn.execute(
-        "DELETE FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-        libsql::params![auth_payload.key.clone(), payload.backup_version],
-    )
-    .await?;
+    backup_repo
+        .delete_by_version(&auth_payload.key, payload.backup_version)
+        .await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
@@ -271,33 +240,14 @@ pub async fn report_job_status(
     );
 
     let conn = app_state.db.connect()?;
-
     let tx = conn.transaction().await?;
 
-    // First, insert the new report
-    tx.execute(
-        "INSERT INTO job_status_reports (pubkey, report_type, status, error_message) VALUES (?, ?, ?, ?)",
-        libsql::params![
-            auth_payload.key.clone(),
-            format!("{:?}", payload.report_type),
-            format!("{:?}", payload.status),
-            payload.error_message
-        ],
-    )
-    .await?;
-
-    // Keep only the last 20 reports by deleting the oldest one if the count exceeds 20.
-    // This is more efficient than counting first.
-    tx.execute(
-        "DELETE FROM job_status_reports
-         WHERE pubkey = ?
-         AND id NOT IN (
-             SELECT id FROM job_status_reports
-             WHERE pubkey = ?
-             ORDER BY created_at DESC, id DESC
-             LIMIT 20
-         )",
-        libsql::params![auth_payload.key.clone(), auth_payload.key.clone()],
+    JobStatusRepository::create_and_prune(
+        &tx,
+        &auth_payload.key,
+        &payload.report_type,
+        &payload.status,
+        payload.error_message,
     )
     .await?;
 
@@ -312,12 +262,10 @@ pub async fn update_backup_settings(
     Json(payload): Json<BackupSettingsPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let conn = state.db.connect()?;
-    conn.execute(
-        "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)
-         ON CONFLICT(pubkey) DO UPDATE SET backup_enabled = excluded.backup_enabled",
-        libsql::params![auth_payload.key.clone(), payload.backup_enabled],
-    )
-    .await?;
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_settings(&auth_payload.key, payload.backup_enabled)
+        .await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
@@ -334,11 +282,10 @@ pub async fn register_offboarding_request(
     let request_id = Uuid::new_v4().to_string();
 
     let conn = state.db.connect()?;
-    conn.execute(
-        "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
-        libsql::params![request_id.clone(), auth_payload.key],
-    )
-    .await?;
+    let offboarding_repo = OffboardingRepository::new(&conn);
+    offboarding_repo
+        .create_request(&request_id, &auth_payload.key)
+        .await?;
 
     Ok(Json(RegisterOffboardingResponse {
         success: true,
@@ -358,16 +305,8 @@ pub async fn deregister(
     // Use a transaction to ensure all or nothing is deleted
     let tx = conn.transaction().await?;
 
-    tx.execute(
-        "DELETE FROM push_tokens WHERE pubkey = ?",
-        libsql::params![pubkey.clone()],
-    )
-    .await?;
-    tx.execute(
-        "DELETE FROM offboarding_requests WHERE pubkey = ?",
-        libsql::params![pubkey.clone()],
-    )
-    .await?;
+    PushTokenRepository::delete_by_pubkey(&tx, &pubkey).await?;
+    OffboardingRepository::delete_by_pubkey(&tx, &pubkey).await?;
 
     tx.commit().await?;
 
