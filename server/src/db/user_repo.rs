@@ -92,4 +92,14 @@ impl<'a> UserRepository<'a> {
             .await?;
         Ok(())
     }
+
+    /// Checks if a user exists by their public key.
+    pub async fn exists_by_pubkey(&self, pubkey: &str) -> Result<bool, libsql::Error> {
+        let mut rows = self
+            .conn
+            .query("SELECT 1 FROM users WHERE pubkey = ?", [pubkey])
+            .await?;
+
+        Ok(rows.next().await?.is_some())
+    }
 }

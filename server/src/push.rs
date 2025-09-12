@@ -2,7 +2,10 @@ use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
 use futures_util::{StreamExt, stream};
 use serde::Serialize;
 
-use crate::{AppState, errors::ApiError, types::NotificationsData, utils::make_k1};
+use crate::{
+    AppState, db::push_token_repo::PushTokenRepository, errors::ApiError, types::NotificationsData,
+    utils::make_k1,
+};
 
 #[derive(Serialize, Clone, Debug)]
 pub struct PushNotificationData {
@@ -33,26 +36,18 @@ pub async fn send_push_notification_with_unique_k1(
         access_token: Some(app_state.expo_access_token.clone()),
     });
 
-    let mut push_tokens = Vec::new();
+    let conn = app_state.db.connect()?;
+    let push_token_repo = PushTokenRepository::new(&conn);
 
-    if let Some(pubkey) = pubkey {
-        let conn = app_state.db.connect()?;
-        let mut rows = conn
-            .query(
-                "SELECT push_token FROM push_tokens WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
-        while let Some(row) = rows.next().await? {
-            push_tokens.push(row.get::<String>(0)?);
+    let push_tokens = if let Some(pubkey) = pubkey {
+        // A single token might not be found, which is not an error, so we handle the Option.
+        match push_token_repo.find_by_pubkey(&pubkey).await? {
+            Some(token) => vec![token],
+            None => vec![],
         }
     } else {
-        let conn = app_state.db.connect()?;
-        let mut rows = conn.query("SELECT push_token FROM push_tokens", ()).await?;
-        while let Some(row) = rows.next().await? {
-            push_tokens.push(row.get::<String>(0)?);
-        }
-    }
+        push_token_repo.find_all().await?
+    };
 
     if push_tokens.is_empty() {
         return Ok(());
@@ -129,26 +124,18 @@ async fn send_push_notification_internal(
         access_token: Some(app_state.expo_access_token.clone()),
     });
 
-    let mut push_tokens = Vec::new();
+    let conn = app_state.db.connect()?;
+    let push_token_repo = PushTokenRepository::new(&conn);
 
-    if let Some(pubkey) = pubkey {
-        let conn = app_state.db.connect()?;
-        let mut rows = conn
-            .query(
-                "SELECT push_token FROM push_tokens WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
-        while let Some(row) = rows.next().await? {
-            push_tokens.push(row.get::<String>(0)?);
+    let push_tokens = if let Some(pubkey) = pubkey {
+        // A single token might not be found, which is not an error, so we handle the Option.
+        match push_token_repo.find_by_pubkey(&pubkey).await? {
+            Some(token) => vec![token],
+            None => vec![],
         }
     } else {
-        let conn = app_state.db.connect()?;
-        let mut rows = conn.query("SELECT push_token FROM push_tokens", ()).await?;
-        while let Some(row) = rows.next().await? {
-            push_tokens.push(row.get::<String>(0)?);
-        }
-    }
+        push_token_repo.find_all().await?
+    };
 
     if push_tokens.is_empty() {
         return Ok(());

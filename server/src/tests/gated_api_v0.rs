@@ -10,6 +10,11 @@ use serde_json::json;
 use tower::ServiceExt;
 
 use crate::app_middleware::auth_middleware;
+use crate::db::{
+    backup_repo::BackupRepository, job_status_repo::JobStatusRepository,
+    offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
+    user_repo::UserRepository,
+};
 use crate::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
     list_backups, register_offboarding_request, register_push_token, report_job_status,
@@ -271,17 +276,14 @@ async fn test_register_push_token() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let mut rows = conn
-        .query(
-            "SELECT push_token FROM push_tokens WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    // Verification: Check for token with the repository
+    let push_token_repo = PushTokenRepository::new(&conn);
+    let token = push_token_repo
+        .find_by_pubkey(&user.pubkey().to_string())
         .await
+        .unwrap()
         .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let push_token: String = row.get(0).unwrap();
-    assert_eq!(push_token, "test_push_token");
+    assert_eq!(token, "test_push_token");
 }
 
 #[tracing_test::traced_test]
@@ -291,13 +293,13 @@ async fn test_get_user_info() {
 
     let user = TestUser::new();
 
+    // Setup: Create user with the repository
     let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "existing@localhost"],
-    )
-    .await
-    .unwrap();
+    let tx = conn.transaction().await.unwrap();
+    UserRepository::create(&tx, &user.pubkey().to_string(), "existing@localhost")
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -332,13 +334,13 @@ async fn test_update_ln_address() {
 
     let user = TestUser::new();
 
+    // Setup: Create user with the repository
     let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "existing@localhost"],
-    )
-    .await
-    .unwrap();
+    let tx = conn.transaction().await.unwrap();
+    UserRepository::create(&tx, &user.pubkey().to_string(), "existing@localhost")
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -365,17 +367,17 @@ async fn test_update_ln_address() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let mut rows = conn
-        .query(
-            "SELECT lightning_address FROM users WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    // Verification: Check for updated address with the repository
+    let user_repo = UserRepository::new(&conn);
+    let updated_user = user_repo
+        .find_by_pubkey(&user.pubkey().to_string())
         .await
+        .unwrap()
         .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let ln_address: String = row.get(0).unwrap();
-    assert_eq!(ln_address, "new@localhost");
+    assert_eq!(
+        updated_user.lightning_address,
+        Some("new@localhost".to_string())
+    );
 }
 
 // Helper function to create a test user in the database
@@ -474,22 +476,16 @@ async fn test_complete_upload() {
 
     // Verify the backup metadata was stored
     let conn = app_state.db.connect().unwrap();
-    let mut rows = conn
-        .query(
-            "SELECT s3_key, backup_size, backup_version FROM backup_metadata WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    let backup_repo = BackupRepository::new(&conn);
+    let metadata = backup_repo
+        .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
         .await
+        .unwrap()
         .unwrap();
 
-    let row = rows.next().await.unwrap().unwrap();
-    let stored_s3_key: String = row.get(0).unwrap();
-    let stored_size: i64 = row.get(1).unwrap();
-    let stored_version: i32 = row.get(2).unwrap();
-
-    assert_eq!(stored_s3_key, s3_key);
-    assert_eq!(stored_size, 1024);
-    assert_eq!(stored_version, 1);
+    assert_eq!(metadata.s3_key, s3_key);
+    assert_eq!(metadata.backup_size, 1024);
+    assert_eq!(metadata.backup_version, 1);
 }
 
 #[tracing_test::traced_test]
@@ -558,22 +554,16 @@ async fn test_complete_upload_upsert() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    // Verify only one record exists with updated size
+    // Verify the record was updated
     let conn = app_state.db.connect().unwrap();
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*), backup_size FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-            libsql::params![user.pubkey().to_string(), 1],
-        )
+    let backup_repo = BackupRepository::new(&conn);
+    let metadata = backup_repo
+        .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
         .await
+        .unwrap()
         .unwrap();
 
-    let row = rows.next().await.unwrap().unwrap();
-    let count: i64 = row.get(0).unwrap();
-    let size: i64 = row.get(1).unwrap();
-
-    assert_eq!(count, 1);
-    assert_eq!(size, 2048);
+    assert_eq!(metadata.backup_size, 2048);
 }
 
 #[tracing_test::traced_test]
@@ -617,19 +607,15 @@ async fn test_list_backups_with_data() {
 
     // Insert test backup metadata
     let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)",
-        libsql::params![user.pubkey().to_string(), "test/backup_v1.db", 1024, 1],
-    )
-    .await
-    .unwrap();
-
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)",
-        libsql::params![user.pubkey().to_string(), "test/backup_v2.db", 2048, 2],
-    )
-    .await
-    .unwrap();
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_metadata(&user.pubkey().to_string(), "test/backup_v1.db", 1024, 1)
+        .await
+        .unwrap();
+    backup_repo
+        .upsert_metadata(&user.pubkey().to_string(), "test/backup_v2.db", 2048, 2)
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -675,12 +661,11 @@ async fn test_get_download_url_specific_version() {
     // Insert test backup metadata
     let conn = app_state.db.connect().unwrap();
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)",
-        libsql::params![user.pubkey().to_string(), s3_key, 1024, 1],
-    )
-    .await
-    .unwrap();
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_metadata(&user.pubkey().to_string(), &s3_key, 1024, 1)
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -726,19 +711,32 @@ async fn test_get_download_url_latest() {
 
     // Insert test backup metadata with different timestamps
     let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version, created_at) VALUES (?, ?, ?, ?, datetime('now', '-1 hour'))",
-        libsql::params![user.pubkey().to_string(), "test/backup_v1.db", 1024, 1],
-    )
-    .await
-    .unwrap();
-
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version, created_at) VALUES (?, ?, ?, ?, datetime('now'))",
-        libsql::params![user.pubkey().to_string(), "test/backup_v2.db", 2048, 2],
-    )
-    .await
-    .unwrap();
+    let backup_repo = BackupRepository::new(&conn);
+    use chrono::{Duration, Utc};
+    let now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    let one_hour_ago = (Utc::now() - Duration::hours(1))
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
+    backup_repo
+        .upsert_metadata_with_timestamp(
+            &user.pubkey().to_string(),
+            "test/backup_v1.db",
+            1024,
+            1,
+            &one_hour_ago,
+        )
+        .await
+        .unwrap();
+    backup_repo
+        .upsert_metadata_with_timestamp(
+            &user.pubkey().to_string(),
+            "test/backup_v2.db",
+            2048,
+            2,
+            &now,
+        )
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -813,12 +811,11 @@ async fn test_delete_backup() {
     // Insert test backup metadata
     let conn = app_state.db.connect().unwrap();
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)",
-        libsql::params![user.pubkey().to_string(), s3_key, 1024, 1],
-    )
-    .await
-    .unwrap();
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_metadata(&user.pubkey().to_string(), &s3_key, 1024, 1)
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -847,17 +844,12 @@ async fn test_delete_backup() {
     // The S3 delete operation might fail, but the database deletion should succeed
     if response.status() == StatusCode::OK {
         // Verify the backup metadata was deleted from database
-        let mut rows = conn
-            .query(
-                "SELECT COUNT(*) FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-                libsql::params![user.pubkey().to_string(), 1],
-            )
+        let backup_repo = BackupRepository::new(&conn);
+        let metadata = backup_repo
+            .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
             .await
             .unwrap();
-
-        let row = rows.next().await.unwrap().unwrap();
-        let count: i64 = row.get(0).unwrap();
-        assert_eq!(count, 0);
+        assert!(metadata.is_none());
     } else {
         // If S3 is not available, we expect an internal server error
         assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
@@ -931,16 +923,12 @@ async fn test_update_backup_settings_enable() {
 
     // Verify the backup settings were stored
     let conn = app_state.db.connect().unwrap();
-    let mut rows = conn
-        .query(
-            "SELECT backup_enabled FROM backup_settings WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    let backup_repo = BackupRepository::new(&conn);
+    let backup_enabled = backup_repo
+        .get_settings(&user.pubkey().to_string())
         .await
+        .unwrap()
         .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let backup_enabled: bool = row.get(0).unwrap();
     assert_eq!(backup_enabled, true);
 }
 
@@ -953,12 +941,11 @@ async fn test_update_backup_settings_disable() {
 
     // First enable backup
     let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), true],
-    )
-    .await
-    .unwrap();
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_settings(&user.pubkey().to_string(), true)
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -986,16 +973,12 @@ async fn test_update_backup_settings_disable() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verify the backup settings were updated
-    let mut rows = conn
-        .query(
-            "SELECT backup_enabled FROM backup_settings WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    let backup_repo = BackupRepository::new(&conn);
+    let backup_enabled = backup_repo
+        .get_settings(&user.pubkey().to_string())
         .await
+        .unwrap()
         .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let backup_enabled: bool = row.get(0).unwrap();
     assert_eq!(backup_enabled, false);
 }
 
@@ -1385,22 +1368,16 @@ async fn test_register_offboarding_request() {
 
     // Verify the offboarding request was stored in the database
     let conn = app_state.db.connect().unwrap();
-    let mut rows = conn
-        .query(
-            "SELECT request_id, pubkey, status FROM offboarding_requests WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    let offboarding_repo = OffboardingRepository::new(&conn);
+    let request = offboarding_repo
+        .find_by_pubkey(&user.pubkey().to_string())
         .await
+        .unwrap()
         .unwrap();
 
-    let row = rows.next().await.unwrap().unwrap();
-    let stored_request_id: String = row.get(0).unwrap();
-    let stored_pubkey: String = row.get(1).unwrap();
-    let stored_status: String = row.get(2).unwrap();
-
-    assert_eq!(stored_request_id, res.request_id);
-    assert_eq!(stored_pubkey, user.pubkey().to_string());
-    assert_eq!(stored_status, "pending");
+    assert_eq!(request.request_id, res.request_id);
+    assert_eq!(request.pubkey, user.pubkey().to_string());
+    assert_eq!(request.status, "pending");
 }
 
 #[tracing_test::traced_test]
@@ -1439,41 +1416,34 @@ async fn test_deregister_user() {
     let user = TestUser::new();
     let conn = app_state.db.connect().unwrap();
 
-    // 1. Create user and associated data
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "test@localhost"],
-    )
-    .await
-    .unwrap();
+    // 1. Create user and associated data using repositories
+    let tx = conn.transaction().await.unwrap();
+    UserRepository::create(&tx, &user.pubkey().to_string(), "test@localhost")
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
 
-    conn.execute(
-        "INSERT INTO push_tokens (pubkey, push_token) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "test_push_token"],
-    )
-    .await
-    .unwrap();
+    let push_token_repo = PushTokenRepository::new(&conn);
+    push_token_repo
+        .upsert(&user.pubkey().to_string(), "test_push_token")
+        .await
+        .unwrap();
 
-    conn.execute(
-        "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)",
-        libsql::params![user.pubkey().to_string(), "test_s3_key", 1024, 1],
-    )
-    .await
-    .unwrap();
+    let backup_repo = BackupRepository::new(&conn);
+    backup_repo
+        .upsert_metadata(&user.pubkey().to_string(), "test_s3_key", 1024, 1)
+        .await
+        .unwrap();
+    backup_repo
+        .upsert_settings(&user.pubkey().to_string(), true)
+        .await
+        .unwrap();
 
-    conn.execute(
-        "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), true],
-    )
-    .await
-    .unwrap();
-
-    conn.execute(
-        "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
-        libsql::params!["test_request_id", user.pubkey().to_string()],
-    )
-    .await
-    .unwrap();
+    let offboarding_repo = OffboardingRepository::new(&conn);
+    offboarding_repo
+        .create_request("test_request_id", &user.pubkey().to_string())
+        .await
+        .unwrap();
 
     // 2. Call deregister endpoint
     let k1 = make_k1(app_state.k1_values.clone());
@@ -1496,41 +1466,41 @@ async fn test_deregister_user() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    // 3. Verify data is deleted from correct tables
-    let tables_to_delete = vec!["push_tokens", "offboarding_requests"];
-    for table in tables_to_delete {
-        let mut rows = conn
-            .query(
-                &format!("SELECT COUNT(*) FROM {} WHERE pubkey = ?", table),
-                libsql::params![user.pubkey().to_string()],
-            )
-            .await
-            .unwrap();
+    // 3. Verify data is deleted from the correct places
+    let push_token_repo = PushTokenRepository::new(&conn);
+    let token = push_token_repo
+        .find_by_pubkey(&user.pubkey().to_string())
+        .await
+        .unwrap();
+    assert!(token.is_none(), "Push token should be deleted");
 
-        let row = rows.next().await.unwrap().unwrap();
-        let count: i64 = row.get(0).unwrap();
-        assert_eq!(count, 0, "Data not deleted from table: {}", table);
-    }
+    let offboarding_repo = OffboardingRepository::new(&conn);
+    let request = offboarding_repo
+        .find_by_pubkey(&user.pubkey().to_string())
+        .await
+        .unwrap();
+    assert!(request.is_none(), "Offboarding request should be deleted");
 
     // 4. Verify data is NOT deleted from other tables
-    let tables_to_keep = vec!["users", "backup_metadata", "backup_settings"];
-    for table in tables_to_keep {
-        let mut rows = conn
-            .query(
-                &format!("SELECT COUNT(*) FROM {} WHERE pubkey = ?", table),
-                libsql::params![user.pubkey().to_string()],
-            )
-            .await
-            .unwrap();
+    let user_repo = UserRepository::new(&conn);
+    let user_record = user_repo
+        .find_by_pubkey(&user.pubkey().to_string())
+        .await
+        .unwrap();
+    assert!(user_record.is_some(), "User should not be deleted");
 
-        let row = rows.next().await.unwrap().unwrap();
-        let count: i64 = row.get(0).unwrap();
-        assert_eq!(
-            count, 1,
-            "Data should not have been deleted from table: {}",
-            table
-        );
-    }
+    let backup_repo = BackupRepository::new(&conn);
+    let metadata = backup_repo
+        .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
+        .await
+        .unwrap();
+    assert!(metadata.is_some(), "Backup metadata should not be deleted");
+
+    let settings = backup_repo
+        .get_settings(&user.pubkey().to_string())
+        .await
+        .unwrap();
+    assert!(settings.is_some(), "Backup settings should not be deleted");
 }
 
 #[tracing_test::traced_test]
@@ -1575,31 +1545,18 @@ async fn test_report_job_status_pruning() {
 
     // Verify that only 20 reports are stored in the database
     let conn = app_state.db.connect().unwrap();
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM job_status_reports WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
+    let count = JobStatusRepository::count_by_pubkey(&conn, &user.pubkey().to_string())
         .await
         .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let count: i64 = row.get(0).unwrap();
     assert_eq!(count, 20);
 
     // Verify that the remaining reports are the last 20
-    let mut rows = conn
-        .query(
-            "SELECT error_message FROM job_status_reports WHERE pubkey = ? ORDER BY created_at ASC, id ASC",
-            libsql::params![user.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-
-    let mut messages = Vec::new();
-    while let Some(row) = rows.next().await.unwrap() {
-        messages.push(row.get::<String>(0).unwrap());
-    }
+    let messages = JobStatusRepository::find_error_messages_by_pubkey_ordered(
+        &conn,
+        &user.pubkey().to_string(),
+    )
+    .await
+    .unwrap();
 
     assert_eq!(
         messages,

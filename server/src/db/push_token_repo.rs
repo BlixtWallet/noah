@@ -22,6 +22,22 @@ impl<'a> PushTokenRepository<'a> {
             .await?;
         Ok(())
     }
+
+    /// Finds a push token by its associated public key.
+    pub async fn find_by_pubkey(&self, pubkey: &str) -> Result<Option<String>> {
+        let mut rows = self
+            .conn
+            .query(
+                "SELECT push_token FROM push_tokens WHERE pubkey = ?",
+                libsql::params![pubkey],
+            )
+            .await?;
+
+        match rows.next().await? {
+            Some(row) => Ok(Some(row.get(0)?)),
+            None => Ok(None),
+        }
+    }
     /// Deletes all push tokens for a given user within a transaction.
     pub async fn delete_by_pubkey(tx: &libsql::Transaction, pubkey: &str) -> Result<()> {
         tx.execute(
@@ -30,5 +46,19 @@ impl<'a> PushTokenRepository<'a> {
         )
         .await?;
         Ok(())
+    }
+
+    /// Finds all push tokens in the database.
+    pub async fn find_all(&self) -> Result<Vec<String>> {
+        let mut rows = self
+            .conn
+            .query("SELECT push_token FROM push_tokens", ())
+            .await?;
+
+        let mut tokens = Vec::new();
+        while let Some(row) = rows.next().await? {
+            tokens.push(row.get(0)?);
+        }
+        Ok(tokens)
     }
 }

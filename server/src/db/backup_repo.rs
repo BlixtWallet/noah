@@ -8,7 +8,7 @@ pub struct BackupMetadata {
     pub pubkey: String,
     pub s3_key: String,
     pub backup_size: u64,
-    pub backup_version: i64,
+    pub backup_version: i32,
 }
 
 /// A struct to encapsulate backup-related database operations.
@@ -34,6 +34,24 @@ impl<'a> BackupRepository<'a> {
             "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
              ON CONFLICT(pubkey, backup_version) DO UPDATE SET s3_key = excluded.s3_key, backup_size = excluded.backup_size, created_at = CURRENT_TIMESTAMP",
             libsql::params![pubkey, s3_key, backup_size, backup_version],
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// [TEST ONLY] Inserts or updates backup metadata with a specific creation timestamp.
+    #[cfg(test)]
+    pub async fn upsert_metadata_with_timestamp(
+        &self,
+        pubkey: &str,
+        s3_key: &str,
+        backup_size: u64,
+        backup_version: i32,
+        created_at_iso: &str,
+    ) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version, created_at) VALUES (?, ?, ?, ?, ?)",
+            libsql::params![pubkey, s3_key, backup_size, backup_version, created_at_iso],
         )
         .await?;
         Ok(())
@@ -102,6 +120,28 @@ impl<'a> BackupRepository<'a> {
         }
     }
 
+    /// Finds the full metadata for a specific backup version.
+    pub async fn find_by_pubkey_and_version(
+        &self,
+        pubkey: &str,
+        version: i32,
+    ) -> Result<Option<BackupMetadata>> {
+        let mut rows = self.conn.query(
+            "SELECT pubkey, s3_key, backup_size, backup_version FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
+            libsql::params![pubkey, version],
+        ).await?;
+
+        match rows.next().await? {
+            Some(row) => Ok(Some(BackupMetadata {
+                pubkey: row.get(0)?,
+                s3_key: row.get(1)?,
+                backup_size: row.get(2)?,
+                backup_version: row.get(3)?,
+            })),
+            None => Ok(None),
+        }
+    }
+
     /// Deletes a backup record by its version.
     pub async fn delete_by_version(&self, pubkey: &str, version: i32) -> Result<()> {
         self.conn
@@ -123,5 +163,21 @@ impl<'a> BackupRepository<'a> {
             )
             .await?;
         Ok(())
+    }
+
+    /// Gets the backup settings for a user.
+    pub async fn get_settings(&self, pubkey: &str) -> Result<Option<bool>> {
+        let mut rows = self
+            .conn
+            .query(
+                "SELECT backup_enabled FROM backup_settings WHERE pubkey = ?",
+                libsql::params![pubkey],
+            )
+            .await?;
+
+        match rows.next().await? {
+            Some(row) => Ok(Some(row.get(0)?)),
+            None => Ok(None),
+        }
     }
 }

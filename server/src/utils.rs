@@ -3,6 +3,7 @@ use std::{str::FromStr, sync::Arc, time::SystemTime};
 use dashmap::DashMap;
 use rand::RngCore;
 
+use crate::db::user_repo::UserRepository;
 use crate::errors::ApiError;
 
 pub async fn verify_message(
@@ -43,20 +44,9 @@ pub fn make_k1(k1_values: Arc<DashMap<String, SystemTime>>) -> String {
 }
 
 pub async fn verify_user_exists(conn: &libsql::Connection, pubkey: &str) -> Result<bool, ApiError> {
-    let mut rows = conn
-        .query("SELECT pubkey FROM users WHERE pubkey = ?", [pubkey])
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to query user: {}", e);
-            ApiError::Database(e)
-        })?;
-
-    Ok(rows
-        .next()
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get next row: {}", e);
-            ApiError::Database(e)
-        })?
-        .is_some())
+    let user_repo = UserRepository::new(conn);
+    user_repo.exists_by_pubkey(pubkey).await.map_err(|e| {
+        tracing::error!("Failed to query user: {}", e);
+        ApiError::Database(e)
+    })
 }
