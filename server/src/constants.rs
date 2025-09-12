@@ -26,6 +26,8 @@ pub enum EnvVariables {
     BackupCron,
     #[strum(serialize = "S3_BUCKET_NAME")]
     S3BucketName,
+    #[strum(serialize = "MAINTENANCE_INTERVAL_ROUNDS")]
+    MaintenanceIntervalRounds,
 }
 
 pub const DEFAULT_HOST: &str = "0.0.0.0";

@@ -1,9 +1,11 @@
 use crate::{
     AppState,
+    constants::EnvVariables,
     push::send_push_notification_with_unique_k1,
     types::{NotificationTypes, NotificationsData},
 };
 
+use bitcoin::hex::DisplayHex;
 use futures_util::stream::StreamExt;
 use server_rpc::{
     ArkServiceClient,
@@ -22,16 +24,21 @@ pub async fn connect_to_ark_server(
 
     tracing::info!("Handshake response: {:?}", response);
 
-    let info = client.get_ark_info(Empty {}).await?;
+    let info = client.get_ark_info(Empty {}).await?.into_inner();
 
-    tracing::info!("Ark info: {:?}", info);
+    tracing::info!(
+        "Ark Server Public Key: {}, Ark Server Info: {:?}",
+        info.server_pubkey.to_lower_hex_string(),
+        info
+    );
 
     let mut stream = client.subscribe_rounds(Empty {}).await?.into_inner();
 
-    let maintenance_interval_rounds: u32 = std::env::var("MAINTENANCE_INTERVAL_ROUNDS")
-        .unwrap_or_else(|_| "1".to_string())
-        .parse()
-        .unwrap_or(1);
+    let maintenance_interval_rounds: u32 =
+        std::env::var(EnvVariables::MaintenanceIntervalRounds.to_string())
+            .unwrap_or_else(|_| "1".to_string())
+            .parse()
+            .unwrap_or(1);
     let mut round_counter = 0;
 
     tracing::info!("starting round subscription");
