@@ -128,6 +128,28 @@ namespace margelo::nitro::noahtools {
       return __promise;
     }();
   }
+  std::shared_ptr<Promise<HttpResponse>> JHybridNoahToolsSpec::nativeGet(const std::string& url, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* url */, jni::alias_ref<jni::JMap<jni::JString, jni::JString>> /* headers */, double /* timeoutSeconds */)>("nativeGet");
+    auto __result = method(_javaPart, jni::make_jstring(url), [&]() -> jni::local_ref<jni::JMap<jni::JString, jni::JString>> {
+      auto __map = jni::JHashMap<jni::JString, jni::JString>::create(headers.size());
+      for (const auto& __entry : headers) {
+        __map->put(jni::make_jstring(__entry.first), jni::make_jstring(__entry.second));
+      }
+      return __map;
+    }(), timeoutSeconds);
+    return [&]() {
+      auto __promise = Promise<HttpResponse>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<JHttpResponse>(__boxedResult);
+        __promise->resolve(__result->toCpp());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
   void JHybridNoahToolsSpec::nativeLog(const std::string& level, const std::string& tag, const std::string& message) {
     static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* level */, jni::alias_ref<jni::JString> /* tag */, jni::alias_ref<jni::JString> /* message */)>("nativeLog");
     method(_javaPart, jni::make_jstring(level), jni::make_jstring(tag), jni::make_jstring(message));

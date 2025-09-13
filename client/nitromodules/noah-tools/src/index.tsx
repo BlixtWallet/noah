@@ -29,6 +29,14 @@ export function nativePost(
   return NoahToolsHybridObject.nativePost(url, body, headers, timeoutSeconds);
 }
 
+export function nativeGet(
+  url: string,
+  headers: Record<string, string>,
+  timeoutSeconds: number = 30,
+): Promise<HttpResponse> {
+  return NoahToolsHybridObject.nativeGet(url, headers, timeoutSeconds);
+}
+
 export function nativeLog(level: LogLevel, tag: string, message: string): void {
   return NoahToolsHybridObject.nativeLog(level, tag, message);
 }

@@ -102,6 +102,14 @@ namespace margelo::nitro::noahtools {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline std::shared_ptr<Promise<HttpResponse>> nativeGet(const std::string& url, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) override {
+      auto __result = _swiftPart.nativeGet(url, headers, std::forward<decltype(timeoutSeconds)>(timeoutSeconds));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
     inline void nativeLog(const std::string& level, const std::string& tag, const std::string& message) override {
       auto __result = _swiftPart.nativeLog(level, tag, message);
       if (__result.hasError()) [[unlikely]] {

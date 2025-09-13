@@ -61,6 +61,8 @@
 - Always use `anyhow` for error handling.
 - Try and keep the types as simple as possible.
 - Use `tracing` for logging.
+- All database related code should be in the `db` directory separated into repo files based on the type of data being dealt with.
+- Every API endpoint should have a test case.
 
 ## Security considerations
 

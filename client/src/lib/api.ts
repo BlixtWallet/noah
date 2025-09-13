@@ -22,7 +22,7 @@ import {
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 import ky from "ky";
-import { nativePost } from "noah-tools";
+import { nativeGet, nativePost } from "noah-tools";
 
 const log = logger("serverApi");
 
@@ -173,18 +173,40 @@ export const submitInvoice = (payload: SubmitInvoicePayload & { k1?: string }) =
     payload,
   );
 
-export const getK1 = async () => {
-  const k1Result = await ResultAsync.fromPromise(
-    ky.get(`${API_URL}/v0/getk1`).json<{ k1: string }>(),
+export const getK1 = async (): Promise<Result<string, Error>> => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  const responseResult = await ResultAsync.fromPromise(
+    nativeGet(`${API_URL}/v0/getk1`, headers, 30),
     (e) => e as Error,
   );
 
-  if (k1Result.isErr()) {
-    return err(k1Result.error);
+  if (responseResult.isErr()) {
+    return err(responseResult.error);
   }
 
-  const { k1 } = k1Result.value;
-  return ok(k1);
+  const response = responseResult.value;
+
+  if (response.status < 200 || response.status >= 300) {
+    return err(new Error(`HTTP ${response.status}: ${response.body}`));
+  }
+
+  if (!response.body) {
+    return err(new Error("Empty response body from getk1"));
+  }
+
+  const parseResult = Result.fromThrowable(
+    () => JSON.parse(response.body) as { k1: string },
+    (e) => new Error(`Failed to parse JSON response: ${(e as Error).message}`),
+  )();
+
+  if (parseResult.isErr()) {
+    return err(parseResult.error);
+  }
+
+  return ok(parseResult.value.k1);
 };
 
 export const getDownloadUrlForRestore = async (payload: {
