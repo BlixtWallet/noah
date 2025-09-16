@@ -200,9 +200,23 @@ class NoahTools : HybridNoahToolsSpec() {
           if (line!!.contains(pid) &&
               (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
               !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
-            logcat.addLast(line!!)
-            if (logcat.size > 2000) {
-              logcat.removeFirst()
+
+            // Check if this line is a continuation of the previous log entry
+            // Continuation lines have extra indentation after the log tag (ReactNativeJS: )
+            val isContinuation = line!!.matches(Regex(".*ReactNativeJS:\\s{2,}.*")) ||
+                                 line!!.matches(Regex(".*NitroArk:\\s{2,}.*"))
+
+            if (isContinuation && logcat.isNotEmpty()) {
+              // Append to the last log entry
+              val lastEntry = logcat.removeLast()
+              val continuationContent = line!!.substringAfter(": ").trimStart()
+              logcat.addLast("$lastEntry\n  $continuationContent")
+            } else {
+              // Add as new log entry
+              logcat.addLast(line!!)
+              if (logcat.size > 2000) {
+                logcat.removeFirst()
+              }
             }
           }
         }
