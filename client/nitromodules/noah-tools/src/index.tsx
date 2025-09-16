@@ -1,5 +1,5 @@
 import { NitroModules } from "react-native-nitro-modules";
-import type { NoahTools, HttpResponse } from "./NoahTools.nitro";
+import type { NoahTools, HttpResponse, NfcPaymentData, NfcStatus } from "./NoahTools.nitro";
 
 const NoahToolsHybridObject = NitroModules.createHybridObject<NoahTools>("NoahTools");
 export type LogLevel = "verbose" | "debug" | "info" | "warn" | "error";
@@ -41,4 +41,21 @@ export function nativeLog(level: LogLevel, tag: string, message: string): void {
   return NoahToolsHybridObject.nativeLog(level, tag, message);
 }
 
-export type { HttpResponse } from "./NoahTools.nitro";
+// NFC functions
+export function checkNfcStatus(): Promise<NfcStatus> {
+  return NoahToolsHybridObject.checkNfcStatus();
+}
+
+export function startNfcSend(paymentData: NfcPaymentData): Promise<boolean> {
+  return NoahToolsHybridObject.startNfcSend(JSON.stringify(paymentData));
+}
+
+export function startNfcReceive(): Promise<NfcPaymentData> {
+  return NoahToolsHybridObject.startNfcReceive().then((data) => JSON.parse(data));
+}
+
+export function stopNfc(): void {
+  return NoahToolsHybridObject.stopNfc();
+}
+
+export type { HttpResponse, NfcPaymentData, NfcStatus } from "./NoahTools.nitro";

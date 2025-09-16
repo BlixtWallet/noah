@@ -12,6 +12,8 @@
 namespace margelo::nitro::noahtools { struct HttpResponse; }
 // Forward declaration of `HybridNoahToolsSpec` to properly resolve imports.
 namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
+// Forward declaration of `NfcStatus` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct NfcStatus; }
 
 // Forward declarations of Swift defined types
 // Forward declaration of `HybridNoahToolsSpec_cxx` to properly resolve imports.
@@ -20,6 +22,7 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 // Include C++ defined types
 #include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
+#include "NfcStatus.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
@@ -230,6 +233,40 @@ namespace margelo::nitro::noahtools::bridge::swift {
     return Func_void_HttpResponse_Wrapper(std::move(value));
   }
   
+  // pragma MARK: std::shared_ptr<Promise<NfcStatus>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<NfcStatus>>`.
+   */
+  using std__shared_ptr_Promise_NfcStatus__ = std::shared_ptr<Promise<NfcStatus>>;
+  inline std::shared_ptr<Promise<NfcStatus>> create_std__shared_ptr_Promise_NfcStatus__() noexcept {
+    return Promise<NfcStatus>::create();
+  }
+  inline PromiseHolder<NfcStatus> wrap_std__shared_ptr_Promise_NfcStatus__(std::shared_ptr<Promise<NfcStatus>> promise) noexcept {
+    return PromiseHolder<NfcStatus>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void(const NfcStatus& /* result */)>
+  /**
+   * Specialized version of `std::function<void(const NfcStatus&)>`.
+   */
+  using Func_void_NfcStatus = std::function<void(const NfcStatus& /* result */)>;
+  /**
+   * Wrapper class for a `std::function<void(const NfcStatus& / * result * /)>`, this can be used from Swift.
+   */
+  class Func_void_NfcStatus_Wrapper final {
+  public:
+    explicit Func_void_NfcStatus_Wrapper(std::function<void(const NfcStatus& /* result */)>&& func): _function(std::make_unique<std::function<void(const NfcStatus& /* result */)>>(std::move(func))) {}
+    inline void call(NfcStatus result) const noexcept {
+      _function->operator()(result);
+    }
+  private:
+    std::unique_ptr<std::function<void(const NfcStatus& /* result */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_NfcStatus create_Func_void_NfcStatus(void* _Nonnull swiftClosureWrapper) noexcept;
+  inline Func_void_NfcStatus_Wrapper wrap_Func_void_NfcStatus(Func_void_NfcStatus value) noexcept {
+    return Func_void_NfcStatus_Wrapper(std::move(value));
+  }
+  
   // pragma MARK: std::shared_ptr<HybridNoahToolsSpec>
   /**
    * Specialized version of `std::shared_ptr<HybridNoahToolsSpec>`.
@@ -294,6 +331,15 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   inline Result_void_ create_Result_void_(const std::exception_ptr& error) noexcept {
     return Result<void>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<NfcStatus>>>
+  using Result_std__shared_ptr_Promise_NfcStatus___ = Result<std::shared_ptr<Promise<NfcStatus>>>;
+  inline Result_std__shared_ptr_Promise_NfcStatus___ create_Result_std__shared_ptr_Promise_NfcStatus___(const std::shared_ptr<Promise<NfcStatus>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<NfcStatus>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_NfcStatus___ create_Result_std__shared_ptr_Promise_NfcStatus___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<NfcStatus>>>::withError(error);
   }
 
 } // namespace margelo::nitro::noahtools::bridge::swift

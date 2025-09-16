@@ -15,12 +15,15 @@
 
 // Forward declaration of `HttpResponse` to properly resolve imports.
 namespace margelo::nitro::noahtools { struct HttpResponse; }
+// Forward declaration of `NfcStatus` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct NfcStatus; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
 #include "HttpResponse.hpp"
 #include <unordered_map>
+#include "NfcStatus.hpp"
 
 namespace margelo::nitro::noahtools {
 
@@ -60,6 +63,10 @@ namespace margelo::nitro::noahtools {
       virtual std::shared_ptr<Promise<HttpResponse>> nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) = 0;
       virtual std::shared_ptr<Promise<HttpResponse>> nativeGet(const std::string& url, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) = 0;
       virtual void nativeLog(const std::string& level, const std::string& tag, const std::string& message) = 0;
+      virtual std::shared_ptr<Promise<NfcStatus>> checkNfcStatus() = 0;
+      virtual std::shared_ptr<Promise<bool>> startNfcSend(const std::string& paymentData) = 0;
+      virtual std::shared_ptr<Promise<std::string>> startNfcReceive() = 0;
+      virtual void stopNfc() = 0;
 
     protected:
       // Hybrid Setup

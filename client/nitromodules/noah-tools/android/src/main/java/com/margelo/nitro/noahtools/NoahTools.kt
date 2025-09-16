@@ -1,12 +1,29 @@
 package com.margelo.nitro.noahtools
 
+import android.app.Activity
 import android.app.Application
+import android.app.PendingIntent
 import android.os.Process
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.nfc.NdefMessage
+import android.nfc.NdefRecord
+import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.margelo.nitro.core.Promise
+import org.json.JSONObject
 import java.lang.reflect.Method
 import java.io.File
 import java.io.FileInputStream
@@ -14,6 +31,7 @@ import java.io.FileOutputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.ByteBuffer
+import java.nio.charset.Charset
 import java.security.SecureRandom
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -29,7 +47,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.MediaType.Companion.toMediaType
 import java.util.concurrent.TimeUnit
 
-class NoahTools : HybridNoahToolsSpec() {
+// NFC Status data class
+data class NfcStatus(
+  val isSupported: Boolean,
+  val isEnabled: Boolean
+)
+
+class NoahTools : HybridNoahToolsSpec(), NfcAdapter.ReaderCallback {
 
   companion object {
     private const val TAG = "NoahTools"
@@ -41,6 +65,7 @@ class NoahTools : HybridNoahToolsSpec() {
     private const val PBKDF2_ITERATIONS = 600_000
     private const val GCM_TAG_LENGTH = 128
     private const val BUFFER_SIZE = 8192
+    private const val NFC_MIME_TYPE = "application/vnd.noah.payment"
 
     // OkHttp client for background requests
     private val backgroundHttpClient = OkHttpClient.Builder()
@@ -50,6 +75,12 @@ class NoahTools : HybridNoahToolsSpec() {
       .retryOnConnectionFailure(false)
       .build()
   }
+
+  private var nfcAdapter: NfcAdapter? = null
+  private var currentActivity: Activity? = null
+  private var nfcReceivePromise: Promise<String>? = null
+  private var nfcSendData: String? = null
+  private var isNfcActive = false
 
   override fun nativePost(
     url: String,
@@ -517,17 +548,295 @@ class NoahTools : HybridNoahToolsSpec() {
     }
   }
 
-    override fun nativeLog(level: String, tag: String, message: String) {
-      val logTag = "ReactNativeJS"
-      val logMessage = "[$tag] $message"
+  override fun nativeLog(level: String, tag: String, message: String) {
+    val logTag = "ReactNativeJS"
+    val logMessage = "[$tag] $message"
 
-      when (level.lowercase()) {
-        "verbose" -> Log.v(logTag, logMessage)
-        "debug" -> Log.d(logTag, logMessage)
-        "info" -> Log.i(logTag, logMessage)
-        "warn" -> Log.w(logTag, logMessage)
-        "error" -> Log.e(logTag, logMessage)
-        else -> Log.i(logTag, logMessage)
+    when (level.lowercase()) {
+      "verbose" -> Log.v(logTag, logMessage)
+      "debug" -> Log.d(logTag, logMessage)
+      "info" -> Log.i(logTag, logMessage)
+      "warn" -> Log.w(logTag, logMessage)
+      "error" -> Log.e(logTag, logMessage)
+      else -> Log.i(logTag, logMessage)
+    }
+  }
+
+  // NFC Methods
+  override fun checkNfcStatus(): Promise<NfcStatus> {
+    return Promise.async {
+      try {
+        val context = getApplicationContext()
+        if (context == null) {
+          return@async NfcStatus(isSupported = false, isEnabled = false)
+        }
+
+        val nfcAdapter = NfcAdapter.getDefaultAdapter(context)
+        if (nfcAdapter == null) {
+          return@async NfcStatus(isSupported = false, isEnabled = false)
+        }
+
+        this.nfcAdapter = nfcAdapter
+        return@async NfcStatus(
+          isSupported = true,
+          isEnabled = nfcAdapter.isEnabled
+        )
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to check NFC status", e)
+        return@async NfcStatus(isSupported = false, isEnabled = false)
       }
     }
   }
+
+  override fun startNfcSend(paymentData: String): Promise<Boolean> {
+    return Promise.async {
+      try {
+        Log.d(TAG, "Starting NFC send with data: ${paymentData.length} bytes")
+        
+        val context = getApplicationContext()
+        if (context == null) {
+          throw Exception("No application context available")
+        }
+
+        if (nfcAdapter == null) {
+          nfcAdapter = NfcAdapter.getDefaultAdapter(context)
+        }
+
+        if (nfcAdapter == null || !nfcAdapter!!.isEnabled) {
+          throw Exception("NFC is not available or not enabled")
+        }
+
+        // Store the payment data to send
+        nfcSendData = paymentData
+        isNfcActive = true
+
+        // Get current activity
+        currentActivity = getCurrentActivity()
+        if (currentActivity == null) {
+          throw Exception("No current activity available")
+        }
+
+        // Enable reader mode to send data when another device taps
+        Handler(Looper.getMainLooper()).post {
+          nfcAdapter?.enableReaderMode(
+            currentActivity,
+            this,
+            NfcAdapter.FLAG_READER_NFC_A or
+            NfcAdapter.FLAG_READER_NFC_B or
+            NfcAdapter.FLAG_READER_NFC_F or
+            NfcAdapter.FLAG_READER_NFC_V or
+            NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
+            null
+          )
+        }
+
+        Log.d(TAG, "NFC send mode activated")
+        return@async true
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to start NFC send", e)
+        throw Exception("Failed to start NFC send: ${e.message}")
+      }
+    }
+  }
+
+  override fun startNfcReceive(): Promise<String> {
+    return Promise.async {
+      try {
+        Log.d(TAG, "Starting NFC receive mode")
+        
+        val context = getApplicationContext()
+        if (context == null) {
+          throw Exception("No application context available")
+        }
+
+        if (nfcAdapter == null) {
+          nfcAdapter = NfcAdapter.getDefaultAdapter(context)
+        }
+
+        if (nfcAdapter == null || !nfcAdapter!!.isEnabled) {
+          throw Exception("NFC is not available or not enabled")
+        }
+
+        isNfcActive = true
+        nfcSendData = null // Clear send data
+
+        // Get current activity
+        currentActivity = getCurrentActivity()
+        if (currentActivity == null) {
+          throw Exception("No current activity available")
+        }
+
+        // Store the promise to resolve when data is received
+        nfcReceivePromise = Promise.async { receivedData ->
+          receivedData
+        }
+
+        // Enable reader mode to receive data
+        Handler(Looper.getMainLooper()).post {
+          nfcAdapter?.enableReaderMode(
+            currentActivity,
+            this,
+            NfcAdapter.FLAG_READER_NFC_A or
+            NfcAdapter.FLAG_READER_NFC_B or
+            NfcAdapter.FLAG_READER_NFC_F or
+            NfcAdapter.FLAG_READER_NFC_V,
+            null
+          )
+        }
+
+        Log.d(TAG, "NFC receive mode activated")
+        
+        // Wait for the data to be received
+        return@async nfcReceivePromise!!.await()
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to start NFC receive", e)
+        throw Exception("Failed to start NFC receive: ${e.message}")
+      }
+    }
+  }
+
+  override fun stopNfc() {
+    try {
+      Log.d(TAG, "Stopping NFC")
+      isNfcActive = false
+      nfcSendData = null
+      nfcReceivePromise = null
+
+      Handler(Looper.getMainLooper()).post {
+        currentActivity?.let { activity ->
+          nfcAdapter?.disableReaderMode(activity)
+        }
+      }
+      
+      currentActivity = null
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to stop NFC", e)
+    }
+  }
+
+  // NFC Reader Callback
+  override fun onTagDiscovered(tag: Tag?) {
+    if (!isNfcActive || tag == null) {
+      return
+    }
+
+    try {
+      if (nfcSendData != null) {
+        // Send mode: write data to the tag
+        Log.d(TAG, "NFC tag discovered in send mode")
+        writeNdefMessage(tag, nfcSendData!!)
+      } else if (nfcReceivePromise != null) {
+        // Receive mode: read data from the tag
+        Log.d(TAG, "NFC tag discovered in receive mode")
+        val data = readNdefMessage(tag)
+        if (data != null) {
+          nfcReceivePromise?.resolve(data)
+          nfcReceivePromise = null
+          stopNfc()
+        }
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "Error handling NFC tag", e)
+      nfcReceivePromise?.reject(e)
+      nfcReceivePromise = null
+    }
+  }
+
+  private fun writeNdefMessage(tag: Tag, data: String) {
+    try {
+      val ndefRecord = NdefRecord.createMime(NFC_MIME_TYPE, data.toByteArray(Charset.forName("UTF-8")))
+      val ndefMessage = NdefMessage(arrayOf(ndefRecord))
+
+      val ndef = Ndef.get(tag)
+      if (ndef != null) {
+        ndef.connect()
+        if (!ndef.isWritable) {
+          throw Exception("NFC tag is not writable")
+        }
+        if (ndef.maxSize < ndefMessage.toByteArray().size) {
+          throw Exception("NFC tag capacity is too small")
+        }
+        ndef.writeNdefMessage(ndefMessage)
+        ndef.close()
+        Log.d(TAG, "Successfully wrote NFC message")
+      } else {
+        // Try to format the tag as NDEF
+        val format = NdefFormatable.get(tag)
+        if (format != null) {
+          format.connect()
+          format.format(ndefMessage)
+          format.close()
+          Log.d(TAG, "Successfully formatted and wrote NFC message")
+        } else {
+          throw Exception("NFC tag doesn't support NDEF")
+        }
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to write NFC message", e)
+      throw e
+    }
+  }
+
+  private fun readNdefMessage(tag: Tag): String? {
+    try {
+      val ndef = Ndef.get(tag)
+      if (ndef == null) {
+        Log.w(TAG, "Tag doesn't support NDEF")
+        return null
+      }
+
+      ndef.connect()
+      val ndefMessage = ndef.ndefMessage ?: ndef.cachedNdefMessage
+      ndef.close()
+
+      if (ndefMessage == null) {
+        Log.w(TAG, "No NDEF message found on tag")
+        return null
+      }
+
+      for (record in ndefMessage.records) {
+        val mimeType = String(record.type, Charset.forName("US-ASCII"))
+        if (mimeType == NFC_MIME_TYPE) {
+          val payload = String(record.payload, Charset.forName("UTF-8"))
+          Log.d(TAG, "Successfully read NFC message: ${payload.length} bytes")
+          return payload
+        }
+      }
+
+      Log.w(TAG, "No matching MIME type found in NDEF message")
+      return null
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to read NFC message", e)
+      throw e
+    }
+  }
+
+  private fun getCurrentActivity(): Activity? {
+    try {
+      val activityThreadClass = Class.forName("android.app.ActivityThread")
+      val currentActivityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null)
+      val activitiesField = activityThreadClass.getDeclaredField("mActivities")
+      activitiesField.isAccessible = true
+      
+      @Suppress("UNCHECKED_CAST")
+      val activities = activitiesField.get(currentActivityThread) as? Map<Any, Any>
+      if (activities == null || activities.isEmpty()) {
+        return null
+      }
+
+      for (activityRecord in activities.values) {
+        val activityRecordClass = activityRecord.javaClass
+        val pausedField = activityRecordClass.getDeclaredField("paused")
+        pausedField.isAccessible = true
+        if (!pausedField.getBoolean(activityRecord)) {
+          val activityField = activityRecordClass.getDeclaredField("activity")
+          activityField.isAccessible = true
+          return activityField.get(activityRecord) as? Activity
+        }
+      }
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to get current activity", e)
+    }
+    return null
+  }
+}

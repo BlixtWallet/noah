@@ -12,10 +12,13 @@
 namespace margelo::nitro::noahtools { struct HttpResponse; }
 // Forward declaration of `HybridNoahToolsSpec` to properly resolve imports.
 namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
+// Forward declaration of `NfcStatus` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct NfcStatus; }
 
 // Include C++ defined types
 #include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
+#include "NfcStatus.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>

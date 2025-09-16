@@ -21,6 +21,10 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func nativePost(url: String, body: String, headers: Dictionary<String, String>, timeoutSeconds: Double) throws -> Promise<HttpResponse>
   func nativeGet(url: String, headers: Dictionary<String, String>, timeoutSeconds: Double) throws -> Promise<HttpResponse>
   func nativeLog(level: String, tag: String, message: String) throws -> Void
+  func checkNfcStatus() throws -> Promise<NfcStatus>
+  func startNfcSend(paymentData: String) throws -> Promise<Bool>
+  func startNfcReceive() throws -> Promise<String>
+  func stopNfc() throws -> Void
 }
 
 /// See ``HybridNoahToolsSpec``

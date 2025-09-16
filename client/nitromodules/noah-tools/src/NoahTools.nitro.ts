@@ -6,6 +6,18 @@ export interface HttpResponse {
   headers: Record<string, string>;
 }
 
+export interface NfcPaymentData {
+  destination: string;
+  amount?: number;
+  comment?: string;
+  paymentType?: "ark" | "lightning" | "onchain";
+}
+
+export interface NfcStatus {
+  isSupported: boolean;
+  isEnabled: boolean;
+}
+
 export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin" }> {
   getAppVariant(): string;
   getAppLogs(): Promise<string[]>;
@@ -29,4 +41,10 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
 
   // Native logging
   nativeLog(level: string, tag: string, message: string): void;
+
+  // NFC methods
+  checkNfcStatus(): Promise<NfcStatus>;
+  startNfcSend(paymentData: string): Promise<boolean>;
+  startNfcReceive(): Promise<string>;
+  stopNfc(): void;
 }

@@ -25,8 +25,10 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { satsToBtc, formatNumber } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import { COLORS } from "~/lib/styleConstants";
+import { useNfc } from "~/hooks/useNfc";
+import type { NfcPaymentData } from "noah-tools";
 
 const truncateAddress = (addr: string) => {
   if (addr.length <= 40) {
@@ -75,6 +77,15 @@ const ReceiveScreen = () => {
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
+
+  const {
+    isNfcSupported,
+    isNfcEnabled,
+    isNfcActive,
+    isProcessing: isNfcProcessing,
+    sendPaymentViaNfc,
+    cancelNfc,
+  } = useNfc();
 
   const {
     mutate: generateOffchainAddress,
@@ -153,6 +164,48 @@ const ReceiveScreen = () => {
     copyWithState(value, type);
   };
 
+  const handleNfcShare = async () => {
+    if (!bip321Uri) {
+      Alert.alert("No Payment Request", "Please generate a payment request first.");
+      return;
+    }
+
+    // Determine the primary payment method based on what's available
+    let paymentType: "ark" | "lightning" | "onchain" = "ark";
+    let destination = "";
+
+    if (vtxoPubkey) {
+      paymentType = "ark";
+      destination = vtxoPubkey;
+    } else if (lightningInvoice) {
+      paymentType = "lightning";
+      destination = lightningInvoice;
+    } else if (onchainAddress) {
+      paymentType = "onchain";
+      destination = onchainAddress;
+    }
+
+    const paymentData: NfcPaymentData = {
+      destination,
+      amount: amountSat || undefined,
+      paymentType,
+    };
+
+    const success = await sendPaymentViaNfc(paymentData);
+    if (success) {
+      // NFC is active, waiting for another device to tap
+    }
+  };
+
+  // Clean up NFC when component unmounts
+  useEffect(() => {
+    return () => {
+      if (isNfcActive) {
+        cancelNfc();
+      }
+    };
+  }, [isNfcActive, cancelNfc]);
+
   return (
     <NoahSafeAreaView className="flex-1 bg-background p-4">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -162,6 +215,21 @@ const ReceiveScreen = () => {
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
             <Text className="text-2xl font-bold text-foreground">Receive</Text>
+            <View className="flex-1 flex-row justify-end items-center">
+              {isNfcSupported && bip321Uri && (
+                <TouchableOpacity
+                  onPress={handleNfcShare}
+                  disabled={isNfcProcessing || !isNfcEnabled}
+                  style={{ opacity: isNfcEnabled ? 1 : 0.5 }}
+                >
+                  <MaterialIcons
+                    name="nfc"
+                    size={28}
+                    color={isNfcActive ? COLORS.BITCOIN_ORANGE : "white"}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           <View className="flex-row items-center justify-center my-4">
@@ -200,8 +268,12 @@ const ReceiveScreen = () => {
               </View>
             ) : null}
             <View className="flex-1">
-              <NoahButton onPress={handleGenerate} isLoading={isLoading} disabled={isLoading}>
-                Generate
+              <NoahButton
+                onPress={handleGenerate}
+                isLoading={isLoading || isNfcProcessing}
+                disabled={isLoading || isNfcActive}
+              >
+                {isNfcActive ? "NFC Active..." : "Generate"}
               </NoahButton>
             </View>
           </View>

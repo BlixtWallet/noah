@@ -14,12 +14,15 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
 // Forward declaration of `HttpResponse` to properly resolve imports.
 namespace margelo::nitro::noahtools { struct HttpResponse; }
+// Forward declaration of `NfcStatus` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct NfcStatus; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
 #include "HttpResponse.hpp"
 #include <unordered_map>
+#include "NfcStatus.hpp"
 
 #include "NoahTools-Swift-Cxx-Umbrella.hpp"
 
@@ -112,6 +115,36 @@ namespace margelo::nitro::noahtools {
     }
     inline void nativeLog(const std::string& level, const std::string& tag, const std::string& message) override {
       auto __result = _swiftPart.nativeLog(level, tag, message);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::shared_ptr<Promise<NfcStatus>> checkNfcStatus() override {
+      auto __result = _swiftPart.checkNfcStatus();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<bool>> startNfcSend(const std::string& paymentData) override {
+      auto __result = _swiftPart.startNfcSend(paymentData);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::shared_ptr<Promise<std::string>> startNfcReceive() override {
+      auto __result = _swiftPart.startNfcReceive();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void stopNfc() override {
+      auto __result = _swiftPart.stopNfc();
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

@@ -9,6 +9,8 @@
 
 // Forward declaration of `HttpResponse` to properly resolve imports.
 namespace margelo::nitro::noahtools { struct HttpResponse; }
+// Forward declaration of `NfcStatus` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct NfcStatus; }
 
 #include <string>
 #include <vector>
@@ -17,6 +19,8 @@ namespace margelo::nitro::noahtools { struct HttpResponse; }
 #include "HttpResponse.hpp"
 #include "JHttpResponse.hpp"
 #include <unordered_map>
+#include "NfcStatus.hpp"
+#include "JNfcStatus.hpp"
 
 namespace margelo::nitro::noahtools {
 
@@ -153,6 +157,58 @@ namespace margelo::nitro::noahtools {
   void JHybridNoahToolsSpec::nativeLog(const std::string& level, const std::string& tag, const std::string& message) {
     static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* level */, jni::alias_ref<jni::JString> /* tag */, jni::alias_ref<jni::JString> /* message */)>("nativeLog");
     method(_javaPart, jni::make_jstring(level), jni::make_jstring(tag), jni::make_jstring(message));
+  }
+  std::shared_ptr<Promise<NfcStatus>> JHybridNoahToolsSpec::checkNfcStatus() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>()>("checkNfcStatus");
+    auto __result = method(_javaPart);
+    return [&]() {
+      auto __promise = Promise<NfcStatus>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<JNfcStatus>(__boxedResult);
+        __promise->resolve(__result->toCpp());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<bool>> JHybridNoahToolsSpec::startNfcSend(const std::string& paymentData) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* paymentData */)>("startNfcSend");
+    auto __result = method(_javaPart, jni::make_jstring(paymentData));
+    return [&]() {
+      auto __promise = Promise<bool>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JBoolean>(__boxedResult);
+        __promise->resolve(static_cast<bool>(__result->value()));
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::startNfcReceive() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>()>("startNfcReceive");
+    auto __result = method(_javaPart);
+    return [&]() {
+      auto __promise = Promise<std::string>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JString>(__boxedResult);
+        __promise->resolve(__result->toStdString());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  void JHybridNoahToolsSpec::stopNfc() {
+    static const auto method = javaClassStatic()->getMethod<void()>("stopNfc");
+    method(_javaPart);
   }
 
 } // namespace margelo::nitro::noahtools

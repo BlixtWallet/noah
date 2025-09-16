@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSendScreen } from "../hooks/useSendScreen";
 import { SendSuccess } from "../components/SendSuccess";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
@@ -20,6 +21,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
 import { Text } from "~/components/ui/text";
+import { useNfc } from "~/hooks/useNfc";
+import type { NfcPaymentData } from "noah-tools";
 
 const SendScreen = () => {
   const navigation = useNavigation();
@@ -50,10 +53,66 @@ const SendScreen = () => {
     handleClear,
   } = useSendScreen();
 
+  const {
+    isNfcSupported,
+    isNfcEnabled,
+    isNfcActive,
+    isProcessing: isNfcProcessing,
+    sendPaymentViaNfc,
+    receivePaymentViaNfc,
+    cancelNfc,
+  } = useNfc();
+
   const handlePaste = async () => {
     const text = await Clipboard.getStringAsync();
     setDestination(text);
   };
+
+  const handleNfcSend = async () => {
+    if (!destination || !amountSat) {
+      Alert.alert("Missing Information", "Please enter a destination and amount first.");
+      return;
+    }
+
+    const paymentData: NfcPaymentData = {
+      destination,
+      amount: amountSat,
+      comment: comment || undefined,
+      paymentType: selectedPaymentMethod,
+    };
+
+    const success = await sendPaymentViaNfc(paymentData);
+    if (success) {
+      // The NFC send is initiated, waiting for another device to tap
+      // The actual send will happen when devices connect
+    }
+  };
+
+  const handleNfcReceive = async () => {
+    const receivedData = await receivePaymentViaNfc();
+    if (receivedData) {
+      // Set the received payment data
+      setDestination(receivedData.destination);
+      if (receivedData.amount) {
+        setAmount(receivedData.amount.toString());
+      }
+      if (receivedData.comment) {
+        setComment(receivedData.comment);
+      }
+      if (receivedData.paymentType) {
+        setSelectedPaymentMethod(receivedData.paymentType);
+      }
+    }
+  };
+
+  // Clean up NFC when component unmounts or when payment is successful
+  useEffect(() => {
+    return () => {
+      if (isNfcActive) {
+        cancelNfc();
+      }
+    };
+  }, [isNfcActive, cancelNfc]);
 
   if (parsedResult?.success) {
     return <SendSuccess parsedResult={parsedResult} handleDone={handleDone} />;
@@ -72,7 +131,20 @@ const SendScreen = () => {
               <Icon name="arrow-back" size={28} color="white" />
             </TouchableOpacity>
             <Text className="text-2xl font-bold text-foreground">Send</Text>
-            <View className="flex-1 items-end">
+            <View className="flex-1 flex-row justify-end items-center gap-3">
+              {isNfcSupported && (
+                <TouchableOpacity
+                  onPress={destination ? handleNfcSend : handleNfcReceive}
+                  disabled={isNfcProcessing || !isNfcEnabled}
+                  style={{ opacity: isNfcEnabled ? 1 : 0.5 }}
+                >
+                  <MaterialIcons
+                    name="nfc"
+                    size={28}
+                    color={isNfcActive ? COLORS.BITCOIN_ORANGE : "white"}
+                  />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity onPress={handleScanPress}>
                 <Icon name="scan" size={28} color="white" />
               </TouchableOpacity>
@@ -154,10 +226,10 @@ const SendScreen = () => {
               <View className="flex-1">
                 <NoahButton
                   onPress={handleSend}
-                  disabled={!destination || isSending}
-                  isLoading={isSending}
+                  disabled={!destination || isSending || isNfcActive}
+                  isLoading={isSending || isNfcProcessing}
                 >
-                  Send
+                  {isNfcActive ? "NFC Active..." : "Send"}
                 </NoahButton>
               </View>
             </View>

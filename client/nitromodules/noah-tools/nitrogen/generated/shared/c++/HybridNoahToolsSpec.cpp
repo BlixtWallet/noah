@@ -21,6 +21,10 @@ namespace margelo::nitro::noahtools {
       prototype.registerHybridMethod("nativePost", &HybridNoahToolsSpec::nativePost);
       prototype.registerHybridMethod("nativeGet", &HybridNoahToolsSpec::nativeGet);
       prototype.registerHybridMethod("nativeLog", &HybridNoahToolsSpec::nativeLog);
+      prototype.registerHybridMethod("checkNfcStatus", &HybridNoahToolsSpec::checkNfcStatus);
+      prototype.registerHybridMethod("startNfcSend", &HybridNoahToolsSpec::startNfcSend);
+      prototype.registerHybridMethod("startNfcReceive", &HybridNoahToolsSpec::startNfcReceive);
+      prototype.registerHybridMethod("stopNfc", &HybridNoahToolsSpec::stopNfc);
     });
   }
 

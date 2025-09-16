@@ -60,6 +60,10 @@ namespace margelo::nitro::noahtools {
     std::shared_ptr<Promise<HttpResponse>> nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) override;
     std::shared_ptr<Promise<HttpResponse>> nativeGet(const std::string& url, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) override;
     void nativeLog(const std::string& level, const std::string& tag, const std::string& message) override;
+    std::shared_ptr<Promise<NfcStatus>> checkNfcStatus() override;
+    std::shared_ptr<Promise<bool>> startNfcSend(const std::string& paymentData) override;
+    std::shared_ptr<Promise<std::string>> startNfcReceive() override;
+    void stopNfc() override;
 
   private:
     friend HybridBase;

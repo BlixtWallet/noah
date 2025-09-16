@@ -67,6 +67,22 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun nativeLog(level: String, tag: String, message: String): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun checkNfcStatus(): Promise<NfcStatus>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun startNfcSend(paymentData: String): Promise<Boolean>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun startNfcReceive(): Promise<String>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun stopNfc(): Unit
 
   private external fun initHybrid(): HybridData
 
