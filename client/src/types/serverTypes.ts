@@ -30,7 +30,7 @@ export type GetUploadUrlPayload = { backup_version: number, };
 
 export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding";
 
-export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, amount: number | null, offboarding_request_id: string | null, };
+export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, transaction_id: string | null, amount: number | null, offboarding_request_id: string | null, };
 
 export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
 
@@ -90,7 +90,11 @@ export type SubmitInvoicePayload = {
 /**
  * The BOLT11 invoice to be paid.
  */
-invoice: string, };
+invoice: string, 
+/**
+ * The unique identifier for the payment transaction.
+ */
+transaction_id: string, };
 
 /**
  * Defines the payload for updating a user's lightning address.

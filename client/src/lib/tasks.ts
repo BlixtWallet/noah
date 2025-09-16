@@ -47,7 +47,7 @@ export async function maintenance(): Promise<Result<void, Error>> {
   return ok(undefined);
 }
 
-export async function submitInvoice(k1: string, amountMsat: number) {
+export async function submitInvoice(transaction_id: string, k1: string, amountMsat: number) {
   log.d("[submitInvoice Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
@@ -66,7 +66,8 @@ export async function submitInvoice(k1: string, amountMsat: number) {
 
   const responseResult = await submitInvoiceApi({
     invoice,
-    k1,
+    transaction_id,
+    k1, // Use k1 from notification for auth optimization
   });
 
   if (responseResult.isErr()) {

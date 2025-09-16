@@ -104,12 +104,20 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           await handleTaskCompletion("maintenance", result, notificationData.k1);
         } else if (notificationData.notification_type === "lightning_invoice_request") {
           log.i("Received lightning invoice request", [notificationData]);
-          if (!notificationData.amount || !notificationData.k1) {
+          if (
+            !notificationData.amount ||
+            !notificationData.transaction_id ||
+            !notificationData.k1
+          ) {
             log.w("Invalid lightning invoice request", [notificationData]);
             return;
           }
 
-          await submitInvoice(notificationData.k1, notificationData.amount);
+          await submitInvoice(
+            notificationData.transaction_id,
+            notificationData.k1,
+            notificationData.amount,
+          );
         } else if (notificationData.notification_type === "backup_trigger") {
           if (!notificationData.k1) {
             log.w("Invalid backup trigger notification", [notificationData]);

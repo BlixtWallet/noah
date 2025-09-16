@@ -84,6 +84,7 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     let notification_data = NotificationsData {
         notification_type: NotificationTypes::Maintenance,
         k1: None, // Will be generated uniquely for each device
+        transaction_id: None,
         amount: None,
         offboarding_request_id: None,
     };
@@ -119,6 +120,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
         let notification_data = NotificationsData {
             notification_type: NotificationTypes::Offboarding,
             k1: None, // Will be generated uniquely for each device
+            transaction_id: None,
             amount: None,
             offboarding_request_id: Some(request.request_id.clone()),
         };

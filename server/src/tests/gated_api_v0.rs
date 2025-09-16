@@ -9,7 +9,7 @@ use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
 
-use crate::app_middleware::auth_middleware;
+use crate::app_middleware::{auth_middleware, user_exists_middleware};
 use crate::db::{
     backup_repo::BackupRepository, job_status_repo::JobStatusRepository,
     offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
@@ -51,8 +51,13 @@ async fn setup_test_app() -> (Router, AppState) {
         expo_access_token: "test-expo-access-token".to_string(),
     });
 
-    let app = Router::new()
-        .route("/register", post(register))
+    // Middleware layers
+    let auth_layer = middleware::from_fn_with_state(app_state.clone(), auth_middleware);
+    let user_exists_layer =
+        middleware::from_fn_with_state(app_state.clone(), user_exists_middleware);
+
+    // Gated routes that need auth AND user to exist in database
+    let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
         .route(
             "/register_offboarding_request",
@@ -68,11 +73,15 @@ async fn setup_test_app() -> (Router, AppState) {
         .route("/backup/delete", post(delete_backup))
         .route("/backup/settings", post(update_backup_settings))
         .route("/report_job_status", post(report_job_status))
-        .route_layer(middleware::from_fn_with_state(
-            app_state.clone(),
-            auth_middleware,
-        ))
-        .with_state(app_state.clone());
+        .layer(user_exists_layer);
+
+    // Routes that need auth but user may not exist (like registration)
+    let auth_router = Router::new()
+        .route("/register", post(register))
+        .merge(gated_router)
+        .layer(auth_layer);
+
+    let app = auth_router.with_state(app_state.clone());
 
     (app, app_state)
 }
