@@ -40,6 +40,7 @@ pub mod db;
 mod errors;
 mod migrations;
 mod push;
+mod rate_limit;
 mod s3_client;
 #[cfg(test)]
 mod tests;
@@ -235,6 +236,10 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let user_exists_layer =
         middleware::from_fn_with_state(app_state.clone(), app_middleware::user_exists_middleware);
 
+    // Create rate limiters
+    let public_rate_limiter = rate_limit::create_public_rate_limiter();
+    let auth_rate_limiter = rate_limit::create_auth_rate_limiter();
+
     // Gated routes, need auth and for user to exist
     let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
@@ -256,14 +261,16 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .layer(user_exists_layer);
 
     // Routes that need auth but user may not exist (like registration)
+    // Apply auth rate limiter to these routes
     let auth_router = Router::new()
         .route("/register", post(register))
         .merge(gated_router)
+        .layer(auth_rate_limiter)
         .layer(auth_layer);
 
-    // Public route
+    // Public routes with strict rate limiting on getk1
     let v0_router = Router::new()
-        .route("/getk1", get(get_k1))
+        .route("/getk1", get(get_k1).layer(public_rate_limiter))
         .merge(auth_router);
 
     // Public route
@@ -292,7 +299,12 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         axum::serve(private_listener, private_router).await.unwrap();
     });
 
-    axum::serve(listener, app).await?;
+    // Important: Use into_make_service_with_connect_info to provide IP information for rate limiting
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
 
     Ok(())
 }

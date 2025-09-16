@@ -140,6 +140,7 @@
             bun
             androidSdk
             bacon
+            rust-analyzer
             (bark-wrapper pkgs)
           ];
 

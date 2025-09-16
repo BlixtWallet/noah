@@ -10,6 +10,8 @@ tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 tower-http = { version = "0.6.6", features = ["trace"] }
+tower_governor = "0.8.0"
+governor = "0.10.1"
 libsql = "0.9.20"
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "0.4.41", features = ["serde"] }

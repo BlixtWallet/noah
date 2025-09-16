@@ -56,7 +56,7 @@ pub async fn auth_middleware(
         tracing::warn!(
             uri = %uri_path,
             k1 = %payload.k1,
-            "Auth failed: Invalid k1 (not found in cache)"
+            "Auth failed: k1 not found in cache - may have been already used or never existed"
         );
         return Err(ApiError::InvalidArgument("Invalid k1".to_string()).into_response());
     }
@@ -92,11 +92,14 @@ pub async fn auth_middleware(
         .as_secs();
 
     if now.saturating_sub(timestamp) > 600 {
+        let age_seconds = now.saturating_sub(timestamp);
         tracing::warn!(
             uri = %uri_path,
             k1 = %payload.k1,
-            age_seconds = %(now.saturating_sub(timestamp)),
-            "Auth failed: K1 expired"
+            age_seconds = %age_seconds,
+            max_age_seconds = 600,
+            "Auth failed: k1 expired (age {} seconds exceeds 10 minute limit)",
+            age_seconds
         );
         return Err(ApiError::K1Expired.into_response());
     }
@@ -109,7 +112,7 @@ pub async fn auth_middleware(
                     uri = %uri_path,
                     key = %payload.key,
                     error = %e,
-                    "Auth failed: Signature verification error"
+                    "Auth failed: Error during signature verification process"
                 );
                 return Err(ApiError::InvalidSignature.into_response());
             }
@@ -119,10 +122,18 @@ pub async fn auth_middleware(
         tracing::warn!(
             uri = %uri_path,
             key = %payload.key,
-            "Auth failed: Invalid signature"
+            k1 = %payload.k1,
+            "Auth failed: Signature verification failed - signature does not match the public key for the given k1"
         );
         return Err(ApiError::InvalidSignature.into_response());
     }
+
+    // Authentication successful
+    tracing::debug!(
+        uri = %uri_path,
+        key = %payload.key,
+        "Auth successful: User authenticated"
+    );
 
     // Remove the k1 value to prevent reuse
     state.k1_values.remove(&payload.k1);
@@ -172,10 +183,16 @@ pub async fn user_exists_middleware(
         tracing::warn!(
             uri = %uri_path,
             key = %auth_payload.key,
-            "User existence check failed: User not found"
+            "User existence check failed: User not found in database"
         );
         return Err(ApiError::UserNotFound.into_response());
     }
+
+    tracing::debug!(
+        uri = %uri_path,
+        key = %auth_payload.key,
+        "User existence check passed"
+    );
 
     Ok(next.run(request).await)
 }
