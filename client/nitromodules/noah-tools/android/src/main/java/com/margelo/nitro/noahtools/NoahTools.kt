@@ -201,16 +201,18 @@ class NoahTools : HybridNoahToolsSpec() {
               (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
               !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
 
-            // Check if this line is a continuation of the previous log entry
-            // Continuation lines have extra indentation after the log tag (ReactNativeJS: )
-            val isContinuation = line!!.matches(Regex(".*ReactNativeJS:\\s{2,}.*")) ||
-                                 line!!.matches(Regex(".*NitroArk:\\s{2,}.*"))
+            // More robust continuation detection
+            // Check for typical logcat format: "MM-DD HH:MM:SS.mmm PID TID LEVEL TAG: MESSAGE"
+            val isMainLogLine = line!!.matches(Regex("^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEF]\\s+\\w+:.*"))
 
-            if (isContinuation && logcat.isNotEmpty()) {
-              // Append to the last log entry
+            // If it doesn't match the main format, it's likely a continuation line
+            val isContinuation = !isMainLogLine && logcat.isNotEmpty()
+
+            if (isContinuation) {
+              // Append to the last log entry, preserving original formatting
               val lastEntry = logcat.removeLast()
-              val continuationContent = line!!.substringAfter(": ").trimStart()
-              logcat.addLast("$lastEntry\n  $continuationContent")
+              // Keep the original line as-is to preserve indentation and formatting
+              logcat.addLast("$lastEntry\n$line")
             } else {
               // Add as new log entry
               logcat.addLast(line!!)

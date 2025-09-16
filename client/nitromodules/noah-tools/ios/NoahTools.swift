@@ -174,32 +174,81 @@ class NoahTools: HybridNoahToolsSpec {
 
     func getAppLogs() throws -> Promise<[String]> {
         return Promise.async {
-            let store = try OSLogStore(scope: .currentProcessIdentifier)
+            do {
+                let store = try OSLogStore(scope: .currentProcessIdentifier)
 
-            // Start from 24 hours ago (adjust as needed, e.g., -3600 for 1 hour or Date.distantPast for all)
-            let position = store.position(date: Date().addingTimeInterval(-3600 * 24))
+                // Start from 24 hours ago (adjust as needed, e.g., -3600 for 1 hour or Date.distantPast for all)
+                let position = store.position(date: Date().addingTimeInterval(-3600 * 24))
 
-            // Subsystems to include in the logs
-            let rustSubsystem = "com.nitro.ark"
-            let jsSubsystem = "com.facebook.react.log"
+                // Subsystems to include in the logs
+                let rustSubsystem = "com.nitro.ark"
+                let jsSubsystem = "com.facebook.react.log"
 
-            // Debug logging
-            let debugLogger = Logger(subsystem: "com.noah.logfetcher", category: "debug")
-            debugLogger.info("Filtering for subsystems: \(rustSubsystem), \(jsSubsystem)")
+                // Debug logging
+                let debugLogger = Logger(subsystem: "com.noah.logfetcher", category: "debug")
+                debugLogger.info("Filtering for subsystems: \(rustSubsystem), \(jsSubsystem)")
 
-            // Predicate: Filter for entries from either the Rust subsystem or the JavaScript subsystem
-            let predicate = NSPredicate(
-                format: "subsystem == %@ OR subsystem == %@", rustSubsystem, jsSubsystem)
+                // Predicate: Filter for entries from either the Rust subsystem or the JavaScript subsystem
+                let predicate = NSPredicate(
+                    format: "subsystem == %@ OR subsystem == %@", rustSubsystem, jsSubsystem)
 
-            // Fetch entries with the predicate (efficient filtering)
-            let rawEntries = try store.getEntries(at: position, matching: predicate)
-            let filteredEntries = rawEntries.compactMap { $0 as? OSLogEntryLog }
+                // Fetch entries with the predicate (efficient filtering)
+                let rawEntries = try store.getEntries(at: position, matching: predicate)
+                let filteredEntries = rawEntries.compactMap { $0 as? OSLogEntryLog }
 
-            let formattedEntries = filteredEntries.map {
-                "[\($0.date.formatted())] \($0.composedMessage)"
+                // Sort by timestamp to ensure chronological order
+                let sortedEntries = filteredEntries.sorted { $0.date < $1.date }
+
+                // Apply log rotation - keep only the last 1000 entries to prevent memory issues
+                let maxLogEntries = 1000
+                let entriesToProcess = sortedEntries.suffix(maxLogEntries)
+
+                // Format entries with better timestamp formatting (similar to Android logcat)
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MM-dd HH:mm:ss.SSS"
+
+                let formattedEntries = entriesToProcess.map { entry in
+                    let timestamp = dateFormatter.string(from: entry.date)
+                    let level = self.getLogLevelString(from: entry.level)
+                    return "\(timestamp) \(level) \(entry.subsystem): \(entry.composedMessage)"
+                }
+
+                debugLogger.info("Returning \(formattedEntries.count) log entries")
+                return Array(formattedEntries)
+
+            } catch {
+                // Better error handling
+                let debugLogger = Logger(subsystem: "com.noah.logfetcher", category: "debug")
+                debugLogger.error("Failed to fetch logs: \(error.localizedDescription)")
+                throw NSError(
+                    domain: "NoahTools",
+                    code: 200,
+                    userInfo: [
+                        NSLocalizedDescriptionKey:
+                            "Failed to fetch logs: \(error.localizedDescription)"
+                    ]
+                )
             }
+        }
+    }
 
-            return formattedEntries
+    // Helper function to convert OSLogEntryLog level to string
+    private func getLogLevelString(from level: OSLogEntryLog.Level) -> String {
+        switch level {
+        case .undefined:
+            return "U"
+        case .debug:
+            return "D"
+        case .info:
+            return "I"
+        case .notice:
+            return "N"
+        case .error:
+            return "E"
+        case .fault:
+            return "F"
+        @unknown default:
+            return "I"
         }
     }
 
