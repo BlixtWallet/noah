@@ -490,9 +490,9 @@ class NoahTools: HybridNoahToolsSpec {
             logger.info("\(logMessage, privacy: .public)")
         }
     }
-    
+
     // MARK: - NFC Methods
-    
+
     func checkNfcStatus() throws -> Promise<NfcStatus> {
         return Promise.async {
             if #available(iOS 13.0, *) {
@@ -504,7 +504,7 @@ class NoahTools: HybridNoahToolsSpec {
             }
         }
     }
-    
+
     func startNfcSend(paymentData: String) throws -> Promise<Bool> {
         return Promise.async {
             guard #available(iOS 13.0, *) else {
@@ -514,7 +514,7 @@ class NoahTools: HybridNoahToolsSpec {
                     userInfo: [NSLocalizedDescriptionKey: "NFC is not available on this device"]
                 )
             }
-            
+
             guard NFCNDEFReaderSession.readingAvailable else {
                 throw NSError(
                     domain: "NoahTools",
@@ -522,23 +522,24 @@ class NoahTools: HybridNoahToolsSpec {
                     userInfo: [NSLocalizedDescriptionKey: "NFC is not supported on this device"]
                 )
             }
-            
+
             self.nfcSendData = paymentData
-            
+
             // Create NFC session for writing
             self.nfcWriterSession = NFCNDEFReaderSession(
                 delegate: self,
                 queue: nil,
                 invalidateAfterFirstRead: false
             )
-            
-            self.nfcWriterSession?.alertMessage = "Hold your device near another device to send payment"
+
+            self.nfcWriterSession?.alertMessage =
+                "Hold your device near another device to send payment"
             self.nfcWriterSession?.begin()
-            
+
             return true
         }
     }
-    
+
     func startNfcReceive() throws -> Promise<String> {
         return Promise.async {
             guard #available(iOS 13.0, *) else {
@@ -548,7 +549,7 @@ class NoahTools: HybridNoahToolsSpec {
                     userInfo: [NSLocalizedDescriptionKey: "NFC is not available on this device"]
                 )
             }
-            
+
             guard NFCNDEFReaderSession.readingAvailable else {
                 throw NSError(
                     domain: "NoahTools",
@@ -556,27 +557,26 @@ class NoahTools: HybridNoahToolsSpec {
                     userInfo: [NSLocalizedDescriptionKey: "NFC is not supported on this device"]
                 )
             }
-            
+
             // Create promise to resolve when data is received
-            self.nfcReceivePromise = Promise.async { receivedData in
-                receivedData
-            }
-            
+            self.nfcReceivePromise = Promise<String>()
+
             // Create NFC session for reading
             self.nfcSession = NFCNDEFReaderSession(
                 delegate: self,
                 queue: nil,
                 invalidateAfterFirstRead: true
             )
-            
-            self.nfcSession?.alertMessage = "Hold your device near another device to receive payment"
+
+            self.nfcSession?.alertMessage =
+                "Hold your device near another device to receive payment"
             self.nfcSession?.begin()
-            
-            // Wait for the data to be received
-            return try await self.nfcReceivePromise!.await()
+
+            // Return the promise that will be resolved when data is received
+            return self.nfcReceivePromise!
         }
     }
-    
+
     func stopNfc() throws {
         if #available(iOS 13.0, *) {
             self.nfcSession?.invalidate()
@@ -596,10 +596,11 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
     func readerSession(_ session: NFCNDEFReaderSession, didInvalidateWithError error: Error) {
         // Handle session invalidation
         if let nfcError = error as? NFCReaderError {
-            if nfcError.code != .readerSessionInvalidationErrorFirstNDEFTagRead &&
-               nfcError.code != .readerSessionInvalidationErrorUserCanceled {
+            if nfcError.code != .readerSessionInvalidationErrorFirstNDEFTagRead
+                && nfcError.code != .readerSessionInvalidationErrorUserCanceled
+            {
                 logger.error("NFC session invalidated with error: \(error.localizedDescription)")
-                
+
                 // Reject the promise if we have one
                 if let promise = self.nfcReceivePromise {
                     promise.reject(error)
@@ -607,7 +608,7 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
                 }
             }
         }
-        
+
         // Clean up
         if session == self.nfcSession {
             self.nfcSession = nil
@@ -615,19 +616,20 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
             self.nfcWriterSession = nil
         }
     }
-    
+
     func readerSession(_ session: NFCNDEFReaderSession, didDetectNDEFs messages: [NFCNDEFMessage]) {
         // This method is called when reading tags
         for message in messages {
             for record in message.records {
                 if let type = String(data: record.type, encoding: .utf8),
-                   type == self.nfcMimeType,
-                   let payload = String(data: record.payload, encoding: .utf8) {
-                    
+                    type == self.nfcMimeType,
+                    let payload = String(data: record.payload, encoding: .utf8)
+                {
+
                     // Resolve the promise with the received data
                     self.nfcReceivePromise?.resolve(payload)
                     self.nfcReceivePromise = nil
-                    
+
                     // Invalidate the session
                     session.invalidate()
                     return
@@ -635,29 +637,31 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
             }
         }
     }
-    
+
     func readerSession(_ session: NFCNDEFReaderSession, didDetect tags: [NFCNDEFTag]) {
         // This method is called when we want to write to tags
         guard let tag = tags.first else {
             session.invalidate(errorMessage: "No NFC tag found")
             return
         }
-        
+
         session.connect(to: tag) { error in
             if let error = error {
-                session.invalidate(errorMessage: "Failed to connect to tag: \(error.localizedDescription)")
+                session.invalidate(
+                    errorMessage: "Failed to connect to tag: \(error.localizedDescription)")
                 return
             }
-            
+
             // Check if we're in send mode
             if let dataToSend = self.nfcSendData {
                 // Write mode: write data to the tag
                 tag.queryNDEFStatus { status, capacity, error in
                     if let error = error {
-                        session.invalidate(errorMessage: "Failed to query tag: \(error.localizedDescription)")
+                        session.invalidate(
+                            errorMessage: "Failed to query tag: \(error.localizedDescription)")
                         return
                     }
-                    
+
                     switch status {
                     case .notSupported:
                         session.invalidate(errorMessage: "Tag doesn't support NDEF")
@@ -666,24 +670,26 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
                     case .readWrite:
                         // Create NDEF message
                         guard let payloadData = dataToSend.data(using: .utf8),
-                              let typeData = self.nfcMimeType.data(using: .utf8) else {
+                            let typeData = self.nfcMimeType.data(using: .utf8)
+                        else {
                             session.invalidate(errorMessage: "Failed to create NDEF message")
                             return
                         }
-                        
+
                         let payload = NFCNDEFPayload(
                             format: .media,
                             type: typeData,
                             identifier: Data(),
                             payload: payloadData
                         )
-                        
+
                         let message = NFCNDEFMessage(records: [payload])
-                        
+
                         // Write the message
                         tag.writeNDEF(message) { error in
                             if let error = error {
-                                session.invalidate(errorMessage: "Failed to write: \(error.localizedDescription)")
+                                session.invalidate(
+                                    errorMessage: "Failed to write: \(error.localizedDescription)")
                             } else {
                                 session.alertMessage = "Payment data sent successfully!"
                                 session.invalidate()
@@ -697,31 +703,33 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
                 // Read mode: read data from the tag
                 tag.readNDEF { message, error in
                     if let error = error {
-                        session.invalidate(errorMessage: "Failed to read tag: \(error.localizedDescription)")
+                        session.invalidate(
+                            errorMessage: "Failed to read tag: \(error.localizedDescription)")
                         return
                     }
-                    
+
                     guard let message = message else {
                         session.invalidate(errorMessage: "No NDEF message found on tag")
                         return
                     }
-                    
+
                     // Process the message
                     for record in message.records {
                         if let type = String(data: record.type, encoding: .utf8),
-                           type == self.nfcMimeType,
-                           let payload = String(data: record.payload, encoding: .utf8) {
-                            
+                            type == self.nfcMimeType,
+                            let payload = String(data: record.payload, encoding: .utf8)
+                        {
+
                             // Resolve the promise with the received data
                             self.nfcReceivePromise?.resolve(payload)
                             self.nfcReceivePromise = nil
-                            
+
                             session.alertMessage = "Payment data received successfully!"
                             session.invalidate()
                             return
                         }
                     }
-                    
+
                     session.invalidate(errorMessage: "No payment data found on tag")
                 }
             }
@@ -729,8 +737,4 @@ extension NoahTools: NFCNDEFReaderSessionDelegate {
     }
 }
 
-// NFC Status struct
-struct NfcStatus {
-    let isSupported: Bool
-    let isEnabled: Bool
-}
+// NfcStatus struct is generated by nitrogen, no need to declare it here

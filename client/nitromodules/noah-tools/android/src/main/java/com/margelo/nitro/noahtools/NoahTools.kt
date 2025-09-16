@@ -47,12 +47,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.MediaType.Companion.toMediaType
 import java.util.concurrent.TimeUnit
 
-// NFC Status data class
-data class NfcStatus(
-  val isSupported: Boolean,
-  val isEnabled: Boolean
-)
-
 class NoahTools : HybridNoahToolsSpec(), NfcAdapter.ReaderCallback {
 
   companion object {
@@ -640,59 +634,60 @@ class NoahTools : HybridNoahToolsSpec(), NfcAdapter.ReaderCallback {
   }
 
   override fun startNfcReceive(): Promise<String> {
-    return Promise.async {
-      try {
-        Log.d(TAG, "Starting NFC receive mode")
-        
-        val context = getApplicationContext()
-        if (context == null) {
-          throw Exception("No application context available")
-        }
-
-        if (nfcAdapter == null) {
-          nfcAdapter = NfcAdapter.getDefaultAdapter(context)
-        }
-
-        if (nfcAdapter == null || !nfcAdapter!!.isEnabled) {
-          throw Exception("NFC is not available or not enabled")
-        }
-
-        isNfcActive = true
-        nfcSendData = null // Clear send data
-
-        // Get current activity
-        currentActivity = getCurrentActivity()
-        if (currentActivity == null) {
-          throw Exception("No current activity available")
-        }
-
-        // Store the promise to resolve when data is received
-        nfcReceivePromise = Promise.async { receivedData ->
-          receivedData
-        }
-
-        // Enable reader mode to receive data
-        Handler(Looper.getMainLooper()).post {
-          nfcAdapter?.enableReaderMode(
-            currentActivity,
-            this,
-            NfcAdapter.FLAG_READER_NFC_A or
-            NfcAdapter.FLAG_READER_NFC_B or
-            NfcAdapter.FLAG_READER_NFC_F or
-            NfcAdapter.FLAG_READER_NFC_V,
-            null
-          )
-        }
-
-        Log.d(TAG, "NFC receive mode activated")
-        
-        // Wait for the data to be received
-        return@async nfcReceivePromise!!.await()
-      } catch (e: Exception) {
-        Log.e(TAG, "Failed to start NFC receive", e)
-        throw Exception("Failed to start NFC receive: ${e.message}")
+    val promise = Promise<String>()
+    
+    try {
+      Log.d(TAG, "Starting NFC receive mode")
+      
+      val context = getApplicationContext()
+      if (context == null) {
+        promise.reject(Exception("No application context available"))
+        return promise
       }
+
+      if (nfcAdapter == null) {
+        nfcAdapter = NfcAdapter.getDefaultAdapter(context)
+      }
+
+      if (nfcAdapter == null || !nfcAdapter!!.isEnabled) {
+        promise.reject(Exception("NFC is not available or not enabled"))
+        return promise
+      }
+
+      isNfcActive = true
+      nfcSendData = null // Clear send data
+
+      // Get current activity
+      currentActivity = getCurrentActivity()
+      if (currentActivity == null) {
+        promise.reject(Exception("No current activity available"))
+        return promise
+      }
+
+      // Store the promise to resolve when data is received
+      nfcReceivePromise = promise
+
+      // Enable reader mode to receive data
+      Handler(Looper.getMainLooper()).post {
+        nfcAdapter?.enableReaderMode(
+          currentActivity,
+          this,
+          NfcAdapter.FLAG_READER_NFC_A or
+          NfcAdapter.FLAG_READER_NFC_B or
+          NfcAdapter.FLAG_READER_NFC_F or
+          NfcAdapter.FLAG_READER_NFC_V,
+          null
+        )
+      }
+
+      Log.d(TAG, "NFC receive mode activated")
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to start NFC receive", e)
+      promise.reject(Exception("Failed to start NFC receive: ${e.message}"))
     }
+    
+    // Return the promise that will be resolved when data is received
+    return promise
   }
 
   override fun stopNfc() {
