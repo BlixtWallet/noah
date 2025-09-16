@@ -184,6 +184,7 @@ pub async fn lnurlp_request(
     let k1 = make_k1(state.k1_values.clone());
 
     let state_clone = state.clone();
+    let transaction_id_clone = transaction_id.clone();
     tokio::spawn(async move {
         let data = PushNotificationData {
             title: None,
@@ -191,7 +192,7 @@ pub async fn lnurlp_request(
             data: serde_json::to_string(&NotificationsData {
                 notification_type: NotificationTypes::LightningInvoiceRequest,
                 k1: Some(k1), // Include k1 for auth optimization
-                transaction_id: Some(transaction_id),
+                transaction_id: Some(transaction_id_clone),
                 amount: Some(amount),
                 offboarding_request_id: None,
             })
@@ -205,13 +206,24 @@ pub async fn lnurlp_request(
     });
 
     tracing::debug!("Waiting for invoice with a 180s timeout...");
-    let invoice = timeout(Duration::from_secs(180), rx)
-        .await
-        .map_err(|_| {
-            tracing::error!("Invoice request timed out after 180s");
-            ApiError::ServerErr("Request timed out".to_string())
-        })?
-        .map_err(|_| ApiError::ServerErr("Failed to receive invoice".to_string()))?;
+    let invoice_result = timeout(Duration::from_secs(180), rx).await;
+
+    let invoice = match invoice_result {
+        Ok(Ok(invoice)) => Ok(invoice),
+        Ok(Err(_)) => {
+            state.invoice_data_transmitters.remove(&transaction_id);
+            Err(ApiError::ServerErr("Failed to receive invoice".to_string()))
+        }
+        Err(_) => {
+            // Timeout occurred
+            state.invoice_data_transmitters.remove(&transaction_id);
+            tracing::error!(
+                "Invoice request timed out after 180s for transaction_id: {}",
+                transaction_id
+            );
+            Err(ApiError::ServerErr("Request timed out".to_string()))
+        }
+    }?;
 
     let response = LnurlpInvoiceResponse {
         pr: invoice,

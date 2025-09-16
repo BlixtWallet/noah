@@ -136,14 +136,15 @@ pub async fn user_exists_middleware(
     request: Request,
     next: Next,
 ) -> Result<Response, impl IntoResponse> {
-    let auth_payload = request
-        .extensions()
-        .get::<AuthPayload>()
-        .cloned()
-        .ok_or_else(|| {
-            ApiError::ServerErr("Auth payload not found in request extensions".to_string())
-                .into_response()
-        })?;
+    let auth_payload = match request.extensions().get::<AuthPayload>() {
+        Some(payload) => payload,
+        None => {
+            return Err(ApiError::ServerErr(
+                "Auth payload not found in request extensions".to_string(),
+            )
+            .into_response());
+        }
+    };
 
     let uri_path = request.uri().path().to_string();
 
