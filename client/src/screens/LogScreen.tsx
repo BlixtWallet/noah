@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, Pressable, ActivityIndicator, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Pressable, ActivityIndicator, TextInput, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
-import { ScrollView } from "react-native";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { getAppLogs } from "noah-tools";
