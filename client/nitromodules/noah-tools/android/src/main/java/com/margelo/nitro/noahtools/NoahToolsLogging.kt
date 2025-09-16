@@ -9,11 +9,11 @@ import java.io.InputStreamReader
 
 object NoahToolsLogging {
     private const val TAG = "NoahTools"
-    
+
     fun performNativeLog(level: String, tag: String, message: String) {
         val logTag = "ReactNativeJS"
         val logMessage = "[$tag] $message"
-        
+
         when (level.lowercase()) {
             "verbose" -> Log.v(logTag, logMessage)
             "debug" -> Log.d(logTag, logMessage)
@@ -23,7 +23,7 @@ object NoahToolsLogging {
             else -> Log.i(logTag, logMessage)
         }
     }
-    
+
     fun getApplicationContext(): Context? {
         return try {
             val activityThread = Class.forName("android.app.ActivityThread")
@@ -34,7 +34,7 @@ object NoahToolsLogging {
             null
         }
     }
-    
+
     fun performGetAppVariant(): String {
         try {
             val buildConfigClass = Class.forName("com.anonymous.noah.BuildConfig")
@@ -48,7 +48,7 @@ object NoahToolsLogging {
         }
         throw Error("NoahTools: Can't find BuildConfig field APP_VARIANT. Is the current app variant properly set?")
     }
-    
+
     fun performGetAppLogs(): Promise<Array<String>> {
         return Promise.async {
             val logcat = ArrayDeque<String>(2000)
@@ -56,20 +56,20 @@ object NoahToolsLogging {
             try {
                 val process = Runtime.getRuntime().exec("logcat -d -v threadtime")
                 val bufferedReader = BufferedReader(InputStreamReader(process.inputStream))
-                
+
                 var line: String?
                 while (bufferedReader.readLine().also { line = it } != null) {
                     if (line!!.contains(pid) &&
                         (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
                         !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
-                        
+
                         // More robust continuation detection
                         // Check for typical logcat format: "MM-DD HH:MM:SS.mmm PID TID LEVEL TAG: MESSAGE"
                         val isMainLogLine = line!!.matches(Regex("^\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\s+\\d+\\s+\\d+\\s+[VDIWEF]\\s+\\w+:.*"))
-                        
+
                         // If it doesn't match the main format, it's likely a continuation line
                         val isContinuation = !isMainLogLine && logcat.isNotEmpty()
-                        
+
                         if (isContinuation) {
                             // Append to the last log entry, preserving original formatting
                             val lastEntry = logcat.removeLast()
