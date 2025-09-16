@@ -76,6 +76,8 @@ pub struct UserInfoResponse {
 pub struct SubmitInvoicePayload {
     /// The BOLT11 invoice to be paid.
     pub invoice: String,
+    /// The unique identifier for the payment transaction.
+    pub transaction_id: String,
 }
 
 /// Defines the payload for updating a user's lightning address.
@@ -177,6 +179,7 @@ pub enum NotificationTypes {
 pub struct NotificationsData {
     pub notification_type: NotificationTypes,
     pub k1: Option<String>,
+    pub transaction_id: Option<String>,
     #[ts(type = "number | null")]
     pub amount: Option<u64>,
     pub offboarding_request_id: Option<String>,

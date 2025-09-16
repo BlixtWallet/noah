@@ -227,8 +227,16 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         Ok(())
     });
 
-    // Gated routes, need auth
-    let auth_router = Router::new()
+    // Middleware that checks the signature and authenticates the user
+    let auth_layer =
+        middleware::from_fn_with_state(app_state.clone(), app_middleware::auth_middleware);
+
+    // Middleware that only checks for user existence
+    let user_exists_layer =
+        middleware::from_fn_with_state(app_state.clone(), app_middleware::user_exists_middleware);
+
+    // Gated routes, need auth and for user to exist
+    let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
         .route(
             "/register_offboarding_request",
@@ -245,21 +253,17 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route("/backup/delete", post(delete_backup))
         .route("/backup/settings", post(update_backup_settings))
         .route("/report_job_status", post(report_job_status))
-        .route_layer(middleware::from_fn_with_state(
-            app_state.clone(),
-            app_middleware::auth_middleware,
-        ));
+        .layer(user_exists_layer);
+
+    // Routes that need auth but user may not exist (like registration)
+    let auth_router = Router::new()
+        .route("/register", post(register))
+        .merge(gated_router)
+        .layer(auth_layer);
 
     // Public route
     let v0_router = Router::new()
         .route("/getk1", get(get_k1))
-        .route(
-            "/register",
-            post(register).route_layer(middleware::from_fn_with_state(
-                app_state.clone(),
-                app_middleware::auth_middleware,
-            )),
-        )
         .merge(auth_router);
 
     // Public route

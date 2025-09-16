@@ -124,37 +124,57 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidSignature.into_response());
     }
 
-    if request.uri().path() != "/register" {
-        let conn = state.db.connect().map_err(|e| {
-            tracing::error!(
-                uri = %uri_path,
-                error = %e,
-                "Auth failed: Database connection error"
-            );
-            ApiError::ServerErr("Failed to connect to database".to_string()).into_response()
-        })?;
-
-        if !verify_user_exists(&conn, &payload.key).await.map_err(|e| {
-            tracing::error!(
-                uri = %uri_path,
-                key = %payload.key,
-                error = %e,
-                "Auth failed: Error checking user existence"
-            );
-            ApiError::UserNotFound.into_response()
-        })? {
-            tracing::warn!(
-                uri = %uri_path,
-                key = %payload.key,
-                "Auth failed: User not found"
-            );
-            return Err(ApiError::UserNotFound.into_response());
-        }
-    }
-
     // Remove the k1 value to prevent reuse
     state.k1_values.remove(&payload.k1);
 
     request.extensions_mut().insert(payload);
+    Ok(next.run(request).await)
+}
+
+pub async fn user_exists_middleware(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+) -> Result<Response, impl IntoResponse> {
+    let auth_payload = request
+        .extensions()
+        .get::<AuthPayload>()
+        .cloned()
+        .ok_or_else(|| {
+            ApiError::ServerErr("Auth payload not found in request extensions".to_string())
+                .into_response()
+        })?;
+
+    let uri_path = request.uri().path().to_string();
+
+    let conn = state.db.connect().map_err(|e| {
+        tracing::error!(
+            uri = %uri_path,
+            error = %e,
+            "User existence check failed: Database connection error"
+        );
+        ApiError::ServerErr("Failed to connect to database".to_string()).into_response()
+    })?;
+
+    if !verify_user_exists(&conn, &auth_payload.key)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                uri = %uri_path,
+                key = %auth_payload.key,
+                error = %e,
+                "User existence check failed: Error checking user existence"
+            );
+            ApiError::UserNotFound.into_response()
+        })?
+    {
+        tracing::warn!(
+            uri = %uri_path,
+            key = %auth_payload.key,
+            "User existence check failed: User not found"
+        );
+        return Err(ApiError::UserNotFound.into_response());
+    }
+
     Ok(next.run(request).await)
 }

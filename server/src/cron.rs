@@ -14,6 +14,7 @@ async fn background_sync(app_state: AppState) {
         data: serde_json::to_string(&NotificationsData {
             notification_type: NotificationTypes::BackgroundSync,
             k1: None,
+            transaction_id: None,
             amount: None,
             offboarding_request_id: None,
         })
@@ -40,6 +41,7 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
         let notification_data = NotificationsData {
             notification_type: NotificationTypes::BackupTrigger,
             k1: None, // Will be generated uniquely for each device by the send function
+            transaction_id: None,
             amount: None,
             offboarding_request_id: None,
         };

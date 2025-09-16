@@ -36,11 +36,6 @@ pub async fn register_push_token(
     );
 
     let conn = app_state.db.connect()?;
-    let user_repo = UserRepository::new(&conn);
-    if user_repo.find_by_pubkey(&auth_payload.key).await?.is_none() {
-        return Err(ApiError::InvalidArgument("User not registered".to_string()));
-    }
-
     let push_token_repo = PushTokenRepository::new(&conn);
     push_token_repo
         .upsert(&auth_payload.key, &payload.push_token)
@@ -59,12 +54,15 @@ pub async fn submit_invoice(
     Json(payload): Json<SubmitInvoicePayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     tracing::info!(
-        "Received submit invoice request for pubkey: {} and k1: {}",
+        "Received submit invoice request for pubkey: {} and transaction_id: {}",
         auth_payload.key,
-        auth_payload.k1
+        payload.transaction_id
     );
 
-    if let Some((_, tx)) = state.invoice_data_transmitters.remove(&auth_payload.k1) {
+    if let Some((_, tx)) = state
+        .invoice_data_transmitters
+        .remove(&payload.transaction_id)
+    {
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
 

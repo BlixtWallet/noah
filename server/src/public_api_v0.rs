@@ -6,6 +6,7 @@ use axum::{
     http::StatusCode,
 };
 use rand::Rng;
+use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
 use tokio::{sync::oneshot, time::timeout};
@@ -173,14 +174,14 @@ pub async fn lnurlp_request(
 
     let (tx, rx) = oneshot::channel();
 
-    // TODO Nitesh:
-    // This could be a retarded solution for now.
-    // We are using two separate states for k1
-    // One is signed from server, the other to just manage channel requests
-    // Probably need a better solution
+    // Generate a unique transaction ID for this payment request
+    let transaction_id = Uuid::new_v4().to_string();
+    state
+        .invoice_data_transmitters
+        .insert(transaction_id.clone(), tx);
 
+    // Generate a k1 for authentication optimization (avoids extra network call)
     let k1 = make_k1(state.k1_values.clone());
-    state.invoice_data_transmitters.insert(k1.clone(), tx);
 
     let state_clone = state.clone();
     tokio::spawn(async move {
@@ -189,7 +190,8 @@ pub async fn lnurlp_request(
             body: None,
             data: serde_json::to_string(&NotificationsData {
                 notification_type: NotificationTypes::LightningInvoiceRequest,
-                k1: Some(k1),
+                k1: Some(k1), // Include k1 for auth optimization
+                transaction_id: Some(transaction_id),
                 amount: Some(amount),
                 offboarding_request_id: None,
             })
