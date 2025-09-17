@@ -190,7 +190,7 @@ pub async fn user_exists_middleware(
 
     tracing::debug!(
         uri = %uri_path,
-        key = %auth_payload.key,
+        public_key = %auth_payload.key,
         "User existence check passed"
     );
 

@@ -31,7 +31,7 @@ pub async fn register_push_token(
     Json(payload): Json<RegisterPushToken>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     tracing::debug!(
-        "Received push token registration request for pubkey: {}",
+        "Received push registration request for public key: {}",
         auth_payload.key
     );
 
