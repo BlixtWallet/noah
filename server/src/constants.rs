@@ -18,8 +18,8 @@ pub enum EnvVariables {
     ArkServerUrl,
     #[strum(serialize = "SERVER_NETWORK")]
     ServerNetwork,
-    #[strum(serialize = "SENTRY_TOKEN")]
-    SentryToken,
+    #[strum(serialize = "SENTRY_URL")]
+    SentryUrl,
     #[strum(serialize = "BACKGROUND_SYNC_CRON")]
     BackgroundSyncCron,
     #[strum(serialize = "BACKUP_CRON")]

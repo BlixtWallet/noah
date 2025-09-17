@@ -71,13 +71,41 @@ struct Config {
     expo_access_token: String,
     ark_server_url: String,
     server_network: Network,
-    sentry_token: Option<String>,
+    sentry_url: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
     let config = load_config()?;
 
+    // Initialize Sentry first if we're on production networks
+    let _sentry_guard =
+        if config.server_network == Network::Bitcoin || config.server_network == Network::Signet {
+            if let Some(sentry_url) = config.sentry_url.clone() {
+                let guard = Some(sentry::init((
+                    sentry_url.clone(),
+                    sentry::ClientOptions {
+                        release: sentry::release_name!(),
+                        enable_logs: true,
+                        send_default_pii: false,
+                        ..Default::default()
+                    },
+                )));
+                info!(
+                    "Sentry initialized successfully with URL: {}",
+                    sentry_url.len()
+                );
+                guard
+            } else {
+                info!("Sentry URL not provided, skipping Sentry initialization");
+                None
+            }
+        } else {
+            info!("Sentry disabled for network: {:?}", config.server_network);
+            None
+        };
+
+    // Build subscriber with conditional Sentry layer
     let subscriber = tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -85,30 +113,18 @@ fn main() -> anyhow::Result<()> {
         )
         .with(tracing_subscriber::fmt::layer());
 
-    if config.server_network == Network::Bitcoin || config.server_network == Network::Signet {
-        if let Some(sentry_token) = config.sentry_token.clone() {
-            let _guard = sentry::init((
-                sentry_token,
-                sentry::ClientOptions {
-                    release: sentry::release_name!(),
-                    enable_logs: true,
-                    send_default_pii: false,
-                    ..Default::default()
-                },
-            ));
-
-            let sentry_layer =
-                sentry::integrations::tracing::layer().event_filter(|md| match *md.level() {
-                    tracing::Level::ERROR => EventFilter::Log,
-                    tracing::Level::WARN => EventFilter::Log,
-                    tracing::Level::INFO => EventFilter::Log,
-                    tracing::Level::DEBUG => EventFilter::Log,
-                    _ => EventFilter::Ignore,
-                });
-            subscriber.with(sentry_layer).init();
-        } else {
-            subscriber.init();
-        }
+    // Initialize subscriber with or without Sentry layer
+    if _sentry_guard.is_some() {
+        let sentry_layer =
+            sentry::integrations::tracing::layer().event_filter(|md| match *md.level() {
+                tracing::Level::ERROR => EventFilter::Log,
+                tracing::Level::WARN => EventFilter::Log,
+                tracing::Level::INFO => EventFilter::Log,
+                tracing::Level::DEBUG => EventFilter::Log,
+                _ => EventFilter::Ignore,
+            });
+        println!("Sentry tracing layer added to subscriber");
+        subscriber.with(sentry_layer).init();
     } else {
         subscriber.init();
     }
@@ -150,7 +166,7 @@ fn load_config() -> anyhow::Result<Config> {
         &std::env::var(EnvVariables::ServerNetwork.to_string())
             .unwrap_or(constants::DEFAULT_SERVER_NETWORK.to_string()),
     )?;
-    let sentry_token = std::env::var(EnvVariables::SentryToken.to_string()).ok();
+    let sentry_url = std::env::var(EnvVariables::SentryUrl.to_string()).ok();
 
     Ok(Config {
         host,
@@ -162,7 +178,7 @@ fn load_config() -> anyhow::Result<Config> {
         expo_access_token,
         ark_server_url,
         server_network,
-        sentry_token,
+        sentry_url,
     })
 }
 
