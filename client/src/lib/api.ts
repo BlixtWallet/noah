@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import { getServerEndpoint } from "~/constants";
 import { peakKeyPair, signMessage } from "./crypto";
@@ -217,7 +218,7 @@ export const getDownloadUrlForRestore = async (payload: {
 }): Promise<Result<DownloadUrlResponse, Error>> => {
   const { k1, sig, key, ...restPayload } = payload;
   try {
-    const headers: HeadersInit = {
+    const headers = {
       "Content-Type": "application/json",
       "x-auth-k1": k1,
       "x-auth-sig": sig,

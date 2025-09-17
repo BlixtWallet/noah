@@ -56,6 +56,7 @@ export function useLoadWallet() {
       }
     },
     onError: (error: Error) => {
+      log.e("Error syncing wallet", [error]);
       setWalletError(true);
     },
   });

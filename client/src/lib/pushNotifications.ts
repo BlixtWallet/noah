@@ -55,7 +55,7 @@ async function handleTaskCompletion(
 
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
-  async ({ data, error, executionInfo }) => {
+  async ({ data, error }) => {
     log.i("[Background Job] dataReceived", [data, typeof data]);
     if (error) {
       log.e("[Background Job] error", [error]);

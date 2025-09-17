@@ -135,13 +135,11 @@ const OnboardForm = ({
   amount,
   setAmount,
   onchainBalance,
-  isMaxAmount,
   setIsMaxAmount,
 }: {
   amount: string;
   setAmount: (amount: string) => void;
   onchainBalance: number;
-  isMaxAmount: boolean;
   setIsMaxAmount: (isMax: boolean) => void;
 }) => (
   <View className="mb-4">
@@ -450,7 +448,6 @@ const BoardArkScreen = () => {
                 amount={amount}
                 setAmount={setAmount}
                 onchainBalance={onchainBalance}
-                isMaxAmount={isMaxAmount}
                 setIsMaxAmount={setIsMaxAmount}
               />
             </>

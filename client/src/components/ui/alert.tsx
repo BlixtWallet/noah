@@ -1,24 +1,24 @@
-import { useTheme } from '@react-navigation/native';
-import { cva, type VariantProps } from 'class-variance-authority';
-import type { LucideIcon } from 'lucide-react-native';
-import * as React from 'react';
-import { View, type ViewProps } from 'react-native';
-import { cn } from '~/lib/utils';
-import { Text } from '~/components/ui/text';
+import { useTheme } from "@react-navigation/native";
+import { cva, type VariantProps } from "class-variance-authority";
+import type { LucideIcon } from "lucide-react-native";
+import * as React from "react";
+import { View, type ViewProps } from "react-native";
+import { cn } from "~/lib/utils";
+import { Text } from "~/components/ui/text";
 
 const alertVariants = cva(
-  'relative bg-background w-full rounded-lg border border-border p-4 shadow shadow-foreground/10',
+  "relative bg-background w-full rounded-lg border border-border p-4 shadow shadow-foreground/10",
   {
     variants: {
       variant: {
-        default: '',
-        destructive: 'border-destructive',
+        default: "",
+        destructive: "border-destructive",
       },
     },
     defaultVariants: {
-      variant: 'default',
+      variant: "default",
     },
-  }
+  },
 );
 
 function Alert({
@@ -27,22 +27,21 @@ function Alert({
   children,
   icon: Icon,
   iconSize = 16,
-  iconClassName,
+
   ...props
 }: ViewProps &
   VariantProps<typeof alertVariants> & {
     ref?: React.RefObject<View>;
     icon: LucideIcon;
     iconSize?: number;
-    iconClassName?: string;
   }) {
   const { colors } = useTheme();
   return (
-    <View role='alert' className={alertVariants({ variant, className })} {...props}>
-      <View className='absolute left-3.5 top-4 -translate-y-0.5'>
+    <View role="alert" className={alertVariants({ variant, className })} {...props}>
+      <View className="absolute left-3.5 top-4 -translate-y-0.5">
         <Icon
           size={iconSize}
-          color={variant === 'destructive' ? colors.notification : colors.text}
+          color={variant === "destructive" ? colors.notification : colors.text}
         />
       </View>
       {children}
@@ -54,8 +53,8 @@ function AlertTitle({ className, ...props }: React.ComponentProps<typeof Text>) 
   return (
     <Text
       className={cn(
-        'pl-7 mb-1 font-medium text-base leading-none tracking-tight text-foreground',
-        className
+        "pl-7 mb-1 font-medium text-base leading-none tracking-tight text-foreground",
+        className,
       )}
       {...props}
     />
@@ -64,7 +63,7 @@ function AlertTitle({ className, ...props }: React.ComponentProps<typeof Text>) 
 
 function AlertDescription({ className, ...props }: React.ComponentProps<typeof Text>) {
   return (
-    <Text className={cn('pl-7 text-sm leading-relaxed text-foreground', className)} {...props} />
+    <Text className={cn("pl-7 text-sm leading-relaxed text-foreground", className)} {...props} />
   );
 }
 

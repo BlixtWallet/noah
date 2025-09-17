@@ -141,7 +141,6 @@ function SelectLabel({
 
 function SelectItem({
   className,
-  children,
   icon,
   description,
   ...props

@@ -101,9 +101,7 @@
 
               chmod +x $out/bin/*
 
-              if [ -d "/Applications/Xcode-beta.app" ]; then
-                DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
-              elif [ -d "/Applications/Xcode.app" ]; then
+              if [ -d "/Applications/Xcode.app" ]; then
                 DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
               elif [ -d "/Applications/Xcode-16.4.0.app" ]; then
                 DEVELOPER_DIR="/Applications/Xcode-16.4.0.app/Contents/Developer"

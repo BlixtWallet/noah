@@ -303,7 +303,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.29.4):
+  - NitroModules (0.29.6):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1630,7 +1630,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-bottom-tabs (0.11.1):
+  - react-native-bottom-tabs (0.11.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2858,7 +2858,7 @@ SPEC CHECKSUMS:
   MMKVCore: 6d5cc1bacce539f4c974985dfe646fb65a5d27d2
   NitroArk: 20b1ae0560be5286b03919e98558d599e8bb837e
   NitroMmkv: 827e61ed2d64353e42610ca11ed6ca0157707928
-  NitroModules: d140176cc4241d89eec31f938baf07c7527840d9
+  NitroModules: 9baeb373e78e48a9c0400f4c97ac6620f946333b
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
   RCTRequired: 54128b7df8be566881d48c7234724a78cb9b6157
@@ -2893,7 +2893,7 @@ SPEC CHECKSUMS:
   React-logger: 472e292c035c024ac73070cd6cbd011a827136f9
   React-Mapbuffer: 823a2c0e0d1826c784f808174626d5229f59be17
   React-microtasksnativemodule: 70cdf4826e52c7bcf98bc55255c3e30b5455d318
-  react-native-bottom-tabs: 86f2da7855cb2fa031a6dea60fc73059b2986e4e
+  react-native-bottom-tabs: 20495084b78e848d9578c71add3e7549a1e03c11
   react-native-safe-area-context: add9b4ba236fe95ec600604d0fc72f395433dd59
   react-native-vector-icons: 2c084b9997443aaf79527ac0454b50cc081c98de
   react-native-vector-icons-ionicons: ad07e944a092a5cf71b8b569d8f5ce2bf674c415
