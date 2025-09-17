@@ -91,17 +91,12 @@ fn main() -> anyhow::Result<()> {
                         ..Default::default()
                     },
                 )));
-                info!(
-                    "Sentry initialized successfully with URL: {}",
-                    sentry_url.len()
-                );
+
                 guard
             } else {
-                info!("Sentry URL not provided, skipping Sentry initialization");
                 None
             }
         } else {
-            info!("Sentry disabled for network: {:?}", config.server_network);
             None
         };
 
@@ -123,7 +118,6 @@ fn main() -> anyhow::Result<()> {
                 tracing::Level::DEBUG => EventFilter::Log,
                 _ => EventFilter::Ignore,
             });
-        println!("Sentry tracing layer added to subscriber");
         subscriber.with(sentry_layer).init();
     } else {
         subscriber.init();
