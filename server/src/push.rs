@@ -53,13 +53,8 @@ pub async fn send_push_notification_with_unique_k1(
         return Ok(());
     }
 
-    tracing::debug!(
-        "send_push_notification_with_unique_k1: Sending to {} tokens with unique k1s",
-        push_tokens.len()
-    );
-
     // Send individual notifications with unique k1 for each device
-    stream::iter(push_tokens)
+    stream::iter(push_tokens.clone())
         .for_each_concurrent(None, |push_token| {
             let expo_clone = expo.clone();
             let app_state_clone = app_state.clone();
@@ -110,8 +105,11 @@ pub async fn send_push_notification_with_unique_k1(
         })
         .await;
 
-    tracing::debug!("send_push_notification_with_unique_k1: Sent notifications with unique k1s");
-
+    tracing::debug!(
+        "send_push_notification_with_unique_k1: Sending to {} tokens with unique k1s {:?}",
+        push_tokens.len(),
+        base_notification_data
+    );
     Ok(())
 }
 
