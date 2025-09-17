@@ -17,6 +17,8 @@ import MnemonicScreen from "~/screens/MnemonicScreen";
 import LogScreen from "~/screens/LogScreen";
 import TransactionsScreen from "~/screens/TransactionsScreen";
 import TransactionDetailScreen from "~/screens/TransactionDetailScreen";
+import BoardingTransactionsScreen from "~/screens/BoardingTransactionsScreen";
+import BoardingTransactionDetailScreen from "~/screens/BoardingTransactionDetailScreen";
 import LightningAddressScreen from "~/screens/LightningAddressScreen";
 import { BackupSettingsScreen } from "~/screens/BackupSettingsScreen";
 import RestoreWalletScreen from "~/screens/RestoreWalletScreen";
@@ -26,9 +28,13 @@ import { COLORS } from "~/lib/styleConstants";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
 import { Transaction } from "~/types/transaction";
+import { OnboardingRequest, OffboardingRequest } from "~/lib/transactionsDb";
 import { getMnemonic } from "~/lib/crypto";
 
 // Param list types
+type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
+  type: "onboarding" | "offboarding";
+};
 export type SettingsStackParamList = {
   SettingsList: undefined;
   Mnemonic: { fromOnboarding: boolean };
@@ -51,6 +57,8 @@ export type HomeStackParamList = {
   Send: { destination: string };
   Transactions: undefined;
   TransactionDetail: { transaction: Transaction };
+  BoardingTransactions: undefined;
+  BoardingTransactionDetail: { transaction: BoardingTransaction };
 };
 
 const Tab = createNativeBottomTabNavigator();
@@ -107,6 +115,16 @@ const HomeStackScreen = () => (
     <HomeStack.Screen
       name="TransactionDetail"
       component={TransactionDetailScreen}
+      options={{ headerShown: false, animation: "default" }}
+    />
+    <HomeStack.Screen
+      name="BoardingTransactions"
+      component={BoardingTransactionsScreen}
+      options={{ headerShown: false, animation: "default" }}
+    />
+    <HomeStack.Screen
+      name="BoardingTransactionDetail"
+      component={BoardingTransactionDetailScreen}
       options={{ headerShown: false, animation: "default" }}
     />
   </HomeStack.Navigator>

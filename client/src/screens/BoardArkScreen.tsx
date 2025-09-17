@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import uuid from "react-native-uuid";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
@@ -10,7 +12,7 @@ import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance } from "../hooks/useWallet";
 import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
 import { registerOffboardingRequest } from "../lib/api";
-import { addOffboardingRequest } from "../lib/transactionsDb";
+import { addOffboardingRequest, addOnboardingRequest } from "../lib/transactionsDb";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import { cn } from "../lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -18,6 +20,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
 import { Result } from "neverthrow";
 import logger from "~/lib/log";
+import { HomeStackParamList } from "~/Navigators";
 
 const log = logger("BoardArkScreen");
 
@@ -192,27 +195,6 @@ const TransactionResult = ({
         </Pressable>
       </CardContent>
     </Card>
-
-    <Text className="text-xl font-bold text-foreground pt-4">vTXOs Created</Text>
-    {parsedData.vtxos.map((vtxo) => (
-      <Card key={vtxo.id}>
-        <CardHeader>
-          <CardTitle className="text-lg" numberOfLines={1} ellipsizeMode="middle">
-            ID: {vtxo.id}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DetailRow label="Amount" value={`${vtxo.amount_sat.toLocaleString()} sats`} />
-          <DetailRow label="Type" value={vtxo.vtxo_type} />
-          <DetailRow label="UTXO" value={vtxo.utxo} isCopyable />
-          <DetailRow label="User Pubkey" value={vtxo.user_pubkey} isCopyable />
-          <DetailRow label="ASP Pubkey" value={vtxo.asp_pubkey} isCopyable />
-          <DetailRow label="Expiry Height" value={vtxo.expiry_height} />
-          <DetailRow label="Exit Delta" value={vtxo.exit_delta} />
-          <DetailRow label="SPK" value={vtxo.spk} />
-        </CardContent>
-      </Card>
-    ))}
   </View>
 );
 
@@ -260,46 +242,9 @@ const ErrorDisplay = ({ errorMessage }: { errorMessage: string }) => (
   </Card>
 );
 
-const DetailRow = ({
-  label,
-  value,
-  isCopyable = false,
-}: {
-  label: string;
-  value: string | number;
-  isCopyable?: boolean;
-}) => {
-  const displayValue = String(value);
-
-  const { showAlert } = useAlert();
-
-  const handleCopy = async () => {
-    await copyToClipboard(displayValue, {
-      onCopy: () => {
-        showAlert({ title: "Copied to Clipboard", description: `${label} has been copied.` });
-      },
-    });
-  };
-
-  return (
-    <View className="flex-row justify-between items-center py-2 border-b border-border/50">
-      <Text className="text-muted-foreground text-base font-medium">{label}</Text>
-      <Pressable disabled={!isCopyable} onPress={handleCopy} className="max-w-[60%]">
-        <Text
-          className={cn("text-foreground text-base text-right", isCopyable && "text-primary")}
-          numberOfLines={1}
-          ellipsizeMode="middle"
-        >
-          {displayValue}
-        </Text>
-      </Pressable>
-    </View>
-  );
-};
-
 const BoardArkScreen = () => {
   const { showAlert } = useAlert();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const { data: balance, isLoading: isBalanceLoading } = useBalance();
   const {
     mutate: boardArk,
@@ -315,6 +260,7 @@ const BoardArkScreen = () => {
   } = useBoardAllAmountArk();
 
   const [flow, setFlow] = useState<Flow>("onboard");
+  const offboardResult = undefined; // Placeholder for offboard result
   const [amount, setAmount] = useState("");
   const [isMaxAmount, setIsMaxAmount] = useState(false);
   const [isRegisteringOffboard, setIsRegisteringOffboard] = useState(false);
@@ -324,13 +270,38 @@ const BoardArkScreen = () => {
   const { parsedData, setParsedData } = useParsedBoardingResult(
     boardResult,
     boardAllResult,
-    undefined,
+    offboardResult,
   );
+
+  // Store onboarding request in database when successful
+  useEffect(() => {
+    const storeOnboardingRequest = async () => {
+      if (parsedData && flow === "onboard") {
+        const onboardingRequestId = uuid.v4();
+
+        const addResult = await addOnboardingRequest({
+          request_id: onboardingRequestId,
+          date: new Date().toISOString(),
+          status: "completed",
+          onchain_txid: parsedData.funding_txid,
+        });
+
+        if (addResult.isErr()) {
+          log.e("Failed to store onboarding request in database", [addResult.error]);
+        } else {
+          log.d("Successfully stored onboarding request", [onboardingRequestId]);
+        }
+      }
+    };
+
+    storeOnboardingRequest();
+  }, [parsedData, flow]);
 
   const onchainBalance = balance?.onchain.confirmed ?? 0;
   const offchainBalance = balance?.offchain.spendable ?? 0;
 
   const handlePress = async () => {
+    Keyboard.dismiss();
     if (flow === "onboard") {
       handleBoard();
     } else {
@@ -413,13 +384,18 @@ const BoardArkScreen = () => {
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
-          <View className="flex-row items-center mb-8">
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
+          <View className="flex-row items-center justify-between mb-8">
+            <View className="flex-row items-center">
+              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+                <Icon name="arrow-back-outline" size={24} color="white" />
+              </Pressable>
+              <Text className="text-2xl font-bold text-foreground">
+                {flow === "onboard" ? "Board Ark" : "Offboard Ark"}
+              </Text>
+            </View>
+            <Pressable onPress={() => navigation.navigate("BoardingTransactions")} className="p-2">
+              <Icon name="time-outline" size={24} color="white" />
             </Pressable>
-            <Text className="text-2xl font-bold text-foreground">
-              {flow === "onboard" ? "Board Ark" : "Offboard Ark"}
-            </Text>
           </View>
 
           {/* Flow Toggle */}

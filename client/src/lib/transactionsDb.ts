@@ -36,6 +36,17 @@ export const openDatabase = async () => {
         status TEXT NOT NULL
       );
     `,
+    `
+      ALTER TABLE offboarding_requests ADD COLUMN onchain_txid TEXT;
+    `,
+    `
+      CREATE TABLE IF NOT EXISTS onboarding_requests (
+        request_id TEXT PRIMARY KEY NOT NULL,
+        date TEXT NOT NULL,
+        status TEXT NOT NULL,
+        onchain_txid TEXT
+      );
+    `,
     // In the future, add new migrations here. For example:
     // `ALTER TABLE transactions ADD COLUMN new_column TEXT;`,
   ];
@@ -105,17 +116,27 @@ export type OffboardingRequest = {
   request_id: string;
   date: string;
   status: "pending" | "completed" | "failed";
+  onchain_txid?: string;
+};
+
+// Onboarding request functions
+export type OnboardingRequest = {
+  request_id: string;
+  date: string;
+  status: "pending" | "completed" | "failed";
+  onchain_txid?: string;
 };
 
 export const addOffboardingRequest = async (request: OffboardingRequest) => {
   const db = await openDatabase();
   return ResultAsync.fromPromise(
     db.runAsync(
-      `INSERT INTO offboarding_requests (request_id, date, status)
-       VALUES (?, ?, ?);`,
+      `INSERT INTO offboarding_requests (request_id, date, status, onchain_txid)
+       VALUES (?, ?, ?, ?);`,
       request.request_id,
       request.date,
       request.status,
+      request.onchain_txid || null,
     ),
     (e) => {
       log.e("Failed to add offboarding request", [e]);
@@ -137,15 +158,66 @@ export const getOffboardingRequests = async (): Promise<
   );
 };
 
-export const updateOffboardingRequestStatus = async (
+export const addOnboardingRequest = async (request: OnboardingRequest) => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(
+    db.runAsync(
+      `INSERT INTO onboarding_requests (request_id, date, status, onchain_txid)
+       VALUES (?, ?, ?, ?);`,
+      request.request_id,
+      request.date,
+      request.status,
+      request.onchain_txid || null,
+    ),
+    (e) => {
+      log.e("Failed to add onboarding request", [e]);
+      return e as Error;
+    },
+  );
+};
+
+export const getOnboardingRequests = async (): Promise<ResultAsync<OnboardingRequest[], Error>> => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(
+    db.getAllAsync<OnboardingRequest>("SELECT * FROM onboarding_requests ORDER BY date DESC;"),
+    (e) => {
+      log.e("Failed to get onboarding requests", [e]);
+      return e as Error;
+    },
+  );
+};
+
+export const updateOnboardingRequestStatus = async (
   requestId: string,
-  status: OffboardingRequest["status"],
+  status: OnboardingRequest["status"],
+  onchainTxid?: string,
 ) => {
   const db = await openDatabase();
   return ResultAsync.fromPromise(
     db.runAsync(
-      "UPDATE offboarding_requests SET status = ? WHERE request_id = ?;",
+      "UPDATE onboarding_requests SET status = ?, onchain_txid = ? WHERE request_id = ?;",
       status,
+      onchainTxid || null,
+      requestId,
+    ),
+    (e) => {
+      log.e("Failed to update onboarding request status", [e]);
+      return e as Error;
+    },
+  );
+};
+
+export const updateOffboardingRequestStatus = async (
+  requestId: string,
+  status: OffboardingRequest["status"],
+  onchainTxid?: string,
+) => {
+  const db = await openDatabase();
+  return ResultAsync.fromPromise(
+    db.runAsync(
+      "UPDATE offboarding_requests SET status = ?, onchain_txid = ? WHERE request_id = ?;",
+      status,
+      onchainTxid || null,
       requestId,
     ),
     (e) => {

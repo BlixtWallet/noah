@@ -129,7 +129,11 @@ export async function offboardTask(requestId: string): Promise<Result<void, Erro
 
   log.d("[Offboard Job] offboarding result is ", [offboardResult.value]);
 
-  const updateResult = await updateOffboardingRequestStatus(requestId, "completed");
+  const updateResult = await updateOffboardingRequestStatus(
+    requestId,
+    "completed",
+    offboardResult.value,
+  );
   if (updateResult.isErr()) {
     log.e("Failed to update offboarding request status", [updateResult.error]);
     return err(updateResult.error);
