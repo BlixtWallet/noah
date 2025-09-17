@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable, ActivityIndicator } from "react-native";
+import { View, Pressable } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -9,11 +9,11 @@ import { Text } from "../components/ui/text";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Button } from "../components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
 
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
-import { COLORS } from "~/lib/styleConstants";
 import { getMnemonic } from "~/lib/crypto";
 
 type MnemonicScreenRouteProp = RouteProp<
@@ -90,7 +90,7 @@ const MnemonicScreen = () => {
           </Card>
         ) : (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+            <NoahActivityIndicator size="large" />
           </View>
         )}
 

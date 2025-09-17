@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, ActivityIndicator, TextInput, ScrollView } from "react-native";
+import { View, Pressable, TextInput, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -7,6 +7,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { getAppLogs } from "noah-tools";
 import { COLORS } from "~/lib/styleConstants";
 import { Button } from "~/components/ui/button";
+import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import RNFSTurbo from "react-native-fs-turbo";
 import Share from "react-native-share";
@@ -98,7 +99,7 @@ const LogScreen = () => {
         </View>
         {isLoading ? (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+            <NoahActivityIndicator size="large" />
           </View>
         ) : error ? (
           <View className="flex-1 justify-center items-center">

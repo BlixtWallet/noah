@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Switch, ScrollView, ActivityIndicator, Pressable } from "react-native";
+import { View, Switch, ScrollView, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useBackupManager } from "../hooks/useBackupManager";
 import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { CheckCircle } from "lucide-react-native";
 import Icon from "@react-native-vector-icons/ionicons";
+import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 
 export const BackupSettingsScreen = () => {
   const navigation = useNavigation();
@@ -42,7 +43,7 @@ export const BackupSettingsScreen = () => {
         <View className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-4">
           <Label className="text-foreground text-lg">Enable Automatic Backups</Label>
           <View className="flex-row items-center">
-            {isLoading && <ActivityIndicator size="small" className="mr-2" />}
+            {isLoading && <NoahActivityIndicator size="small" className="mr-2" />}
             <Switch value={isBackupEnabled} onValueChange={setBackupEnabled} disabled={isLoading} />
           </View>
         </View>
@@ -62,7 +63,7 @@ export const BackupSettingsScreen = () => {
         >
           {isLoading ? (
             <View className="flex-row items-center">
-              <ActivityIndicator size="small" color="white" className="mr-2" />
+              <NoahActivityIndicator size="small" color="white" className="mr-2" />
               <Text>Backing up...</Text>
             </View>
           ) : (
@@ -91,7 +92,7 @@ export const BackupSettingsScreen = () => {
           >
             {isLoading ? (
               <View className="flex-row items-center">
-                <ActivityIndicator size="small" className="mr-2" />
+                <NoahActivityIndicator size="small" className="mr-2" />
                 <Text>Loading...</Text>
               </View>
             ) : (

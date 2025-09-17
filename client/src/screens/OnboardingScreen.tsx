@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "../Navigators";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
-import { COLORS } from "../lib/styleConstants";
 import { useCreateWallet } from "../hooks/useWallet";
+import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 
 const OnboardingScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
@@ -26,7 +26,7 @@ const OnboardingScreen = () => {
       </Text>
       {isPending ? (
         <View className="items-center">
-          <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+          <NoahActivityIndicator size="large" />
           <Text className="mt-4 text-muted-foreground">Creating your wallet...</Text>
         </View>
       ) : (

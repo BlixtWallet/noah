@@ -37,6 +37,7 @@
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",
+    "check": "bun run lint && bun run typecheck",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },

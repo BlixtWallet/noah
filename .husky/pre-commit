@@ -1,3 +1,2 @@
-bun client lint
-bun client typecheck
+bun client check
 cargo fmt --check

@@ -126,6 +126,8 @@ const ReceiveScreen = () => {
   }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
   const handleGenerate = () => {
+    Keyboard.dismiss();
+
     if (amountSat && amountSat < 330) {
       Alert.alert("Invalid Amount", "The minimum amount is 330 sats.");
       return;
@@ -164,7 +166,7 @@ const ReceiveScreen = () => {
             <Text className="text-2xl font-bold text-foreground">Receive</Text>
           </View>
 
-          <View className="flex-row items-center justify-center my-4">
+          <View className="flex-row items-center justify-center my-2">
             {currency === "USD" && <Text className="text-white text-3xl font-bold mr-2">$</Text>}
             <TextInput
               className="text-white text-3xl font-bold text-center h-20"
@@ -191,7 +193,7 @@ const ReceiveScreen = () => {
               : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
           </Text>
 
-          <View className="flex-row items-center justify-between mt-8 gap-4">
+          <View className="flex-row items-center justify-between mt-6 gap-4">
             {bip321Uri ? (
               <View className="flex-1">
                 <Button onPress={handleClear} variant="outline">
@@ -222,7 +224,7 @@ const ReceiveScreen = () => {
                 </Pressable>
               </View>
 
-              <View className="mt-4">
+              <View>
                 {onchainAddress && (
                   <CopyableDetail
                     label="On-chain"

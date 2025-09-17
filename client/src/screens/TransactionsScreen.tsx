@@ -214,6 +214,7 @@ const TransactionsScreen = () => {
             )}
             keyExtractor={(item: Transaction) => item.id}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 50 }}
           />
         </View>
       </NoahSafeAreaView>

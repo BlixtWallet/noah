@@ -3,8 +3,9 @@ import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform, View, ActivityIndicator, Text } from "react-native";
+import { Platform, View, Text } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 
 import HomeScreen from "~/screens/HomeScreen";
 import OnboardingScreen from "~/screens/OnboardingScreen";
@@ -265,7 +266,7 @@ const AppNavigation = () => {
       <NavigationContainer theme={DarkTheme}>
         <StatusBar style="light" />
         <View className="flex-1 items-center justify-center bg-background">
-          <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+          <NoahActivityIndicator size="large" />
           <Text style={{ marginTop: 10, color: "white" }}>Loading...</Text>
         </View>
         <PortalHost />

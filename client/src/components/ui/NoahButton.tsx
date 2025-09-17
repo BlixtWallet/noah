@@ -1,8 +1,9 @@
 import React from "react";
-import { ActivityIndicator, ViewStyle } from "react-native";
+import { ViewStyle } from "react-native";
 import { Text } from "./text";
 import { Button, type ButtonProps } from "./button";
 import { COLORS } from "../../lib/styleConstants";
+import { NoahActivityIndicator } from "./NoahActivityIndicator";
 
 interface NoahButtonProps extends Omit<ButtonProps, "style"> {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export const NoahButton = ({ children, isLoading, style, ...props }: NoahButtonP
   return (
     <Button {...props} style={[{ backgroundColor: COLORS.BITCOIN_ORANGE }, style]}>
       {isLoading ? (
-        <ActivityIndicator color="white" />
+        <NoahActivityIndicator color="white" />
       ) : (
         <Text className="font-bold">{children}</Text>
       )}

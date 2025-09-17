@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, Text } from "react-native";
 import { useWalletStore } from "../store/walletStore";
 import { useLoadWallet, useCloseWallet } from "../hooks/useWallet";
-import { COLORS } from "../lib/styleConstants";
 import { isWalletLoaded as isWalletLoadedNitro } from "react-native-nitro-ark";
 import { getMnemonic } from "../lib/crypto";
+import { NoahActivityIndicator } from "./ui/NoahActivityIndicator";
 
 interface WalletLoaderProps {
   children: React.ReactNode;
@@ -84,7 +84,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
   if ((isWalletLoading || !isWalletLoaded) && !walletError) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+        <NoahActivityIndicator size="large" />
         <Text style={{ marginTop: 10, color: "white" }}>Loading Wallet...</Text>
       </View>
     );

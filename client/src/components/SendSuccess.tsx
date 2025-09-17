@@ -1,10 +1,11 @@
-import React from "react";
-import { View } from "react-native";
+import React, { useState } from "react";
+import { View, Pressable } from "react-native";
 import { Text } from "./ui/text";
 import { NoahButton } from "./ui/NoahButton";
 import SuccessAnimation from "./SuccessAnimation";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import { copyToClipboard } from "../lib/clipboardUtils";
 
 type ParsedResult = {
   amount_sat: number;
@@ -18,6 +19,31 @@ type ParsedResult = {
 type SendSuccessProps = {
   parsedResult: ParsedResult;
   handleDone: () => void;
+};
+
+const CopyableRow = ({ label, value }: { label: string; value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const onCopy = async () => {
+    await copyToClipboard(value, {
+      onCopy: () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1000);
+      },
+    });
+  };
+
+  // Trim the displayed value to make it more readable
+  const displayValue = value.length > 20 ? `${value.slice(0, 15)}...${value.slice(-10)}` : value;
+
+  return (
+    <View className="mt-2">
+      <Text className="text-muted-foreground">{label}:</Text>
+      <Pressable onPress={onCopy}>
+        <Text className="text-foreground font-semibold">{copied ? "Copied!" : displayValue}</Text>
+      </Pressable>
+    </View>
+  );
 };
 
 export const SendSuccess: React.FC<SendSuccessProps> = ({ parsedResult, handleDone }) => {
@@ -39,40 +65,9 @@ export const SendSuccess: React.FC<SendSuccessProps> = ({ parsedResult, handleDo
             <Text className="text-muted-foreground">Type:</Text>
             <Text className="text-foreground font-semibold">{parsedResult.type}</Text>
           </View>
-          <View>
-            <Text className="text-muted-foreground">Destination:</Text>
-            <Text
-              className="text-foreground font-semibold"
-              ellipsizeMode="middle"
-              numberOfLines={1}
-            >
-              {parsedResult.destination}
-            </Text>
-          </View>
-          {parsedResult.txid && (
-            <View className="mt-2">
-              <Text className="text-muted-foreground">Transaction ID:</Text>
-              <Text
-                className="text-foreground font-semibold"
-                ellipsizeMode="middle"
-                numberOfLines={1}
-              >
-                {parsedResult.txid}
-              </Text>
-            </View>
-          )}
-          {parsedResult.preimage && (
-            <View className="mt-2">
-              <Text className="text-muted-foreground">Preimage:</Text>
-              <Text
-                className="text-foreground font-semibold"
-                ellipsizeMode="middle"
-                numberOfLines={1}
-              >
-                {parsedResult.preimage}
-              </Text>
-            </View>
-          )}
+          <CopyableRow label="Destination" value={parsedResult.destination} />
+          {parsedResult.txid && <CopyableRow label="Transaction ID" value={parsedResult.txid} />}
+          {parsedResult.preimage && <CopyableRow label="Preimage" value={parsedResult.preimage} />}
         </CardContent>
       </Card>
       <NoahButton onPress={handleDone} className="w-full mt-8">

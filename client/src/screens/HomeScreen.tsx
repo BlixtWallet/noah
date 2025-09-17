@@ -1,4 +1,4 @@
-import { View, ScrollView, RefreshControl, Pressable, ActivityIndicator } from "react-native";
+import { View, ScrollView, RefreshControl, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NoahButton } from "../components/ui/NoahButton";
@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
+import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance, useBalanceSync, useLoadWallet } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
@@ -128,7 +129,7 @@ const HomeScreen = () => {
       >
         <View className="items-center justify-center flex-1">
           {isFetching && !balance ? (
-            <ActivityIndicator size="large" color={COLORS.BITCOIN_ORANGE} />
+            <NoahActivityIndicator size="large" />
           ) : error || walletError ? (
             <Alert variant="destructive" icon={AlertCircle}>
               <AlertTitle>Error</AlertTitle>
@@ -154,7 +155,7 @@ const HomeScreen = () => {
                         </Text>
                       ) : (
                         <View className="h-[32px] mb-2 justify-center">
-                          <ActivityIndicator color={COLORS.BITCOIN_ORANGE} />
+                          <NoahActivityIndicator />
                         </View>
                       )}
                       <View className="flex-row items-center space-x-2">

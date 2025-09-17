@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  TouchableWithoutFeedback,
-  Keyboard,
-} from "react-native";
+import { View, Pressable, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
+import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance } from "../hooks/useWallet";
 import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
 import { registerOffboardingRequest } from "../lib/api";
 import { addOffboardingRequest } from "../lib/transactionsDb";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import { cn } from "../lib/utils";
-import { COLORS } from "../lib/styleConstants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
@@ -83,7 +76,7 @@ const BalanceDisplay = ({
   <View className="mb-8">
     <Text className="text-lg text-muted-foreground">{title}</Text>
     {isLoading ? (
-      <ActivityIndicator color={COLORS.BITCOIN_ORANGE} className="mt-2" />
+      <NoahActivityIndicator className="mt-2" />
     ) : (
       <Text className="text-3xl font-bold text-foreground mt-1">
         {amount.toLocaleString()} sats
