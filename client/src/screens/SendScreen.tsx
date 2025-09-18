@@ -1,6 +1,6 @@
 import React from "react";
 import { useSendScreen } from "../hooks/useSendScreen";
-import { SendSuccess } from "../components/SendSuccess";
+import { SendSuccessBottomSheet } from "../components/SendSuccessBottomSheet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
 import {
@@ -10,16 +10,18 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+
 import Icon from "@react-native-vector-icons/ionicons";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
-import { COLORS } from "~/lib/styleConstants";
 import { formatNumber, satsToUsd } from "~/lib/utils";
 import { useNavigation } from "@react-navigation/native";
 import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
 import { Text } from "~/components/ui/text";
+import { BottomSheet } from "~/components/ui/BottomSheet";
+import { SendConfirmation } from "~/components/SendConfirmation";
+import { CurrencyToggle } from "~/components/CurrencyToggle";
 
 const SendScreen = () => {
   const navigation = useNavigation();
@@ -33,6 +35,8 @@ const SendScreen = () => {
     setComment,
     parsedResult,
     handleSend,
+    handleConfirmSend,
+    handleCancelConfirmation,
     handleDone,
     isSending,
     showCamera,
@@ -48,16 +52,16 @@ const SendScreen = () => {
     selectedPaymentMethod,
     setSelectedPaymentMethod,
     handleClear,
+    showConfirmation,
+    destinationType,
+    showSuccess,
+    handleCloseSuccess,
   } = useSendScreen();
 
   const handlePaste = async () => {
     const text = await Clipboard.getStringAsync();
     setDestination(text);
   };
-
-  if (parsedResult?.success) {
-    return <SendSuccess parsedResult={parsedResult} handleDone={handleDone} />;
-  }
 
   if (showCamera) {
     return <QRCodeScanner codeScanner={codeScanner} onClose={() => setShowCamera(false)} />;
@@ -94,11 +98,9 @@ const SendScreen = () => {
               {currency === "SATS" && (
                 <Text className="text-white text-3xl font-bold ml-2">sats</Text>
               )}
-              {!parsedAmount && (
-                <TouchableOpacity onPress={toggleCurrency} className="ml-2">
-                  <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
-                </TouchableOpacity>
-              )}
+              <View className="ml-2">
+                <CurrencyToggle onPress={toggleCurrency} disabled={!!parsedAmount} />
+              </View>
             </View>
             <Text className="text-gray-400 text-center text-xl">
               {parsedAmount
@@ -164,6 +166,31 @@ const SendScreen = () => {
           </View>
         </View>
       </TouchableWithoutFeedback>
+
+      <BottomSheet isOpen={showConfirmation} onClose={handleCancelConfirmation}>
+        <SendConfirmation
+          destination={destination}
+          amount={amountSat}
+          destinationType={destinationType}
+          comment={comment}
+          btcPrice={btcPrice}
+          bip321Data={bip321Data}
+          selectedPaymentMethod={selectedPaymentMethod}
+          onConfirm={handleConfirmSend}
+          onCancel={handleCancelConfirmation}
+          isLoading={isSending}
+        />
+      </BottomSheet>
+
+      <BottomSheet isOpen={showSuccess} onClose={handleCloseSuccess}>
+        {parsedResult && (
+          <SendSuccessBottomSheet
+            parsedResult={parsedResult}
+            handleDone={handleDone}
+            btcPrice={btcPrice}
+          />
+        )}
+      </BottomSheet>
     </NoahSafeAreaView>
   );
 };

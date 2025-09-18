@@ -50,6 +50,8 @@ export const useSendScreen = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "ark" | "lightning" | "onchain"
   >("onchain");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (route.params?.destination) {
@@ -217,12 +219,32 @@ export const useSendScreen = () => {
           destination: displayResult.destination,
           btcPrice: btcPrice,
         });
+        setShowSuccess(true);
       }
       setParsedResult(displayResult);
     }
   }, [result, amountSat, showAlert, addTransaction, destinationType, comment, btcPrice]);
 
   const handleSend = () => {
+    // Validation
+    if (!isValidDestination(destination)) {
+      showAlert({
+        title: "Invalid Destination",
+        description:
+          "Please enter a valid Bitcoin address, BOLT11 invoice, Lightning Address, or Ark public key.",
+      });
+      return;
+    }
+    if (isNaN(amountSat) || amountSat <= 0) {
+      showAlert({ title: "Invalid Amount", description: "Please enter a valid amount." });
+      return;
+    }
+
+    // Show confirmation instead of sending immediately
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmSend = () => {
     if (destinationType === "bip321" && bip321Data) {
       let destinationToSend = null;
       let newDestinationType: DestinationTypes = "onchain";
@@ -251,29 +273,26 @@ export const useSendScreen = () => {
         amountSat: newDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
         comment: comment || null,
       });
-      return;
-    }
+    } else {
+      const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
 
-    if (!isValidDestination(destination)) {
-      showAlert({
-        title: "Invalid Destination",
-        description:
-          "Please enter a valid Bitcoin address, BOLT11 invoice, Lightning Address, or Ark public key.",
+      send({
+        destination: cleanedDestination,
+        amountSat:
+          finalDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
+        comment: comment || null,
       });
-      return;
-    }
-    if (isNaN(amountSat) || amountSat <= 0) {
-      showAlert({ title: "Invalid Amount", description: "Please enter a valid amount." });
-      return;
     }
 
-    const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
+    setShowConfirmation(false);
+  };
 
-    send({
-      destination: cleanedDestination,
-      amountSat: finalDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
-      comment: comment || null,
-    });
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
+  const handleCloseSuccess = () => {
+    setShowSuccess(false);
   };
 
   const handleDone = () => {
@@ -282,10 +301,15 @@ export const useSendScreen = () => {
     setDestination("");
     setAmount("");
     setComment("");
+    setShowConfirmation(false);
+    setShowSuccess(false);
+    handleCloseSuccess();
   };
 
   const handleClear = () => {
     setDestination("");
+    setShowConfirmation(false);
+    setShowSuccess(false);
   };
 
   const { showCamera, setShowCamera, handleScanPress, codeScanner } = useQRCodeScanner({
@@ -309,6 +333,8 @@ export const useSendScreen = () => {
     setComment,
     parsedResult,
     handleSend,
+    handleConfirmSend,
+    handleCancelConfirmation,
     handleDone,
     handleClear,
     isSending,
@@ -326,5 +352,9 @@ export const useSendScreen = () => {
     bip321Data,
     selectedPaymentMethod,
     setSelectedPaymentMethod,
+    showConfirmation,
+    destinationType,
+    showSuccess,
+    handleCloseSuccess,
   };
 };

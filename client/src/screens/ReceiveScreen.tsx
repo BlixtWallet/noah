@@ -6,7 +6,6 @@ import {
   Keyboard,
   Alert,
   TextInput,
-  TouchableOpacity,
   ScrollView,
 } from "react-native";
 import { Text } from "../components/ui/text";
@@ -25,8 +24,8 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { satsToBtc, formatNumber } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
-import { FontAwesome } from "@expo/vector-icons";
 import { COLORS } from "~/lib/styleConstants";
+import { CurrencyToggle } from "~/components/CurrencyToggle";
 
 const truncateAddress = (addr: string) => {
   if (addr.length <= 40) {
@@ -179,9 +178,9 @@ const ReceiveScreen = () => {
             {currency === "SATS" && (
               <Text className="text-white text-3xl font-bold ml-2">sats</Text>
             )}
-            <TouchableOpacity onPress={toggleCurrency} className="ml-2">
-              <FontAwesome name="arrows-v" size={24} color={COLORS.BITCOIN_ORANGE} />
-            </TouchableOpacity>
+            <View className="ml-2">
+              <CurrencyToggle onPress={toggleCurrency} />
+            </View>
           </View>
           <Text className="text-gray-400 text-center text-xl">
             {currency === "SATS"
