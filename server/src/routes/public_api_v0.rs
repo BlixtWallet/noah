@@ -278,8 +278,9 @@ pub async fn register(
     }
 
     let ln_address = payload.ln_address.unwrap_or_else(|| {
-        let number = rand::rng().random_range(0..1000);
-        format!("noah-{}", number)
+        let number = rand::rng().random_range(0..100);
+        let random_word = random_word::get(random_word::Lang::En);
+        format!("{}{}", random_word, number)
     });
 
     // Create a new user in a transaction
