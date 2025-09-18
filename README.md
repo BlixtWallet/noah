@@ -138,6 +138,8 @@ For development and testing, you can run a local Ark stack (bitcoind, aspd, bark
     - Generate blocks to fund it: `./scripts/ark-dev.sh generate 101`
     - Create a bark wallet: `./scripts/ark-dev.sh create-bark-wallet`
     - Fund the ASPD: `./scripts/ark-dev.sh fund-aspd 1`
+    - For interacting bark wallet: `./scripts/ark-dev.sh bark`
+    - For interacting with ASPD RPC: `./scripts/ark-dev.sh aspd`
 
 4.  **Stop the services**
 
@@ -171,6 +173,15 @@ bun client android:regtest:debug
 bun client ios:regtest:debug
 ```
 
+## 📡 Running the server
+
+- Important note: Server uses local sqlite database for `regtest` and `Turso cloud` database for `mainnet` and `signet`.
+- If you're using Nix, simply run `bacon` to start a hot reloading Rust.
+- If you are not using Nix, then `cargo install bacon` for hot reloading and then run `bacon`.
+- If you just want to run the server `cargo run` or `cargo run --release`.
+- For release builds, run `cargo build --release`.
+- Please look at the `.env.example` file for environment variables.
+
 ---
 
 ## 📦 Building for Production
@@ -180,14 +191,6 @@ You can create production-ready application binaries using the build scripts.
 Please see the `scripts` section in the [`package.json`](./package.json) file for commands starting with `build:`.
 
 **Note on Code Signing:** For production builds, you will need to configure your own signing keys. Refer to the official React Native and Expo documentation for code signing on [Android](https://reactnative.dev/docs/signed-apk-android) and iOS.
-
-## 📡 Running the server
-
-- Important note: Right now the server uses `Turso sqlite` as a remote database, so you will need an API_KEY from Turso, the goal is to move to a local sqlite with syncing to Turso eventually.
-- If you're using Nix, simply run `bacon` to start a hot reloading Rust.
-- If you are not using Nix, then `cargo install bacon` for hot reloading and then run `bacon`.
-- If you just want to run the server `cargo run` or `cargo run --release`.
-- For release builds, run `cargo build --release`.
 
 ---
 

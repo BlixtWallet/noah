@@ -6,12 +6,12 @@ use bitcoin::key::Keypair;
 use dashmap::DashMap;
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
-use crate::gated_api_v0::{
+use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
     list_backups, register_offboarding_request, register_push_token, report_job_status,
     update_backup_settings, update_ln_address,
 };
-use crate::public_api_v0::register;
+use crate::routes::public_api_v0::{get_k1, lnurlp_request, register};
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
 
@@ -56,7 +56,7 @@ pub async fn setup_test_app() -> (Router, AppState) {
     let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
     let conn = db.connect().unwrap();
-    crate::migrations::migrate(&conn).await.unwrap();
+    crate::db::migrations::migrate(&conn).await.unwrap();
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
@@ -105,7 +105,7 @@ pub async fn setup_public_test_app() -> (Router, AppState) {
     let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
     let conn = db.connect().unwrap();
-    crate::migrations::migrate(&conn).await.unwrap();
+    crate::db::migrations::migrate(&conn).await.unwrap();
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
@@ -116,10 +116,10 @@ pub async fn setup_public_test_app() -> (Router, AppState) {
     });
 
     let app = Router::new()
-        .route("/getk1", axum::routing::get(crate::public_api_v0::get_k1))
+        .route("/getk1", axum::routing::get(get_k1))
         .route(
             "/.well-known/lnurlp/{username}",
-            axum::routing::get(crate::public_api_v0::lnurlp_request),
+            axum::routing::get(lnurlp_request),
         )
         .with_state(app_state.clone());
 

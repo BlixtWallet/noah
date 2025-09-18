@@ -3,7 +3,7 @@ use axum::http::{self, Request, StatusCode};
 use http_body_util::BodyExt;
 use tower::ServiceExt;
 
-use crate::public_api_v0::{GetK1, LnurlpDefaultResponse};
+use crate::routes::public_api_v0::{GetK1, LnurlpDefaultResponse};
 use crate::tests::common::setup_public_test_app;
 
 #[tracing_test::traced_test]
