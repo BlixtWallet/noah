@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
 use tokio::{sync::oneshot, time::timeout};
-use validator::Validate;
+use validator::{Validate, ValidateEmail};
 
 use crate::{
     AppState,
@@ -280,8 +280,14 @@ pub async fn register(
     let ln_address = payload.ln_address.unwrap_or_else(|| {
         let number = rand::rng().random_range(0..100);
         let random_word = random_word::get(random_word::Lang::En);
-        format!("{}{}", random_word, number)
+        format!("{}{}@{}", random_word, number, state.lnurl_domain)
     });
+
+    if !ln_address.validate_email() {
+        return Err(ApiError::InvalidArgument(
+            "Invalid lightning address".to_string(),
+        ));
+    }
 
     // Create a new user in a transaction
     let tx = conn.transaction().await?;
