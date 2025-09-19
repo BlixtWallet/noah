@@ -28,7 +28,8 @@ type Setting = {
     | "showLogs"
     | "staticVtxoPubkey"
     | "resetRegistration"
-    | "backup";
+    | "backup"
+    | "vtxos";
   title: string;
   value?: string;
   isPressable: boolean;
@@ -78,6 +79,8 @@ const SettingsScreen = () => {
       // This is handled by the AlertDialog now
     } else if (item.id === "backup") {
       navigation.navigate("BackupSettings");
+    } else if (item.id === "vtxos") {
+      navigation.navigate("VTXOs");
     }
   };
 
@@ -116,6 +119,7 @@ const SettingsScreen = () => {
 
   if (isInitialized) {
     data.push({ id: "showMnemonic", title: "Show Mnemonic", isPressable: true });
+    data.push({ id: "vtxos", title: "Show VTXOs", isPressable: true });
     data.push({ id: "showLogs", title: "Show Logs", isPressable: true });
     data.push({
       id: "resetRegistration",

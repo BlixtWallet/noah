@@ -10,6 +10,8 @@ import {
   loadWalletIfNeeded as loadWalletAction,
   sync as syncAction,
   onchainSync as onchainSyncAction,
+  getVtxos,
+  getExpiringVtxos,
 } from "../lib/walletApi";
 import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
@@ -20,6 +22,15 @@ import { ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 
 const log = logger("useWallet");
+
+export interface BarkVtxo {
+  amount: number;
+  expiry_height: number;
+  server_pubkey: string;
+  exit_delta: number;
+  anchor_point: string;
+  point: string;
+}
 
 export function useCreateWallet() {
   const { showAlert } = useAlert();
@@ -83,6 +94,34 @@ export function useBalance() {
       return { onchain: onchainResult.value, offchain: offchainResult.value };
     },
     enabled: isInitialized,
+    retry: false,
+  });
+}
+
+export function useGetVtxos() {
+  return useQuery({
+    queryKey: ["vtxos"],
+    queryFn: async () => {
+      const result = await getVtxos();
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
+    retry: false,
+  });
+}
+
+export function useGetExpiringVtxos() {
+  return useQuery({
+    queryKey: ["expiring-vtxos"],
+    queryFn: async () => {
+      const result = await getExpiringVtxos();
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
     retry: false,
   });
 }

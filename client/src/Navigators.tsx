@@ -30,6 +30,8 @@ import AppServices from "~/AppServices";
 import { Transaction } from "~/types/transaction";
 import { OnboardingRequest, OffboardingRequest } from "~/lib/transactionsDb";
 import { getMnemonic } from "~/lib/crypto";
+import VTXOsScreen, { type VTXOWithStatus } from "~/screens/VTXOsScreen";
+import VTXODetailScreen from "~/screens/VTXODetailScreen";
 
 // Param list types
 type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
@@ -41,6 +43,8 @@ export type SettingsStackParamList = {
   Logs: undefined;
   LightningAddress: { fromOnboarding?: boolean };
   BackupSettings: undefined;
+  VTXOs: undefined;
+  VTXODetail: { vtxo: VTXOWithStatus };
 };
 
 export type OnboardingStackParamList = {
@@ -85,6 +89,12 @@ const SettingsStackNav = () => (
     <Stack.Screen
       name="BackupSettings"
       component={BackupSettingsScreen}
+      options={{ animation: "default" }}
+    />
+    <Stack.Screen name="VTXOs" component={VTXOsScreen} options={{ animation: "default" }} />
+    <Stack.Screen
+      name="VTXODetail"
+      component={VTXODetailScreen}
       options={{ animation: "default" }}
     />
   </Stack.Navigator>

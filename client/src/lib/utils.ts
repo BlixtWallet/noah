@@ -24,7 +24,7 @@ export const formatNumber = (num: number | string) => {
 };
 
 export const satsToBtc = (sats: number) => {
-  return sats / 100_000_000;
+  return (sats / 100_000_000).toFixed(8);
 };
 
 export const satsToUsd = (sats: number, btcPrice: number): string => {
