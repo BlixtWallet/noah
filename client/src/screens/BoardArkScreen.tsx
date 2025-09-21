@@ -70,10 +70,12 @@ const useParsedBoardingResult = (
 const BalanceDisplay = ({
   title,
   amount,
+  pendingAmount,
   isLoading,
 }: {
   title: string;
   amount: number;
+  pendingAmount?: number;
   isLoading: boolean;
 }) => (
   <View className="mb-8">
@@ -81,9 +83,16 @@ const BalanceDisplay = ({
     {isLoading ? (
       <NoahActivityIndicator className="mt-2" />
     ) : (
-      <Text className="text-3xl font-bold text-foreground mt-1">
-        {amount.toLocaleString()} sats
-      </Text>
+      <>
+        <Text className="text-3xl font-bold text-foreground mt-1">
+          {amount.toLocaleString()} sats
+        </Text>
+        {pendingAmount !== undefined && pendingAmount > 0 && (
+          <Text className="text-xl text-muted-foreground mt-1">
+            {pendingAmount.toLocaleString()} sats pending
+          </Text>
+        )}
+      </>
     )}
   </View>
 );
@@ -298,7 +307,16 @@ const BoardArkScreen = () => {
   }, [parsedData, flow]);
 
   const onchainBalance = balance?.onchain.confirmed ?? 0;
+  const onchainPendingBalance =
+    (balance?.onchain.immature ?? 0) +
+    (balance?.onchain.trusted_pending ?? 0) +
+    (balance?.onchain.untrusted_pending ?? 0);
+
   const offchainBalance = balance?.offchain.spendable ?? 0;
+  const offchainPendingBalance =
+    (balance?.offchain.pending_lightning_send ?? 0) +
+    (balance?.offchain.pending_in_round ?? 0) +
+    (balance?.offchain.pending_exit ?? 0);
 
   const handlePress = async () => {
     Keyboard.dismiss();
@@ -411,6 +429,7 @@ const BoardArkScreen = () => {
               <BalanceDisplay
                 title="Confirmed On-chain Balance"
                 amount={onchainBalance}
+                pendingAmount={onchainPendingBalance}
                 isLoading={isBalanceLoading}
               />
               <OnboardForm
@@ -423,12 +442,13 @@ const BoardArkScreen = () => {
           ) : (
             <>
               <Text className="text-muted-foreground text-center mb-8">
-                Register your offboarding request. It will be processed automatically when the next
-                Ark round starts.
+                Register your offboarding request to exit Ark to on-chain Bitcoin. It will be
+                processed automatically when the next Ark round starts.
               </Text>
               <BalanceDisplay
                 title="Confirmed Off-chain Balance"
                 amount={offchainBalance}
+                pendingAmount={offchainPendingBalance}
                 isLoading={isBalanceLoading}
               />
             </>

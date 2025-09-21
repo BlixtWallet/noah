@@ -1,6 +1,6 @@
 import { View, Pressable } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -23,20 +23,16 @@ const VTXOsScreen = () => {
   const { data: expiringVtxos = [], isLoading: isLoadingExpiring } = useGetExpiringVtxos();
 
   // Combine and deduplicate VTXOs by point, marking expiring ones
-  const vtxosWithStatus: VTXOWithStatus[] = useMemo(() => {
-    const expiringPoints = new Set(expiringVtxos.map((vtxo) => vtxo.point));
+  const expiringPoints = new Set(expiringVtxos.map((vtxo) => vtxo.point));
 
-    const combined = allVtxos.map((vtxo) => ({
-      ...vtxo,
-      isExpiring: expiringPoints.has(vtxo.point),
-    }));
-
-    return combined;
-  }, [allVtxos, expiringVtxos]);
+  const vtxosWithStatus: VTXOWithStatus[] = allVtxos.map((vtxo) => ({
+    ...vtxo,
+    isExpiring: expiringPoints.has(vtxo.point),
+  }));
 
   const isLoading = isLoadingAll || isLoadingExpiring;
 
-  const filteredVtxos = useMemo(() => {
+  const filteredVtxos = (() => {
     switch (filter) {
       case "active":
         return vtxosWithStatus.filter((vtxo) => !vtxo.isExpiring);
@@ -45,7 +41,7 @@ const VTXOsScreen = () => {
       default:
         return vtxosWithStatus;
     }
-  }, [vtxosWithStatus, filter]);
+  })();
 
   const getVtxoIcon = (isExpiring: boolean) => {
     return isExpiring ? "warning-outline" : "cube-outline";
