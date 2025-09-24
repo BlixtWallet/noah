@@ -1,15 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { nativeLog, LogLevel } from "noah-tools";
-
-// TODO(hsjoberg): we don't have got code to know if it's debug mode or not
-const Debug = true;
-
-export const logEntries: [LogLevel, string][] = [];
-
-// TODO: maybe make array observable in order trigger re-render for hook
-export function useGetLogEntries(): [LogLevel, string][] {
-  return logEntries;
-}
+import { nativeLog } from "noah-tools";
 
 const isDebugMode = __DEV__;
 
@@ -18,34 +8,27 @@ const log = (tag?: string) => {
 
   return {
     v: (message: string, data: any[] = []) => {
-      if (Debug) {
-        const msg = fixMessage(message, data);
-        logEntries.push(["verbose", `${tag}: ${msg}`]);
-        if (isDebugMode) {
-          console.debug(`${tag}: ${msg}`);
-          nativeLog("verbose", tag, msg);
-        } else {
-          nativeLog("verbose", tag, msg);
-        }
+      const msg = fixMessage(message, data);
+      if (isDebugMode) {
+        console.debug(`${tag}: ${msg}`);
+        nativeLog("verbose", tag, msg);
+      } else {
+        nativeLog("verbose", tag, msg);
       }
     },
 
     d: (message: string, data: any[] = []) => {
-      if (Debug) {
-        const msg = fixMessage(message, data);
-        logEntries.push(["debug", `${tag}: ${msg}`]);
-        if (isDebugMode) {
-          console.debug(`${tag}: ${msg}`);
-          nativeLog("debug", tag, msg);
-        } else {
-          nativeLog("debug", tag, msg);
-        }
+      const msg = fixMessage(message, data);
+      if (isDebugMode) {
+        console.debug(`${tag}: ${msg}`);
+        nativeLog("debug", tag, msg);
+      } else {
+        nativeLog("debug", tag, msg);
       }
     },
 
     i: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      logEntries.push(["info", `${tag}: ${msg}`]);
       if (isDebugMode) {
         console.log(`${tag}: ${msg}`);
         nativeLog("info", tag, msg);
@@ -56,7 +39,6 @@ const log = (tag?: string) => {
 
     w: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      logEntries.push(["warn", `${tag}: ${msg}`]);
       if (isDebugMode) {
         console.warn(`${tag}: ${msg}`);
         nativeLog("warn", tag, msg);
@@ -67,7 +49,6 @@ const log = (tag?: string) => {
 
     e: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      logEntries.push(["error", `${tag}: ${msg}`]);
       if (isDebugMode) {
         console.error(`${tag}: ${msg}`);
         nativeLog("error", tag, msg);

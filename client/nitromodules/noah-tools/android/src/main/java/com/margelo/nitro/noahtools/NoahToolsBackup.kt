@@ -18,7 +18,7 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 object NoahToolsBackup {
-    private const val TAG = "NoahTools"
+    private const val TAG = "com.noah.app"
     private const val FORMAT_VERSION: Byte = 1
     private const val SALT_LENGTH = 16
     private const val IV_LENGTH = 12

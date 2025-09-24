@@ -4,7 +4,7 @@ import OSLog
 
 extension NoahTools {
     // Logger for native logging
-    internal static let logger = Logger(subsystem: "com.facebook.react.log", category: "NoahTools")
+    internal static let logger = Logger(subsystem: "com.noah.app", category: "NoahTools")
 
     internal func performNativeLog(level: String, tag: String, message: String) throws {
         let logMessage = "[\(tag)] \(message)"
@@ -50,15 +50,11 @@ extension NoahTools {
 
                 // Subsystems to include in the logs
                 let rustSubsystem = "com.nitro.ark"
-                let jsSubsystem = "com.facebook.react.log"
+                let noahAppSubsystem = "com.noah.app"
 
-                // Debug logging
-                let debugLogger = Logger(subsystem: "com.noah.logfetcher", category: "debug")
-                debugLogger.info("Filtering for subsystems: \(rustSubsystem), \(jsSubsystem)")
-
-                // Predicate: Filter for entries from either the Rust subsystem or the JavaScript subsystem
+                // Predicate: Filter for entries from Rust and Noah app subsystems
                 let predicate = NSPredicate(
-                    format: "subsystem == %@ OR subsystem == %@", rustSubsystem, jsSubsystem)
+                    format: "subsystem == %@ OR subsystem == %@", rustSubsystem, noahAppSubsystem)
 
                 // Fetch entries with the predicate (efficient filtering)
                 let rawEntries = try store.getEntries(at: position, matching: predicate)
@@ -81,13 +77,9 @@ extension NoahTools {
                     return "\(timestamp) \(level) \(entry.subsystem): \(entry.composedMessage)"
                 }
 
-                debugLogger.info("Returning \(formattedEntries.count) log entries")
                 return Array(formattedEntries)
 
             } catch {
-                // Better error handling
-                let debugLogger = Logger(subsystem: "com.noah.logfetcher", category: "debug")
-                debugLogger.error("Failed to fetch logs: \(error.localizedDescription)")
                 throw NSError(
                     domain: "NoahTools",
                     code: 200,

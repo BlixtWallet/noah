@@ -9,7 +9,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import java.util.concurrent.TimeUnit
 
 object NoahToolsHttp {
-    private const val TAG = "NoahTools"
+    private const val TAG = "com.noah.app"
 
     // OkHttp client for background requests
     private val backgroundHttpClient = OkHttpClient.Builder()

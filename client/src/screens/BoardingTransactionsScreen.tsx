@@ -70,9 +70,9 @@ const BoardingTransactionsScreen = () => {
       // Sort by date descending
       boardingTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTransactions(boardingTransactions);
+      setIsLoading(false);
     } catch (error) {
       log.e("Failed to load boarding transactions", [error]);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -155,9 +155,7 @@ const BoardingTransactionsScreen = () => {
   };
 
   const filteredTransactions =
-    filter === "all"
-      ? transactions
-      : transactions.filter((t) => t.type === filter);
+    filter === "all" ? transactions : transactions.filter((t) => t.type === filter);
 
   const getIconForType = (type: BoardingTransaction["type"]) => {
     switch (type) {
@@ -241,7 +239,9 @@ const BoardingTransactionsScreen = () => {
               renderItem={({ item }: { item: BoardingTransaction }) => (
                 <View style={{ marginBottom: 8 }}>
                   <Pressable
-                    onPress={() => navigation.navigate("BoardingTransactionDetail", { transaction: item })}
+                    onPress={() =>
+                      navigation.navigate("BoardingTransactionDetail", { transaction: item })
+                    }
                     onLongPress={() => handleDeleteRequest(item.request_id)}
                   >
                     <View className="flex-row items-center p-4 bg-card rounded-lg">

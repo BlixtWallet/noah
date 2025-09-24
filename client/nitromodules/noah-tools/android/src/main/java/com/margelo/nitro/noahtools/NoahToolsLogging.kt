@@ -8,10 +8,9 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 object NoahToolsLogging {
-    private const val TAG = "NoahTools"
+    private const val logTag = "com.noah.app"
 
     fun performNativeLog(level: String, tag: String, message: String) {
-        val logTag = "ReactNativeJS"
         val logMessage = "[$tag] $message"
 
         when (level.lowercase()) {
@@ -30,7 +29,7 @@ object NoahToolsLogging {
             val currentApplication = activityThread.getMethod("currentApplication")
             currentApplication.invoke(null) as? Context
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get application context", e)
+            Log.e(logTag, "Failed to get application context", e)
             null
         }
     }
@@ -60,7 +59,7 @@ object NoahToolsLogging {
                 var line: String?
                 while (bufferedReader.readLine().also { line = it } != null) {
                     if (line!!.contains(pid) &&
-                        (line!!.contains("NitroArk") || line!!.contains("ReactNativeJS")) &&
+                        (line!!.contains("NitroArk") || line!!.contains(logTag)) &&
                         !Regex("\\s+V\\s+").containsMatchIn(line!!)) {
 
                         // More robust continuation detection
