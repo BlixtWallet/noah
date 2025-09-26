@@ -41,12 +41,9 @@ async function post<T, U>(
 
     if (authenticated) {
       const walletResult = await loadWalletIfNeeded();
-      log.i("Wallet load result", [walletResult]);
       if (walletResult.isErr()) {
         return err(walletResult.error);
       }
-
-      log.i("Payload", [payload]);
 
       const k1 = payload.k1 ?? (await getK1()).unwrapOr(undefined);
 
@@ -54,27 +51,21 @@ async function post<T, U>(
         return err(new Error("Failed to get k1 for authentication"));
       }
 
-      log.i("k1 is", [k1]);
-
       const peakResult = await peakKeyPair(0);
 
       if (peakResult.isErr()) {
-        log.i("Failed to derive public key for authentication", [peakResult.error]);
+        log.w("Failed to derive public key for authentication", [peakResult.error]);
         return err(peakResult.error);
       }
       const { public_key: key } = peakResult.value;
 
-      log.i("Derived public key", [key]);
-
       const signatureResult = await signMessage(k1, 0);
 
       if (signatureResult.isErr()) {
-        log.i("Failed to sign message for authentication", [signatureResult.error]);
+        log.w("Failed to sign message for authentication", [signatureResult.error]);
         return err(signatureResult.error);
       }
       const sig = signatureResult.value;
-
-      log.i("Signature", [sig.length]);
 
       headers["x-auth-k1"] = k1;
       headers["x-auth-sig"] = sig;
@@ -83,8 +74,6 @@ async function post<T, U>(
 
     const body = JSON.stringify(payload);
     const url = `${API_URL}/v0${endpoint}`;
-
-    log.i("Calling endpoint", [url]);
 
     // Always use native HTTP client for all requests
     const responseResult = await ResultAsync.fromPromise(
@@ -102,8 +91,6 @@ async function post<T, U>(
     }
 
     const response = responseResult.value;
-
-    log.i("Native HTTP response status", [response.status]);
 
     if (response.status >= 200 && response.status < 300) {
       // Handle successful responses with no body (e.g. 204 No Content)
@@ -123,7 +110,6 @@ async function post<T, U>(
         return err(responseJson.error);
       }
 
-      log.i("Response from server", [responseJson]);
       return ok(responseJson.value);
     } else {
       return err(new Error(`HTTP ${response.status}: ${response.body}`));

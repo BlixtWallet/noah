@@ -234,6 +234,11 @@ case "$COMMAND" in
         dcr run --rm "$BARK_SERVICE" "bark" "$@"
         ;;
 
+    bcli)
+        echo "Running bitcoin-cli command: $@"
+        dcr exec "$BITCOIND_SERVICE" bitcoin-cli $BITCOIN_CLI_OPTS "$@"
+        ;;
+
     *)
         echo "Error: Unknown command '$COMMAND'" >&2
         usage

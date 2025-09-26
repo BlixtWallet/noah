@@ -3,7 +3,6 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
-import { PLATFORM } from "~/constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
 import {
@@ -26,7 +25,7 @@ async function handleTaskCompletion(
   k1?: string,
 ) {
   if (result.isErr()) {
-    log.i(`Failed to trigger ${report_type} task, reporting failure`);
+    log.w(`Failed to trigger ${report_type} task, reporting failure`);
     const jobStatusResult = await reportJobStatus({
       report_type,
       status: "failure",
@@ -35,12 +34,12 @@ async function handleTaskCompletion(
     });
 
     if (jobStatusResult.isErr()) {
-      log.i("Failed to report job status", [jobStatusResult.error]);
+      log.w("Failed to report job status", [jobStatusResult.error]);
     }
     throw result.error;
   }
 
-  log.i(`Triggered ${report_type} task, reporting success`);
+  log.d(`Triggered ${report_type} task, reporting success`);
   const jobStatusResult = await reportJobStatus({
     report_type,
     status: "success",
@@ -63,8 +62,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
       return;
     }
 
-    log.i("[Background Job] dataReceived", [data, typeof data]);
-
     const notificationDataResult = Result.fromThrowable(
       () => {
         const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
@@ -83,8 +80,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
     }
 
     const notificationData = notificationDataResult.value;
-
-    log.i("[Background Job] notificationData", [notificationData, typeof notificationData]);
 
     if (!notificationData || !notificationData.notification_type) {
       log.w("[Background Job] No data or type received", [notificationData]);
@@ -169,13 +164,10 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
   }
 
   if (Device.isDevice) {
-    log.v("Device is device");
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    log.v("existingStatus", [existingStatus]);
     let finalStatus = existingStatus;
     if (existingStatus !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
-      log.i("status", [status]);
       finalStatus = status;
     }
     if (finalStatus !== "granted") {
@@ -192,11 +184,9 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     );
 
     if (nativePushTokenResult.isErr()) {
+      log.w("Failed to get native push token", [nativePushTokenResult.error]);
       return err(nativePushTokenResult.error);
     }
-
-    const nativePushToken = nativePushTokenResult.value;
-    log.i(PLATFORM === "android" ? "fcm" : "apns", [nativePushToken.data.length]);
 
     const pushTokenResult = await ResultAsync.fromPromise(
       Notifications.getExpoPushTokenAsync({
@@ -210,7 +200,6 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     }
 
     const pushTokenString = pushTokenResult.value.data;
-    log.i("push token string is ", [pushTokenString.length]);
     return ok(pushTokenString);
   } else {
     return err(new Error("Must use physical device for push notifications"));

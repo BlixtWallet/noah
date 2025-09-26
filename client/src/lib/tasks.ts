@@ -30,7 +30,6 @@ export async function backgroundSync() {
 }
 
 export async function maintenance(): Promise<Result<void, Error>> {
-  log.d("[Maintenance Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
     const e = new Error("Failed to load wallet for maintenance");
@@ -48,7 +47,6 @@ export async function maintenance(): Promise<Result<void, Error>> {
 }
 
 export async function submitInvoice(transaction_id: string, k1: string, amountMsat: number) {
-  log.d("[submitInvoice Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
     log.e("Failed to load wallet for submitting invoice", [loadResult.error]);
@@ -81,7 +79,6 @@ export async function submitInvoice(transaction_id: string, k1: string, amountMs
 // Shared backup function that can be used by both hooks and background tasks
 
 export async function triggerBackupTask(): Promise<Result<void, Error>> {
-  log.d("[Backup Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
     const e = new Error("Failed to load wallet for backup");
