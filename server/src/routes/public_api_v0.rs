@@ -195,6 +195,7 @@ pub async fn lnurlp_request(
                 transaction_id: Some(transaction_id_clone),
                 amount: Some(amount),
                 offboarding_request_id: None,
+                notification_id: None,
             })
             .unwrap(),
             priority: "high".to_string(),

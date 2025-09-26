@@ -11,6 +11,7 @@ import {
   DownloadUrlResponse,
   GetDownloadUrlPayload,
   GetUploadUrlPayload,
+  HeartbeatResponsePayload,
   RegisterResponse,
   RegisterOffboardingResponse,
   RegisterPushToken,
@@ -157,6 +158,12 @@ export const reportJobStatus = (payload: ReportJobStatusPayload & { k1?: string 
 export const submitInvoice = (payload: SubmitInvoicePayload & { k1?: string }) =>
   post<SubmitInvoicePayload & { k1?: string }, DefaultSuccessPayload>(
     "/lnurlp/submit_invoice",
+    payload,
+  );
+
+export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1?: string }) =>
+  post<HeartbeatResponsePayload & { k1?: string }, DefaultSuccessPayload>(
+    "/heartbeat_response",
     payload,
   );
 

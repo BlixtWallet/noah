@@ -172,6 +172,7 @@ pub enum NotificationTypes {
     LightningInvoiceRequest,
     BackupTrigger,
     Offboarding,
+    Heartbeat,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
@@ -183,6 +184,13 @@ pub struct NotificationsData {
     #[ts(type = "number | null")]
     pub amount: Option<u64>,
     pub offboarding_request_id: Option<String>,
+    pub notification_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Validate, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct HeartbeatResponsePayload {
+    pub notification_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]

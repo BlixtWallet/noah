@@ -1,4 +1,5 @@
 use crate::db::backup_repo::BackupRepository;
+use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::db::job_status_repo::JobStatusRepository;
 use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::push_token_repo::PushTokenRepository;
@@ -6,8 +7,8 @@ use crate::db::user_repo::UserRepository;
 use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
-    DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, RegisterOffboardingResponse,
-    ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
+    DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, HeartbeatResponsePayload,
+    RegisterOffboardingResponse, ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -306,7 +307,37 @@ pub async fn deregister(
     PushTokenRepository::delete_by_pubkey(&tx, &pubkey).await?;
     OffboardingRepository::delete_by_pubkey(&tx, &pubkey).await?;
 
+    let heartbeat_repo = HeartbeatRepository::new(&tx);
+    heartbeat_repo.delete_by_pubkey(&pubkey).await?;
+
     tx.commit().await?;
+
+    Ok(Json(DefaultSuccessPayload { success: true }))
+}
+
+pub async fn heartbeat_response(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<HeartbeatResponsePayload>,
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    tracing::debug!(
+        "Received heartbeat response from pubkey: {} for notification_id: {}",
+        auth_payload.key,
+        payload.notification_id
+    );
+
+    let conn = state.db.connect()?;
+    let heartbeat_repo = HeartbeatRepository::new(&conn);
+
+    let updated = heartbeat_repo
+        .mark_as_responded(&payload.notification_id)
+        .await?;
+
+    if !updated {
+        return Err(ApiError::NotFound(
+            "Heartbeat notification not found or already responded".to_string(),
+        ));
+    }
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
