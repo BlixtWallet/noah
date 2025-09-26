@@ -28,9 +28,11 @@ export type GetDownloadUrlPayload = { backup_version: number | null, };
 
 export type GetUploadUrlPayload = { backup_version: number, };
 
-export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding";
+export type HeartbeatResponsePayload = { notification_id: string, };
 
-export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, transaction_id: string | null, amount: number | null, offboarding_request_id: string | null, };
+export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding" | "heartbeat";
+
+export type NotificationsData = { notification_type: NotificationTypes, k1: string | null, transaction_id: string | null, amount: number | null, offboarding_request_id: string | null, notification_id: string | null, };
 
 export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
 

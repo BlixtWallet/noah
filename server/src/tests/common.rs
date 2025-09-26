@@ -8,8 +8,8 @@ use dashmap::DashMap;
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
-    list_backups, register_offboarding_request, register_push_token, report_job_status,
-    update_backup_settings, update_ln_address,
+    heartbeat_response, list_backups, register_offboarding_request, register_push_token,
+    report_job_status, update_backup_settings, update_ln_address,
 };
 use crate::routes::public_api_v0::{get_k1, lnurlp_request, register};
 use crate::types::AuthPayload;
@@ -24,6 +24,13 @@ impl TestUser {
     pub fn new() -> Self {
         let secp = bitcoin::secp256k1::Secp256k1::new();
         let secret_key = bitcoin::secp256k1::SecretKey::from_slice(&[0xcd; 32]).unwrap();
+        let keypair = Keypair::from_secret_key(&secp, &secret_key);
+        Self { keypair, secp }
+    }
+
+    pub fn new_with_key(key_bytes: &[u8; 32]) -> Self {
+        let secp = bitcoin::secp256k1::Secp256k1::new();
+        let secret_key = bitcoin::secp256k1::SecretKey::from_slice(key_bytes).unwrap();
         let keypair = Keypair::from_secret_key(&secp, &secret_key);
         Self { keypair, secp }
     }
@@ -88,6 +95,7 @@ pub async fn setup_test_app() -> (Router, AppState) {
         .route("/backup/delete", post(delete_backup))
         .route("/backup/settings", post(update_backup_settings))
         .route("/report_job_status", post(report_job_status))
+        .route("/heartbeat_response", post(heartbeat_response))
         .layer(user_exists_layer);
 
     // Routes that need auth but user may not exist (like registration)

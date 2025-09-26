@@ -112,6 +112,21 @@ const MIGRATIONS: &[&str] = &[
         UPDATE devices SET updated_at = CURRENT_TIMESTAMP WHERE pubkey = OLD.pubkey;
     END;
     "#,
+    r#"
+    CREATE TABLE heartbeat_notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pubkey TEXT NOT NULL,
+        notification_id TEXT NOT NULL UNIQUE,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        responded_at TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'pending',
+        FOREIGN KEY (pubkey) REFERENCES users(pubkey)
+    );
+
+    CREATE INDEX idx_heartbeat_notifications_pubkey ON heartbeat_notifications(pubkey);
+    CREATE INDEX idx_heartbeat_notifications_status ON heartbeat_notifications(status);
+    CREATE INDEX idx_heartbeat_notifications_sent_at ON heartbeat_notifications(sent_at);
+    "#,
 ];
 
 /// Applies all pending migrations to the database.

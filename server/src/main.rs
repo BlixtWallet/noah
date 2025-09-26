@@ -26,8 +26,9 @@ use crate::{
         app_middleware,
         gated_api_v0::{
             complete_upload, delete_backup, deregister, get_download_url, get_upload_url,
-            get_user_info, list_backups, register_offboarding_request, register_push_token,
-            report_job_status, submit_invoice, update_backup_settings, update_ln_address,
+            get_user_info, heartbeat_response, list_backups, register_offboarding_request,
+            register_push_token, report_job_status, submit_invoice, update_backup_settings,
+            update_ln_address,
         },
         private_api_v0::health_check,
         public_api_v0::{get_k1, lnurlp_request, register},
@@ -266,6 +267,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route("/backup/delete", post(delete_backup))
         .route("/backup/settings", post(update_backup_settings))
         .route("/report_job_status", post(report_job_status))
+        .route("/heartbeat_response", post(heartbeat_response))
         .layer(user_exists_layer);
 
     // Routes that need auth but user may not exist (like registration)

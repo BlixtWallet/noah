@@ -12,7 +12,7 @@ import {
   submitInvoice,
   triggerBackupTask,
 } from "./tasks";
-import { registerPushToken, reportJobStatus } from "~/lib/api";
+import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationsData, ReportType } from "~/types/serverTypes";
 
@@ -127,6 +127,25 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           }
           const result = await offboardTask(notificationData.offboarding_request_id);
           await handleTaskCompletion("offboarding", result, notificationData.k1);
+        } else if (notificationData.notification_type === "heartbeat") {
+          log.i("Received heartbeat notification", [notificationData]);
+          if (!notificationData.notification_id || !notificationData.k1) {
+            log.w("Invalid heartbeat notification - missing notification_id or k1", [
+              notificationData,
+            ]);
+            return;
+          }
+
+          const heartbeatResult = await heartbeatResponse({
+            notification_id: notificationData.notification_id,
+            k1: notificationData.k1,
+          });
+
+          if (heartbeatResult.isErr()) {
+            log.w("Failed to respond to heartbeat", [heartbeatResult.error]);
+          } else {
+            log.d("Successfully responded to heartbeat", [notificationData.notification_id]);
+          }
         }
       })(),
       (e) =>

@@ -138,6 +138,7 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
         transaction_id: None,
         amount: None,
         offboarding_request_id: None,
+        notification_id: None,
     };
 
     if let Err(e) = send_push_notification_with_unique_k1(app_state, notification_data, None).await
@@ -174,6 +175,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
             transaction_id: None,
             amount: None,
             offboarding_request_id: Some(request.request_id.clone()),
+            notification_id: None,
         };
 
         if let Err(e) = send_push_notification_with_unique_k1(
