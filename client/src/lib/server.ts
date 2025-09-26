@@ -31,6 +31,6 @@ export const performServerRegistration = async (
 
   const { lightning_address } = result.value;
   log.d("Successfully registered with server");
-  setRegisteredWithServer(true, lightning_address);
+  setRegisteredWithServer(true, lightning_address, true);
   return result;
 };
