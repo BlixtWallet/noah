@@ -42,7 +42,6 @@ abstract_target 'noah-common' do
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
-  pod 'MMKVCore', :modular_headers => true
 
   post_install do |installer|
     react_native_post_install(

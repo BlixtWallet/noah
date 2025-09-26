@@ -254,7 +254,7 @@ PODS:
   - hermes-engine (0.81.4):
     - hermes-engine/Pre-built (= 0.81.4)
   - hermes-engine/Pre-built (0.81.4)
-  - MMKVCore (2.2.3)
+  - MMKVCore (2.2.4)
   - NitroArk (0.0.56):
     - hermes-engine
     - NitroModules
@@ -278,9 +278,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroMmkv (4.0.0-beta.8):
+  - NitroMmkv (4.0.0-beta.12):
     - hermes-engine
-    - MMKVCore (>= 2.2.3)
+    - MMKVCore (= 2.2.4)
     - NitroModules
     - RCTRequired
     - RCTTypeSafety
@@ -2538,7 +2538,6 @@ DEPENDENCIES:
   - EXUpdatesInterface (from `../../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - MMKVCore
   - NitroArk (from `../../node_modules/react-native-nitro-ark`)
   - NitroMmkv (from `../../node_modules/react-native-mmkv`)
   - NitroModules (from `../../node_modules/react-native-nitro-modules`)
@@ -2886,9 +2885,9 @@ SPEC CHECKSUMS:
   EXUpdatesInterface: 1436757deb0d574b84bba063bd024c315e0ec08b
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394
-  MMKVCore: 6d5cc1bacce539f4c974985dfe646fb65a5d27d2
+  MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   NitroArk: 20b1ae0560be5286b03919e98558d599e8bb837e
-  NitroMmkv: 827e61ed2d64353e42610ca11ed6ca0157707928
+  NitroMmkv: 74b239cbc42ed2ec377f6d6715c4ed7afd8cdb7c
   NitroModules: 9baeb373e78e48a9c0400f4c97ac6620f946333b
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
@@ -2979,6 +2978,6 @@ SPEC CHECKSUMS:
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
   ZIPFoundation: b8c29ea7ae353b309bc810586181fd073cb3312c
 
-PODFILE CHECKSUM: dc24aa3833aa85d313d7376a204c0cfb617934c7
+PODFILE CHECKSUM: 8db4febbec4310a47851c28950d99c5dc774a0ef
 
 COCOAPODS: 1.16.2
