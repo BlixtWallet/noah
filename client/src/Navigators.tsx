@@ -203,6 +203,7 @@ const AppTabs = () => {
       screenOptions={{
         tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
       }}
+      disablePageAnimations={true}
     >
       <Tab.Screen
         name="Home"
