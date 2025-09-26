@@ -2511,7 +2511,7 @@ PODS:
     - React-Core
     - VisionCamera/FrameProcessors
   - Yoga (0.0.0)
-  - ZIPFoundation (0.9.19)
+  - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
   - EXApplication (from `../../node_modules/expo-application/ios`)
@@ -2976,7 +2976,7 @@ SPEC CHECKSUMS:
   UMAppLoader: e1234c45d2b7da239e9e90fc4bbeacee12afd5b6
   VisionCamera: 02578a728d4a479d9c47f869efdf906c5680d50b
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
-  ZIPFoundation: b8c29ea7ae353b309bc810586181fd073cb3312c
+  ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
 PODFILE CHECKSUM: 8db4febbec4310a47851c28950d99c5dc774a0ef
 
