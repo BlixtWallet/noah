@@ -2538,6 +2538,7 @@ DEPENDENCIES:
   - EXUpdatesInterface (from `../../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - MMKVCore
   - NitroArk (from `../../node_modules/react-native-nitro-ark`)
   - NitroMmkv (from `../../node_modules/react-native-mmkv`)
   - NitroModules (from `../../node_modules/react-native-nitro-modules`)
@@ -2978,6 +2979,6 @@ SPEC CHECKSUMS:
   Yoga: 051f086b5ccf465ff2ed38a2cf5a558ae01aaaa1
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: 8db4febbec4310a47851c28950d99c5dc774a0ef
+PODFILE CHECKSUM: eb465d6980cc5651168e87617e868fa9e2682313
 
 COCOAPODS: 1.16.2
