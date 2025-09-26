@@ -83,7 +83,7 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
             transaction_id: None,
             amount: None,
             offboarding_request_id: None,
-            notification_id: Some(notification_id),
+            notification_id: Some(notification_id.clone()),
         };
 
         if let Err(e) = send_push_notification_with_unique_k1(
@@ -94,6 +94,14 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
         .await
         {
             tracing::error!("Failed to send heartbeat notification to {}: {}", pubkey, e);
+            // Rollback the created notification record
+            if let Err(delete_err) = heartbeat_repo.delete_notification(&notification_id).await {
+                tracing::error!(
+                    "Failed to delete orphaned heartbeat notification {}: {}",
+                    notification_id,
+                    delete_err
+                );
+            }
         }
     }
 

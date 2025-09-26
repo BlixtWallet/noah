@@ -36,7 +36,19 @@ impl<'a> HeartbeatRepository<'a> {
         Ok(result > 0)
     }
 
+    /// Deletes a heartbeat notification by its ID
+    pub async fn delete_notification(&self, notification_id: &str) -> Result<()> {
+        self.conn
+            .execute(
+                "DELETE FROM heartbeat_notifications WHERE notification_id = ?",
+                libsql::params![notification_id],
+            )
+            .await?;
+        Ok(())
+    }
+
     /// Counts consecutive missed heartbeats for a user (most recent first)
+    #[cfg(test)]
     pub async fn count_consecutive_missed(&self, pubkey: &str) -> Result<i32> {
         let mut rows = self.conn
             .query(

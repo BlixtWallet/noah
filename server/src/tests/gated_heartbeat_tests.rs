@@ -367,3 +367,69 @@ async fn test_heartbeat_repo_cleanup_old_notifications() {
 
     assert_eq!(count, 15);
 }
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_heartbeat_repo_delete_notification() {
+    let (_, app_state) = setup_test_app().await;
+
+    let user = TestUser::new();
+    create_test_user(&app_state, &user).await;
+
+    let conn = app_state.db.connect().unwrap();
+    let heartbeat_repo = HeartbeatRepository::new(&conn);
+
+    // Create a heartbeat notification
+    let notification_id = heartbeat_repo
+        .create_notification(&user.pubkey().to_string())
+        .await
+        .unwrap();
+
+    // Verify it exists
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE notification_id = ?",
+            libsql::params![notification_id.clone()],
+        )
+        .await
+        .unwrap();
+
+    let row = rows.next().await.unwrap().unwrap();
+    let count: i32 = row.get(0).unwrap();
+    assert_eq!(count, 1);
+
+    // Delete the notification
+    heartbeat_repo
+        .delete_notification(&notification_id)
+        .await
+        .unwrap();
+
+    // Verify it no longer exists
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE notification_id = ?",
+            libsql::params![notification_id.clone()],
+        )
+        .await
+        .unwrap();
+
+    let row = rows.next().await.unwrap().unwrap();
+    let count: i32 = row.get(0).unwrap();
+    assert_eq!(count, 0);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_heartbeat_repo_delete_nonexistent_notification() {
+    let (_, app_state) = setup_test_app().await;
+
+    let conn = app_state.db.connect().unwrap();
+    let heartbeat_repo = HeartbeatRepository::new(&conn);
+
+    // Attempt to delete a non-existent notification - should not error
+    let result = heartbeat_repo
+        .delete_notification("non-existent-notification-id")
+        .await;
+
+    assert!(result.is_ok());
+}
