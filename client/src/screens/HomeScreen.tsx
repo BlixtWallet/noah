@@ -97,8 +97,8 @@ const HomeScreen = () => {
       }}
     >
       <View className="flex-row items-center justify-between p-4">
-        <Pressable onPress={handleScanPress}>
-          <Icon name="scan" size={28} color="white" />
+        <Pressable onPress={() => navigation.navigate("BoardArk")}>
+          <Icon name="boat" size={28} color="white" />
         </Pressable>
         <View className="flex-1 items-center">
           {APP_VARIANT !== "mainnet" && (
@@ -242,8 +242,8 @@ const HomeScreen = () => {
                   </Animated.View>
                 </CollapsibleContent>
               </Collapsible>
-              <NoahButton onPress={() => navigation.navigate("BoardArk")} className="mt-8">
-                🚢 Board/Offboard Ark
+              <NoahButton onPress={handleScanPress} className="mt-8">
+                📷 Scan QR Code
               </NoahButton>
             </>
           )}

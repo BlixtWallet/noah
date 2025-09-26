@@ -1,33 +1,55 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { nativeLog } from "noah-tools";
 
+const isDevMode = __DEV__;
+
 const log = (tag?: string) => {
   tag = tag ?? "";
 
   return {
     v: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      nativeLog("verbose", tag, msg);
+      if (isDevMode) {
+        nativeLog("verbose", tag, msg);
+      } else {
+        console.debug(tag, msg);
+      }
     },
 
     d: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      nativeLog("debug", tag, msg);
+      if (isDevMode) {
+        nativeLog("debug", tag, msg);
+      } else {
+        console.debug(tag, msg);
+      }
     },
 
     i: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      nativeLog("info", tag, msg);
+      if (isDevMode) {
+        nativeLog("info", tag, msg);
+      } else {
+        console.info(tag, msg);
+      }
     },
 
     w: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      nativeLog("warn", tag, msg);
+      if (isDevMode) {
+        nativeLog("warn", tag, msg);
+      } else {
+        console.warn(tag, msg);
+      }
     },
 
     e: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
-      nativeLog("error", tag, msg);
+      if (isDevMode) {
+        nativeLog("error", tag, msg);
+      } else {
+        console.error(tag, msg);
+      }
     },
   };
 };

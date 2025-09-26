@@ -4,11 +4,11 @@ import {
   Pressable,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert,
   TextInput,
   ScrollView,
 } from "react-native";
 import { Text } from "../components/ui/text";
+import { useAlert } from "~/contexts/AlertProvider";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Button } from "~/components/ui/button";
 
@@ -74,6 +74,7 @@ const ReceiveScreen = () => {
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
+  const { showAlert } = useAlert();
 
   const {
     mutate: generateOffchainAddress,
@@ -128,7 +129,10 @@ const ReceiveScreen = () => {
     Keyboard.dismiss();
 
     if (amountSat && amountSat < 330) {
-      Alert.alert("Invalid Amount", "The minimum amount is 330 sats.");
+      showAlert({
+        title: "Invalid Amount",
+        description: "The minimum amount is 330 sats.",
+      });
       return;
     }
 

@@ -6,10 +6,10 @@ import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
 import { Text } from "../components/ui/text";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
-import { CheckCircle } from "lucide-react-native";
+import { useAlert } from "~/contexts/AlertProvider";
 import Icon from "@react-native-vector-icons/ionicons";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
+import { NoahButton } from "~/components/ui/NoahButton";
 
 export const BackupSettingsScreen = () => {
   const navigation = useNavigation();
@@ -24,7 +24,7 @@ export const BackupSettingsScreen = () => {
   } = useBackupManager();
 
   const [showBackups, setShowBackups] = useState(false);
-  const [showBackupSuccess, setShowBackupSuccess] = useState(false);
+  const { showAlert } = useAlert();
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -48,14 +48,14 @@ export const BackupSettingsScreen = () => {
           </View>
         </View>
 
-        <Button
+        <NoahButton
           onPress={async () => {
             const result = await triggerBackup();
             if (result.isOk()) {
-              setShowBackupSuccess(true);
-              setTimeout(() => {
-                setShowBackupSuccess(false);
-              }, 3000);
+              showAlert({
+                title: "Backup Complete!",
+                description: "Your wallet has been backed up successfully.",
+              });
             }
           }}
           className="mb-4"
@@ -69,17 +69,10 @@ export const BackupSettingsScreen = () => {
           ) : (
             <Text>Backup Now</Text>
           )}
-        </Button>
-
-        {showBackupSuccess && (
-          <Alert icon={CheckCircle} className="mb-4">
-            <AlertTitle>Backup Complete!</AlertTitle>
-            <AlertDescription>Your wallet has been backed up successfully.</AlertDescription>
-          </Alert>
-        )}
+        </NoahButton>
 
         <View className="mt-8">
-          <Button
+          <NoahButton
             variant="outline"
             onPress={async () => {
               const result = await listBackups();
@@ -87,8 +80,9 @@ export const BackupSettingsScreen = () => {
                 setShowBackups(true);
               }
             }}
-            className="mb-4"
+            className="mb-8 border-gray-600"
             disabled={isLoading}
+            style={{ backgroundColor: "black" }}
           >
             {isLoading ? (
               <View className="flex-row items-center">
@@ -98,7 +92,7 @@ export const BackupSettingsScreen = () => {
             ) : (
               <Text>List Backups</Text>
             )}
-          </Button>
+          </NoahButton>
 
           {showBackups && backupsList && (
             <View className="mb-4 p-4 bg-card rounded-lg border border-border">
@@ -114,7 +108,7 @@ export const BackupSettingsScreen = () => {
                     <View>
                       <Text className="font-medium">Version {backup.backup_version}</Text>
                       <Text className="text-sm text-muted-foreground">
-                        {new Date(backup.created_at).toLocaleDateString()} -{" "}
+                        {new Date(backup.created_at).toLocaleString()} -{" "}
                         {(backup.backup_size / 1024).toFixed(1)} KB
                       </Text>
                     </View>
