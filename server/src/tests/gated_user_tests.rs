@@ -5,6 +5,7 @@ use serde_json::json;
 use tower::ServiceExt;
 
 use crate::db::backup_repo::BackupRepository;
+use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
@@ -218,6 +219,12 @@ async fn test_deregister_user() {
         .await
         .unwrap();
 
+    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let _heartbeat_notification_id = heartbeat_repo
+        .create_notification(&user.pubkey().to_string())
+        .await
+        .unwrap();
+
     // 2. Call deregister endpoint
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -274,6 +281,21 @@ async fn test_deregister_user() {
         .await
         .unwrap();
     assert!(settings.is_some(), "Backup settings should not be deleted");
+
+    // 5. Verify heartbeat notifications are deleted
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
+            libsql::params![user.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let heartbeat_count: i32 = row.get(0).unwrap();
+    assert_eq!(
+        heartbeat_count, 0,
+        "Heartbeat notifications should be deleted"
+    );
 }
 
 #[tracing_test::traced_test]

@@ -47,6 +47,17 @@ impl<'a> HeartbeatRepository<'a> {
         Ok(())
     }
 
+    /// Deletes all heartbeat notifications for a user by pubkey
+    pub async fn delete_by_pubkey(&self, pubkey: &str) -> Result<()> {
+        self.conn
+            .execute(
+                "DELETE FROM heartbeat_notifications WHERE pubkey = ?",
+                libsql::params![pubkey],
+            )
+            .await?;
+        Ok(())
+    }
+
     /// Counts consecutive missed heartbeats for a user (most recent first)
     #[cfg(test)]
     pub async fn count_consecutive_missed(&self, pubkey: &str) -> Result<i32> {

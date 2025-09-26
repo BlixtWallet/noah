@@ -143,6 +143,16 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
             continue;
         }
 
+        let heartbeat_repo = HeartbeatRepository::new(&tx);
+        if let Err(e) = heartbeat_repo.delete_by_pubkey(&pubkey).await {
+            tracing::error!(
+                "Failed to delete heartbeat notifications for {}: {}",
+                pubkey,
+                e
+            );
+            continue;
+        }
+
         if let Err(e) = tx.commit().await {
             tracing::error!(
                 "Failed to commit deregistration transaction for {}: {}",

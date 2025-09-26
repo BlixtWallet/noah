@@ -433,3 +433,93 @@ async fn test_heartbeat_repo_delete_nonexistent_notification() {
 
     assert!(result.is_ok());
 }
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_heartbeat_repo_delete_by_pubkey() {
+    let (_, app_state) = setup_test_app().await;
+
+    let user1 = TestUser::new();
+    let user2 = TestUser::new_with_key(&[0xab; 32]);
+    create_test_user(&app_state, &user1).await;
+
+    // Create user2 with unique lightning address
+    let conn = app_state.db.connect().unwrap();
+    conn.execute(
+        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
+        libsql::params![user2.pubkey().to_string(), "user2@localhost"],
+    )
+    .await
+    .unwrap();
+
+    let heartbeat_repo = HeartbeatRepository::new(&conn);
+
+    // Create multiple heartbeat notifications for user1
+    let _notification_id1 = heartbeat_repo
+        .create_notification(&user1.pubkey().to_string())
+        .await
+        .unwrap();
+    let _notification_id2 = heartbeat_repo
+        .create_notification(&user1.pubkey().to_string())
+        .await
+        .unwrap();
+
+    // Create a heartbeat notification for user2
+    let _notification_id3 = heartbeat_repo
+        .create_notification(&user2.pubkey().to_string())
+        .await
+        .unwrap();
+
+    // Verify all notifications exist
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
+            libsql::params![user1.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let count1: i32 = row.get(0).unwrap();
+    assert_eq!(count1, 2);
+
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
+            libsql::params![user2.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let count2: i32 = row.get(0).unwrap();
+    assert_eq!(count2, 1);
+
+    // Delete all heartbeat notifications for user1
+    heartbeat_repo
+        .delete_by_pubkey(&user1.pubkey().to_string())
+        .await
+        .unwrap();
+
+    // Verify user1's notifications are deleted
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
+            libsql::params![user1.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let count1_after: i32 = row.get(0).unwrap();
+    assert_eq!(count1_after, 0);
+
+    // Verify user2's notifications are still there
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
+            libsql::params![user2.pubkey().to_string()],
+        )
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let count2_after: i32 = row.get(0).unwrap();
+    assert_eq!(count2_after, 1);
+}

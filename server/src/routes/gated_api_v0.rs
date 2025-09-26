@@ -307,6 +307,9 @@ pub async fn deregister(
     PushTokenRepository::delete_by_pubkey(&tx, &pubkey).await?;
     OffboardingRepository::delete_by_pubkey(&tx, &pubkey).await?;
 
+    let heartbeat_repo = HeartbeatRepository::new(&tx);
+    heartbeat_repo.delete_by_pubkey(&pubkey).await?;
+
     tx.commit().await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
