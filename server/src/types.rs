@@ -163,6 +163,87 @@ pub enum ReportStatus {
     Failure,
 }
 
+// Individual notification data structures
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct BackgroundSyncNotification {
+    // No additional data needed
+}
+
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct MaintenanceNotification {
+    pub k1: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct LightningInvoiceRequestNotification {
+    pub k1: String,
+    pub transaction_id: String,
+    #[ts(type = "number")]
+    pub amount: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct BackupTriggerNotification {
+    pub k1: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct OffboardingNotification {
+    pub k1: String,
+    pub offboarding_request_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct HeartbeatNotification {
+    pub k1: String,
+    pub notification_id: String,
+}
+
+// Enum wrapper for all notification types
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+#[serde(tag = "notification_type", rename_all = "snake_case")]
+pub enum NotificationData {
+    BackgroundSync(BackgroundSyncNotification),
+    Maintenance(MaintenanceNotification),
+    LightningInvoiceRequest(LightningInvoiceRequestNotification),
+    BackupTrigger(BackupTriggerNotification),
+    Offboarding(OffboardingNotification),
+    Heartbeat(HeartbeatNotification),
+}
+
+impl NotificationData {
+    /// Check if this notification needs a unique k1 per device
+    pub fn needs_unique_k1(&self) -> bool {
+        matches!(
+            self,
+            NotificationData::Maintenance(_)
+                | NotificationData::BackupTrigger(_)
+                | NotificationData::Offboarding(_)
+                | NotificationData::Heartbeat(_)
+        )
+    }
+
+    /// Set the k1 value for notifications that require it
+    pub fn set_k1(&mut self, k1: String) {
+        match self {
+            NotificationData::Maintenance(n) => n.k1 = k1,
+            NotificationData::BackupTrigger(n) => n.k1 = k1,
+            NotificationData::Offboarding(n) => n.k1 = k1,
+            NotificationData::Heartbeat(n) => n.k1 = k1,
+            NotificationData::LightningInvoiceRequest(n) => n.k1 = k1,
+            _ => {}
+        }
+    }
+}
+
+// Legacy support - keeping the old structure for backward compatibility if needed
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 #[serde(rename_all = "snake_case")]
@@ -173,18 +254,6 @@ pub enum NotificationTypes {
     BackupTrigger,
     Offboarding,
     Heartbeat,
-}
-
-#[derive(Debug, Serialize, Deserialize, TS, Clone)]
-#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct NotificationsData {
-    pub notification_type: NotificationTypes,
-    pub k1: Option<String>,
-    pub transaction_id: Option<String>,
-    #[ts(type = "number | null")]
-    pub amount: Option<u64>,
-    pub offboarding_request_id: Option<String>,
-    pub notification_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Validate, TS)]

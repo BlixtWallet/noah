@@ -6,11 +6,12 @@ import {
 import { useServerStore } from "~/store/serverStore";
 import logger from "~/lib/log";
 import { loadWalletIfNeeded } from "~/lib/walletApi";
+import { BackupService } from "~/lib/backupService";
 
 const log = logger("usePushNotifications");
 
 export const usePushNotifications = (isReady: boolean) => {
-  const { isRegisteredWithServer } = useServerStore();
+  const { isRegisteredWithServer, isBackupEnabled } = useServerStore();
 
   useEffect(() => {
     const register = async () => {
@@ -33,6 +34,13 @@ export const usePushNotifications = (isReady: boolean) => {
       }
 
       log.d("Successfully registered for push notifications");
+
+      // If backup is enabled, then register with server for backup
+      log.d("Is backup enabled?", [isBackupEnabled]);
+      if (isBackupEnabled) {
+        const backupService = new BackupService();
+        backupService.registerBackup();
+      }
     };
 
     register();

@@ -3,7 +3,7 @@ use crate::{
     constants::EnvVariables,
     db::offboarding_repo::OffboardingRepository,
     push::send_push_notification_with_unique_k1,
-    types::{NotificationTypes, NotificationsData},
+    types::{MaintenanceNotification, NotificationData, OffboardingNotification},
 };
 
 use bitcoin::hex::DisplayHex;
@@ -132,14 +132,9 @@ async fn establish_connection_and_process(
 
 pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     // Send maintenance notification with unique k1 for each device
-    let notification_data = NotificationsData {
-        notification_type: NotificationTypes::Maintenance,
-        k1: None, // Will be generated uniquely for each device
-        transaction_id: None,
-        amount: None,
-        offboarding_request_id: None,
-        notification_id: None,
-    };
+    let notification_data = NotificationData::Maintenance(MaintenanceNotification {
+        k1: String::new(), // Will be replaced with unique k1 per device
+    });
 
     if let Err(e) = send_push_notification_with_unique_k1(app_state, notification_data, None).await
     {
@@ -169,14 +164,10 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
             .await?;
 
         // Send push notification for offboarding
-        let notification_data = NotificationsData {
-            notification_type: NotificationTypes::Offboarding,
-            k1: None, // Will be generated uniquely for each device
-            transaction_id: None,
-            amount: None,
-            offboarding_request_id: Some(request.request_id.clone()),
-            notification_id: None,
-        };
+        let notification_data = NotificationData::Offboarding(OffboardingNotification {
+            k1: String::new(), // Will be replaced with unique k1 per device
+            offboarding_request_id: request.request_id.clone(),
+        });
 
         if let Err(e) = send_push_notification_with_unique_k1(
             app_state.clone(),

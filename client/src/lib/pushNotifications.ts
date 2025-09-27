@@ -14,7 +14,7 @@ import {
 } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
-import { NotificationsData, ReportType } from "~/types/serverTypes";
+import { NotificationData, ReportType } from "~/types/serverTypes";
 
 const log = logger("pushNotifications");
 
@@ -66,9 +66,9 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
       () => {
         const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
         if (typeof rawBody === "string") {
-          return JSON.parse(rawBody) as NotificationsData;
+          return JSON.parse(rawBody) as NotificationData;
         }
-        return rawBody as NotificationsData;
+        return rawBody as NotificationData;
       },
       (e) => new Error(`Failed to parse notification data: ${e}`),
     )();
@@ -88,63 +88,59 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
     const taskResult = await ResultAsync.fromPromise(
       (async () => {
-        if (notificationData.notification_type === "background_sync") {
-          await backgroundSync();
-        } else if (notificationData.notification_type === "maintenance") {
-          if (!notificationData.k1) {
-            log.w("Invalid maintenance notification", [notificationData]);
-            return;
-          }
-          const result = await maintenance();
-          await handleTaskCompletion("maintenance", result, notificationData.k1);
-        } else if (notificationData.notification_type === "lightning_invoice_request") {
-          log.i("Received lightning invoice request", [notificationData]);
-          if (
-            !notificationData.amount ||
-            !notificationData.transaction_id ||
-            !notificationData.k1
-          ) {
-            log.w("Invalid lightning invoice request", [notificationData]);
-            return;
+        switch (notificationData.notification_type) {
+          case "background_sync":
+            await backgroundSync();
+            break;
+
+          case "maintenance": {
+            const result = await maintenance();
+            await handleTaskCompletion("maintenance", result, notificationData.k1);
+            break;
           }
 
-          await submitInvoice(
-            notificationData.transaction_id,
-            notificationData.k1,
-            notificationData.amount,
-          );
-        } else if (notificationData.notification_type === "backup_trigger") {
-          if (!notificationData.k1) {
-            log.w("Invalid backup trigger notification", [notificationData]);
-            return;
-          }
-          const result = await triggerBackupTask();
-          await handleTaskCompletion("backup", result, notificationData.k1);
-        } else if (notificationData.notification_type === "offboarding") {
-          if (!notificationData.k1 || !notificationData.offboarding_request_id) {
-            log.w("Invalid offboarding notification", [notificationData]);
-            return;
-          }
-          const result = await offboardTask(notificationData.offboarding_request_id);
-          await handleTaskCompletion("offboarding", result, notificationData.k1);
-        } else if (notificationData.notification_type === "heartbeat") {
-          log.i("Received heartbeat notification", [notificationData]);
-          if (!notificationData.notification_id || !notificationData.k1) {
-            log.w("Invalid heartbeat notification - missing notification_id or k1", [
-              notificationData,
-            ]);
-            return;
+          case "lightning_invoice_request": {
+            log.i("Received lightning invoice request", [notificationData]);
+            await submitInvoice(
+              notificationData.transaction_id,
+              notificationData.k1,
+              notificationData.amount,
+            );
+            break;
           }
 
-          const heartbeatResult = await heartbeatResponse({
-            notification_id: notificationData.notification_id,
-            k1: notificationData.k1,
-          });
+          case "backup_trigger": {
+            const result = await triggerBackupTask();
+            await handleTaskCompletion("backup", result, notificationData.k1);
+            log.d("Backup task completed");
+            break;
+          }
 
-          if (heartbeatResult.isErr()) {
-            log.w("Failed to respond to heartbeat", [heartbeatResult.error]);
-          } else {
-            log.d("Successfully responded to heartbeat", [notificationData.notification_id]);
+          case "offboarding": {
+            const result = await offboardTask(notificationData.offboarding_request_id);
+            await handleTaskCompletion("offboarding", result, notificationData.k1);
+            log.d("Offboarding task completed");
+            break;
+          }
+
+          case "heartbeat": {
+            log.i("Received heartbeat notification", [notificationData]);
+            const heartbeatResult = await heartbeatResponse({
+              notification_id: notificationData.notification_id,
+              k1: notificationData.k1,
+            });
+
+            if (heartbeatResult.isErr()) {
+              log.w("Failed to respond to heartbeat", [heartbeatResult.error]);
+            } else {
+              log.d("Successfully responded to heartbeat", [notificationData.notification_id]);
+            }
+            break;
+          }
+
+          default: {
+            const _exhaustiveCheck: never = notificationData;
+            log.w("Unknown notification type received", [_exhaustiveCheck]);
           }
         }
       })(),

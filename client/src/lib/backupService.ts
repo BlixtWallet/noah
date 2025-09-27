@@ -1,6 +1,12 @@
 import { createBackup, restoreBackup as restoreBackupNative } from "noah-tools";
 import { err, ok, Result, ResultAsync } from "neverthrow";
-import { completeUpload, getDownloadUrlForRestore, getK1, getUploadUrl } from "./api";
+import {
+  completeUpload,
+  getDownloadUrlForRestore,
+  getK1,
+  getUploadUrl,
+  updateBackupSettings,
+} from "./api";
 import { getMnemonic, setMnemonic } from "./crypto";
 import {
   deriveKeypairFromMnemonic,
@@ -15,6 +21,14 @@ import ky from "ky";
 const log = logger("backupService");
 
 export class BackupService {
+  // This is only for registering backups on startup with the server
+  async registerBackup() {
+    const registerResult = await updateBackupSettings({ backup_enabled: true });
+    if (registerResult.isErr()) {
+      console.error("Failed to register backup:", registerResult.error);
+    }
+  }
+
   async performBackup() {
     // Get mnemonic for encryption
     const mnemonicResult = await getMnemonic();
@@ -46,7 +60,6 @@ export class BackupService {
       return uploadUrlResult;
     }
 
-    log.d("uploadUrlResult", [uploadUrlResult.value]);
     const { upload_url, s3_key } = uploadUrlResult.value;
 
     // Upload the encrypted backup to S3
@@ -63,10 +76,6 @@ export class BackupService {
     if (uploadResult.isErr()) {
       return uploadResult;
     }
-
-    const response = uploadResult.value;
-
-    log.d("response", [response]);
 
     // Complete the upload process
     const completeUploadResult = await completeUpload({

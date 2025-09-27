@@ -18,8 +18,8 @@ use crate::{
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
-        AuthEvent, AuthPayload, NotificationTypes, NotificationsData, RegisterPayload,
-        RegisterResponse,
+        AuthEvent, AuthPayload, LightningInvoiceRequestNotification, NotificationData,
+        RegisterPayload, RegisterResponse,
     },
     utils::make_k1,
 };
@@ -189,14 +189,13 @@ pub async fn lnurlp_request(
         let data = PushNotificationData {
             title: None,
             body: None,
-            data: serde_json::to_string(&NotificationsData {
-                notification_type: NotificationTypes::LightningInvoiceRequest,
-                k1: Some(k1), // Include k1 for auth optimization
-                transaction_id: Some(transaction_id_clone),
-                amount: Some(amount),
-                offboarding_request_id: None,
-                notification_id: None,
-            })
+            data: serde_json::to_string(&NotificationData::LightningInvoiceRequest(
+                LightningInvoiceRequestNotification {
+                    k1, // Include k1 for auth optimization
+                    transaction_id: transaction_id_clone,
+                    amount,
+                },
+            ))
             .unwrap(),
             priority: "high".to_string(),
             content_available: true,

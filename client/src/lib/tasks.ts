@@ -17,7 +17,6 @@ export async function backgroundSync() {
     return;
   }
 
-  log.d("[Background Job] syncing wallet in background");
   await syncWallet();
   const peakResult = await peakKeyPair(0);
   if (peakResult.isErr()) {

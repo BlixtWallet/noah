@@ -3,7 +3,7 @@ use futures_util::{StreamExt, stream};
 use serde::Serialize;
 
 use crate::{
-    AppState, db::push_token_repo::PushTokenRepository, errors::ApiError, types::NotificationsData,
+    AppState, db::push_token_repo::PushTokenRepository, errors::ApiError, types::NotificationData,
     utils::make_k1,
 };
 
@@ -27,7 +27,7 @@ pub async fn send_push_notification(
 
 pub async fn send_push_notification_with_unique_k1(
     app_state: AppState,
-    base_notification_data: NotificationsData,
+    base_notification_data: NotificationData,
     pubkey: Option<String>,
 ) -> anyhow::Result<(), ApiError> {
     // For notifications that need unique k1 per device, we don't use the batching approach
@@ -60,12 +60,12 @@ pub async fn send_push_notification_with_unique_k1(
             let app_state_clone = app_state.clone();
             let base_data_clone = base_notification_data.clone();
             async move {
-                // Generate unique k1 for this device
-                let unique_k1 = make_k1(app_state_clone.k1_values.clone());
-
-                // Create notification data with unique k1
+                // Create notification data with unique k1 if needed
                 let mut notification_data = base_data_clone;
-                notification_data.k1 = Some(unique_k1);
+                if notification_data.needs_unique_k1() {
+                    let unique_k1 = make_k1(app_state_clone.k1_values.clone());
+                    notification_data.set_k1(unique_k1);
+                }
 
                 let data_string = match serde_json::to_string(&notification_data) {
                     Ok(s) => s,

@@ -6,22 +6,21 @@ use crate::{
         offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
     },
     push::{send_push_notification, send_push_notification_with_unique_k1},
-    types::{NotificationTypes, NotificationsData},
+    types::{
+        BackgroundSyncNotification, BackupTriggerNotification, HeartbeatNotification,
+        NotificationData,
+    },
 };
 use tokio_cron_scheduler::{Job, JobScheduler};
+use tracing::info;
 
 async fn background_sync(app_state: AppState) {
     let data = crate::push::PushNotificationData {
         title: None,
         body: None,
-        data: serde_json::to_string(&NotificationsData {
-            notification_type: NotificationTypes::BackgroundSync,
-            k1: None,
-            transaction_id: None,
-            amount: None,
-            offboarding_request_id: None,
-            notification_id: None,
-        })
+        data: serde_json::to_string(&NotificationData::BackgroundSync(
+            BackgroundSyncNotification {},
+        ))
         .unwrap(),
         priority: "high".to_string(),
         content_available: true,
@@ -40,16 +39,12 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
     let backup_repo = BackupRepository::new(&conn);
 
     let pubkeys = backup_repo.find_pubkeys_with_backup_enabled().await?;
+    info!("Pubkeys registered for backup {:?}", pubkeys);
 
     for pubkey in pubkeys {
-        let notification_data = NotificationsData {
-            notification_type: NotificationTypes::BackupTrigger,
-            k1: None, // Will be generated uniquely for each device by the send function
-            transaction_id: None,
-            amount: None,
-            offboarding_request_id: None,
-            notification_id: None,
-        };
+        let notification_data = NotificationData::BackupTrigger(BackupTriggerNotification {
+            k1: String::new(), // Will be replaced with unique k1 per device
+        });
         if let Err(e) = send_push_notification_with_unique_k1(
             app_state.clone(),
             notification_data,
@@ -77,14 +72,10 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
     for pubkey in active_users {
         let notification_id = heartbeat_repo.create_notification(&pubkey).await?;
 
-        let notification_data = NotificationsData {
-            notification_type: NotificationTypes::Heartbeat,
-            k1: None,
-            transaction_id: None,
-            amount: None,
-            offboarding_request_id: None,
-            notification_id: Some(notification_id.clone()),
-        };
+        let notification_data = NotificationData::Heartbeat(HeartbeatNotification {
+            k1: String::new(), // Will be replaced with unique k1 per device
+            notification_id: notification_id.clone(),
+        });
 
         if let Err(e) = send_push_notification_with_unique_k1(
             app_state.clone(),
@@ -182,6 +173,8 @@ pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler>
 
     let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
         .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());
+
+    info!("Backup cron: {}", backup_cron);
 
     let backup_app_state = app_state.clone();
     let backup_job = Job::new_async(&backup_cron, move |_, _| {
