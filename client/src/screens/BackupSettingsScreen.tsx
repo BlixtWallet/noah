@@ -11,7 +11,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { NoahButton } from "~/components/ui/NoahButton";
 
-export const BackupSettingsScreen = () => {
+const BackupSettingsScreen = () => {
   const router = useRouter();
   const {
     isBackupEnabled,
@@ -132,3 +132,5 @@ export const BackupSettingsScreen = () => {
     </NoahSafeAreaView>
   );
 };
+
+export default BackupSettingsScreen;

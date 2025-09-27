@@ -1,4 +1,5 @@
 import "../global.css";
+import "~/lib/pushNotifications";
 
 import React from "react";
 import { Stack } from "expo-router";

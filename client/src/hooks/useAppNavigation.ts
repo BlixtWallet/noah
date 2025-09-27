@@ -1,7 +1,7 @@
 import { useRouter, useLocalSearchParams, usePathname } from "expo-router";
 import { useCallback } from "react";
 
-type NavigationParams = Record<string, any>;
+type NavigationParams = Record<string, string | number | boolean | object | undefined>;
 
 export function useAppNavigation() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export function useAppNavigation() {
           break;
         case "Send":
           path = screenParams?.destination
-            ? `/(tabs)/(home)/send-to?destination=${encodeURIComponent(screenParams.destination)}`
+            ? `/(tabs)/(home)/send-to?destination=${encodeURIComponent(String(screenParams.destination))}`
             : "/(tabs)/(home)/send-to";
           break;
         case "Transactions":
@@ -107,7 +107,7 @@ export function useAppNavigation() {
           return;
       }
 
-      router.push(path as any);
+      router.push(path);
     },
     [router, pathname],
   );
@@ -146,7 +146,7 @@ export function useAppNavigation() {
           return;
       }
 
-      router.replace(path as any);
+      router.replace(path);
     },
     [router, navigate],
   );

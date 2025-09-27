@@ -1,60 +1,72 @@
 import React from "react";
-import { Tabs } from "expo-router";
-import Icon from "@react-native-vector-icons/ionicons";
-import { COLORS } from "~/lib/styleConstants";
+import { NativeTabs, Icon, Label, VectorIcon } from "expo-router/unstable-native-tabs";
+import { Platform } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: COLORS.TAB_BAR_BACKGROUND,
-        },
-        tabBarInactiveTintColor: COLORS.TAB_BAR_INACTIVE,
-        tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
-      }}
-    >
-      <Tabs.Screen
-        name="(home)"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ focused, color, size }) => {
-            const iconName = focused ? "home" : "home-outline";
-            return <Icon name={iconName} size={size} color={color} />;
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="receive"
-        options={{
-          title: "Receive",
-          tabBarIcon: ({ focused, color, size }) => {
-            const iconName = focused ? "arrow-down" : "arrow-down-outline";
-            return <Icon name={iconName} size={size} color={color} />;
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="send"
-        options={{
-          title: "Send",
-          tabBarIcon: ({ focused, color, size }) => {
-            const iconName = focused ? "arrow-up" : "arrow-up-outline";
-            return <Icon name={iconName} size={size} color={color} />;
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ focused, color, size }) => {
-            const iconName = focused ? "settings" : "settings-outline";
-            return <Icon name={iconName} size={size} color={color} />;
-          },
-        }}
-      />
-    </Tabs>
+    <NativeTabs>
+      <NativeTabs.Trigger name="(home)">
+        <Label>Home</Label>
+        {Platform.select({
+          ios: <Icon sf={{ default: "house", selected: "house.fill" }} />,
+          android: (
+            <Icon
+              src={{
+                default: <VectorIcon family={Ionicons} name="home-outline" />,
+                selected: <VectorIcon family={Ionicons} name="home" />,
+              }}
+            />
+          ),
+        })}
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="receive">
+        <Label>Receive</Label>
+        {Platform.select({
+          ios: (
+            <Icon sf={{ default: "arrow.down.left", selected: "arrow.down.left.circle.fill" }} />
+          ),
+          android: (
+            <Icon
+              src={{
+                default: <VectorIcon family={Ionicons} name="arrow-down-outline" />,
+                selected: <VectorIcon family={Ionicons} name="arrow-down" />,
+              }}
+            />
+          ),
+        })}
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="send">
+        <Label>Send</Label>
+        {Platform.select({
+          ios: <Icon sf={{ default: "arrow.up.right", selected: "arrow.up.right.circle.fill" }} />,
+          android: (
+            <Icon
+              src={{
+                default: <VectorIcon family={Ionicons} name="arrow-up-outline" />,
+                selected: <VectorIcon family={Ionicons} name="arrow-up" />,
+              }}
+            />
+          ),
+        })}
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
+        {Platform.select({
+          ios: <Icon sf={{ default: "gear", selected: "gearshape.fill" }} />,
+          android: (
+            <Icon
+              src={{
+                default: <VectorIcon family={Ionicons} name="settings-outline" />,
+                selected: <VectorIcon family={Ionicons} name="settings" />,
+              }}
+            />
+          ),
+        })}
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
