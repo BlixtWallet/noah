@@ -4,7 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import React from "react";
 import { AlertProvider } from "~/contexts/AlertProvider";
-import AppNavigation from "~/Navigators";
+// Navigation is now handled by Expo Router in app/_layout.tsx
 import * as Sentry from "@sentry/react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "~/queryClient";
@@ -27,15 +27,10 @@ if (!isDebugModeOrRegtest) {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <GestureHandlerRootView>
-          <AlertProvider>
-            <AppNavigation />
-          </AlertProvider>
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    // This file is no longer used with Expo Router
+    // The app entry point is now handled by app/_layout.tsx
+    // You can safely delete this file
+    null
   );
 };
 

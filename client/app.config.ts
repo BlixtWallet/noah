@@ -17,6 +17,7 @@ const config: { expo: ExpoConfig } = {
       },
     },
     plugins: [
+      "expo-router",
       "expo-sqlite",
       [
         "react-native-share",
@@ -74,6 +75,7 @@ const config: { expo: ExpoConfig } = {
       },
     },
     android: {
+      scheme: "Noah-Signet",
       adaptiveIcon: {
         foregroundImage:
           "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",

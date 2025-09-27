@@ -15,7 +15,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { formatNumber, satsToUsd } from "~/lib/utils";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
 import { Text } from "~/components/ui/text";
@@ -24,7 +24,7 @@ import { SendConfirmation } from "~/components/SendConfirmation";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
 
 const SendScreen = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const {
     destination,
     setDestination,
@@ -72,7 +72,7 @@ const SendScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View className="flex-1">
           <View className="flex-row items-center p-4">
-            <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+            <TouchableOpacity onPress={() => router.back()} className="mr-4">
               <Icon name="arrow-back" size={28} color="white" />
             </TouchableOpacity>
             <Text className="text-2xl font-bold text-foreground">Send</Text>

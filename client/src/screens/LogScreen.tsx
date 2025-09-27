@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, TextInput, ScrollView } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -8,18 +8,19 @@ import { getAppLogs } from "noah-tools";
 import { COLORS } from "~/lib/styleConstants";
 import { Button } from "~/components/ui/button";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
-import { useBottomTabBarHeight } from "react-native-bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import RNFSTurbo from "react-native-fs-turbo";
 import Share from "react-native-share";
 import { CACHES_DIRECTORY_PATH, PLATFORM } from "~/constants";
 import { Result, ResultAsync } from "neverthrow";
 
 const LogScreen = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const bottomTabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+  const bottomTabBarHeight = insets.bottom > 0 ? insets.bottom + 50 : 80;
 
   useEffect(() => {
     let isMounted = true;
@@ -88,7 +89,7 @@ const LogScreen = () => {
       <View className="p-4 flex-1">
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Pressable onPress={() => router.back()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
             <Text className="text-2xl font-bold text-foreground">App Logs</Text>

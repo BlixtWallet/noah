@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
 import { useAlert } from "~/contexts/AlertProvider";
 import {
   parseDestination,
@@ -31,10 +30,8 @@ type DisplayResult = {
   type: string;
 };
 
-type SendScreenRouteProp = RouteProp<{ params: { destination?: string } }, "params">;
-
 export const useSendScreen = () => {
-  const route = useRoute<SendScreenRouteProp>();
+  const params = useLocalSearchParams();
   const { showAlert } = useAlert();
   const { addTransaction } = useTransactionStore();
   const { data: btcPrice } = useBtcToUsdRate();
@@ -54,10 +51,10 @@ export const useSendScreen = () => {
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    if (route.params?.destination) {
-      setDestination(route.params.destination);
+    if (params.destination) {
+      setDestination(params.destination as string);
     }
-  }, [route.params]);
+  }, [params.destination]);
 
   useEffect(() => {
     if (destination) {

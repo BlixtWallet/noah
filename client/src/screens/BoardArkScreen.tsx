@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Pressable, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import uuid from "react-native-uuid";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
@@ -20,7 +19,6 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
 import { Result } from "neverthrow";
 import logger from "~/lib/log";
-import { HomeStackParamList } from "~/Navigators";
 
 const log = logger("BoardArkScreen");
 
@@ -253,7 +251,7 @@ const ErrorDisplay = ({ errorMessage }: { errorMessage: string }) => (
 
 const BoardArkScreen = () => {
   const { showAlert } = useAlert();
-  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const router = useRouter();
   const { data: balance, isLoading: isBalanceLoading } = useBalance();
   const {
     mutate: boardArk,
@@ -404,14 +402,17 @@ const BoardArkScreen = () => {
           {/* Header */}
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
-              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Pressable onPress={() => router.back()} className="mr-4">
                 <Icon name="arrow-back-outline" size={24} color="white" />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">
                 {flow === "onboard" ? "Board Ark" : "Offboard Ark"}
               </Text>
             </View>
-            <Pressable onPress={() => navigation.navigate("BoardingTransactions")} className="p-2">
+            <Pressable
+              onPress={() => router.push("/(tabs)/(home)/boarding-transactions")}
+              className="p-2"
+            >
               <Icon name="time-outline" size={24} color="white" />
             </Pressable>
           </View>

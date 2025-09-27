@@ -1,5 +1,5 @@
 import { View, Pressable, ScrollView } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -66,9 +66,25 @@ const VTXODetailRow = ({
 };
 
 const VTXODetailScreen = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { vtxo } = route.params as { vtxo: VTXOWithStatus };
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const vtxo: VTXOWithStatus = params.vtxo ? JSON.parse(params.vtxo as string) : null;
+
+  if (!vtxo) {
+    return (
+      <NoahSafeAreaView className="flex-1 bg-background">
+        <View className="p-4 flex-1">
+          <View className="flex-row items-center mb-8">
+            <Pressable onPress={() => router.back()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color="white" />
+            </Pressable>
+            <Text className="text-2xl font-bold text-foreground">VTXO Not Found</Text>
+          </View>
+          <Text className="text-foreground text-center">Unable to load VTXO details.</Text>
+        </View>
+      </NoahSafeAreaView>
+    );
+  }
 
   const formatAmount = (amount: number) => {
     return (amount / 100000000).toFixed(8); // Convert sats to BTC
@@ -94,7 +110,7 @@ const VTXODetailScreen = () => {
     <NoahSafeAreaView className="flex-1 bg-background">
       <View className="p-4 flex-1">
         <View className="flex-row items-center mb-8">
-          <Pressable onPress={() => navigation.goBack()} className="mr-4">
+          <Pressable onPress={() => router.back()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">VTXO Details</Text>

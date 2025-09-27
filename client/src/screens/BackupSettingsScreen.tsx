@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Switch, ScrollView, Pressable } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useBackupManager } from "../hooks/useBackupManager";
 import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
 import { Text } from "../components/ui/text";
@@ -12,7 +12,7 @@ import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { NoahButton } from "~/components/ui/NoahButton";
 
 export const BackupSettingsScreen = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const {
     isBackupEnabled,
     setBackupEnabled,
@@ -30,7 +30,7 @@ export const BackupSettingsScreen = () => {
     <NoahSafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerClassName="p-4 flex-1">
         <View className="flex-row items-center mb-8">
-          <Pressable onPress={() => navigation.goBack()} className="mr-4">
+          <Pressable onPress={() => router.back()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Backup</Text>

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Pressable } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -12,20 +10,13 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
 
-import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
 import { getMnemonic } from "~/lib/crypto";
 
-type MnemonicScreenRouteProp = RouteProp<
-  OnboardingStackParamList & SettingsStackParamList,
-  "Mnemonic"
->;
-
 const MnemonicScreen = () => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<OnboardingStackParamList & SettingsStackParamList>>();
-  const route = useRoute<MnemonicScreenRouteProp>();
-  const { fromOnboarding } = route.params || {};
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const fromOnboarding = params.fromOnboarding === "true";
 
   const [mnemonic, setMnemonic] = useState("");
   const { showAlert } = useAlert();
@@ -41,11 +32,11 @@ const MnemonicScreen = () => {
           title: "Error",
           description: "Could not retrieve your recovery phrase. Please try again from settings.",
         });
-        navigation.goBack();
+        router.back();
       }
     };
     fetchMnemonic();
-  }, [showAlert, navigation]);
+  }, [showAlert, router]);
 
   const handleCopy = async () => {
     await copyToClipboard(mnemonic, {
@@ -57,9 +48,9 @@ const MnemonicScreen = () => {
 
   const handleContinue = () => {
     if (fromOnboarding) {
-      navigation.navigate("LightningAddress", { fromOnboarding: true });
+      router.push("/(onboarding)/lightning-address?fromOnboarding=true");
     } else {
-      navigation.goBack();
+      router.back();
     }
   };
 
@@ -68,7 +59,7 @@ const MnemonicScreen = () => {
       <View className="p-4">
         <View className="flex-row items-center mb-8">
           {!fromOnboarding && (
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Pressable onPress={() => router.back()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
           )}

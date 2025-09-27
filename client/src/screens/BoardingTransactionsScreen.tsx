@@ -8,9 +8,7 @@ import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Label } from "~/components/ui/label";
-import { useNavigation } from "@react-navigation/native";
-import { HomeStackParamList } from "~/Navigators";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
 import { Result, ResultAsync } from "neverthrow";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import RNFSTurbo from "react-native-fs-turbo";
@@ -29,7 +27,7 @@ type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
 };
 
 const BoardingTransactionsScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const router = useRouter();
   const [transactions, setTransactions] = useState<BoardingTransaction[]>([]);
   const [filter, setFilter] = useState<"all" | "onboarding" | "offboarding">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -196,7 +194,7 @@ const BoardingTransactionsScreen = () => {
         <View className="p-4 flex-1">
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
-              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Pressable onPress={() => router.back()} className="mr-4">
                 <Icon name="arrow-back-outline" size={24} color="white" />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Boarding History</Text>
@@ -240,7 +238,9 @@ const BoardingTransactionsScreen = () => {
                 <View style={{ marginBottom: 8 }}>
                   <Pressable
                     onPress={() =>
-                      navigation.navigate("BoardingTransactionDetail", { transaction: item })
+                      router.push(
+                        `/(tabs)/(home)/boarding-transaction-detail?transaction=${encodeURIComponent(JSON.stringify(item))}`,
+                      )
                     }
                     onLongPress={() => handleDeleteRequest(item.request_id)}
                   >

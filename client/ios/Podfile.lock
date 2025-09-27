@@ -216,7 +216,12 @@ PODS:
     - ExpoModulesCore
   - ExpoHaptics (15.0.7):
     - ExpoModulesCore
+  - ExpoHead (6.0.8):
+    - ExpoModulesCore
+    - RNScreens
   - ExpoKeepAwake (15.0.7):
+    - ExpoModulesCore
+  - ExpoLinking (8.0.8):
     - ExpoModulesCore
   - ExpoModulesCore (3.0.18):
     - hermes-engine
@@ -2530,7 +2535,9 @@ DEPENDENCIES:
   - ExpoFileSystem (from `../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../../node_modules/expo-haptics/ios`)
+  - ExpoHead (from `../../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../../node_modules/expo-keep-awake/ios`)
+  - ExpoLinking (from `../../node_modules/expo-linking/ios`)
   - ExpoModulesCore (from `../../node_modules/expo-modules-core`)
   - ExpoSQLite (from `../../node_modules/expo-sqlite/ios`)
   - ExpoSystemUI (from `../../node_modules/expo-system-ui/ios`)
@@ -2671,8 +2678,12 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-font/ios"
   ExpoHaptics:
     :path: "../../node_modules/expo-haptics/ios"
+  ExpoHead:
+    :path: "../../node_modules/expo-router/ios"
   ExpoKeepAwake:
     :path: "../../node_modules/expo-keep-awake/ios"
+  ExpoLinking:
+    :path: "../../node_modules/expo-linking/ios"
   ExpoModulesCore:
     :path: "../../node_modules/expo-modules-core"
   ExpoSQLite:
@@ -2878,7 +2889,9 @@ SPEC CHECKSUMS:
   ExpoFileSystem: 72fef9c5cb92b9995eeee114a14acb66d94d5bd4
   ExpoFont: d3e56c7cc03d9fd113b90a5513ad32b4bf46b0ff
   ExpoHaptics: b48d913e7e5f23816c6f130e525c9a6501b160b5
+  ExpoHead: 511ab91efdcf6b04fdfe76fc83931bb4c0956b09
   ExpoKeepAwake: 3f5e3ac53627849174f3603271df8e08f174ed4a
+  ExpoLinking: f5c171877e118e792cb9a77e5ade0b080d899b14
   ExpoModulesCore: f35e51bd73613b2d3556c5c7d13f2f42f58b1ea9
   ExpoSQLite: f9d1202877e12bfa78a58309a3977ee4ea0b1314
   ExpoSystemUI: 5e7fbe4b716edb9e3a7bc0441e4a3b6b1f9eb1ea

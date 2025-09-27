@@ -1,8 +1,6 @@
 import { View, ScrollView, RefreshControl, Pressable } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
 import { NoahButton } from "../components/ui/NoahButton";
-import type { HomeStackParamList } from "../Navigators";
 import { Text } from "../components/ui/text";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
@@ -24,12 +22,12 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import { useBottomTabBarHeight } from "react-native-bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
 
 const HomeScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const router = useRouter();
   const { walletError } = useWalletStore();
   const { data: balance, isFetching, refetch, error } = useBalance();
   const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
@@ -37,7 +35,10 @@ const HomeScreen = () => {
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const [fact, setFact] = useState("");
-  const bottomTabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+
+  // Use safe area bottom or default tab bar height
+  const bottomTabBarHeight = insets.bottom > 0 ? insets.bottom + 50 : 80;
 
   const getRandomFact = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * BITCOIN_FACTS.length);
@@ -81,7 +82,7 @@ const HomeScreen = () => {
 
   const { showCamera, setShowCamera, handleScanPress, codeScanner } = useQRCodeScanner({
     onScan: (value) => {
-      navigation.navigate("Send", { destination: value });
+      router.push(`/(tabs)/(home)/send-to?destination=${encodeURIComponent(value)}`);
     },
   });
 
@@ -97,7 +98,7 @@ const HomeScreen = () => {
       }}
     >
       <View className="flex-row items-center justify-between p-4">
-        <Pressable onPress={() => navigation.navigate("BoardArk")}>
+        <Pressable onPress={() => router.push("/(tabs)/(home)/board-ark")}>
           <Icon name="boat" size={28} color="white" />
         </Pressable>
         <View className="flex-1 items-center">
@@ -107,7 +108,7 @@ const HomeScreen = () => {
             </View>
           )}
         </View>
-        <Pressable onPress={() => navigation.navigate("Transactions")}>
+        <Pressable onPress={() => router.push("/(tabs)/(home)/transactions")}>
           <Icon name="list" size={28} color="white" />
         </Pressable>
       </View>

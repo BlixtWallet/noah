@@ -20,7 +20,7 @@ import {
 import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import Icon from "@react-native-vector-icons/ionicons";
 import { satsToBtc, formatNumber } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
@@ -70,7 +70,7 @@ const CopyableDetail = ({
 };
 
 const ReceiveScreen = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
@@ -163,7 +163,7 @@ const ReceiveScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View className="flex-1 p-4">
           <View className="flex-row items-center mb-8">
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Pressable onPress={() => router.back()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
             <Text className="text-2xl font-bold text-foreground">Receive</Text>

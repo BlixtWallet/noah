@@ -6,9 +6,7 @@ import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Label } from "~/components/ui/label";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { SettingsStackParamList } from "~/Navigators";
+import { useRouter } from "expo-router";
 import { useGetVtxos, useGetExpiringVtxos, type BarkVtxo } from "~/hooks/useWallet";
 
 export type VTXOWithStatus = BarkVtxo & {
@@ -16,7 +14,7 @@ export type VTXOWithStatus = BarkVtxo & {
 };
 
 const VTXOsScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const router = useRouter();
   const [filter, setFilter] = useState<"all" | "active" | "expiring">("all");
 
   const { data: allVtxos = [], isLoading: isLoadingAll } = useGetVtxos();
@@ -57,7 +55,7 @@ const VTXOsScreen = () => {
         <View className="p-4 flex-1">
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
-              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Pressable onPress={() => router.back()} className="mr-4">
                 <Icon name="arrow-back-outline" size={24} color="white" />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">VTXOs</Text>
@@ -112,7 +110,13 @@ const VTXOsScreen = () => {
               data={filteredVtxos}
               renderItem={({ item }: { item: VTXOWithStatus }) => (
                 <View style={{ marginBottom: 8 }}>
-                  <Pressable onPress={() => navigation.navigate("VTXODetail", { vtxo: item })}>
+                  <Pressable
+                    onPress={() =>
+                      router.push(
+                        `/(tabs)/settings/vtxo-detail?vtxo=${encodeURIComponent(JSON.stringify(item))}`,
+                      )
+                    }
+                  >
                     <View className="flex-row items-center p-4 bg-card rounded-lg">
                       <View className="mr-4">
                         <Icon

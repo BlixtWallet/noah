@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, Pressable } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import type { RouteProp } from "@react-navigation/native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Input } from "../components/ui/input";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
@@ -13,20 +12,15 @@ import { useServerStore } from "../store/serverStore";
 import { useWalletStore } from "../store/walletStore";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { CheckCircle } from "lucide-react-native";
-import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
+
 import { performServerRegistration } from "~/lib/server";
 import { useAlert } from "~/contexts/AlertProvider";
 
-type LightningAddressScreenRouteProp = RouteProp<
-  OnboardingStackParamList & SettingsStackParamList,
-  "LightningAddress"
->;
-
 const LightningAddressScreen = () => {
-  const navigation = useNavigation();
-  const route = useRoute<LightningAddressScreenRouteProp>();
+  const router = useRouter();
+  const params = useLocalSearchParams();
   const { showAlert } = useAlert();
-  const { fromOnboarding } = route.params || {};
+  const fromOnboarding = params.fromOnboarding === "true";
   const { finishOnboarding } = useWalletStore();
   const { lightningAddress } = useServerStore();
   const domain = getLnurlDomain();
@@ -43,8 +37,9 @@ const LightningAddressScreen = () => {
         setShowUpdateSuccess(false);
         if (fromOnboarding) {
           finishOnboarding();
+          router.replace("/(tabs)/(home)");
         } else {
-          navigation.goBack();
+          router.back();
         }
       }, 2000);
     },
@@ -58,6 +53,7 @@ const LightningAddressScreen = () => {
         const result = await performServerRegistration(newAddress);
         if (result.isOk()) {
           finishOnboarding();
+          router.replace("/(tabs)/(home)");
         } else {
           showAlert({
             title: "Error",
@@ -78,8 +74,10 @@ const LightningAddressScreen = () => {
       const result = await performServerRegistration(null);
       if (result.isOk()) {
         finishOnboarding();
+        router.replace("/(tabs)/(home)");
       } else {
         finishOnboarding();
+        router.replace("/(tabs)/(home)");
 
         showAlert({
           title: "Error",
@@ -95,7 +93,7 @@ const LightningAddressScreen = () => {
       <View className="p-4">
         <View className="flex-row items-center mb-8">
           {!fromOnboarding && (
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Pressable onPress={() => router.back()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color="white" />
             </Pressable>
           )}

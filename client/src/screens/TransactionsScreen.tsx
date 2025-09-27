@@ -10,15 +10,13 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
 import { type Transaction, type PaymentTypes } from "../types/transaction";
 import { Label } from "~/components/ui/label";
-import { useNavigation } from "@react-navigation/native";
-import { HomeStackParamList } from "~/Navigators";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
 import { Result, ResultAsync } from "neverthrow";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import RNFSTurbo from "react-native-fs-turbo";
 
 const TransactionsScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const router = useRouter();
   const { transactions, removeTransaction } = useTransactionStore();
   const [filter, setFilter] = useState<PaymentTypes | "all" | "Lightning">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -141,7 +139,7 @@ const TransactionsScreen = () => {
         <View className="p-4 flex-1">
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
-              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Pressable onPress={() => router.back()} className="mr-4">
                 <Icon name="arrow-back-outline" size={24} color="white" />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Transactions</Text>
@@ -178,7 +176,11 @@ const TransactionsScreen = () => {
             renderItem={({ item }: { item: Transaction }) => (
               <View style={{ marginBottom: 8 }}>
                 <Pressable
-                  onPress={() => navigation.navigate("TransactionDetail", { transaction: item })}
+                  onPress={() =>
+                    router.push(
+                      `/(tabs)/(home)/transaction-detail?transaction=${encodeURIComponent(JSON.stringify(item))}`,
+                    )
+                  }
                   onLongPress={() => handleDeleteRequest(item.id)}
                 >
                   <View className="flex-row items-center p-4 bg-card rounded-lg">

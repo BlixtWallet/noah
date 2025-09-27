@@ -8,17 +8,15 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { type NativeStackScreenProps } from "@react-navigation/native-stack";
-import { OnboardingStackParamList } from "../Navigators";
+import { useRouter } from "expo-router";
 import { NoahButton } from "../components/ui/NoahButton";
 import { useRestoreWallet } from "~/hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import Icon from "@react-native-vector-icons/ionicons";
 
-type Props = NativeStackScreenProps<OnboardingStackParamList, "RestoreWallet">;
-
-const RestoreWalletScreen = ({ navigation }: Props) => {
+const RestoreWalletScreen = () => {
+  const router = useRouter();
   const [mnemonic, setMnemonic] = useState("");
   const { mutate: restoreWallet, isPending } = useRestoreWallet();
 
@@ -41,7 +39,7 @@ const RestoreWalletScreen = ({ navigation }: Props) => {
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
           <View className="p-4 flex-1">
             <View className="flex-row items-center mb-4">
-              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Pressable onPress={() => router.back()} className="mr-4">
                 <Icon name="arrow-back-outline" size={24} color="white" />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Restore Wallet</Text>

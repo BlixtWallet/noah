@@ -7,9 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Text } from "../components/ui/text";
 import React, { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
+import { useAppNavigation } from "../hooks/useAppNavigation";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useDeleteWallet } from "../hooks/useWallet";
 import { useExportDatabase } from "../hooks/useExportDatabase";
@@ -65,8 +63,7 @@ const SettingsScreen = () => {
     useExportDatabase();
   const { data: peakKeyPair } = usePeakKeyPair();
 
-  const navigation =
-    useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
+  const navigation = useAppNavigation();
 
   const handlePress = (item: Setting) => {
     if (!item.isPressable) return;

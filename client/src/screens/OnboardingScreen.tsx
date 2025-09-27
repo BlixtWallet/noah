@@ -1,22 +1,20 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { OnboardingStackParamList } from "../Navigators";
+import { useRouter } from "expo-router";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import { useCreateWallet } from "../hooks/useWallet";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 
 const OnboardingScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
+  const router = useRouter();
   const { mutate: createWallet, isPending, isSuccess } = useCreateWallet();
 
   useEffect(() => {
     if (isSuccess) {
-      navigation.navigate("Mnemonic", { fromOnboarding: true });
+      router.push("/(onboarding)/mnemonic?fromOnboarding=true");
     }
-  }, [isSuccess, navigation]);
+  }, [isSuccess, router]);
 
   return (
     <View className="flex-1 items-center justify-center bg-background p-5">
@@ -35,7 +33,7 @@ const OnboardingScreen = () => {
             Create Wallet
           </NoahButton>
           <View style={{ width: 20 }} />
-          <NoahButton onPress={() => navigation.navigate("RestoreWallet")} size="lg">
+          <NoahButton onPress={() => router.push("/(onboarding)/restore-wallet")} size="lg">
             Restore Wallet
           </NoahButton>
         </View>

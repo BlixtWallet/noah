@@ -1,5 +1,5 @@
 import { View, Pressable } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -62,9 +62,27 @@ const TransactionDetailRow = ({
 };
 
 const TransactionDetailScreen = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
-  const { transaction } = route.params as { transaction: Transaction };
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const transaction: Transaction = params.transaction
+    ? JSON.parse(params.transaction as string)
+    : null;
+
+  if (!transaction) {
+    return (
+      <NoahSafeAreaView className="flex-1 bg-background">
+        <View className="p-4 flex-1">
+          <View className="flex-row items-center mb-8">
+            <Pressable onPress={() => router.back()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color="white" />
+            </Pressable>
+            <Text className="text-2xl font-bold text-foreground">Transaction Not Found</Text>
+          </View>
+          <Text className="text-foreground text-center">Unable to load transaction details.</Text>
+        </View>
+      </NoahSafeAreaView>
+    );
+  }
 
   const fiatAmount = transaction.btcPrice
     ? (transaction.amount * 0.00000001 * transaction.btcPrice).toFixed(2)
@@ -75,7 +93,7 @@ const TransactionDetailScreen = () => {
     <NoahSafeAreaView className="flex-1 bg-background">
       <View className="p-4 flex-1">
         <View className="flex-row items-center mb-8">
-          <Pressable onPress={() => navigation.goBack()} className="mr-4">
+          <Pressable onPress={() => router.back()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">{transaction.type}</Text>
