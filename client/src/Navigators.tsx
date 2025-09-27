@@ -37,6 +37,13 @@ import VTXODetailScreen from "~/screens/VTXODetailScreen";
 type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
   type: "onboarding" | "offboarding";
 };
+export type TabParamList = {
+  Home: undefined;
+  Receive: undefined;
+  Send: { destination?: string };
+  Settings: undefined;
+};
+
 export type SettingsStackParamList = {
   SettingsList: undefined;
   Mnemonic: { fromOnboarding: boolean };
@@ -65,12 +72,10 @@ export type HomeStackParamList = {
   BoardingTransactionDetail: { transaction: BoardingTransaction };
 };
 
-const Tab = createNativeBottomTabNavigator();
+const Tab = createNativeBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
-const ReceiveStack = createNativeStackNavigator();
-const SendStack = createNativeStackNavigator();
 
 const SettingsStackNav = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -140,26 +145,6 @@ const HomeStackScreen = () => (
   </HomeStack.Navigator>
 );
 
-const ReceiveStackScreen = () => (
-  <ReceiveStack.Navigator>
-    <ReceiveStack.Screen
-      name="ReceiveStack"
-      component={ReceiveScreen}
-      options={{ headerShown: false, animation: "default" }}
-    />
-  </ReceiveStack.Navigator>
-);
-
-const SendStackScreen = () => (
-  <SendStack.Navigator>
-    <SendStack.Screen
-      name="SendStack"
-      component={SendScreen}
-      options={{ headerShown: false, animation: "default" }}
-    />
-  </SendStack.Navigator>
-);
-
 const OnboardingStackScreen = () => (
   <OnboardingStack.Navigator screenOptions={{ headerShown: false }}>
     <OnboardingStack.Screen
@@ -195,14 +180,14 @@ const AppTabs = () => {
 
   return (
     <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
+      }}
       tabBarStyle={{
         backgroundColor: COLORS.TAB_BAR_BACKGROUND,
       }}
       tabBarInactiveTintColor={COLORS.TAB_BAR_INACTIVE}
       hapticFeedbackEnabled
-      screenOptions={{
-        tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
-      }}
       disablePageAnimations={true}
     >
       <Tab.Screen
@@ -220,8 +205,9 @@ const AppTabs = () => {
       />
       <Tab.Screen
         name="Receive"
-        component={ReceiveStackScreen}
+        component={ReceiveScreen}
         options={{
+          lazy: true,
           tabBarIcon: ({ focused }) => {
             if (isIos) {
               return { sfSymbol: focused ? "arrow.down.left" : "arrow.down.left" };
@@ -233,8 +219,9 @@ const AppTabs = () => {
       />
       <Tab.Screen
         name="Send"
-        component={SendStackScreen}
+        component={SendScreen}
         options={{
+          lazy: true,
           tabBarIcon: ({ focused }) => {
             if (isIos) {
               return { sfSymbol: focused ? "arrow.up.right" : "arrow.up.right" };
@@ -248,6 +235,7 @@ const AppTabs = () => {
         name="Settings"
         component={SettingsStackNav}
         options={{
+          lazy: true,
           tabBarIcon: ({ focused }) => {
             if (isIos) {
               return { sfSymbol: focused ? "gearshape.fill" : "gear" };

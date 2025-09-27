@@ -29,7 +29,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <GestureHandlerRootView>
+        <GestureHandlerRootView style={{ flex: 1 }}>
           <AlertProvider>
             <AppNavigation />
           </AlertProvider>
