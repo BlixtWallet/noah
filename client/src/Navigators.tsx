@@ -202,6 +202,26 @@ const AppTabs = () => {
             return Icon.getImageSourceSync(iconName, 24)!;
           },
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const route = state.routes[state.index];
+
+            // If we're on the Home tab and in a nested screen, prevent default and reset
+            if (route.name === "Home" && route.state?.index && route.state.index > 0) {
+              // Prevent default action only when we need to reset
+              e.preventDefault();
+
+              // Navigate to Home twice to reset the stack
+              navigation.navigate("Home");
+              // Request animation frame to ensure smooth reset
+              requestAnimationFrame(() => {
+                navigation.navigate("Home");
+              });
+            }
+            // Otherwise, let the default behavior handle the navigation
+          },
+        })}
       />
       <Tab.Screen
         name="Receive"
@@ -244,6 +264,26 @@ const AppTabs = () => {
             return Icon.getImageSourceSync(iconName, 24)!;
           },
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const route = state.routes[state.index];
+
+            // If we're on the Settings tab and in a nested screen, prevent default and reset
+            if (route.name === "Settings" && route.state?.index && route.state.index > 0) {
+              // Prevent default action only when we need to reset
+              e.preventDefault();
+
+              // Navigate to Settings twice to reset the stack
+              navigation.navigate("Settings");
+              // Request animation frame to ensure smooth reset
+              requestAnimationFrame(() => {
+                navigation.navigate("Settings");
+              });
+            }
+            // Otherwise, let the default behavior handle the navigation
+          },
+        })}
       />
     </Tab.Navigator>
   );
