@@ -5,34 +5,11 @@ use crate::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
         offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
     },
-    push::{send_push_notification, send_push_notification_with_unique_k1},
-    types::{
-        BackgroundSyncNotification, BackupTriggerNotification, HeartbeatNotification,
-        NotificationData,
-    },
+    push::send_push_notification_with_unique_k1,
+    types::{BackupTriggerNotification, HeartbeatNotification, NotificationData},
 };
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::info;
-
-async fn background_sync(app_state: AppState) {
-    let data = crate::push::PushNotificationData {
-        title: None,
-        body: None,
-        data: serde_json::to_string(&NotificationData::BackgroundSync(
-            BackgroundSyncNotification {},
-        ))
-        .unwrap(),
-        priority: "high".to_string(),
-        content_available: true,
-    };
-
-    if let Err(e) = send_push_notification(app_state.clone(), data, None).await {
-        tracing::error!(
-            "Failed to send push notification for background sync: {}",
-            e
-        );
-    }
-}
 
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
     let conn = app_state.db.connect()?;
@@ -160,16 +137,6 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
 
 pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
-
-    let background_sync_cron = std::env::var(EnvVariables::BackgroundSyncCron.to_string())
-        .unwrap_or(constants::DEFAULT_BACKGROUND_SYNC_CRON.to_string());
-
-    let bg_sync_app_state = app_state.clone();
-    let bg_job = Job::new_async(&background_sync_cron, move |_, _| {
-        let app_state = bg_sync_app_state.clone();
-        Box::pin(background_sync(app_state))
-    })?;
-    sched.add(bg_job).await?;
 
     let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
         .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());

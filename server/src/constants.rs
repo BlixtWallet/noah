@@ -20,8 +20,6 @@ pub enum EnvVariables {
     ServerNetwork,
     #[strum(serialize = "SENTRY_URL")]
     SentryUrl,
-    #[strum(serialize = "BACKGROUND_SYNC_CRON")]
-    BackgroundSyncCron,
     #[strum(serialize = "BACKUP_CRON")]
     BackupCron,
     #[strum(serialize = "S3_BUCKET_NAME")]
@@ -36,6 +34,5 @@ pub const DEFAULT_PRIVATE_PORT: &str = "3099";
 pub const DEFAULT_LNURL_DOMAIN: &str = "localhost";
 pub const DEFAULT_SERVER_NETWORK: &str = "regtest";
 pub const DEFAULT_BACKUP_CRON: &str = "every 2 hours";
-pub const DEFAULT_BACKGROUND_SYNC_CRON: &str = "every 48 hours";
 pub const DEFAULT_HEARTBEAT_CRON: &str = "every 48 hours";
 pub const DEFAULT_DEREGISTER_CRON: &str = "every 12 hours";

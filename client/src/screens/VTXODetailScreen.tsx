@@ -69,7 +69,7 @@ const VTXODetailRow = ({
 const VTXODetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { data: blockHeight, isError: isErrorFetchingBlockHeight } = useGetBlockHeight();
+  const { data: blockHeight } = useGetBlockHeight();
   const { vtxo } = route.params as { vtxo: VTXOWithStatus };
 
   const formatAmount = (amount: number) => {

@@ -1,32 +1,12 @@
-import { syncWallet } from "~/lib/sync";
 import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice, offboardAllArk, onchainAddress } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
-import { peakKeyPair } from "./crypto";
 import { submitInvoice as submitInvoiceApi } from "./api";
 import { updateOffboardingRequestStatus } from "./transactionsDb";
 
 const log = logger("tasks");
-
-export async function backgroundSync() {
-  const loadResult = await loadWalletIfNeeded();
-  if (loadResult.isErr()) {
-    log.e("Failed to load wallet in background", [loadResult.error]);
-    return;
-  }
-
-  await syncWallet();
-  const peakResult = await peakKeyPair(0);
-  if (peakResult.isErr()) {
-    log.e("Failed to peak key pair in background", [peakResult.error]);
-    return;
-  }
-  const { public_key: pubkey } = peakResult.value;
-
-  log.d("[Background Job] wallet synced in background", [pubkey]);
-}
 
 export async function maintenance(): Promise<Result<void, Error>> {
   const loadResult = await loadWalletIfNeeded();

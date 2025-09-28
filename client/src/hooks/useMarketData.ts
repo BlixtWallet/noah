@@ -68,7 +68,6 @@ export const getBlockHeight = async (): Promise<Result<number, Error>> => {
     ky.get(url).text(),
     (e) => new Error(`Failed to fetch blockheight from mempool.space: ${e}`),
   ).andThen((data) => {
-    console.log("blockheight", data);
     const height = parseInt(data, 10);
     if (!isNaN(height)) {
       return ok(height);

@@ -163,13 +163,6 @@ pub enum ReportStatus {
     Failure,
 }
 
-// Individual notification data structures
-#[derive(Debug, Serialize, Deserialize, TS, Clone)]
-#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct BackgroundSyncNotification {
-    // No additional data needed
-}
-
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct MaintenanceNotification {
@@ -210,7 +203,6 @@ pub struct HeartbeatNotification {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 #[serde(tag = "notification_type", rename_all = "snake_case")]
 pub enum NotificationData {
-    BackgroundSync(BackgroundSyncNotification),
     Maintenance(MaintenanceNotification),
     LightningInvoiceRequest(LightningInvoiceRequestNotification),
     BackupTrigger(BackupTriggerNotification),
@@ -238,7 +230,6 @@ impl NotificationData {
             NotificationData::Offboarding(n) => n.k1 = k1,
             NotificationData::Heartbeat(n) => n.k1 = k1,
             NotificationData::LightningInvoiceRequest(n) => n.k1 = k1,
-            _ => {}
         }
     }
 }
@@ -248,7 +239,6 @@ impl NotificationData {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 #[serde(rename_all = "snake_case")]
 pub enum NotificationTypes {
-    BackgroundSync,
     Maintenance,
     LightningInvoiceRequest,
     BackupTrigger,

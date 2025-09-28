@@ -7,8 +7,6 @@ export type AuthEvent = "REGISTERED";
 
 export type AuthPayload = { key: string, sig: string, k1: string, };
 
-export type BackgroundSyncNotification = Record<string, never>;
-
 export type BackupInfo = { backup_version: number, created_at: string, backup_size: number, };
 
 export type BackupSettingsPayload = { backup_enabled: boolean, };
@@ -40,9 +38,9 @@ export type LightningInvoiceRequestNotification = { k1: string, transaction_id: 
 
 export type MaintenanceNotification = { k1: string, };
 
-export type NotificationData = { "notification_type": "background_sync" } & BackgroundSyncNotification | { "notification_type": "maintenance" } & MaintenanceNotification | { "notification_type": "lightning_invoice_request" } & LightningInvoiceRequestNotification | { "notification_type": "backup_trigger" } & BackupTriggerNotification | { "notification_type": "offboarding" } & OffboardingNotification | { "notification_type": "heartbeat" } & HeartbeatNotification;
+export type NotificationData = { "notification_type": "maintenance" } & MaintenanceNotification | { "notification_type": "lightning_invoice_request" } & LightningInvoiceRequestNotification | { "notification_type": "backup_trigger" } & BackupTriggerNotification | { "notification_type": "offboarding" } & OffboardingNotification | { "notification_type": "heartbeat" } & HeartbeatNotification;
 
-export type NotificationTypes = "background_sync" | "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding" | "heartbeat";
+export type NotificationTypes = "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding" | "heartbeat";
 
 export type OffboardingNotification = { k1: string, offboarding_request_id: string, };
 

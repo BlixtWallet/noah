@@ -206,8 +206,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
         .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());
-    let background_sync_cron = std::env::var(EnvVariables::BackgroundSyncCron.to_string())
-        .unwrap_or(constants::DEFAULT_BACKGROUND_SYNC_CRON.to_string());
 
     let server_config = serde_json::json!({
         "HOST": config.host,
@@ -216,7 +214,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         "LNURL_DOMAIN": config.lnurl_domain,
         "ARK_SERVER_URL": config.ark_server_url,
         "SERVER_ENV": config.server_network,
-        "BACKGROUND_SYNC_CRON": background_sync_cron,
         "BACKUP_CRON": backup_cron,
     });
 

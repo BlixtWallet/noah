@@ -5,13 +5,7 @@ import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import {
-  backgroundSync,
-  maintenance,
-  offboardTask,
-  submitInvoice,
-  triggerBackupTask,
-} from "./tasks";
+import { maintenance, offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
@@ -91,10 +85,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
     const taskResult = await ResultAsync.fromPromise(
       (async () => {
         switch (notificationData.notification_type) {
-          case "background_sync":
-            await backgroundSync();
-            break;
-
           case "maintenance": {
             const result = await maintenance();
             await handleTaskCompletion("maintenance", result, notificationData.k1);
