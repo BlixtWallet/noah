@@ -162,6 +162,17 @@ export const mempoolPriceEndpoint = "https://mempool.noderunner.wtf/api/v1/price
 export const mempoolHistoricalPriceEndpoint =
   "https://mempool.noderunner.wtf/api/v1/historical-price";
 
+export const getBlockheightEndpoint = () => {
+  switch (APP_VARIANT) {
+    case "mainnet":
+      return "https://mempool.noderunner.wtf/api/blocks/tip/height";
+    case "signet":
+      return "https://mempool.space/signet/api/blocks/tip/height";
+    case "regtest":
+      return `http://${REGTEST_URL}:18443`;
+  }
+};
+
 export const isValidLightningAddress = (url: string): boolean => {
   if (!isEmail(url)) {
     return false;

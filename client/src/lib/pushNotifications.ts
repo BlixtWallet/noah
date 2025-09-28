@@ -39,7 +39,6 @@ async function handleTaskCompletion(
     throw result.error;
   }
 
-  log.d(`Triggered ${report_type} task, reporting success`);
   const jobStatusResult = await reportJobStatus({
     report_type,
     status: "success",
@@ -49,7 +48,10 @@ async function handleTaskCompletion(
 
   if (jobStatusResult.isErr()) {
     log.i("Failed to report job status", [jobStatusResult.error]);
+    return;
   }
+
+  log.d(`Triggered ${report_type} task, successfully`);
 }
 
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
@@ -178,47 +180,48 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     });
   }
 
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== "granted") {
-      return err(new Error("Permission not granted to get push token for push notification!"));
-    }
-    const projectId =
-      Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
-    if (!projectId) {
-      return err(new Error("Project ID not found"));
-    }
-    const nativePushTokenResult = await ResultAsync.fromPromise(
-      Notifications.getDevicePushTokenAsync(),
-      (e) => e as Error,
-    );
-
-    if (nativePushTokenResult.isErr()) {
-      log.w("Failed to get native push token", [nativePushTokenResult.error]);
-      return err(nativePushTokenResult.error);
-    }
-
-    const pushTokenResult = await ResultAsync.fromPromise(
-      Notifications.getExpoPushTokenAsync({
-        projectId,
-      }),
-      (e) => e as Error,
-    );
-
-    if (pushTokenResult.isErr()) {
-      return err(pushTokenResult.error);
-    }
-
-    const pushTokenString = pushTokenResult.value.data;
-    return ok(pushTokenString);
-  } else {
+  // If the device is not a physical device, return an error
+  // Push notifications are not supported on simulators or emulators
+  if (!Device.isDevice) {
     return err(new Error("Must use physical device for push notifications"));
   }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== "granted") {
+    return err(new Error("Permission not granted to get push token for push notification!"));
+  }
+  const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+  if (!projectId) {
+    return err(new Error("Project ID not found"));
+  }
+  const nativePushTokenResult = await ResultAsync.fromPromise(
+    Notifications.getDevicePushTokenAsync(),
+    (e) => e as Error,
+  );
+
+  if (nativePushTokenResult.isErr()) {
+    log.w("Failed to get native push token", [nativePushTokenResult.error]);
+    return err(nativePushTokenResult.error);
+  }
+
+  const pushTokenResult = await ResultAsync.fromPromise(
+    Notifications.getExpoPushTokenAsync({
+      projectId,
+    }),
+    (e) => e as Error,
+  );
+
+  if (pushTokenResult.isErr()) {
+    return err(pushTokenResult.error);
+  }
+
+  const pushTokenString = pushTokenResult.value.data;
+  return ok(pushTokenString);
 }
 
 export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {

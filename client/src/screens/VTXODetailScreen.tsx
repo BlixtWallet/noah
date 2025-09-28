@@ -7,6 +7,7 @@ import { copyToClipboard } from "../lib/clipboardUtils";
 import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
 import type { BarkVtxo } from "~/hooks/useWallet";
+import { useGetBlockHeight } from "~/hooks/useMarketData";
 
 type VTXOWithStatus = BarkVtxo & {
   isExpiring: boolean;
@@ -68,6 +69,7 @@ const VTXODetailRow = ({
 const VTXODetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const { data: blockHeight, isError: isErrorFetchingBlockHeight } = useGetBlockHeight();
   const { vtxo } = route.params as { vtxo: VTXOWithStatus };
 
   const formatAmount = (amount: number) => {
@@ -134,7 +136,21 @@ const VTXODetailScreen = () => {
               value={`${formatAmount(vtxo.amount)} BTC (${vtxo.amount.toLocaleString()} sats)`}
             />
             <VTXODetailRow label="Status" value={vtxo.isExpiring ? "Expiring" : "Active"} />
-            <VTXODetailRow label="Expiry Height" value={vtxo.expiry_height.toString()} />
+            <VTXODetailRow
+              label="Current Block Height"
+              value={blockHeight ? blockHeight.toLocaleString() : "Loading..."}
+            />
+            <VTXODetailRow label="Expiry Height" value={vtxo.expiry_height.toLocaleString()} />
+            <VTXODetailRow
+              label="Blocks Until Expiry"
+              value={
+                blockHeight
+                  ? vtxo.expiry_height > blockHeight
+                    ? `${(vtxo.expiry_height - blockHeight).toLocaleString()}`
+                    : "Expired"
+                  : "Loading..."
+              }
+            />
             <VTXODetailRow label="Exit Delta" value={vtxo.exit_delta.toString()} />
           </View>
 

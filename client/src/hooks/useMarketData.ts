@@ -1,8 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { mempoolPriceEndpoint, mempoolHistoricalPriceEndpoint } from "~/constants";
+import {
+  mempoolPriceEndpoint,
+  mempoolHistoricalPriceEndpoint,
+  getBlockheightEndpoint,
+  REGTEST_CONFIG,
+} from "~/constants";
 import ky from "ky";
 
-import { err, ok, ResultAsync } from "neverthrow";
+import { err, ok, Result, ResultAsync } from "neverthrow";
+import { APP_VARIANT } from "~/config";
 export const getBtcToUsdRate = (): ResultAsync<number, Error> => {
   return ResultAsync.fromPromise(
     ky.get(mempoolPriceEndpoint).json<{ USD?: number }>(),
@@ -21,6 +27,63 @@ export function useBtcToUsdRate() {
     queryKey: ["btcToUsdRate"],
     queryFn: async () => {
       const result = await getBtcToUsdRate();
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return result.value;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+export const getBlockHeight = async (): Promise<Result<number, Error>> => {
+  const url = getBlockheightEndpoint();
+
+  if (APP_VARIANT === "regtest") {
+    const auth = {
+      username: REGTEST_CONFIG.config?.bitcoind_user,
+      password: REGTEST_CONFIG.config?.bitcoind_pass,
+    };
+
+    return ResultAsync.fromPromise(
+      ky
+        .post(url, {
+          json: {
+            jsonrpc: "1.0",
+            id: "curltest",
+            method: "getblockcount",
+          },
+          headers: {
+            Authorization: `Basic ${btoa(`${auth.username}:${auth.password}`)}`,
+          },
+        })
+        .json<{ result: number }>(),
+      (e) => new Error(`Failed to fetch blockheight from Bitcoin Core: ${e}`),
+    ).andThen((data) => {
+      return ok(data.result);
+    });
+  }
+
+  const result = await ResultAsync.fromPromise(
+    ky.get(url).text(),
+    (e) => new Error(`Failed to fetch blockheight from mempool.space: ${e}`),
+  ).andThen((data) => {
+    console.log("blockheight", data);
+    const height = parseInt(data, 10);
+    if (!isNaN(height)) {
+      return ok(height);
+    }
+    return err(new Error("Invalid blockheight response"));
+  });
+
+  return result;
+};
+
+export function useGetBlockHeight() {
+  return useQuery({
+    queryKey: ["getBlockHeight"],
+    queryFn: async () => {
+      const result = await getBlockHeight();
       if (result.isErr()) {
         throw result.error;
       }
