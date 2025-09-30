@@ -109,7 +109,10 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
           }
 
           case "offboarding": {
-            const result = await offboardTask(notificationData.offboarding_request_id);
+            const result = await offboardTask(
+              notificationData.offboarding_request_id,
+              notificationData.address,
+            );
             await handleTaskCompletion("offboarding", result, notificationData.k1);
             log.d("Offboarding task completed");
             break;

@@ -189,6 +189,7 @@ pub struct BackupTriggerNotification {
 pub struct OffboardingNotification {
     pub k1: String,
     pub offboarding_request_id: String,
+    pub address: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
@@ -264,6 +265,12 @@ pub struct ReportJobStatusPayload {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct DefaultSuccessPayload {
     pub success: bool,
+}
+
+#[derive(Serialize, Deserialize, TS, Validate)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct RegisterOffboardingRequestPayload {
+    pub address: String,
 }
 
 #[derive(Serialize, Deserialize, TS)]

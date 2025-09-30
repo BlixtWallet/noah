@@ -5,6 +5,7 @@ pub struct OffboardingRequest {
     pub request_id: String,
     pub pubkey: String,
     pub status: String,
+    pub address: String,
 }
 
 /// A struct to encapsulate offboarding-related database operations.
@@ -19,11 +20,16 @@ impl<'a> OffboardingRepository<'a> {
     }
 
     /// Creates a new offboarding request.
-    pub async fn create_request(&self, request_id: &str, pubkey: &str) -> Result<()> {
+    pub async fn create_request(
+        &self,
+        request_id: &str,
+        pubkey: &str,
+        address: &str,
+    ) -> Result<()> {
         self.conn
             .execute(
-                "INSERT INTO offboarding_requests (request_id, pubkey) VALUES (?, ?)",
-                libsql::params![request_id, pubkey],
+                "INSERT INTO offboarding_requests (request_id, pubkey, address) VALUES (?, ?, ?)",
+                libsql::params![request_id, pubkey, address],
             )
             .await?;
         Ok(())
@@ -36,7 +42,7 @@ impl<'a> OffboardingRepository<'a> {
         let mut rows = self
             .conn
             .query(
-                "SELECT request_id, pubkey, status FROM offboarding_requests WHERE pubkey = ?",
+                "SELECT request_id, pubkey, status, address FROM offboarding_requests WHERE pubkey = ?",
                 libsql::params![pubkey],
             )
             .await?;
@@ -46,6 +52,7 @@ impl<'a> OffboardingRepository<'a> {
                 request_id: row.get(0)?,
                 pubkey: row.get(1)?,
                 status: row.get(2)?,
+                address: row.get(3)?,
             })),
             None => Ok(None),
         }
@@ -56,7 +63,7 @@ impl<'a> OffboardingRepository<'a> {
         let mut rows = self
             .conn
             .query(
-                "SELECT request_id, pubkey, status FROM offboarding_requests WHERE status = 'pending'",
+                "SELECT request_id, pubkey, status, address FROM offboarding_requests WHERE status = 'pending'",
                 (),
             )
             .await?;
@@ -67,6 +74,7 @@ impl<'a> OffboardingRepository<'a> {
                 request_id: row.get(0)?,
                 pubkey: row.get(1)?,
                 status: row.get(2)?,
+                address: row.get(3)?,
             });
         }
         Ok(requests)

@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View, Switch } from "react-native";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { useServerStore } from "../store/serverStore";
+import { useTransactionStore } from "../store/transactionStore";
 import { APP_VARIANT } from "../config";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -59,6 +60,7 @@ const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const { config, isInitialized } = useWalletStore();
   const { lightningAddress, resetRegistration } = useServerStore();
+  const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
@@ -158,6 +160,7 @@ const SettingsScreen = () => {
         )}
         <ScrollView className="flex-1 mb-16">
           <BackupStatusCard />
+
           {lightningAddress && (
             <Pressable
               onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
@@ -217,6 +220,22 @@ const SettingsScreen = () => {
               </Pressable>
             );
           })}
+
+          <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
+            <View className="flex-1">
+              <Label className="text-foreground text-lg">Auto-Board to Ark</Label>
+              <Text className="text-base mt-1 text-muted-foreground">
+                Automatically board to Ark when onchain balance exceeds 20k sats
+              </Text>
+            </View>
+            <Switch
+              value={isAutoBoardingEnabled}
+              onValueChange={setAutoBoardingEnabled}
+              trackColor={{ false: "#767577", true: "#F7931A" }}
+              thumbColor={isAutoBoardingEnabled ? "#ffffff" : "#f4f3f4"}
+            />
+          </View>
+
           {isInitialized && (
             <View className="mt-4">
               <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>

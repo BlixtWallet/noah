@@ -13,6 +13,7 @@ import {
   GetUploadUrlPayload,
   HeartbeatResponsePayload,
   RegisterResponse,
+  RegisterOffboardingRequestPayload,
   RegisterOffboardingResponse,
   RegisterPushToken,
   UpdateLnAddressPayload,
@@ -146,8 +147,11 @@ export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
 export const registerPushToken = (payload: RegisterPushToken) =>
   post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);
 
-export const registerOffboardingRequest = () =>
-  post<object, RegisterOffboardingResponse>("/register_offboarding_request", {});
+export const registerOffboardingRequest = (payload: RegisterOffboardingRequestPayload) =>
+  post<RegisterOffboardingRequestPayload, RegisterOffboardingResponse>(
+    "/register_offboarding_request",
+    payload,
+  );
 
 export const reportJobStatus = (payload: ReportJobStatusPayload & { k1?: string }) =>
   post<ReportJobStatusPayload & { k1?: string }, DefaultSuccessPayload>(

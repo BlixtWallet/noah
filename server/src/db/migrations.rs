@@ -63,6 +63,7 @@ const MIGRATIONS: &[&str] = &[
    CREATE TABLE offboarding_requests (
        request_id TEXT PRIMARY KEY,
        pubkey TEXT NOT NULL,
+       address TEXT NOT NULL,
        status TEXT NOT NULL DEFAULT 'pending',
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

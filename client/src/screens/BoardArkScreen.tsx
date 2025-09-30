@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, ScrollView, TouchableWithoutFeedback, Keyboard } from "react-native";
+import {
+  View,
+  Pressable,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import uuid from "react-native-uuid";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,6 +15,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import { isValidBitcoinAddress } from "../constants";
 import { NoahButton } from "../components/ui/NoahButton";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance } from "../hooks/useWallet";
@@ -272,6 +281,7 @@ const BoardArkScreen = () => {
   const offboardResult = undefined; // Placeholder for offboard result
   const [amount, setAmount] = useState("");
   const [isMaxAmount, setIsMaxAmount] = useState(false);
+  const [address, setAddress] = useState("");
   const [isRegisteringOffboard, setIsRegisteringOffboard] = useState(false);
   const [offboardingRequestId, setOffboardingRequestId] = useState<string | null>(null);
 
@@ -328,9 +338,17 @@ const BoardArkScreen = () => {
   };
 
   const handleOffboard = async () => {
+    if (!address || !isValidBitcoinAddress(address)) {
+      showAlert({
+        title: "Invalid Address",
+        description: "Please enter a valid Bitcoin address.",
+      });
+      return;
+    }
+
     setIsRegisteringOffboard(true);
 
-    const result = await registerOffboardingRequest();
+    const result = await registerOffboardingRequest({ address });
     setIsRegisteringOffboard(false);
     if (result.isErr()) {
       showAlert({
@@ -395,102 +413,125 @@ const BoardArkScreen = () => {
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <ScrollView
-          className="p-4"
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header */}
-          <View className="flex-row items-center justify-between mb-8">
-            <View className="flex-row items-center">
-              <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                <Icon name="arrow-back-outline" size={24} color="white" />
-              </Pressable>
-              <Text className="text-2xl font-bold text-foreground">
-                {flow === "onboard" ? "Board Ark" : "Offboard Ark"}
-              </Text>
-            </View>
-            <Pressable onPress={() => navigation.navigate("BoardingTransactions")} className="p-2">
-              <Icon name="time-outline" size={24} color="white" />
-            </Pressable>
-          </View>
-
-          {/* Flow Toggle */}
-          <FlowToggle flow={flow} onFlowChange={setFlow} />
-
-          {/* Description and Form */}
-          {flow === "onboard" ? (
-            <>
-              <Text className="text-muted-foreground text-center mb-8">
-                Swap you onchain bitcoin and enter the Ark network for fast, cheap offchain
-                transactions.
-              </Text>
-              <BalanceDisplay
-                title="Confirmed On-chain Balance"
-                amount={onchainBalance}
-                pendingAmount={onchainPendingBalance}
-                isLoading={isBalanceLoading}
-              />
-              <OnboardForm
-                amount={amount}
-                setAmount={setAmount}
-                onchainBalance={onchainBalance}
-                setIsMaxAmount={setIsMaxAmount}
-              />
-            </>
-          ) : (
-            <>
-              <Text className="text-muted-foreground text-center mb-8">
-                Register your offboarding request to exit Ark to on-chain Bitcoin. It will be
-                processed automatically when the next Ark round starts.
-              </Text>
-              <BalanceDisplay
-                title="Confirmed Off-chain Balance"
-                amount={offchainBalance}
-                pendingAmount={offchainPendingBalance}
-                isLoading={isBalanceLoading}
-              />
-            </>
-          )}
-
-          {/* Action Button */}
-          <NoahButton
-            onPress={handlePress}
-            isLoading={isBoarding || isBoardingAll || isRegisteringOffboard}
-            disabled={
-              isBoarding ||
-              isBoardingAll ||
-              isRegisteringOffboard ||
-              (flow === "onboard" && (!amount || onchainBalance === 0)) ||
-              (flow === "offboard" && offchainBalance === 0)
-            }
-            className="mt-8"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <ScrollView
+            className="p-4"
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
+            keyboardShouldPersistTaps="handled"
           >
-            {flow === "onboard" ? "Board Ark" : "Register Offboard Request"}
-          </NoahButton>
+            {/* Header */}
+            <View className="flex-row items-center justify-between mb-8">
+              <View className="flex-row items-center">
+                <Pressable onPress={() => navigation.goBack()} className="mr-4">
+                  <Icon name="arrow-back-outline" size={24} color="white" />
+                </Pressable>
+                <Text className="text-2xl font-bold text-foreground">
+                  {flow === "onboard" ? "Board Ark" : "Offboard Ark"}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => navigation.navigate("BoardingTransactions")}
+                className="p-2"
+              >
+                <Icon name="time-outline" size={24} color="white" />
+              </Pressable>
+            </View>
 
-          {/* Transaction Result */}
-          {parsedData && (
-            <TransactionResult
-              parsedData={parsedData}
-              flow={flow}
-              onCopyTxid={handleCopyToClipboard}
-            />
-          )}
+            {/* Flow Toggle */}
+            <FlowToggle flow={flow} onFlowChange={setFlow} />
 
-          {/* Offboarding Request Result */}
-          {offboardingRequestId && (
-            <OffboardingRequestResult
-              requestId={offboardingRequestId}
-              onCopyRequestId={handleCopyToClipboard}
-            />
-          )}
+            {/* Description and Form */}
+            {flow === "onboard" ? (
+              <>
+                <Text className="text-muted-foreground text-center mb-8">
+                  Swap you onchain bitcoin and enter the Ark network for fast, cheap offchain
+                  transactions.
+                </Text>
+                <BalanceDisplay
+                  title="Confirmed On-chain Balance"
+                  amount={onchainBalance}
+                  pendingAmount={onchainPendingBalance}
+                  isLoading={isBalanceLoading}
+                />
+                <OnboardForm
+                  amount={amount}
+                  setAmount={setAmount}
+                  onchainBalance={onchainBalance}
+                  setIsMaxAmount={setIsMaxAmount}
+                />
+              </>
+            ) : (
+              <>
+                <Text className="text-muted-foreground text-center mb-8">
+                  Register your offboarding request to exit Ark to on-chain Bitcoin. It will be
+                  processed automatically when the next Ark round starts.
+                </Text>
+                <BalanceDisplay
+                  title="Confirmed Off-chain Balance"
+                  amount={offchainBalance}
+                  pendingAmount={offchainPendingBalance}
+                  isLoading={isBalanceLoading}
+                />
+                <View className="mb-4">
+                  <Text className="text-lg text-red-400 mb-2">
+                    Important: Please only input an external address like your cold storage wallet,
+                    DO NOT use Noah wallet address, if you do, you will be boarding into Ark again.
+                  </Text>
 
-          {/* Error Display */}
-          {(boardError || boardAllError) && <ErrorDisplay errorMessage={errorMessage} />}
-        </ScrollView>
-      </TouchableWithoutFeedback>
+                  <Input
+                    value={address}
+                    onChangeText={setAddress}
+                    placeholder="Enter Bitcoin address"
+                    className="border-border bg-card p-4 rounded-lg text-foreground"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+              </>
+            )}
+
+            {/* Action Button */}
+            <NoahButton
+              onPress={handlePress}
+              isLoading={isBoarding || isBoardingAll || isRegisteringOffboard}
+              disabled={
+                isBoarding ||
+                isBoardingAll ||
+                isRegisteringOffboard ||
+                (flow === "onboard" && (!amount || onchainBalance === 0)) ||
+                (flow === "offboard" && (offchainBalance === 0 || !address))
+              }
+              className="mt-8"
+            >
+              {flow === "onboard" ? "Board Ark" : "Register Offboard Request"}
+            </NoahButton>
+
+            {/* Transaction Result */}
+            {parsedData && (
+              <TransactionResult
+                parsedData={parsedData}
+                flow={flow}
+                onCopyTxid={handleCopyToClipboard}
+              />
+            )}
+
+            {/* Offboarding Request Result */}
+            {offboardingRequestId && (
+              <OffboardingRequestResult
+                requestId={offboardingRequestId}
+                onCopyRequestId={handleCopyToClipboard}
+              />
+            )}
+
+            {/* Error Display */}
+            {(boardError || boardAllError) && <ErrorDisplay errorMessage={errorMessage} />}
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </NoahSafeAreaView>
   );
 };

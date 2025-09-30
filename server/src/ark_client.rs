@@ -167,6 +167,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
         let notification_data = NotificationData::Offboarding(OffboardingNotification {
             k1: String::new(), // Will be replaced with unique k1 per device
             offboarding_request_id: request.request_id.clone(),
+            address: request.address.clone(),
         });
 
         if let Err(e) = send_push_notification_with_unique_k1(

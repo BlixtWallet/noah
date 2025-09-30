@@ -1,10 +1,11 @@
 import { loadWalletIfNeeded, maintanance } from "./walletApi";
 import logger from "~/lib/log";
-import { bolt11Invoice, offboardAllArk, onchainAddress } from "./paymentsApi";
+import { bolt11Invoice, offboardAllArk } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import { submitInvoice as submitInvoiceApi } from "./api";
 import { updateOffboardingRequestStatus } from "./transactionsDb";
+import { isValidBitcoinAddress } from "~/constants";
 
 const log = logger("tasks");
 
@@ -77,7 +78,10 @@ export async function triggerBackupTask(): Promise<Result<void, Error>> {
   return ok(undefined);
 }
 
-export async function offboardTask(requestId: string): Promise<Result<void, Error>> {
+export async function offboardTask(
+  requestId: string,
+  address: string,
+): Promise<Result<void, Error>> {
   log.d("[Offboard Job] running");
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
@@ -87,17 +91,15 @@ export async function offboardTask(requestId: string): Promise<Result<void, Erro
   }
 
   log.d("[Offboard Job] offboarding request id is ", [requestId]);
+  log.d("[Offboard Job] onchain address is ", [address]);
 
-  const address = await onchainAddress();
-  if (address.isErr()) {
-    const e = new Error("Failed to get onchain address");
-    log.e(e.message, [address.error]);
+  if (!isValidBitcoinAddress(address)) {
+    const e = new Error("Invalid Bitcoin address");
+    log.e(e.message, [address]);
     return err(e);
   }
 
-  log.d("[Offboard Job] onchain address is ", [address.value]);
-
-  const offboardResult = await offboardAllArk(address.value);
+  const offboardResult = await offboardAllArk(address);
   if (offboardResult.isErr()) {
     log.e("Offboarding failed", [offboardResult.error]);
     return err(offboardResult.error);

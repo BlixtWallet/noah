@@ -10,45 +10,45 @@ const log = (tag?: string) => {
     v: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
       if (isDevMode) {
-        nativeLog("verbose", tag, msg);
-      } else {
         console.debug(tag, msg);
+      } else {
+        nativeLog("verbose", tag, msg);
       }
     },
 
     d: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
       if (isDevMode) {
-        nativeLog("debug", tag, msg);
-      } else {
         console.debug(tag, msg);
+      } else {
+        nativeLog("debug", tag, msg);
       }
     },
 
     i: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
       if (isDevMode) {
-        nativeLog("info", tag, msg);
-      } else {
         console.info(tag, msg);
+      } else {
+        nativeLog("info", tag, msg);
       }
     },
 
     w: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
       if (isDevMode) {
-        nativeLog("warn", tag, msg);
-      } else {
         console.warn(tag, msg);
+      } else {
+        nativeLog("warn", tag, msg);
       }
     },
 
     e: (message: string, data: any[] = []) => {
       const msg = fixMessage(message, data);
       if (isDevMode) {
-        nativeLog("error", tag, msg);
-      } else {
         console.error(tag, msg);
+      } else {
+        nativeLog("error", tag, msg);
       }
     },
   };

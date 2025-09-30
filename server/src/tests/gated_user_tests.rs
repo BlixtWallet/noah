@@ -126,7 +126,12 @@ async fn test_register_offboarding_request() {
                 .header("x-auth-key", auth_payload.key)
                 .header("x-auth-sig", auth_payload.sig)
                 .header("x-auth-k1", auth_payload.k1)
-                .body(Body::empty())
+                .body(Body::from(
+                    json!({
+                        "address": "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
+                    })
+                    .to_string(),
+                ))
                 .unwrap(),
         )
         .await
@@ -152,6 +157,10 @@ async fn test_register_offboarding_request() {
     assert_eq!(request.request_id, res.request_id);
     assert_eq!(request.pubkey, user.pubkey().to_string());
     assert_eq!(request.status, "pending");
+    assert_eq!(
+        request.address,
+        "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
+    );
 }
 
 #[tracing_test::traced_test]
@@ -215,7 +224,11 @@ async fn test_deregister_user() {
 
     let offboarding_repo = OffboardingRepository::new(&conn);
     offboarding_repo
-        .create_request("test_request_id", &user.pubkey().to_string())
+        .create_request(
+            "test_request_id",
+            &user.pubkey().to_string(),
+            "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+        )
         .await
         .unwrap();
 

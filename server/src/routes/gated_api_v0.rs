@@ -8,7 +8,8 @@ use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
     DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, HeartbeatResponsePayload,
-    RegisterOffboardingResponse, ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
+    RegisterOffboardingRequestPayload, RegisterOffboardingResponse, ReportJobStatusPayload,
+    SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -272,10 +273,22 @@ pub async fn update_backup_settings(
 pub async fn register_offboarding_request(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<RegisterOffboardingRequestPayload>,
 ) -> anyhow::Result<Json<RegisterOffboardingResponse>, ApiError> {
+    if let Err(e) = payload.validate() {
+        return Err(ApiError::InvalidArgument(e.to_string()));
+    }
+
+    if payload.address.is_empty() {
+        return Err(ApiError::InvalidArgument(
+            "Address cannot be empty".to_string(),
+        ));
+    }
+
     tracing::info!(
-        "Received offboarding request for pubkey: {}",
-        auth_payload.key
+        "Received offboarding request for pubkey: {} with address: {}",
+        auth_payload.key,
+        payload.address
     );
 
     let request_id = Uuid::new_v4().to_string();
@@ -283,7 +296,7 @@ pub async fn register_offboarding_request(
     let conn = state.db.connect()?;
     let offboarding_repo = OffboardingRepository::new(&conn);
     offboarding_repo
-        .create_request(&request_id, &auth_payload.key)
+        .create_request(&request_id, &auth_payload.key, &payload.address)
         .await?;
 
     Ok(Json(RegisterOffboardingResponse {
