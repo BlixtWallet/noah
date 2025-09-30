@@ -1,7 +1,7 @@
 default_job = "webserver"
 
 [jobs.webserver]
-command = ["cargo", "run"]
+command = ["cargo", "run", "--", "--config-path", "config.toml"]
 need_stdout = true
 background = false
 on_change_strategy = "kill_then_restart"

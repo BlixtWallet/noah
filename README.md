@@ -175,12 +175,48 @@ bun client ios:regtest:debug
 
 ## 📡 Running the server
 
-- Important note: Server uses local sqlite database for `regtest` and `Turso cloud` database for `mainnet` and `signet`.
+**Important note:** Server uses local sqlite database for `regtest` and `Turso cloud` database for `mainnet` and `signet`.
+
+### Configuration Setup
+
+The server uses a TOML configuration file instead of environment variables.
+
+1. **Copy the example configuration file:**
+   ```bash
+   cd server
+   cp config.toml.example config.toml
+   ```
+
+2. **Edit `config.toml` with your values:**
+   ```toml
+   host = "0.0.0.0"
+   port = 3000
+   private_port = 3099
+   lnurl_domain = "localhost"
+   turso_url = "file:noah-regtest.db"  # For regtest
+   turso_api_key = "dummy"              # For regtest
+   expo_access_token = "your-expo-access-token"
+   ark_server_url = "http://localhost:8080"
+   server_network = "regtest"
+   backup_cron = "every 2 hours"
+   s3_bucket_name = "noah-regtest-backups"
+   
+   # Optional: AWS credentials for S3 (if not using environment variables)
+   # aws_access_key_id = "your-aws-access-key-id"
+   # aws_secret_access_key = "your-aws-secret-access-key"
+   ```
+
+3. **Specify config path (optional):**
+   - By default, the server looks for `config.toml` in the current directory
+   - Use `--config-path` CLI argument: `cargo run -- --config-path /path/to/config.toml`
+   - Or set `CONFIG_PATH` environment variable: `CONFIG_PATH=/path/to/config.toml cargo run`
+
+### Running
+
 - If you're using Nix, simply run `bacon` to start a hot reloading Rust.
 - If you are not using Nix, then `cargo install bacon` for hot reloading and then run `bacon`.
 - If you just want to run the server `cargo run` or `cargo run --release`.
 - For release builds, run `cargo build --release`.
-- Please look at the `.env.example` file for environment variables.
 
 ---
 

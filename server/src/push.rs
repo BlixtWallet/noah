@@ -33,7 +33,7 @@ pub async fn send_push_notification_with_unique_k1(
     // For notifications that need unique k1 per device, we don't use the batching approach
     // Instead, we send individual notifications with unique k1 values
     let expo = Expo::new(ExpoClientOptions {
-        access_token: Some(app_state.expo_access_token.clone()),
+        access_token: Some(app_state.config.expo_access_token.clone()),
     });
 
     let conn = app_state.db.connect()?;
@@ -119,7 +119,7 @@ async fn send_push_notification_internal(
     pubkey: Option<String>,
 ) -> anyhow::Result<(), ApiError> {
     let expo = Expo::new(ExpoClientOptions {
-        access_token: Some(app_state.expo_access_token.clone()),
+        access_token: Some(app_state.config.expo_access_token.clone()),
     });
 
     let conn = app_state.db.connect()?;

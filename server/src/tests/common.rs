@@ -6,6 +6,7 @@ use bitcoin::key::Keypair;
 use dashmap::DashMap;
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
+use crate::config::Config;
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
     heartbeat_response, list_backups, register_offboarding_request, register_push_token,
@@ -39,6 +40,29 @@ impl TestUser {
         self.keypair.public_key().into()
     }
 
+    pub fn get_config() -> Config {
+        Config {
+            s3_bucket_name: "test-bucket".to_string(),
+            aws_access_key_id: Some("test-key".to_string()),
+            aws_secret_access_key: Some("test-secret".to_string()),
+            aws_region: Some("us-east-1".to_string()),
+            host: "localhost".to_string(),
+            port: 3000,
+            private_port: 3001,
+            lnurl_domain: "localhost".to_string(),
+            turso_url: "http://localhost:8080".to_string(),
+            turso_api_key: "test-key".to_string(),
+            expo_access_token: "test-token".to_string(),
+            ark_server_url: "http://localhost:8081".to_string(),
+            server_network: "test-network".to_string(),
+            sentry_url: Some("http://localhost:8082".to_string()),
+            backup_cron: "0 0 * * *".to_string(),
+            maintenance_interval_rounds: 10,
+            heartbeat_cron: "0 0 * * *".to_string(),
+            deregister_cron: "0 0 * * *".to_string(),
+        }
+    }
+
     pub fn auth_payload(&self, k1: &str) -> AuthPayload {
         let hash = bitcoin::sign_message::signed_msg_hash(k1);
         let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
@@ -70,7 +94,7 @@ pub async fn setup_test_app() -> (Router, AppState) {
         db: Arc::new(db),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
-        expo_access_token: "test-expo-access-token".to_string(),
+        config: TestUser::get_config(),
     });
 
     // Middleware layers
@@ -120,7 +144,7 @@ pub async fn setup_public_test_app() -> (Router, AppState) {
         db: Arc::new(db),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
-        expo_access_token: "test-expo-access-token".to_string(),
+        config: TestUser::get_config(),
     });
 
     let app = Router::new()

@@ -1,26 +1,23 @@
-use anyhow::{Context, bail};
+use anyhow::bail;
 use axum::{
     Router, middleware,
     routing::{get, post},
 };
+mod config;
 mod constants;
 mod routes;
 mod types;
 use bitcoin::Network;
 use dashmap::DashMap;
 use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
-use std::{
-    net::{Ipv4Addr, SocketAddr},
-    str::FromStr,
-    sync::Arc,
-};
+use std::{net::SocketAddr, sync::Arc};
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    constants::EnvVariables,
+    config::Config,
     cron::cron_scheduler,
     routes::{
         app_middleware,
@@ -53,52 +50,39 @@ type AppState = Arc<AppStruct>;
 
 #[derive(Clone)]
 pub struct AppStruct {
+    pub config: Config,
     pub lnurl_domain: String,
     pub db: Arc<libsql::Database>,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
     pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
-    expo_access_token: String,
-}
-
-#[derive(Clone)]
-struct Config {
-    host: Ipv4Addr,
-    port: u16,
-    private_port: u16,
-    lnurl_domain: String,
-    turso_url: String,
-    turso_api_key: String,
-    expo_access_token: String,
-    ark_server_url: String,
-    server_network: Network,
-    sentry_url: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv().ok();
-    let config = load_config()?;
+    let config_path = Config::get_config_path();
+    let config = Config::load_config(&config_path)?;
+
+    let server_network = config.network()?;
 
     // Initialize Sentry first if we're on production networks
-    let _sentry_guard =
-        if config.server_network == Network::Bitcoin || config.server_network == Network::Signet {
-            if let Some(sentry_url) = config.sentry_url.clone() {
-                let guard = Some(sentry::init((
-                    sentry_url.clone(),
-                    sentry::ClientOptions {
-                        release: sentry::release_name!(),
-                        enable_logs: true,
-                        send_default_pii: false,
-                        ..Default::default()
-                    },
-                )));
+    let _sentry_guard = if server_network == Network::Bitcoin || server_network == Network::Signet {
+        if let Some(sentry_url) = config.sentry_url.clone() {
+            let guard = Some(sentry::init((
+                sentry_url.clone(),
+                sentry::ClientOptions {
+                    release: sentry::release_name!(),
+                    enable_logs: true,
+                    send_default_pii: false,
+                    ..Default::default()
+                },
+            )));
 
-                guard
-            } else {
-                None
-            }
+            guard
         } else {
             None
-        };
+        }
+    } else {
+        None
+    };
 
     // Build subscriber with conditional Sentry layer
     let subscriber = tracing_subscriber::registry()
@@ -135,49 +119,11 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn load_config() -> anyhow::Result<Config> {
-    let host = Ipv4Addr::from_str(
-        &std::env::var(EnvVariables::Host.to_string())
-            .unwrap_or(constants::DEFAULT_HOST.to_string()),
-    )?;
-    let port = std::env::var(EnvVariables::Port.to_string())
-        .unwrap_or(constants::DEFAULT_PORT.to_string())
-        .parse::<u16>()?;
-    let private_port = std::env::var(EnvVariables::PrivatePort.to_string())
-        .unwrap_or(constants::DEFAULT_PRIVATE_PORT.to_string())
-        .parse::<u16>()?;
-    let lnurl_domain = std::env::var(EnvVariables::LnurlDomain.to_string())
-        .unwrap_or(constants::DEFAULT_LNURL_DOMAIN.to_string());
-    let turso_url = std::env::var(EnvVariables::TursoUrl.to_string())
-        .context("TURSO_URL must be set in the environment variables")?;
-    let turso_api_key = std::env::var(EnvVariables::TursoApiKey.to_string())
-        .context("TURSO_API_KEY must be set in the environment variables")?;
-    let expo_access_token = std::env::var(EnvVariables::ExpoAccessToken.to_string())
-        .context("EXPO_ACCESS_TOKEN must be set in the environment variables")?;
-    let ark_server_url = std::env::var(EnvVariables::ArkServerUrl.to_string())
-        .context("ARK_SERVER_URL must be set in the environment variables")?;
-    let server_network = Network::from_str(
-        &std::env::var(EnvVariables::ServerNetwork.to_string())
-            .unwrap_or(constants::DEFAULT_SERVER_NETWORK.to_string()),
-    )?;
-    let sentry_url = std::env::var(EnvVariables::SentryUrl.to_string()).ok();
-
-    Ok(Config {
-        host,
-        port,
-        private_port,
-        lnurl_domain,
-        turso_url,
-        turso_api_key,
-        expo_access_token,
-        ark_server_url,
-        server_network,
-        sentry_url,
-    })
-}
-
 async fn start_server(config: Config) -> anyhow::Result<()> {
-    let db = match config.server_network {
+    let host = config.host()?;
+    let server_network = config.network()?;
+
+    let db = match server_network {
         Network::Bitcoin | Network::Signet => {
             libsql::Builder::new_remote(config.turso_url.clone(), config.turso_api_key.clone())
                 .build()
@@ -189,7 +135,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
                 .await?
         }
         _ => {
-            bail!("Unsupported network: {}", config.server_network);
+            bail!("Unsupported network: {}", server_network);
         }
     };
 
@@ -197,29 +143,26 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     db::migrations::migrate(&conn).await?;
 
     let app_state = Arc::new(AppStruct {
+        config: config.clone(),
         lnurl_domain: config.lnurl_domain.clone(),
         db: Arc::new(db),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
-        expo_access_token: config.expo_access_token,
     });
 
-    let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
-        .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());
-
     let server_config = serde_json::json!({
-        "HOST": config.host,
+        "HOST": host,
         "PORT": config.port,
         "PRIVATE_PORT": config.private_port,
         "LNURL_DOMAIN": config.lnurl_domain,
         "ARK_SERVER_URL": config.ark_server_url,
-        "SERVER_ENV": config.server_network,
-        "BACKUP_CRON": backup_cron,
+        "SERVER_ENV": server_network,
+        "BACKUP_CRON": config.backup_cron,
     });
 
     info!("Server environment: {}", server_config);
 
-    let cron_handle = cron_scheduler(app_state.clone()).await?;
+    let cron_handle = cron_scheduler(app_state.clone(), config.backup_cron.clone()).await?;
 
     cron_handle.start().await?;
 
@@ -290,12 +233,12 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .layer(middleware::from_fn(trace_layer::trace_middleware))
         .layer(ServiceBuilder::new().layer(NewSentryLayer::new_from_top()));
 
-    let addr = SocketAddr::from((config.host, config.port));
+    let addr = SocketAddr::from((host, config.port));
     tracing::debug!("server started listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
     // Private routes, not exposed to the internet.
-    let private_addr = SocketAddr::from((config.host, config.private_port));
+    let private_addr = SocketAddr::from((host, config.private_port));
     let private_router = Router::new()
         .route("/health", get(health_check))
         .layer(TraceLayer::new_for_http());

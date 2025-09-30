@@ -1,6 +1,5 @@
 use crate::{
-    AppState,
-    constants::{self, EnvVariables},
+    AppState, constants,
     db::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
         offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
@@ -135,11 +134,11 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
     Ok(())
 }
 
-pub async fn cron_scheduler(app_state: AppState) -> anyhow::Result<JobScheduler> {
+pub async fn cron_scheduler(
+    app_state: AppState,
+    backup_cron: String,
+) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
-
-    let backup_cron = std::env::var(EnvVariables::BackupCron.to_string())
-        .unwrap_or(constants::DEFAULT_BACKUP_CRON.to_string());
 
     info!("Backup cron: {}", backup_cron);
 

@@ -4,23 +4,23 @@ use aws_sdk_s3::Client;
 use aws_sdk_s3::presigning::PresigningConfig;
 use std::time::Duration;
 
-use crate::constants::EnvVariables;
-
 pub struct S3BackupClient {
     client: Client,
     bucket: String,
 }
 
 impl S3BackupClient {
-    pub async fn new() -> Result<Self, anyhow::Error> {
-        let region_provider = RegionProviderChain::default_provider().or_else("us-east-1");
+    pub async fn new(bucket_name: String) -> Result<Self, anyhow::Error> {
+        let region_provider = RegionProviderChain::default_provider().or_else("us-east-2");
         let config = aws_config::defaults(BehaviorVersion::latest())
             .region(region_provider)
             .load()
             .await;
         let client = Client::new(&config);
-        let bucket = std::env::var(EnvVariables::S3BucketName.to_string())?;
-        Ok(Self { client, bucket })
+        Ok(Self {
+            client,
+            bucket: bucket_name,
+        })
     }
 
     pub async fn generate_upload_url(&self, key: &str) -> Result<String, anyhow::Error> {

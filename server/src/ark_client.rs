@@ -1,6 +1,5 @@
 use crate::{
     AppState,
-    constants::EnvVariables,
     db::offboarding_repo::OffboardingRepository,
     push::send_push_notification_with_unique_k1,
     types::{MaintenanceNotification, NotificationData, OffboardingNotification},
@@ -80,11 +79,7 @@ async fn establish_connection_and_process(
 
     let mut stream = client.subscribe_rounds(Empty {}).await?.into_inner();
 
-    let maintenance_interval_rounds: u32 =
-        std::env::var(EnvVariables::MaintenanceIntervalRounds.to_string())
-            .unwrap_or_else(|_| "1".to_string())
-            .parse()
-            .unwrap_or(1);
+    let maintenance_interval_rounds = app_state.config.maintenance_interval_rounds;
     let mut round_counter = 0;
 
     tracing::info!("Starting round subscription");
