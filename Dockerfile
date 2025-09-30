@@ -28,4 +28,4 @@ COPY --from=builder /app/target/release/server /usr/local/bin/
 EXPOSE 3000
 
 # Set the startup command
-CMD ["server"]
+CMD ["server", "--config-path", "/etc/server/config.toml"]
