@@ -158,6 +158,8 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         "ARK_SERVER_URL": config.ark_server_url,
         "SERVER_ENV": server_network,
         "BACKUP_CRON": config.backup_cron,
+        "DEREGISTR_CRON": config.deregister_cron,
+        "MAINTENANCE_INTERVAL_ROUNDS": config.maintenance_interval_rounds,
     });
 
     info!("Server environment: {}", server_config);

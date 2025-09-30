@@ -122,5 +122,5 @@ fn default_deregister_cron() -> String {
 }
 
 fn default_maintenance_interval_rounds() -> u16 {
-    crate::constants::DEFAULT_MAINTENANCE_INTERVAL
+    crate::constants::DEFAULT_MAINTENANCE_INTERVAL_ROUNDS
 }

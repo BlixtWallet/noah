@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y ca-certificates curl pkg-config libssl-
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/server /usr/local/bin/
+RUN mkdir -p /etc/server
 
 EXPOSE 3000
 
