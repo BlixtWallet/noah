@@ -5,6 +5,7 @@ import { err, ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import { submitInvoice as submitInvoiceApi } from "./api";
 import { updateOffboardingRequestStatus } from "./transactionsDb";
+import { verifyMessage } from "./crypto";
 import { isValidBitcoinAddress } from "~/constants";
 
 const log = logger("tasks");
@@ -81,6 +82,7 @@ export async function triggerBackupTask(): Promise<Result<void, Error>> {
 export async function offboardTask(
   requestId: string,
   address: string,
+  addressSignature: string,
 ): Promise<Result<void, Error>> {
   log.d("[Offboard Job] running");
   const loadResult = await loadWalletIfNeeded();
@@ -92,6 +94,24 @@ export async function offboardTask(
 
   log.d("[Offboard Job] offboarding request id is ", [requestId]);
   log.d("[Offboard Job] onchain address is ", [address]);
+
+  // Verify the address signature to prevent tampering
+  const verifyResult = await verifyMessage(address, addressSignature, 0);
+  if (verifyResult.isErr()) {
+    const e = new Error("Failed to verify address signature");
+    log.e(e.message, [verifyResult.error]);
+    return err(e);
+  }
+
+  if (!verifyResult.value) {
+    const e = new Error(
+      "Address signature verification failed - address may have been tampered with",
+    );
+    log.e(e.message);
+    return err(e);
+  }
+
+  log.d("[Offboard Job] address signature verified successfully");
 
   if (!isValidBitcoinAddress(address)) {
     const e = new Error("Invalid Bitcoin address");

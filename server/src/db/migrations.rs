@@ -64,6 +64,7 @@ const MIGRATIONS: &[&str] = &[
        request_id TEXT PRIMARY KEY,
        pubkey TEXT NOT NULL,
        address TEXT NOT NULL,
+       address_signature TEXT NOT NULL,
        status TEXT NOT NULL DEFAULT 'pending',
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

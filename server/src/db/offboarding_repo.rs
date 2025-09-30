@@ -6,6 +6,7 @@ pub struct OffboardingRequest {
     pub pubkey: String,
     pub status: String,
     pub address: String,
+    pub address_signature: String,
 }
 
 /// A struct to encapsulate offboarding-related database operations.
@@ -25,11 +26,12 @@ impl<'a> OffboardingRepository<'a> {
         request_id: &str,
         pubkey: &str,
         address: &str,
+        address_signature: &str,
     ) -> Result<()> {
         self.conn
             .execute(
-                "INSERT INTO offboarding_requests (request_id, pubkey, address) VALUES (?, ?, ?)",
-                libsql::params![request_id, pubkey, address],
+                "INSERT INTO offboarding_requests (request_id, pubkey, address, address_signature) VALUES (?, ?, ?, ?)",
+                libsql::params![request_id, pubkey, address, address_signature],
             )
             .await?;
         Ok(())
@@ -42,7 +44,7 @@ impl<'a> OffboardingRepository<'a> {
         let mut rows = self
             .conn
             .query(
-                "SELECT request_id, pubkey, status, address FROM offboarding_requests WHERE pubkey = ?",
+                "SELECT request_id, pubkey, status, address, address_signature FROM offboarding_requests WHERE pubkey = ?",
                 libsql::params![pubkey],
             )
             .await?;
@@ -53,6 +55,7 @@ impl<'a> OffboardingRepository<'a> {
                 pubkey: row.get(1)?,
                 status: row.get(2)?,
                 address: row.get(3)?,
+                address_signature: row.get(4)?,
             })),
             None => Ok(None),
         }
@@ -63,7 +66,7 @@ impl<'a> OffboardingRepository<'a> {
         let mut rows = self
             .conn
             .query(
-                "SELECT request_id, pubkey, status, address FROM offboarding_requests WHERE status = 'pending'",
+                "SELECT request_id, pubkey, status, address, address_signature FROM offboarding_requests WHERE status = 'pending'",
                 (),
             )
             .await?;
@@ -75,6 +78,7 @@ impl<'a> OffboardingRepository<'a> {
                 pubkey: row.get(1)?,
                 status: row.get(2)?,
                 address: row.get(3)?,
+                address_signature: row.get(4)?,
             });
         }
         Ok(requests)

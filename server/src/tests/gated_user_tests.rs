@@ -128,7 +128,8 @@ async fn test_register_offboarding_request() {
                 .header("x-auth-k1", auth_payload.k1)
                 .body(Body::from(
                     json!({
-                        "address": "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
+                        "address": "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+                        "address_signature": "mock_signature_for_testing"
                     })
                     .to_string(),
                 ))
@@ -228,6 +229,7 @@ async fn test_deregister_user() {
             "test_request_id",
             &user.pubkey().to_string(),
             "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+            "mock_signature_for_testing",
         )
         .await
         .unwrap();

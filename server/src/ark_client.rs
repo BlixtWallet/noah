@@ -168,6 +168,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
             k1: String::new(), // Will be replaced with unique k1 per device
             offboarding_request_id: request.request_id.clone(),
             address: request.address.clone(),
+            address_signature: request.address_signature.clone(),
         });
 
         if let Err(e) = send_push_notification_with_unique_k1(

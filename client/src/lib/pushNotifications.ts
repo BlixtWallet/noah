@@ -112,6 +112,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
             const result = await offboardTask(
               notificationData.offboarding_request_id,
               notificationData.address,
+              notificationData.address_signature,
             );
             await handleTaskCompletion("offboarding", result, notificationData.k1);
             log.d("Offboarding task completed");

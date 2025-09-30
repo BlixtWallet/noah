@@ -296,7 +296,12 @@ pub async fn register_offboarding_request(
     let conn = state.db.connect()?;
     let offboarding_repo = OffboardingRepository::new(&conn);
     offboarding_repo
-        .create_request(&request_id, &auth_payload.key, &payload.address)
+        .create_request(
+            &request_id,
+            &auth_payload.key,
+            &payload.address,
+            &payload.address_signature,
+        )
         .await?;
 
     Ok(Json(RegisterOffboardingResponse {

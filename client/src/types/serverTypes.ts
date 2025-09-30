@@ -42,9 +42,9 @@ export type NotificationData = { "notification_type": "maintenance" } & Maintena
 
 export type NotificationTypes = "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding" | "heartbeat";
 
-export type OffboardingNotification = { k1: string, offboarding_request_id: string, address: string, };
+export type OffboardingNotification = { k1: string, offboarding_request_id: string, address: string, address_signature: string, };
 
-export type RegisterOffboardingRequestPayload = { address: string, };
+export type RegisterOffboardingRequestPayload = { address: string, address_signature: string, };
 
 export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
 

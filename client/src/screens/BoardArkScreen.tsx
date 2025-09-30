@@ -21,6 +21,7 @@ import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance } from "../hooks/useWallet";
 import { useBoardAllAmountArk, useBoardArk } from "../hooks/usePayments";
 import { registerOffboardingRequest } from "../lib/api";
+import { signMessage } from "../lib/crypto";
 import { addOffboardingRequest, addOnboardingRequest } from "../lib/transactionsDb";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import { cn } from "../lib/utils";
@@ -348,7 +349,21 @@ const BoardArkScreen = () => {
 
     setIsRegisteringOffboard(true);
 
-    const result = await registerOffboardingRequest({ address });
+    // Sign the address to prevent tampering
+    const signatureResult = await signMessage(address, 0);
+    if (signatureResult.isErr()) {
+      setIsRegisteringOffboard(false);
+      showAlert({
+        title: "Signature Error",
+        description: "Failed to sign address. Please try again.",
+      });
+      return;
+    }
+
+    const result = await registerOffboardingRequest({
+      address,
+      address_signature: signatureResult.value,
+    });
     setIsRegisteringOffboard(false);
     if (result.isErr()) {
       showAlert({

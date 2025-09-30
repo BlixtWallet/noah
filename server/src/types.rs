@@ -190,6 +190,7 @@ pub struct OffboardingNotification {
     pub k1: String,
     pub offboarding_request_id: String,
     pub address: String,
+    pub address_signature: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
@@ -271,6 +272,7 @@ pub struct DefaultSuccessPayload {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct RegisterOffboardingRequestPayload {
     pub address: String,
+    pub address_signature: String,
 }
 
 #[derive(Serialize, Deserialize, TS)]
