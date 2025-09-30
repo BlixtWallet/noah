@@ -142,8 +142,6 @@ pub async fn get_upload_url(
     );
     let upload_url = s3_client.generate_upload_url(&s3_key).await?;
 
-    tracing::info!("Generated upload URL for backup: {}", upload_url);
-
     Ok(Json(UploadUrlResponse { upload_url, s3_key }))
 }
 
