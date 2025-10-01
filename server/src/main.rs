@@ -139,8 +139,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         }
     };
 
-    let conn = db.connect()?;
-    db::migrations::migrate(&conn).await?;
+    db::migrations::run_migrations(&db).await?;
 
     let app_state = Arc::new(AppStruct {
         config: config.clone(),

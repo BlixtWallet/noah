@@ -86,8 +86,7 @@ pub async fn setup_test_app() -> (Router, AppState) {
 
     let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
-    let conn = db.connect().unwrap();
-    crate::db::migrations::migrate(&conn).await.unwrap();
+    crate::db::migrations::run_migrations(&db).await.unwrap();
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
@@ -136,8 +135,7 @@ pub async fn setup_test_app() -> (Router, AppState) {
 pub async fn setup_public_test_app() -> (Router, AppState) {
     let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
     let db = libsql::Builder::new_local(db_path).build().await.unwrap();
-    let conn = db.connect().unwrap();
-    crate::db::migrations::migrate(&conn).await.unwrap();
+    crate::db::migrations::run_migrations(&db).await.unwrap();
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),

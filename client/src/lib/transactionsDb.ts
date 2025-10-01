@@ -3,6 +3,7 @@ import { ResultAsync } from "neverthrow";
 import { Transaction } from "~/types/transaction";
 import logger from "./log";
 import { ARK_DATA_PATH } from "~/constants";
+import { runMigrations } from "./migrations";
 
 const log = logger("transactionsDb");
 
@@ -15,55 +16,7 @@ export const openDatabase = async () => {
   const newDb = await SQLite.openDatabaseAsync("noah_wallet.sqlite", {}, ARK_DATA_PATH);
   await newDb.execAsync("PRAGMA journal_mode = WAL;");
 
-  const migrations = [
-    `
-      CREATE TABLE IF NOT EXISTS transactions (
-        id TEXT PRIMARY KEY NOT NULL,
-        txid TEXT,
-        type TEXT NOT NULL,
-        direction TEXT NOT NULL,
-        amount INTEGER NOT NULL,
-        date TEXT NOT NULL,
-        description TEXT,
-        destination TEXT,
-        btcPrice REAL
-      );
-    `,
-    `
-      CREATE TABLE IF NOT EXISTS offboarding_requests (
-        request_id TEXT PRIMARY KEY NOT NULL,
-        date TEXT NOT NULL,
-        status TEXT NOT NULL
-      );
-    `,
-    `
-      ALTER TABLE offboarding_requests ADD COLUMN onchain_txid TEXT;
-    `,
-    `
-      CREATE TABLE IF NOT EXISTS onboarding_requests (
-        request_id TEXT PRIMARY KEY NOT NULL,
-        date TEXT NOT NULL,
-        status TEXT NOT NULL,
-        onchain_txid TEXT
-      );
-    `,
-    // In the future, add new migrations here. For example:
-    // `ALTER TABLE transactions ADD COLUMN new_column TEXT;`,
-  ];
-
-  await newDb.withTransactionAsync(async () => {
-    const result = await newDb.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
-    const version = result?.user_version ?? 0;
-
-    if (version < migrations.length) {
-      for (let i = version; i < migrations.length; i++) {
-        await newDb.execAsync(migrations[i]);
-        const newVersion = i + 1;
-        await newDb.execAsync(`PRAGMA user_version = ${newVersion}`);
-        log.i(`Database migrated to version ${newVersion}`);
-      }
-    }
-  });
+  await runMigrations(newDb);
 
   db = newDb;
   return db;
