@@ -79,10 +79,9 @@ impl<'a> UserRepository<'a> {
             )
             .await;
 
-        if let Err(libsql::Error::SqliteFailure(e, _)) = &result {
-            // rusqlite::ffi::SQLITE_CONSTRAINT_UNIQUE (2067)
-            // This is the extended error code for a UNIQUE constraint violation.
-            if *e == 2067 {
+        if let Err(e) = &result {
+            let error_msg = e.to_string().to_lowercase();
+            if error_msg.contains("unique") && error_msg.contains("constraint") {
                 return Err(LightningAddressTakenError.into());
             }
         }
@@ -102,10 +101,9 @@ impl<'a> UserRepository<'a> {
             )
             .await;
 
-        if let Err(libsql::Error::SqliteFailure(e, _)) = &result {
-            // rusqlite::ffi::SQLITE_CONSTRAINT_UNIQUE (2067)
-            // This is the extended error code for a UNIQUE constraint violation.
-            if *e == 2067 {
+        if let Err(e) = &result {
+            let error_msg = e.to_string().to_lowercase();
+            if error_msg.contains("unique") && error_msg.contains("constraint") {
                 return Err(LightningAddressTakenError.into());
             }
         }
