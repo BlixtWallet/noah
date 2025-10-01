@@ -9,6 +9,8 @@
     "ios:prebuild": "bun client ios:prebuild",
     "android:signet:debug": "bun client android:signet:debug",
     "android:regtest:debug": "bun client android:regtest:debug",
+    "ios:regtest:debug": "bun client ios:regtest:debug",
+    "ios:signet:debug": "bun client ios:signet:debug",
     "android:clean": "bun client android:clean",
     "ios:clean": "bun client ios:clean",
     "postinstall": "bun scripts/download_ark_binaries.js",
