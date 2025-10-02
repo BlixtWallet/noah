@@ -6,7 +6,7 @@ import type { SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
-import { AudioSlider } from "~/components/AudioSlider";
+import Slider from "@react-native-community/slider";
 import { Asset } from "expo-asset";
 import {
   playAudio,
@@ -177,7 +177,8 @@ const NoahStoryScreen = () => {
           </View>
 
           <View className="w-full px-4">
-            <AudioSlider
+            <Slider
+              style={{ width: "100%", height: 40 }}
               minimumValue={0}
               maximumValue={duration || 1}
               value={position}

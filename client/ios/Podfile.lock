@@ -1724,6 +1724,51 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-slider (5.0.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - react-native-slider/common (= 5.0.1)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - react-native-slider/common (5.0.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-vector-icons (12.2.0):
     - hermes-engine
     - RCTRequired
@@ -2579,6 +2624,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-bottom-tabs (from `../../node_modules/react-native-bottom-tabs`)
   - react-native-safe-area-context (from `../../node_modules/react-native-safe-area-context`)
+  - "react-native-slider (from `../../node_modules/@react-native-community/slider`)"
   - "react-native-vector-icons (from `../../node_modules/@react-native-vector-icons/get-image`)"
   - "react-native-vector-icons-ionicons (from `../../node_modules/@react-native-vector-icons/ionicons`)"
   - react-native-worklets-core (from `../../node_modules/react-native-worklets-core`)
@@ -2766,6 +2812,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/react-native-bottom-tabs"
   react-native-safe-area-context:
     :path: "../../node_modules/react-native-safe-area-context"
+  react-native-slider:
+    :path: "../../node_modules/@react-native-community/slider"
   react-native-vector-icons:
     :path: "../../node_modules/@react-native-vector-icons/get-image"
   react-native-vector-icons-ionicons:
@@ -2897,7 +2945,7 @@ SPEC CHECKSUMS:
   React: 2073376f47c71b7e9a0af7535986a77522ce1049
   React-callinvoker: 00fa0972a70df7408a4f088144b67207b157e386
   React-Core: 7edc3b0763d7a47cf5610b32e0e790ac10dd5410
-  React-Core-prebuilt: dde79b89f8863efebb1d532a3335f472927da669
+  React-Core-prebuilt: ab6d77841d4bb8d247c4358663c6c71836e4f461
   React-CoreModules: a02474243c3efbdc767b44dc029b452b0476cee1
   React-cxxreact: b3b6c8c0823ff10237f1c6c1ad067c2577bc2f84
   React-debug: c01d176522cf57cdc4a4a66d1974968fcf497f32
@@ -2926,6 +2974,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 70cdf4826e52c7bcf98bc55255c3e30b5455d318
   react-native-bottom-tabs: 20495084b78e848d9578c71add3e7549a1e03c11
   react-native-safe-area-context: add9b4ba236fe95ec600604d0fc72f395433dd59
+  react-native-slider: b76fa3dd989d25e8c2751c2a546674dfc0c2b6f8
   react-native-vector-icons: 2c084b9997443aaf79527ac0454b50cc081c98de
   react-native-vector-icons-ionicons: ad07e944a092a5cf71b8b569d8f5ce2bf674c415
   react-native-worklets-core: 5357708fd3915bf1c870a03ff969578c69bd3909
