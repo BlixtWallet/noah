@@ -28,7 +28,7 @@ use crate::{
             update_ln_address,
         },
         private_api_v0::health_check,
-        public_api_v0::{get_k1, lnurlp_request, register},
+        public_api_v0::{check_app_version, get_k1, lnurlp_request, register},
     },
 };
 
@@ -222,6 +222,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     // Public routes with strict rate limiting on getk1
     let v0_router = Router::new()
         .route("/getk1", get(get_k1).layer(public_rate_limiter))
+        .route("/app_version", post(check_app_version))
         .merge(auth_router);
 
     // Public route

@@ -281,3 +281,16 @@ pub struct RegisterOffboardingResponse {
     pub success: bool,
     pub request_id: String,
 }
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct AppVersionCheckPayload {
+    pub client_version: String,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct AppVersionInfo {
+    pub minimum_required_version: String,
+    pub update_required: bool,
+}

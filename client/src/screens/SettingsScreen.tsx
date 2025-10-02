@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, View, Switch } from "react-native";
+import Constants from "expo-constants";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { useServerStore } from "../store/serverStore";
 import { useTransactionStore } from "../store/transactionStore";
@@ -279,6 +280,13 @@ const SettingsScreen = () => {
               </ConfirmationDialog>
             </View>
           )}
+
+          <View className="items-center py-8 px-4">
+            <Text className="text-muted-foreground text-sm mb-1">
+              Version {Constants.expoConfig?.version || "0.0.1"}
+            </Text>
+            <Text className="text-muted-foreground text-sm">Made with ❤️ from Noah team</Text>
+          </View>
         </ScrollView>
       </View>
     </NoahSafeAreaView>

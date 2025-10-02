@@ -18,8 +18,8 @@ use crate::{
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
-        AuthEvent, AuthPayload, LightningInvoiceRequestNotification, NotificationData,
-        RegisterPayload, RegisterResponse,
+        AppVersionCheckPayload, AppVersionInfo, AuthEvent, AuthPayload,
+        LightningInvoiceRequestNotification, NotificationData, RegisterPayload, RegisterResponse,
     },
     utils::make_k1,
 };
@@ -313,5 +313,36 @@ pub async fn register(
         event: Some(AuthEvent::Registered),
         reason: None,
         lightning_address: Some(ln_address),
+    }))
+}
+
+pub async fn check_app_version(
+    State(state): State<AppState>,
+    Json(payload): Json<AppVersionCheckPayload>,
+) -> anyhow::Result<Json<AppVersionInfo>, ApiError> {
+    let minimum_required = &state.config.minimum_app_version;
+    let client_version = &payload.client_version;
+
+    let minimum_parsed = semver::Version::parse(minimum_required).map_err(|e| {
+        tracing::error!("Failed to parse minimum_app_version from config: {}", e);
+        ApiError::ServerErr("Invalid server configuration".to_string())
+    })?;
+
+    let client_parsed = semver::Version::parse(client_version).map_err(|_| {
+        ApiError::InvalidArgument(format!("Invalid client version format: {}", client_version))
+    })?;
+
+    let update_required = client_parsed < minimum_parsed;
+
+    tracing::debug!(
+        "Version check: client={}, minimum={}, update_required={}",
+        client_version,
+        minimum_required,
+        update_required
+    );
+
+    Ok(Json(AppVersionInfo {
+        minimum_required_version: minimum_required.clone(),
+        update_required,
     }))
 }

@@ -4,6 +4,7 @@ import logger from "~/lib/log";
 import { useServerStore } from "~/store/serverStore";
 import type { Result } from "neverthrow";
 import { RegisterResponse } from "~/types/serverTypes";
+import Constants from "expo-constants";
 
 const log = logger("server");
 
@@ -15,7 +16,7 @@ export const performServerRegistration = async (
   // Register with server and pass user device information.
   const result = await registerWithServer({
     device_info: {
-      app_version: null,
+      app_version: Constants.expoConfig?.version || null,
       os_name: Device.osName,
       os_version: Device.osVersion,
       device_model: Device.modelName,

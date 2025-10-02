@@ -12,7 +12,7 @@ use crate::routes::gated_api_v0::{
     heartbeat_response, list_backups, register_offboarding_request, register_push_token,
     report_job_status, update_backup_settings, update_ln_address,
 };
-use crate::routes::public_api_v0::{get_k1, lnurlp_request, register};
+use crate::routes::public_api_v0::{check_app_version, get_k1, lnurlp_request, register};
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
 
@@ -60,6 +60,7 @@ impl TestUser {
             maintenance_interval_rounds: 10,
             heartbeat_cron: "0 0 * * *".to_string(),
             deregister_cron: "0 0 * * *".to_string(),
+            minimum_app_version: "0.0.1".to_string(),
         }
     }
 
@@ -147,6 +148,7 @@ pub async fn setup_public_test_app() -> (Router, AppState) {
 
     let app = Router::new()
         .route("/getk1", axum::routing::get(get_k1))
+        .route("/app_version", post(check_app_version))
         .route(
             "/.well-known/lnurlp/{username}",
             axum::routing::get(lnurlp_request),

@@ -59,3 +59,8 @@ s3_bucket_name = "your-s3-bucket-name"
 # aws_access_key_id = "your-aws-access-key-id"
 # aws_secret_access_key = "your-aws-secret-access-key"
 # aws_region = "us-east-2"
+
+# Minimum app version required for clients to connect
+# Default: "0.0.1"
+# Clients with versions lower than this will be blocked from using the app
+minimum_app_version = "0.0.1"

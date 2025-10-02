@@ -33,6 +33,8 @@ pub struct Config {
     pub aws_access_key_id: Option<String>,
     pub aws_secret_access_key: Option<String>,
     pub aws_region: Option<String>,
+    #[serde(default = "default_minimum_app_version")]
+    pub minimum_app_version: String,
 }
 
 impl Config {
@@ -123,4 +125,8 @@ fn default_deregister_cron() -> String {
 
 fn default_maintenance_interval_rounds() -> u16 {
     crate::constants::DEFAULT_MAINTENANCE_INTERVAL_ROUNDS
+}
+
+fn default_minimum_app_version() -> String {
+    "0.0.1".to_string()
 }

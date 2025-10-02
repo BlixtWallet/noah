@@ -4,7 +4,7 @@ const config: { expo: ExpoConfig } = {
   expo: {
     name: "Noah",
     slug: "noahs-ark-wallet",
-    version: "1.0.0",
+    version: "0.0.1",
     orientation: "portrait",
     userInterfaceStyle: "dark",
     newArchEnabled: true,

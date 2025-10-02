@@ -4,6 +4,8 @@ import { getServerEndpoint } from "~/constants";
 import { peakKeyPair, signMessage } from "./crypto";
 import { loadWalletIfNeeded } from "./walletApi";
 import {
+  AppVersionCheckPayload,
+  AppVersionInfo,
   BackupInfo,
   BackupSettingsPayload,
   CompleteUploadPayload,
@@ -236,3 +238,48 @@ export const getDownloadUrlForRestore = async (payload: {
 };
 
 export const deregister = () => post<object, DefaultSuccessPayload>("/deregister", {});
+
+export const checkAppVersion = async (
+  clientVersion: string,
+): Promise<Result<AppVersionInfo, Error>> => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  const payload: AppVersionCheckPayload = {
+    client_version: clientVersion,
+  };
+
+  const body = JSON.stringify(payload);
+  const url = `${API_URL}/v0/app_version`;
+
+  const responseResult = await ResultAsync.fromPromise(
+    nativePost(url, body, headers, 30),
+    (e) => e as Error,
+  );
+
+  if (responseResult.isErr()) {
+    return err(responseResult.error);
+  }
+
+  const response = responseResult.value;
+
+  if (response.status < 200 || response.status >= 300) {
+    return err(new Error(`HTTP ${response.status}: ${response.body}`));
+  }
+
+  if (!response.body) {
+    return err(new Error("Empty response body from app_version"));
+  }
+
+  const parseResult = Result.fromThrowable(
+    () => JSON.parse(response.body) as AppVersionInfo,
+    (e) => new Error(`Failed to parse JSON response: ${(e as Error).message}`),
+  )();
+
+  if (parseResult.isErr()) {
+    return err(parseResult.error);
+  }
+
+  return ok(parseResult.value);
+};

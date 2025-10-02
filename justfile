@@ -80,7 +80,7 @@ clean-all:
 
 # Server commands
 server:
-    cargo run -- --config-path config.toml
+    bacon
 
 server-build:
     cargo build

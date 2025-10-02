@@ -16,6 +16,8 @@ import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
 import { APP_VARIANT } from "~/config";
 import { BITCOIN_FACTS, PLATFORM } from "~/constants";
+import { useAppVersionCheck } from "~/hooks/useAppVersionCheck";
+import { UpdateWarningBanner } from "~/components/UpdateWarningBanner";
 
 import Animated, {
   FadeInDown,
@@ -38,6 +40,7 @@ const HomeScreen = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [fact, setFact] = useState("");
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const { isUpdateRequired, minimumVersion, currentVersion } = useAppVersionCheck();
 
   const getRandomFact = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * BITCOIN_FACTS.length);
@@ -127,6 +130,12 @@ const HomeScreen = () => {
           />
         }
       >
+        {isUpdateRequired && (
+          <UpdateWarningBanner
+            currentVersion={currentVersion}
+            minimumVersion={minimumVersion || "0.0.1"}
+          />
+        )}
         <View className="items-center justify-center flex-1">
           {isFetching && !balance ? (
             <NoahActivityIndicator size="large" />
