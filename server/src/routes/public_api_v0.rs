@@ -320,7 +320,7 @@ pub async fn check_app_version(
     State(state): State<AppState>,
     Json(payload): Json<AppVersionCheckPayload>,
 ) -> anyhow::Result<Json<AppVersionInfo>, ApiError> {
-    let minimum_required = &state.config.minimum_app_version;
+    let minimum_required = &state.config.load().minimum_app_version;
     let client_version = &payload.client_version;
 
     let minimum_parsed = semver::Version::parse(minimum_required).map_err(|e| {

@@ -1,9 +1,11 @@
 use anyhow::bail;
+use arc_swap::ArcSwap;
 use axum::{
     Router, middleware,
     routing::{get, post},
 };
 mod config;
+mod config_watcher;
 mod constants;
 mod routes;
 mod types;
@@ -13,7 +15,7 @@ use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
 use std::{net::SocketAddr, sync::Arc};
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info};
+use tracing::error;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -50,7 +52,7 @@ type AppState = Arc<AppStruct>;
 
 #[derive(Clone)]
 pub struct AppStruct {
-    pub config: Config,
+    pub config: Arc<ArcSwap<Config>>,
     pub lnurl_domain: String,
     pub db: Arc<libsql::Database>,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
@@ -111,7 +113,7 @@ fn main() -> anyhow::Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            if let Err(e) = start_server(config).await {
+            if let Err(e) = start_server(config, config_path).await {
                 error!("Failed to start server: {}", e);
             }
         });
@@ -119,7 +121,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn start_server(config: Config) -> anyhow::Result<()> {
+async fn start_server(config: Config, config_path: String) -> anyhow::Result<()> {
     let host = config.host()?;
     let server_network = config.network()?;
 
@@ -141,29 +143,22 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     db::migrations::run_migrations(&db).await?;
 
+    let config_swap = Arc::new(ArcSwap::from_pointee(config.clone()));
+
     let app_state = Arc::new(AppStruct {
-        config: config.clone(),
+        config: config_swap.clone(),
         lnurl_domain: config.lnurl_domain.clone(),
         db: Arc::new(db),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
     });
 
-    let server_config = serde_json::json!({
-        "HOST": host,
-        "PORT": config.port,
-        "PRIVATE_PORT": config.private_port,
-        "LNURL_DOMAIN": config.lnurl_domain,
-        "ARK_SERVER_URL": config.ark_server_url,
-        "SERVER_ENV": server_network,
-        "BACKUP_CRON": config.backup_cron,
-        "DEREGISTR_CRON": config.deregister_cron,
-        "MAINTENANCE_INTERVAL_ROUNDS": config.maintenance_interval_rounds,
-    });
+    config_watcher::start_config_watcher(config_path.clone(), config_swap).await?;
 
-    info!("Server environment: {}", server_config);
+    config.log_config();
 
-    let cron_handle = cron_scheduler(app_state.clone(), config.backup_cron.clone()).await?;
+    let backup_cron = config.backup_cron.clone();
+    let cron_handle = cron_scheduler(app_state.clone(), backup_cron).await?;
 
     cron_handle.start().await?;
 

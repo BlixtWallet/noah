@@ -4,6 +4,25 @@ use serde::Deserialize;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 
+/// Configuration for the Noah server
+///
+/// # Hot-Reloadable Configuration
+/// Most config values can be updated at runtime by modifying the config file.
+/// The server watches for file changes and automatically reloads the config.
+///
+/// ## Non-Reloadable (requires restart):
+/// - `host`, `port`, `private_port`: Network binding configuration
+/// - `turso_url`, `turso_api_key`: Database connection settings
+/// - `server_network`: Bitcoin network selection
+///
+/// ## Hot-Reloadable (applies automatically):
+/// - `lnurl_domain`, `ark_server_url`: External service URLs
+/// - `expo_access_token`: Push notification credentials
+/// - `backup_cron`, `heartbeat_cron`, `deregister_cron`: Cron schedules
+/// - `maintenance_interval_rounds`: Maintenance settings
+/// - `s3_bucket_name`, AWS credentials: S3 configuration
+/// - `minimum_app_version`: App version requirements
+/// - `sentry_url`: Monitoring configuration
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(default = "default_host")]
@@ -38,6 +57,53 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn log_config(&self) {
+        tracing::info!("=== Server Configuration ===");
+        tracing::info!("Host: {}", self.host);
+        tracing::info!("Port: {}", self.port);
+        tracing::info!("Private Port: {}", self.private_port);
+        tracing::info!("LNURL Domain: {}", self.lnurl_domain);
+        tracing::info!("Turso URL: {}", self.turso_url);
+        tracing::info!("Turso API Key: [REDACTED]");
+        tracing::info!("Expo Access Token: [REDACTED]");
+        tracing::info!("Ark Server URL: {}", self.ark_server_url);
+        tracing::info!("Server Network: {}", self.server_network);
+        tracing::info!(
+            "Sentry URL: {}",
+            self.sentry_url.as_deref().unwrap_or("[NOT SET]")
+        );
+        tracing::info!("Backup Cron: {}", self.backup_cron);
+        tracing::info!("Heartbeat Cron: {}", self.heartbeat_cron);
+        tracing::info!("Deregister Cron: {}", self.deregister_cron);
+        tracing::info!(
+            "Maintenance Interval Rounds: {}",
+            self.maintenance_interval_rounds
+        );
+        tracing::info!("S3 Bucket Name: {}", self.s3_bucket_name);
+        tracing::info!(
+            "AWS Access Key ID: {}",
+            if self.aws_access_key_id.is_some() {
+                "[SET]"
+            } else {
+                "[NOT SET]"
+            }
+        );
+        tracing::info!(
+            "AWS Secret Access Key: {}",
+            if self.aws_secret_access_key.is_some() {
+                "[SET]"
+            } else {
+                "[NOT SET]"
+            }
+        );
+        tracing::info!(
+            "AWS Region: {}",
+            self.aws_region.as_deref().unwrap_or("[NOT SET]")
+        );
+        tracing::info!("Minimum App Version: {}", self.minimum_app_version);
+        tracing::info!("============================");
+    }
+
     pub fn from_file(path: &str) -> Result<Self> {
         let content = std::fs::read_to_string(path)
             .context(format!("Failed to read config file at: {}", path))?;

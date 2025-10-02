@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = { version = "0.8.4", features = ["json"] }
-anyhow = "1.0.99"
+axum = { version = "0.8.6", features = ["json"] }
+anyhow = "1.0.100"
+arc-swap = "1.7.1"
+notify = "8.2.0"
 tokio = { version = "1.47.1", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
@@ -19,9 +21,9 @@ hex = "0.4.3"
 rand = "0.9.2"
 bitcoin = "0.32.7"
 expo_push_notification_client = "1.0.6"
-thiserror = "2.0.16"
+thiserror = "2.0.17"
 dashmap = "6.1.0"
-tokio-cron-scheduler = { version = "0.14.0", features = ["english"] }
+tokio-cron-scheduler = { version = "0.15.0", features = ["english"] }
 serde_json = "1.0.145"
 random_word = { version = "0.5.0", features = ["en"] }
 futures-util = "0.3.30"
@@ -33,11 +35,11 @@ validator = { version = "0.20.0", features = ["derive"] }
 aws-config = "1.8.6"
 aws-sdk-s3 = "1.106.0"
 ts-rs = "11.0.1"
-sentry = { version = "0.42.0", features = ["tracing", "logs", "tower-axum-matched-path"] }
+sentry = { version = "0.43.0", features = ["tracing", "logs", "tower-axum-matched-path"] }
 tower = "0.5.2"
 uuid = "1.18.1"
 toml = "0.9.7"
-semver = "1.0"
+semver = "1.0.27"
 
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["full"] }
