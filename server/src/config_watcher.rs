@@ -4,7 +4,7 @@ use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 use crate::config::Config;
 
@@ -38,7 +38,7 @@ pub async fn start_config_watcher(
         let _watcher = watcher;
 
         while let Some(_event) = rx.recv().await {
-            info!("Config file changed, reloading...");
+            debug!("Config file changed, reloading...");
 
             match Config::from_file(&config_path) {
                 Ok(new_config) => {
@@ -54,8 +54,6 @@ pub async fn start_config_watcher(
                     }
 
                     config_swap.store(Arc::new(new_config.clone()));
-                    info!("Config reloaded successfully");
-                    new_config.log_config();
                 }
                 Err(e) => {
                     error!("Failed to reload config: {}. Keeping old config.", e);

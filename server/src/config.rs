@@ -58,29 +58,33 @@ pub struct Config {
 
 impl Config {
     pub fn log_config(&self) {
-        tracing::info!("=== Server Configuration ===");
-        tracing::info!("Host: {}", self.host);
-        tracing::info!("Port: {}", self.port);
-        tracing::info!("Private Port: {}", self.private_port);
-        tracing::info!("LNURL Domain: {}", self.lnurl_domain);
-        tracing::info!("Turso URL: {}", self.turso_url);
-        tracing::info!("Turso API Key: [REDACTED]");
-        tracing::info!("Expo Access Token: [REDACTED]");
-        tracing::info!("Ark Server URL: {}", self.ark_server_url);
-        tracing::info!("Server Network: {}", self.server_network);
-        tracing::info!(
+        tracing::debug!("=== Server Configuration ===");
+        tracing::debug!("Host: {}", self.host);
+        tracing::debug!("Port: {}", self.port);
+        tracing::debug!("Private Port: {}", self.private_port);
+        tracing::debug!("LNURL Domain: {}", self.lnurl_domain);
+        tracing::debug!("Turso URL: {}", self.turso_url);
+        tracing::debug!("Turso API Key: [REDACTED]");
+        tracing::debug!("Expo Access Token: [REDACTED]");
+        tracing::debug!("Ark Server URL: {}", self.ark_server_url);
+        tracing::debug!("Server Network: {}", self.server_network);
+        tracing::debug!(
             "Sentry URL: {}",
-            self.sentry_url.as_deref().unwrap_or("[NOT SET]")
+            if self.sentry_url.is_some() {
+                "[SET]"
+            } else {
+                "[NOT SET]"
+            }
         );
-        tracing::info!("Backup Cron: {}", self.backup_cron);
-        tracing::info!("Heartbeat Cron: {}", self.heartbeat_cron);
-        tracing::info!("Deregister Cron: {}", self.deregister_cron);
-        tracing::info!(
+        tracing::debug!("Backup Cron: {}", self.backup_cron);
+        tracing::debug!("Heartbeat Cron: {}", self.heartbeat_cron);
+        tracing::debug!("Deregister Cron: {}", self.deregister_cron);
+        tracing::debug!(
             "Maintenance Interval Rounds: {}",
             self.maintenance_interval_rounds
         );
-        tracing::info!("S3 Bucket Name: {}", self.s3_bucket_name);
-        tracing::info!(
+        tracing::debug!("S3 Bucket Name: {}", self.s3_bucket_name);
+        tracing::debug!(
             "AWS Access Key ID: {}",
             if self.aws_access_key_id.is_some() {
                 "[SET]"
@@ -88,7 +92,7 @@ impl Config {
                 "[NOT SET]"
             }
         );
-        tracing::info!(
+        tracing::debug!(
             "AWS Secret Access Key: {}",
             if self.aws_secret_access_key.is_some() {
                 "[SET]"
@@ -96,12 +100,12 @@ impl Config {
                 "[NOT SET]"
             }
         );
-        tracing::info!(
+        tracing::debug!(
             "AWS Region: {}",
             self.aws_region.as_deref().unwrap_or("[NOT SET]")
         );
-        tracing::info!("Minimum App Version: {}", self.minimum_app_version);
-        tracing::info!("============================");
+        tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
+        tracing::debug!("============================");
     }
 
     pub fn from_file(path: &str) -> Result<Self> {
