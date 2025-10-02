@@ -3,9 +3,6 @@
   "workspaces": {
     "": {
       "name": "noah",
-      "dependencies": {
-        "expo-asset": "^12.0.9",
-      },
     },
     "client": {
       "name": "noah",
@@ -37,6 +34,7 @@
         "clsx": "^2.1.1",
         "eslint-plugin-react-compiler": "^19.1.0-rc.2",
         "expo": "~54.0.10",
+        "expo-asset": "^12.0.9",
         "expo-build-properties": "~1.0.9",
         "expo-clipboard": "~8.0.7",
         "expo-constants": "~18.0.9",
