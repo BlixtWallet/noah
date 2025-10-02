@@ -14,7 +14,7 @@
 namespace margelo::nitro::noahtools::bridge::swift {
 
   // pragma MARK: std::function<void(const std::vector<std::string>& /* result */)>
-  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* _Nonnull swiftClosureWrapper) noexcept {
+  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NoahTools::Func_void_std__vector_std__string_::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const std::vector<std::string>& result) mutable -> void {
       swiftClosure.call(result);
@@ -22,7 +22,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   
   // pragma MARK: std::function<void(const std::exception_ptr& /* error */)>
-  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* _Nonnull swiftClosureWrapper) noexcept {
+  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NoahTools::Func_void_std__exception_ptr::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const std::exception_ptr& error) mutable -> void {
       swiftClosure.call(error);
@@ -30,7 +30,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   
   // pragma MARK: std::function<void(const std::string& /* result */)>
-  Func_void_std__string create_Func_void_std__string(void* _Nonnull swiftClosureWrapper) noexcept {
+  Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NoahTools::Func_void_std__string::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const std::string& result) mutable -> void {
       swiftClosure.call(result);
@@ -38,7 +38,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   
   // pragma MARK: std::function<void(bool /* result */)>
-  Func_void_bool create_Func_void_bool(void* _Nonnull swiftClosureWrapper) noexcept {
+  Func_void_bool create_Func_void_bool(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NoahTools::Func_void_bool::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](bool result) mutable -> void {
       swiftClosure.call(result);
@@ -46,19 +46,27 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   
   // pragma MARK: std::function<void(const HttpResponse& /* result */)>
-  Func_void_HttpResponse create_Func_void_HttpResponse(void* _Nonnull swiftClosureWrapper) noexcept {
+  Func_void_HttpResponse create_Func_void_HttpResponse(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NoahTools::Func_void_HttpResponse::fromUnsafe(swiftClosureWrapper);
     return [swiftClosure = std::move(swiftClosure)](const HttpResponse& result) mutable -> void {
       swiftClosure.call(result);
     };
   }
   
+  // pragma MARK: std::function<void()>
+  Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = NoahTools::Func_void::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)]() mutable -> void {
+      swiftClosure.call();
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridNoahToolsSpec>
-  std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* _Nonnull swiftUnsafePointer) noexcept {
+  std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
     NoahTools::HybridNoahToolsSpec_cxx swiftPart = NoahTools::HybridNoahToolsSpec_cxx::fromUnsafe(swiftUnsafePointer);
     return std::make_shared<margelo::nitro::noahtools::HybridNoahToolsSpecSwift>(swiftPart);
   }
-  void* _Nonnull get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept {
+  void* NON_NULL get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept {
     std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::noahtools::HybridNoahToolsSpecSwift>(cppType);
     #ifdef NITRO_DEBUG
     if (swiftWrapper == nullptr) [[unlikely]] {

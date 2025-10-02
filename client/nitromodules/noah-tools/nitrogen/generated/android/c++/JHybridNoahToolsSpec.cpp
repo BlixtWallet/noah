@@ -154,5 +154,51 @@ namespace margelo::nitro::noahtools {
     static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* level */, jni::alias_ref<jni::JString> /* tag */, jni::alias_ref<jni::JString> /* message */)>("nativeLog");
     method(_javaPart, jni::make_jstring(level), jni::make_jstring(tag), jni::make_jstring(message));
   }
+  std::shared_ptr<Promise<void>> JHybridNoahToolsSpec::playAudio(const std::string& filePath) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* filePath */)>("playAudio");
+    auto __result = method(_javaPart, jni::make_jstring(filePath));
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
+  void JHybridNoahToolsSpec::pauseAudio() {
+    static const auto method = javaClassStatic()->getMethod<void()>("pauseAudio");
+    method(_javaPart);
+  }
+  void JHybridNoahToolsSpec::stopAudio() {
+    static const auto method = javaClassStatic()->getMethod<void()>("stopAudio");
+    method(_javaPart);
+  }
+  void JHybridNoahToolsSpec::resumeAudio() {
+    static const auto method = javaClassStatic()->getMethod<void()>("resumeAudio");
+    method(_javaPart);
+  }
+  void JHybridNoahToolsSpec::seekAudio(double positionSeconds) {
+    static const auto method = javaClassStatic()->getMethod<void(double /* positionSeconds */)>("seekAudio");
+    method(_javaPart, positionSeconds);
+  }
+  double JHybridNoahToolsSpec::getAudioDuration() {
+    static const auto method = javaClassStatic()->getMethod<double()>("getAudioDuration");
+    auto __result = method(_javaPart);
+    return __result;
+  }
+  double JHybridNoahToolsSpec::getAudioPosition() {
+    static const auto method = javaClassStatic()->getMethod<double()>("getAudioPosition");
+    auto __result = method(_javaPart);
+    return __result;
+  }
+  bool JHybridNoahToolsSpec::isAudioPlaying() {
+    static const auto method = javaClassStatic()->getMethod<jboolean()>("isAudioPlaying");
+    auto __result = method(_javaPart);
+    return static_cast<bool>(__result);
+  }
 
 } // namespace margelo::nitro::noahtools

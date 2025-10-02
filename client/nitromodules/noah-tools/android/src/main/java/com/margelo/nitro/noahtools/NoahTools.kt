@@ -1,6 +1,7 @@
 package com.margelo.nitro.noahtools
 
 import com.margelo.nitro.core.Promise
+import com.margelo.nitro.noahtools.audio.NoahToolsAudio
 
 class NoahTools : HybridNoahToolsSpec() {
 
@@ -39,5 +40,37 @@ class NoahTools : HybridNoahToolsSpec() {
 
     override fun nativeLog(level: String, tag: String, message: String) {
         NoahToolsLogging.performNativeLog(level, tag, message)
+    }
+
+    override fun playAudio(filePath: String): Promise<Unit> {
+        return NoahToolsAudio.performPlayAudio(filePath)
+    }
+
+    override fun pauseAudio() {
+        NoahToolsAudio.performPauseAudio()
+    }
+
+    override fun stopAudio() {
+        NoahToolsAudio.performStopAudio()
+    }
+
+    override fun resumeAudio() {
+        NoahToolsAudio.performResumeAudio()
+    }
+
+    override fun seekAudio(positionSeconds: Double) {
+        NoahToolsAudio.performSeekAudio(positionSeconds)
+    }
+
+    override fun getAudioDuration(): Double {
+        return NoahToolsAudio.performGetAudioDuration()
+    }
+
+    override fun getAudioPosition(): Double {
+        return NoahToolsAudio.performGetAudioPosition()
+    }
+
+    override fun isAudioPlaying(): Boolean {
+        return NoahToolsAudio.performIsAudioPlaying()
     }
 }

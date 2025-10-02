@@ -116,6 +116,62 @@ namespace margelo::nitro::noahtools {
         std::rethrow_exception(__result.error());
       }
     }
+    inline std::shared_ptr<Promise<void>> playAudio(const std::string& filePath) override {
+      auto __result = _swiftPart.playAudio(filePath);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void pauseAudio() override {
+      auto __result = _swiftPart.pauseAudio();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void stopAudio() override {
+      auto __result = _swiftPart.stopAudio();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void resumeAudio() override {
+      auto __result = _swiftPart.resumeAudio();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void seekAudio(double positionSeconds) override {
+      auto __result = _swiftPart.seekAudio(std::forward<decltype(positionSeconds)>(positionSeconds));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline double getAudioDuration() override {
+      auto __result = _swiftPart.getAudioDuration();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline double getAudioPosition() override {
+      auto __result = _swiftPart.getAudioPosition();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline bool isAudioPlaying() override {
+      auto __result = _swiftPart.isAudioPlaying();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
 
   private:
     NoahTools::HybridNoahToolsSpec_cxx _swiftPart;

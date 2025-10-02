@@ -16,5 +16,8 @@
     "postinstall": "bun scripts/download_ark_binaries.js",
     "prepare": "husky",
     "check": "bun client check"
+  },
+  "dependencies": {
+    "expo-asset": "^12.0.9"
   }
 }

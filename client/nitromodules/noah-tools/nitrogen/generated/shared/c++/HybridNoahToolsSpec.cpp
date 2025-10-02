@@ -21,6 +21,14 @@ namespace margelo::nitro::noahtools {
       prototype.registerHybridMethod("nativePost", &HybridNoahToolsSpec::nativePost);
       prototype.registerHybridMethod("nativeGet", &HybridNoahToolsSpec::nativeGet);
       prototype.registerHybridMethod("nativeLog", &HybridNoahToolsSpec::nativeLog);
+      prototype.registerHybridMethod("playAudio", &HybridNoahToolsSpec::playAudio);
+      prototype.registerHybridMethod("pauseAudio", &HybridNoahToolsSpec::pauseAudio);
+      prototype.registerHybridMethod("stopAudio", &HybridNoahToolsSpec::stopAudio);
+      prototype.registerHybridMethod("resumeAudio", &HybridNoahToolsSpec::resumeAudio);
+      prototype.registerHybridMethod("seekAudio", &HybridNoahToolsSpec::seekAudio);
+      prototype.registerHybridMethod("getAudioDuration", &HybridNoahToolsSpec::getAudioDuration);
+      prototype.registerHybridMethod("getAudioPosition", &HybridNoahToolsSpec::getAudioPosition);
+      prototype.registerHybridMethod("isAudioPlaying", &HybridNoahToolsSpec::isAudioPlaying);
     });
   }
 

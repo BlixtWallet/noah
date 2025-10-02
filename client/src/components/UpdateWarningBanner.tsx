@@ -38,7 +38,7 @@ export const UpdateWarningBanner: React.FC<UpdateWarningBannerProps> = ({
             <Text className="text-sm font-medium text-orange-400">{currentVersion}</Text>
           </View>
           <View className="flex-row items-center justify-between">
-            <Text className="text-xs text-gray-400">Required Version</Text>
+            <Text className="text-xs text-gray-400">Latest Version</Text>
             <Text className="text-sm font-medium text-orange-400">{minimumVersion}</Text>
           </View>
         </View>

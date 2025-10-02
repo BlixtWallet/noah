@@ -29,4 +29,14 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
 
   // Native logging
   nativeLog(level: string, tag: string, message: string): void;
+
+  // Audio playback
+  playAudio(filePath: string): Promise<void>;
+  pauseAudio(): void;
+  stopAudio(): void;
+  resumeAudio(): void;
+  seekAudio(positionSeconds: number): void;
+  getAudioDuration(): number;
+  getAudioPosition(): number;
+  isAudioPlaying(): boolean;
 }

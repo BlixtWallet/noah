@@ -60,6 +60,14 @@ namespace margelo::nitro::noahtools {
     std::shared_ptr<Promise<HttpResponse>> nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) override;
     std::shared_ptr<Promise<HttpResponse>> nativeGet(const std::string& url, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) override;
     void nativeLog(const std::string& level, const std::string& tag, const std::string& message) override;
+    std::shared_ptr<Promise<void>> playAudio(const std::string& filePath) override;
+    void pauseAudio() override;
+    void stopAudio() override;
+    void resumeAudio() override;
+    void seekAudio(double positionSeconds) override;
+    double getAudioDuration() override;
+    double getAudioPosition() override;
+    bool isAudioPlaying() override;
 
   private:
     friend HybridBase;

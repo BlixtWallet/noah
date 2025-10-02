@@ -22,6 +22,7 @@ import BoardingTransactionDetailScreen from "~/screens/BoardingTransactionDetail
 import LightningAddressScreen from "~/screens/LightningAddressScreen";
 import { BackupSettingsScreen } from "~/screens/BackupSettingsScreen";
 import RestoreWalletScreen from "~/screens/RestoreWalletScreen";
+import NoahStoryScreen from "~/screens/NoahStoryScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { COLORS } from "~/lib/styleConstants";
@@ -52,6 +53,7 @@ export type SettingsStackParamList = {
   BackupSettings: undefined;
   VTXOs: undefined;
   VTXODetail: { vtxo: VTXOWithStatus };
+  NoahStory: undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -102,6 +104,7 @@ const SettingsStackNav = () => (
       component={VTXODetailScreen}
       options={{ animation: "default" }}
     />
+    <Stack.Screen name="NoahStory" component={NoahStoryScreen} options={{ animation: "default" }} />
   </Stack.Navigator>
 );
 

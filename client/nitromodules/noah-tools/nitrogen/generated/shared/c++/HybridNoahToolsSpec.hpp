@@ -60,6 +60,14 @@ namespace margelo::nitro::noahtools {
       virtual std::shared_ptr<Promise<HttpResponse>> nativePost(const std::string& url, const std::string& body, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) = 0;
       virtual std::shared_ptr<Promise<HttpResponse>> nativeGet(const std::string& url, const std::unordered_map<std::string, std::string>& headers, double timeoutSeconds) = 0;
       virtual void nativeLog(const std::string& level, const std::string& tag, const std::string& message) = 0;
+      virtual std::shared_ptr<Promise<void>> playAudio(const std::string& filePath) = 0;
+      virtual void pauseAudio() = 0;
+      virtual void stopAudio() = 0;
+      virtual void resumeAudio() = 0;
+      virtual void seekAudio(double positionSeconds) = 0;
+      virtual double getAudioDuration() = 0;
+      virtual double getAudioPosition() = 0;
+      virtual bool isAudioPlaying() = 0;
 
     protected:
       // Hybrid Setup

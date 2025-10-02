@@ -20,6 +20,7 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 // Include C++ defined types
 #include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
+#include <NitroModules/FastVectorCopy.hpp>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
@@ -76,7 +77,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   private:
     std::unique_ptr<std::function<void(const std::vector<std::string>& /* result */)>> _function;
   } SWIFT_NONCOPYABLE;
-  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* _Nonnull swiftClosureWrapper) noexcept;
+  Func_void_std__vector_std__string_ create_Func_void_std__vector_std__string_(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__vector_std__string__Wrapper wrap_Func_void_std__vector_std__string_(Func_void_std__vector_std__string_ value) noexcept {
     return Func_void_std__vector_std__string__Wrapper(std::move(value));
   }
@@ -98,7 +99,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   private:
     std::unique_ptr<std::function<void(const std::exception_ptr& /* error */)>> _function;
   } SWIFT_NONCOPYABLE;
-  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* _Nonnull swiftClosureWrapper) noexcept;
+  Func_void_std__exception_ptr create_Func_void_std__exception_ptr(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__exception_ptr_Wrapper wrap_Func_void_std__exception_ptr(Func_void_std__exception_ptr value) noexcept {
     return Func_void_std__exception_ptr_Wrapper(std::move(value));
   }
@@ -132,7 +133,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   private:
     std::unique_ptr<std::function<void(const std::string& /* result */)>> _function;
   } SWIFT_NONCOPYABLE;
-  Func_void_std__string create_Func_void_std__string(void* _Nonnull swiftClosureWrapper) noexcept;
+  Func_void_std__string create_Func_void_std__string(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_std__string_Wrapper wrap_Func_void_std__string(Func_void_std__string value) noexcept {
     return Func_void_std__string_Wrapper(std::move(value));
   }
@@ -166,7 +167,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
   private:
     std::unique_ptr<std::function<void(bool /* result */)>> _function;
   } SWIFT_NONCOPYABLE;
-  Func_void_bool create_Func_void_bool(void* _Nonnull swiftClosureWrapper) noexcept;
+  Func_void_bool create_Func_void_bool(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_bool_Wrapper wrap_Func_void_bool(Func_void_bool value) noexcept {
     return Func_void_bool_Wrapper(std::move(value));
   }
@@ -225,9 +226,43 @@ namespace margelo::nitro::noahtools::bridge::swift {
   private:
     std::unique_ptr<std::function<void(const HttpResponse& /* result */)>> _function;
   } SWIFT_NONCOPYABLE;
-  Func_void_HttpResponse create_Func_void_HttpResponse(void* _Nonnull swiftClosureWrapper) noexcept;
+  Func_void_HttpResponse create_Func_void_HttpResponse(void* NON_NULL swiftClosureWrapper) noexcept;
   inline Func_void_HttpResponse_Wrapper wrap_Func_void_HttpResponse(Func_void_HttpResponse value) noexcept {
     return Func_void_HttpResponse_Wrapper(std::move(value));
+  }
+  
+  // pragma MARK: std::shared_ptr<Promise<void>>
+  /**
+   * Specialized version of `std::shared_ptr<Promise<void>>`.
+   */
+  using std__shared_ptr_Promise_void__ = std::shared_ptr<Promise<void>>;
+  inline std::shared_ptr<Promise<void>> create_std__shared_ptr_Promise_void__() noexcept {
+    return Promise<void>::create();
+  }
+  inline PromiseHolder<void> wrap_std__shared_ptr_Promise_void__(std::shared_ptr<Promise<void>> promise) noexcept {
+    return PromiseHolder<void>(std::move(promise));
+  }
+  
+  // pragma MARK: std::function<void()>
+  /**
+   * Specialized version of `std::function<void()>`.
+   */
+  using Func_void = std::function<void()>;
+  /**
+   * Wrapper class for a `std::function<void()>`, this can be used from Swift.
+   */
+  class Func_void_Wrapper final {
+  public:
+    explicit Func_void_Wrapper(std::function<void()>&& func): _function(std::make_unique<std::function<void()>>(std::move(func))) {}
+    inline void call() const noexcept {
+      _function->operator()();
+    }
+  private:
+    std::unique_ptr<std::function<void()>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_void_Wrapper wrap_Func_void(Func_void value) noexcept {
+    return Func_void_Wrapper(std::move(value));
   }
   
   // pragma MARK: std::shared_ptr<HybridNoahToolsSpec>
@@ -235,8 +270,8 @@ namespace margelo::nitro::noahtools::bridge::swift {
    * Specialized version of `std::shared_ptr<HybridNoahToolsSpec>`.
    */
   using std__shared_ptr_HybridNoahToolsSpec_ = std::shared_ptr<HybridNoahToolsSpec>;
-  std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* _Nonnull swiftUnsafePointer) noexcept;
-  void* _Nonnull get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept;
+  std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
+  void* NON_NULL get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept;
   
   // pragma MARK: std::weak_ptr<HybridNoahToolsSpec>
   using std__weak_ptr_HybridNoahToolsSpec_ = std::weak_ptr<HybridNoahToolsSpec>;
@@ -294,6 +329,33 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   inline Result_void_ create_Result_void_(const std::exception_ptr& error) noexcept {
     return Result<void>::withError(error);
+  }
+  
+  // pragma MARK: Result<std::shared_ptr<Promise<void>>>
+  using Result_std__shared_ptr_Promise_void___ = Result<std::shared_ptr<Promise<void>>>;
+  inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::shared_ptr<Promise<void>>& value) noexcept {
+    return Result<std::shared_ptr<Promise<void>>>::withValue(value);
+  }
+  inline Result_std__shared_ptr_Promise_void___ create_Result_std__shared_ptr_Promise_void___(const std::exception_ptr& error) noexcept {
+    return Result<std::shared_ptr<Promise<void>>>::withError(error);
+  }
+  
+  // pragma MARK: Result<double>
+  using Result_double_ = Result<double>;
+  inline Result_double_ create_Result_double_(double value) noexcept {
+    return Result<double>::withValue(std::move(value));
+  }
+  inline Result_double_ create_Result_double_(const std::exception_ptr& error) noexcept {
+    return Result<double>::withError(error);
+  }
+  
+  // pragma MARK: Result<bool>
+  using Result_bool_ = Result<bool>;
+  inline Result_bool_ create_Result_bool_(bool value) noexcept {
+    return Result<bool>::withValue(std::move(value));
+  }
+  inline Result_bool_ create_Result_bool_(const std::exception_ptr& error) noexcept {
+    return Result<bool>::withError(error);
   }
 
 } // namespace margelo::nitro::noahtools::bridge::swift

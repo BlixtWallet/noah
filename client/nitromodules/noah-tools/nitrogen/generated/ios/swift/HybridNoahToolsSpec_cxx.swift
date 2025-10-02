@@ -248,4 +248,103 @@ open class HybridNoahToolsSpec_cxx {
       return bridge.create_Result_void_(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func playAudio(filePath: std.string) -> bridge.Result_std__shared_ptr_Promise_void___ {
+    do {
+      let __result = try self.__implementation.playAudio(filePath: String(filePath))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve() })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func pauseAudio() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.pauseAudio()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func stopAudio() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.stopAudio()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func resumeAudio() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.resumeAudio()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func seekAudio(positionSeconds: Double) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.seekAudio(positionSeconds: positionSeconds)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getAudioDuration() -> bridge.Result_double_ {
+    do {
+      let __result = try self.__implementation.getAudioDuration()
+      let __resultCpp = __result
+      return bridge.create_Result_double_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_double_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getAudioPosition() -> bridge.Result_double_ {
+    do {
+      let __result = try self.__implementation.getAudioPosition()
+      let __resultCpp = __result
+      return bridge.create_Result_double_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_double_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func isAudioPlaying() -> bridge.Result_bool_ {
+    do {
+      let __result = try self.__implementation.isAudioPlaying()
+      let __resultCpp = __result
+      return bridge.create_Result_bool_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_bool_(__exceptionPtr)
+    }
+  }
 }

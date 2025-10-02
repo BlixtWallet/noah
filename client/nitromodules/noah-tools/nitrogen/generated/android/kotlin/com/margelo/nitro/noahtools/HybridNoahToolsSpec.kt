@@ -67,6 +67,38 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun nativeLog(level: String, tag: String, message: String): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun playAudio(filePath: String): Promise<Unit>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun pauseAudio(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun stopAudio(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun resumeAudio(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun seekAudio(positionSeconds: Double): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getAudioDuration(): Double
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getAudioPosition(): Double
+  
+  @DoNotStrip
+  @Keep
+  abstract fun isAudioPlaying(): Boolean
 
   private external fun initHybrid(): HybridData
 

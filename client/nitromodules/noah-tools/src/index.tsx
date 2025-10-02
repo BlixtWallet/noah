@@ -41,4 +41,36 @@ export function nativeLog(level: LogLevel, tag: string, message: string): void {
   return NoahToolsHybridObject.nativeLog(level, tag, message);
 }
 
+export function playAudio(filePath: string): Promise<void> {
+  return NoahToolsHybridObject.playAudio(filePath);
+}
+
+export function pauseAudio(): void {
+  return NoahToolsHybridObject.pauseAudio();
+}
+
+export function stopAudio(): void {
+  return NoahToolsHybridObject.stopAudio();
+}
+
+export function resumeAudio(): void {
+  return NoahToolsHybridObject.resumeAudio();
+}
+
+export function seekAudio(positionSeconds: number): void {
+  return NoahToolsHybridObject.seekAudio(positionSeconds);
+}
+
+export function getAudioDuration(): number {
+  return NoahToolsHybridObject.getAudioDuration();
+}
+
+export function getAudioPosition(): number {
+  return NoahToolsHybridObject.getAudioPosition();
+}
+
+export function isAudioPlaying(): boolean {
+  return NoahToolsHybridObject.isAudioPlaying();
+}
+
 export type { HttpResponse } from "./NoahTools.nitro";

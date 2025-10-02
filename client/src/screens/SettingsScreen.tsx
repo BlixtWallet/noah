@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, View, Switch } from "react-native";
+import { Pressable, ScrollView, View, Switch, Image } from "react-native";
 import Constants from "expo-constants";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import { useServerStore } from "../store/serverStore";
@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { BackupStatusCard } from "../components/BackupStatusCard";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
+import logoImage from "../../assets/All_Files/all_sizes/1024.png";
 
 type Setting = {
   id:
@@ -141,6 +142,7 @@ const SettingsScreen = () => {
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
+
         {showResetSuccess && (
           <Alert icon={CheckCircle} className="mb-4">
             <AlertTitle>Success!</AlertTitle>
@@ -160,6 +162,16 @@ const SettingsScreen = () => {
           </Alert>
         )}
         <ScrollView className="flex-1 mb-16">
+          <View className="items-center mb-6">
+            <Pressable onPress={() => navigation.navigate("NoahStory")}>
+              <Image
+                source={logoImage}
+                style={{ width: 120, height: 120, borderRadius: 12 }}
+                resizeMode="contain"
+              />
+            </Pressable>
+          </View>
+
           <BackupStatusCard />
 
           {lightningAddress && (

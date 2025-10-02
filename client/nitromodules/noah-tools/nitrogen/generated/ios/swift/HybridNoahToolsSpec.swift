@@ -21,6 +21,14 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func nativePost(url: String, body: String, headers: Dictionary<String, String>, timeoutSeconds: Double) throws -> Promise<HttpResponse>
   func nativeGet(url: String, headers: Dictionary<String, String>, timeoutSeconds: Double) throws -> Promise<HttpResponse>
   func nativeLog(level: String, tag: String, message: String) throws -> Void
+  func playAudio(filePath: String) throws -> Promise<Void>
+  func pauseAudio() throws -> Void
+  func stopAudio() throws -> Void
+  func resumeAudio() throws -> Void
+  func seekAudio(positionSeconds: Double) throws -> Void
+  func getAudioDuration() throws -> Double
+  func getAudioPosition() throws -> Double
+  func isAudioPlaying() throws -> Bool
 }
 
 /// See ``HybridNoahToolsSpec``
