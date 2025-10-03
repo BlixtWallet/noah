@@ -18,6 +18,10 @@ import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 import ky from "ky";
 
+const updateProgress = (step: string, progress: number) => {
+  useWalletStore.getState().setRestoreProgress({ step, progress });
+};
+
 const log = logger("backupService");
 
 export class BackupService {
@@ -94,6 +98,7 @@ export class BackupService {
   }
 
   async restoreBackup(mnemonic: string, version?: number): Promise<Result<void, Error>> {
+    updateProgress("Authenticating...", 10);
     const k1Result = await getK1();
     if (k1Result.isErr()) {
       return err(k1Result.error);
@@ -101,7 +106,7 @@ export class BackupService {
     const k1 = k1Result.value;
     log.d("k1", [k1]);
 
-    // Sign the k1 with mnemonic
+    updateProgress("Verifying credentials...", 25);
     const signatureResult = await signMesssageWithMnemonic(k1, mnemonic, APP_VARIANT, 0);
     if (signatureResult.isErr()) {
       return err(signatureResult.error);
@@ -109,7 +114,7 @@ export class BackupService {
     const sig = signatureResult.value;
     log.d("sig", [sig]);
 
-    // Derive keypair from mnemonic
+    updateProgress("Deriving keys...", 40);
     const keypairResult = await deriveKeypairFromMnemonic(mnemonic, APP_VARIANT, 0);
     if (keypairResult.isErr()) {
       return err(keypairResult.error);
@@ -117,6 +122,7 @@ export class BackupService {
     const { public_key: key } = keypairResult.value;
     log.d("key", [key]);
 
+    updateProgress("Fetching backup...", 55);
     const downloadUrlResult = await getDownloadUrlForRestore({
       backup_version: version,
       k1,
@@ -131,7 +137,7 @@ export class BackupService {
 
     const { download_url } = downloadUrlResult.value;
 
-    // Download the backup file
+    updateProgress("Downloading backup...", 70);
     const responseResult = await ResultAsync.fromPromise(
       ky.get(download_url).text(),
       (e) => e as Error,
@@ -143,7 +149,7 @@ export class BackupService {
     const encryptedData = responseResult.value;
     log.d("Downloaded data length:", [encryptedData.length]);
 
-    // Decrypt, unzip, and restore the backup natively
+    updateProgress("Restoring wallet...", 85);
     const restoreResult = await ResultAsync.fromPromise(
       restoreBackupNative(encryptedData.trim(), mnemonic),
       (e) => e as Error,
@@ -158,29 +164,37 @@ export class BackupService {
 }
 
 export const restoreWallet = async (mnemonic: string): Promise<Result<void, Error>> => {
-  const backupService = new BackupService();
-  const restoreResult = await backupService.restoreBackup(mnemonic);
+  try {
+    updateProgress("Starting restore...", 0);
+    const backupService = new BackupService();
+    const restoreResult = await backupService.restoreBackup(mnemonic);
 
-  if (restoreResult.isErr()) {
-    return err(restoreResult.error);
+    if (restoreResult.isErr()) {
+      return err(restoreResult.error);
+    }
+
+    updateProgress("Finalizing...", 90);
+    const setMnemonicResult = await ResultAsync.fromPromise(
+      setMnemonic(mnemonic),
+      (e) => e as Error,
+    );
+
+    if (setMnemonicResult.isErr()) {
+      return err(setMnemonicResult.error);
+    }
+
+    updateProgress("Loading wallet...", 95);
+    const loadWalletResult = await ResultAsync.fromPromise(loadWalletIfNeeded(), (e) => e as Error);
+
+    if (loadWalletResult.isErr()) {
+      return err(loadWalletResult.error);
+    }
+
+    updateProgress("Complete", 100);
+    useWalletStore.setState({ isInitialized: true, isWalletLoaded: true, restoreProgress: null });
+
+    return ok(undefined);
+  } finally {
+    useWalletStore.getState().setRestoreProgress(null);
   }
-
-  const setMnemonicResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
-
-  if (setMnemonicResult.isErr()) {
-    return err(setMnemonicResult.error);
-  }
-
-  const loadWalletResult = await ResultAsync.fromPromise(loadWalletIfNeeded(), (e) => e as Error);
-
-  if (loadWalletResult.isErr()) {
-    return err(loadWalletResult.error);
-  }
-
-  useWalletStore.setState({ isInitialized: true, isWalletLoaded: true });
-
-  // The native code handles restoring the files. An app restart is
-  // recommended to ensure all services reload the restored data.
-
-  return ok(undefined);
 };

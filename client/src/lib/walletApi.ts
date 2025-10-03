@@ -17,7 +17,6 @@ import {
   type OnchainBalanceResult,
   type OffchainBalanceResult,
   KeyPairResult,
-  closeWallet,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";

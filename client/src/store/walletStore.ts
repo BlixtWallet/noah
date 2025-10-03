@@ -63,17 +63,24 @@ const initialConfig = (): WalletConfig => {
   };
 };
 
+export type RestoreProgress = {
+  step: string;
+  progress: number;
+};
+
 interface WalletState {
   isInitialized: boolean;
   isWalletLoaded: boolean;
   walletError: boolean;
   config: WalletConfig;
+  restoreProgress: RestoreProgress | null;
   finishOnboarding: () => void;
   setWalletLoaded: () => void;
   setWalletUnloaded: () => void;
   setWalletError: (error: boolean) => void;
   setConfig: (config: WalletConfig) => void;
   setStaticVtxoPubkey: (pubkey: string) => void;
+  setRestoreProgress: (progress: RestoreProgress | null) => void;
   reset: () => void;
 }
 
@@ -82,6 +89,7 @@ const initialState = {
   isWalletLoaded: false,
   walletError: false,
   config: initialConfig(),
+  restoreProgress: null,
 };
 
 export const useWalletStore = create<WalletState>()(
@@ -95,6 +103,7 @@ export const useWalletStore = create<WalletState>()(
       setConfig: (config) => set({ config }),
       setStaticVtxoPubkey: (pubkey) =>
         set((state) => ({ config: { ...state.config, staticVtxoPubkey: pubkey } })),
+      setRestoreProgress: (progress) => set({ restoreProgress: progress }),
       reset: () => set(initialState),
     }),
     {

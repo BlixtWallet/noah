@@ -15,12 +15,14 @@ import { useRestoreWallet } from "~/hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useWalletStore } from "~/store/walletStore";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "RestoreWallet">;
 
 const RestoreWalletScreen = ({ navigation }: Props) => {
   const [mnemonic, setMnemonic] = useState("");
   const { mutate: restoreWallet, isPending } = useRestoreWallet();
+  const restoreProgress = useWalletStore((state) => state.restoreProgress);
 
   const handleRestore = async () => {
     if (mnemonic) {
@@ -62,6 +64,24 @@ const RestoreWalletScreen = ({ navigation }: Props) => {
                 readOnly={isPending}
               />
               <View className="h-5" />
+
+              {restoreProgress && (
+                <View className="w-full mb-4">
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Text className="text-sm text-muted-foreground">{restoreProgress.step}</Text>
+                    <Text className="text-sm text-muted-foreground">
+                      {restoreProgress.progress}%
+                    </Text>
+                  </View>
+                  <View className="w-full h-2 bg-input rounded-full overflow-hidden">
+                    <View
+                      className="h-full bg-primary"
+                      style={{ width: `${restoreProgress.progress}%` }}
+                    />
+                  </View>
+                </View>
+              )}
+
               <NoahButton onPress={handleRestore} disabled={isPending}>
                 {isPending ? "Restoring..." : "Restore"}
               </NoahButton>

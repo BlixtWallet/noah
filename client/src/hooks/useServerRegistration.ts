@@ -5,22 +5,23 @@ import { useAppVersionCheck } from "./useAppVersionCheck";
 
 export const useServerRegistration = (isReady: boolean) => {
   const { isRegisteredWithServer } = useServerStore();
-  const { isUpdateRequired, isChecking } = useAppVersionCheck();
+  const { isChecking } = useAppVersionCheck();
 
   useEffect(() => {
     const register = async () => {
-      if (!isReady || isRegisteredWithServer || isChecking || isUpdateRequired) {
+      if (!isReady || isRegisteredWithServer || isChecking) {
         return;
       }
+
+      console.log("Registering with server...");
 
       await performServerRegistration(null);
     };
 
     register();
-  }, [isRegisteredWithServer, isReady, isChecking, isUpdateRequired]);
+  }, [isRegisteredWithServer, isReady, isChecking]);
 
   return {
-    isUpdateRequired,
     isChecking,
   };
 };
