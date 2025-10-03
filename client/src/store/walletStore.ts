@@ -3,6 +3,9 @@ import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 import { APP_VARIANT } from "../config";
 import { ACTIVE_WALLET_CONFIG } from "~/constants";
 import { mmkv } from "~/lib/mmkv";
+import logger from "~/lib/log";
+
+const log = logger("walletStore");
 
 const zustandStorage: StateStorage = {
   setItem: (name: string, value: string) => {
@@ -11,7 +14,7 @@ const zustandStorage: StateStorage = {
     } catch (error) {
       // Silently fail to prevent error loops and crashes
       // Only log in development
-      console.warn("Wallet storage setItem failed:", error);
+      log.e("Wallet storage setItem failed:", [error]);
       return;
     }
   },
@@ -21,7 +24,7 @@ const zustandStorage: StateStorage = {
       return value ?? null;
     } catch (error) {
       // Silently fail and return null
-      console.warn("Wallet storage getItem failed:", error);
+      log.e("Wallet storage getItem failed:", [error]);
       return null;
     }
   },
@@ -30,7 +33,7 @@ const zustandStorage: StateStorage = {
       return mmkv.remove(name);
     } catch (error) {
       // Silently fail
-      console.warn("Wallet storage removeItem failed:", error);
+      log.e("Wallet storage removeItem failed:", [error]);
       return;
     }
   },

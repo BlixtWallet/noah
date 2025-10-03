@@ -8,6 +8,9 @@ import {
 } from "../lib/api";
 
 import { useServerStore } from "../store/serverStore";
+import logger from "~/lib/log";
+
+const log = logger("useBackupManager");
 
 interface BackupInfo {
   backup_version: number;
@@ -36,7 +39,7 @@ export const useBackupManager = (): UseBackupManager => {
     setBackupEnabledStore(enabled);
     const updateResult = await updateBackupSettings({ backup_enabled: enabled });
     if (updateResult.isErr()) {
-      console.error("Failed to update backup settings:", updateResult.error);
+      log.e("Failed to update backup settings:", [updateResult.error]);
       // Revert the local state if the API call failed
       setBackupEnabledStore(!enabled);
     }

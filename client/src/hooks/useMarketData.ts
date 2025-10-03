@@ -6,6 +6,9 @@ import {
   REGTEST_CONFIG,
 } from "~/constants";
 import ky from "ky";
+import logger from "~/lib/log";
+
+const log = logger("useMarketData");
 
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { APP_VARIANT } from "~/config";
@@ -114,7 +117,7 @@ export const getHistoricalBtcToUsdRate = (date: string): ResultAsync<number, Err
       return getBtcToUsdRate();
     })
     .orElse((error) => {
-      console.error("Failed to fetch historical BTC to USD rate:", error);
+      log.e("Failed to fetch historical BTC to USD rate:", [error]);
       // Fallback to current price on error
       return getBtcToUsdRate();
     });

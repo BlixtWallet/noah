@@ -5,6 +5,9 @@ import { useLoadWallet, useCloseWallet } from "../hooks/useWallet";
 import { isWalletLoaded as isWalletLoadedNitro } from "react-native-nitro-ark";
 import { getMnemonic } from "../lib/crypto";
 import { NoahActivityIndicator } from "./ui/NoahActivityIndicator";
+import logger from "../lib/log";
+
+const log = logger("WalletLoader");
 
 interface WalletLoaderProps {
   children: React.ReactNode;
@@ -73,7 +76,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
           }
         } catch (error) {
           // If we can't check, don't try to close to avoid errors
-          console.log("Skipping wallet close due to check error:", error);
+          log.w("Skipping wallet close due to check error:", [error]);
         }
       };
 

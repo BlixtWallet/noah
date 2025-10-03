@@ -5,6 +5,9 @@ import { ResultAsync } from "neverthrow";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import { createBackup } from "noah-tools";
 import { getMnemonic } from "~/lib/crypto";
+import logger from "~/lib/log";
+
+const log = logger("useExportDatabase");
 
 export const useExportDatabase = () => {
   const [isExporting, setIsExporting] = useState(false);
@@ -29,7 +32,7 @@ export const useExportDatabase = () => {
     );
 
     if (backupResult.isErr()) {
-      console.error("Error creating backup:", backupResult.error);
+      log.e("Error creating backup:", [backupResult.error]);
       setExportError("Failed to create backup file. Please try again.");
       setShowExportError(true);
       setIsExporting(false);
@@ -54,7 +57,7 @@ export const useExportDatabase = () => {
     );
 
     if (writeResult.isErr()) {
-      console.error("Error writing backup file:", writeResult.error);
+      log.e("Error writing backup file:", [writeResult.error]);
       setExportError("Failed to save backup file. Please try again.");
       setShowExportError(true);
       setIsExporting(false);
@@ -74,7 +77,7 @@ export const useExportDatabase = () => {
 
     if (shareResult.isErr()) {
       if (!shareResult.error.message.includes("User did not share")) {
-        console.error("Error sharing backup file:", shareResult.error);
+        log.e("Error sharing backup file:", [shareResult.error]);
         setExportError("Failed to share the backup file. Please try again.");
         setShowExportError(true);
       }

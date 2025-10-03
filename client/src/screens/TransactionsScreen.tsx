@@ -16,6 +16,9 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Result, ResultAsync } from "neverthrow";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import RNFSTurbo from "react-native-fs-turbo";
+import logger from "~/lib/log";
+
+const log = logger("TransactionsScreen");
 
 const TransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -71,7 +74,7 @@ const TransactionsScreen = () => {
     )();
 
     if (writeFileResult.isErr()) {
-      console.error("Error writing CSV file:", writeFileResult.error);
+      log.e("Error writing CSV file:", [writeFileResult.error]);
       return;
     }
 
@@ -88,7 +91,7 @@ const TransactionsScreen = () => {
 
     if (shareResult.isErr()) {
       if (!shareResult.error.message.includes("User did not share")) {
-        console.error("Error sharing CSV:", shareResult.error);
+        log.e("Error sharing CSV:", [shareResult.error]);
       }
     }
 

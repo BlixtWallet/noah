@@ -1,6 +1,9 @@
 import React from "react";
 import Clipboard from "@react-native-clipboard/clipboard";
 import * as Haptics from "expo-haptics";
+import logger from "~/lib/log";
+
+const log = logger("clipboardUtils");
 
 export type CopyToClipboardOptions = {
   /** Whether to trigger haptic feedback (default: true) */
@@ -40,7 +43,7 @@ export const copyToClipboard = async (
       onCopy();
     }
   } catch (error) {
-    console.error("Failed to copy to clipboard:", error);
+    log.e("Failed to copy to clipboard:", [error]);
     // Still execute callback even if haptic feedback fails
     if (onCopy) {
       onCopy();

@@ -120,7 +120,7 @@ const BoardingTransactionsScreen = () => {
     )();
 
     if (writeFileResult.isErr()) {
-      console.error("Error writing CSV file:", writeFileResult.error);
+      log.e("Error writing CSV file:", [writeFileResult.error]);
       return;
     }
 
@@ -137,7 +137,7 @@ const BoardingTransactionsScreen = () => {
 
     if (shareResult.isErr()) {
       if (!shareResult.error.message.includes("User did not share")) {
-        console.error("Error sharing CSV:", shareResult.error);
+        log.e("Error sharing CSV:", [shareResult.error]);
       }
     }
 

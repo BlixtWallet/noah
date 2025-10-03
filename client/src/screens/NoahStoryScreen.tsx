@@ -20,6 +20,9 @@ import {
 } from "noah-tools";
 import audioFile from "../../assets/noahs-ark-story.m4a";
 import logoImage from "../../assets/All_Files/all_sizes/1024.png";
+import logger from "~/lib/log";
+
+const log = logger("NoahStoryScreen");
 
 const NoahStoryScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
@@ -44,7 +47,7 @@ const NoahStoryScreen = () => {
         currentDuration = getAudioDuration();
         playing = isAudioPlaying();
       } catch (error) {
-        console.error("Error updating position:", error);
+        log.e("Error updating position:", [error]);
         hasError = true;
       }
 
@@ -98,7 +101,7 @@ const NoahStoryScreen = () => {
           setIsPlaying(true);
           startPositionUpdates();
         } catch (error) {
-          console.error("Error playing audio:", error);
+          log.e("Error playing audio:", [error]);
           setIsLoading(false);
           setIsPlaying(false);
         }
@@ -108,7 +111,7 @@ const NoahStoryScreen = () => {
           setIsPlaying(true);
           startPositionUpdates();
         } catch (error) {
-          console.error("Error playing audio:", error);
+          log.e("Error playing audio:", [error]);
           setIsPlaying(false);
         }
       }
@@ -122,7 +125,7 @@ const NoahStoryScreen = () => {
       setPosition(0);
       stopPositionUpdates();
     } catch (error) {
-      console.error("Error stopping audio:", error);
+      log.e("Error stopping audio:", [error]);
     }
   };
 
@@ -143,7 +146,7 @@ const NoahStoryScreen = () => {
       try {
         stopAudio();
       } catch (error) {
-        console.error("Error cleaning up audio:", error);
+        log.e("Error cleaning up audio:", [error]);
       }
     };
   }, []);

@@ -29,7 +29,7 @@ export class BackupService {
   async registerBackup() {
     const registerResult = await updateBackupSettings({ backup_enabled: true });
     if (registerResult.isErr()) {
-      console.error("Failed to register backup:", registerResult.error);
+      log.e("Failed to register backup:", [registerResult.error]);
     }
   }
 

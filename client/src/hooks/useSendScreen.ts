@@ -21,6 +21,9 @@ import { useTransactionStore } from "~/store/transactionStore";
 import { useBtcToUsdRate } from "./useMarketData";
 import { satsToUsd, usdToSats } from "../lib/utils";
 import uuid from "react-native-uuid";
+import logger from "~/lib/log";
+
+const log = logger("useSendScreen");
 
 type DisplayResult = {
   amount_sat: number;
@@ -189,7 +192,7 @@ export const useSendScreen = () => {
           };
         }
         default:
-          console.error("Could not process the transaction result. Unknown result type:", result);
+          log.e("Could not process the transaction result. Unknown result type:", [result]);
           showAlert({
             title: "Error",
             description: "Could not process the transaction result. Unknown result type.",

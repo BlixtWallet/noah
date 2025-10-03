@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 import { nativeLog } from "noah-tools";
 
 const isDevMode = __DEV__;

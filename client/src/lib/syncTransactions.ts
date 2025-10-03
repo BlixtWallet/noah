@@ -29,7 +29,7 @@ export const syncArkReceives = async () => {
 
   if (rowsResult.isErr()) {
     db.closeSync();
-    console.error("Failed to sync transactions from SQLite:", rowsResult.error);
+    log.e("Failed to sync transactions from SQLite:", [rowsResult.error]);
     return;
   }
 

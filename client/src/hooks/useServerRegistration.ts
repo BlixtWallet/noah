@@ -13,8 +13,6 @@ export const useServerRegistration = (isReady: boolean) => {
         return;
       }
 
-      console.log("Registering with server...");
-
       await performServerRegistration(null);
     };
 

@@ -68,7 +68,7 @@ const useParsedBoardingResult = (
       if (parseResult.isOk()) {
         setParsedData(parseResult.value);
       } else {
-        console.error("Failed to parse boarding result:", parseResult.error);
+        log.e("Failed to parse boarding result:", [parseResult.error]);
       }
     }
   }, [boardResult, boardAllResult, offboardResult]);

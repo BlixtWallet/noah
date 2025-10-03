@@ -19,6 +19,7 @@ module.exports = tseslint.config(
     },
     rules: {
       "react-compiler/react-compiler": "error",
+      "no-console": ["error"],
       "no-return-await": "error",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": "warn",
