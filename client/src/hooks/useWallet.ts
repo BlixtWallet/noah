@@ -12,10 +12,10 @@ import {
   onchainSync as onchainSyncAction,
   getVtxos,
   getExpiringVtxos,
+  closeWalletIfLoaded,
 } from "../lib/walletApi";
 import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
-import { closeWallet as closeWalletNitro } from "react-native-nitro-ark";
 import { queryClient } from "~/queryClient";
 import { useTransactionStore } from "../store/transactionStore";
 import { ResultAsync } from "neverthrow";
@@ -131,7 +131,7 @@ export function useCloseWallet() {
   const { showAlert } = useAlert();
 
   return useMutation({
-    mutationFn: closeWalletNitro,
+    mutationFn: closeWalletIfLoaded,
     onError: (error: Error) => {
       showAlert({ title: "Failed to close wallet", description: error.message });
     },

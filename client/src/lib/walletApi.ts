@@ -17,11 +17,17 @@ import {
   type OnchainBalanceResult,
   type OffchainBalanceResult,
   KeyPairResult,
+  closeWallet,
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
 import { useWalletStore, type WalletConfig } from "../store/walletStore";
-import { ARK_DATA_PATH, DOCUMENT_DIRECTORY_PATH, MNEMONIC_KEYCHAIN_SERVICE } from "../constants";
+import {
+  ARK_DATA_PATH,
+  CACHES_DIRECTORY_PATH,
+  DOCUMENT_DIRECTORY_PATH,
+  MNEMONIC_KEYCHAIN_SERVICE,
+} from "../constants";
 import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
@@ -181,6 +187,23 @@ export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
   return loadWalletFromStorage(config);
 };
 
+export const closeWalletIfLoaded = async (): Promise<Result<boolean, Error>> => {
+  const isLoaded = await isWalletLoadedNitro();
+
+  log.d("Checking if wallet is loaded:", [isLoaded]);
+
+  if (!isLoaded) {
+    return ok(true);
+  }
+  const closeWalletResult = await ResultAsync.fromPromise(closeWalletNitro(), (e) => e as Error);
+  if (closeWalletResult.isErr()) {
+    log.w("Failed to close wallet:", [closeWalletResult.error]);
+    return ok(false);
+  }
+
+  return ok(true);
+};
+
 export const fetchOnchainBalance = async (): Promise<Result<OnchainBalanceResult, Error>> => {
   return ResultAsync.fromPromise(onchainBalanceNitro(), (e) => e as Error);
 };
@@ -236,34 +259,31 @@ export const maintanance = async (): Promise<Result<void, Error>> => {
 };
 
 export const deleteWallet = async (): Promise<Result<void, Error>> => {
-  // Remove the existing documents directory if it exists
-  const arkDataExists = RNFSTurbo.exists(ARK_DATA_PATH);
-  if (arkDataExists) {
-    log.d("Removing existing data directory");
-    // Delete the Data path
-    const deleteResult = Result.fromThrowable(
-      () => {
-        RNFSTurbo.unlink(ARK_DATA_PATH);
-      },
-      (e) => e as Error,
-    )();
+  // Check if document directory path exists
+  // Then recursively delete all files and directories within it
+  const documentDirectoryExists = RNFSTurbo.exists(DOCUMENT_DIRECTORY_PATH);
 
-    if (deleteResult.isErr()) return err(deleteResult.error);
+  if (documentDirectoryExists) {
+    const dircontents = RNFSTurbo.readdir(DOCUMENT_DIRECTORY_PATH);
+    log.d(`Directory contents: ${dircontents}`);
+    dircontents.forEach((n) => {
+      log.d(`Deleting file: ${n}`);
+      RNFSTurbo.unlink(`${DOCUMENT_DIRECTORY_PATH}/${n}`);
+    });
   }
 
-  // Remove the mmkv directory if it exists
-  const mmkvExists = RNFSTurbo.exists(`${DOCUMENT_DIRECTORY_PATH}/mmkv`);
-  if (mmkvExists) {
-    log.d("Removing existing mmkv directory");
-    // Delete the Data path
-    const deleteResult = Result.fromThrowable(
-      () => {
-        RNFSTurbo.unlink(`${DOCUMENT_DIRECTORY_PATH}/mmkv`);
-      },
-      (e) => e as Error,
-    )();
+  // Check if cache directory path exists
+  // Then recursively delete all files and directories within it
+  const cacheDirectoryExists = RNFSTurbo.exists(CACHES_DIRECTORY_PATH);
 
-    if (deleteResult.isErr()) return err(deleteResult.error);
+  if (cacheDirectoryExists) {
+    const cacheContents = RNFSTurbo.readdir(CACHES_DIRECTORY_PATH);
+    log.d(`Cache contents: ${cacheContents}`);
+
+    cacheContents.forEach((n) => {
+      log.d(`Deleting file: ${n}`);
+      RNFSTurbo.unlink(`${CACHES_DIRECTORY_PATH}/${n}`);
+    });
   }
 
   const resetResult = await ResultAsync.fromPromise(
