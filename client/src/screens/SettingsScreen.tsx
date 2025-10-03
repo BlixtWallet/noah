@@ -20,7 +20,6 @@ import { copyToClipboard } from "../lib/clipboardUtils";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
-import { BackupStatusCard } from "../components/BackupStatusCard";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
 import logoImage from "../../assets/All_Files/all_sizes/1024.png";
 
@@ -161,7 +160,7 @@ const SettingsScreen = () => {
             <AlertDescription>{exportError}</AlertDescription>
           </Alert>
         )}
-        <ScrollView className="flex-1 mb-16">
+        <ScrollView className="flex-1">
           <View className="items-center mb-6">
             <Pressable onPress={() => navigation.navigate("NoahStory")}>
               <Image
@@ -171,8 +170,6 @@ const SettingsScreen = () => {
               />
             </Pressable>
           </View>
-
-          <BackupStatusCard />
 
           {lightningAddress && (
             <Pressable
@@ -295,7 +292,7 @@ const SettingsScreen = () => {
 
           <View className="items-center py-8 px-4">
             <Text className="text-muted-foreground text-sm mb-1">
-              Version {Constants.expoConfig?.version || "0.0.1"}
+              v{Constants.expoConfig?.version || "0.0.1"}
             </Text>
             <Text className="text-muted-foreground text-sm">Made with ❤️ from Noah team</Text>
           </View>

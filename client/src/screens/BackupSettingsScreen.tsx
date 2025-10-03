@@ -6,10 +6,12 @@ import { NoahSafeAreaView } from "../components/NoahSafeAreaView";
 import { Text } from "../components/ui/text";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
-import { useAlert } from "~/contexts/AlertProvider";
+import { Alert, AlertTitle, AlertDescription } from "../components/ui/alert";
 import Icon from "@react-native-vector-icons/ionicons";
+import { CheckCircle } from "lucide-react-native";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { NoahButton } from "~/components/ui/NoahButton";
+import * as Haptics from "expo-haptics";
 
 export const BackupSettingsScreen = () => {
   const navigation = useNavigation();
@@ -24,7 +26,7 @@ export const BackupSettingsScreen = () => {
   } = useBackupManager();
 
   const [showBackups, setShowBackups] = useState(false);
-  const { showAlert } = useAlert();
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -42,33 +44,31 @@ export const BackupSettingsScreen = () => {
 
         <View className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-4">
           <Label className="text-foreground text-lg">Enable Automatic Backups</Label>
-          <View className="flex-row items-center">
-            {isLoading && <NoahActivityIndicator size="small" className="mr-2" />}
-            <Switch value={isBackupEnabled} onValueChange={setBackupEnabled} disabled={isLoading} />
-          </View>
+          <Switch value={isBackupEnabled} onValueChange={setBackupEnabled} disabled={isLoading} />
         </View>
+
+        {showSuccessAlert && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Backup Complete!</AlertTitle>
+            <AlertDescription>Your wallet has been backed up successfully.</AlertDescription>
+          </Alert>
+        )}
 
         <NoahButton
           onPress={async () => {
             const result = await triggerBackup();
             if (result.isOk()) {
-              showAlert({
-                title: "Backup Complete!",
-                description: "Your wallet has been backed up successfully.",
-              });
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setShowSuccessAlert(true);
+              setTimeout(() => setShowSuccessAlert(false), 3000);
+            } else {
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
             }
           }}
           className="mb-4"
           disabled={isLoading}
         >
-          {isLoading ? (
-            <View className="flex-row items-center">
-              <NoahActivityIndicator size="small" color="white" className="mr-2" />
-              <Text>Backing up...</Text>
-            </View>
-          ) : (
-            <Text>Backup Now</Text>
-          )}
+          <Text>Backup Now</Text>
         </NoahButton>
 
         <View className="mt-8">
@@ -84,14 +84,7 @@ export const BackupSettingsScreen = () => {
             disabled={isLoading}
             style={{ backgroundColor: "black" }}
           >
-            {isLoading ? (
-              <View className="flex-row items-center">
-                <NoahActivityIndicator size="small" className="mr-2" />
-                <Text>Loading...</Text>
-              </View>
-            ) : (
-              <Text>List Backups</Text>
-            )}
+            <Text>List Backups</Text>
           </NoahButton>
 
           {showBackups && backupsList && (
@@ -129,6 +122,15 @@ export const BackupSettingsScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {isLoading && (
+        <View className="absolute inset-0 bg-black/50 items-center justify-center">
+          <View className="bg-card p-6 rounded-lg items-center">
+            <NoahActivityIndicator size="large" />
+            <Text className="text-foreground mt-4">Loading...</Text>
+          </View>
+        </View>
+      )}
     </NoahSafeAreaView>
   );
 };

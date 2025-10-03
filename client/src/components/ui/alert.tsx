@@ -11,7 +11,7 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "",
+        default: "border-green-500/50 bg-green-500/10",
         destructive: "border-destructive",
       },
     },
@@ -41,7 +41,13 @@ function Alert({
       <View className="absolute left-3.5 top-4 -translate-y-0.5">
         <Icon
           size={iconSize}
-          color={variant === "destructive" ? colors.notification : colors.text}
+          color={
+            variant === "destructive"
+              ? colors.notification
+              : variant === "default"
+                ? "#22c55e"
+                : colors.text
+          }
         />
       </View>
       {children}

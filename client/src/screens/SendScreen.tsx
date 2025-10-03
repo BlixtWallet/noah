@@ -129,6 +129,8 @@ const SendScreen = () => {
                     className="flex-1 text-white"
                     placeholder="Address, invoice, or lightning address"
                     placeholderTextColor="#6b7280"
+                    autoCorrect={false}
+                    autoCapitalize="none"
                     value={destination}
                     onChangeText={setDestination}
                   />
