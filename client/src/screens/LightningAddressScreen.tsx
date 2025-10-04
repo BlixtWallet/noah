@@ -3,6 +3,7 @@ import { View, Pressable } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -123,22 +124,31 @@ const LightningAddressScreen = () => {
           </View>
         </View>
         <Text className="text-muted-foreground mt-2">Pick your own lightning address.</Text>
-        <NoahButton
-          onPress={handleSave}
-          className="mt-8"
-          isLoading={isSaving || updateLightningAddressMutation.isPending}
-          disabled={!username}
-        >
-          {fromOnboarding && `${username}@${domain}` === lightningAddress ? "Continue" : "Save"}
-        </NoahButton>
-        {fromOnboarding && (
+        {fromOnboarding ? (
+          <View className="flex-row items-center mt-8 gap-4">
+            <View className="flex-1">
+              <Button onPress={handleSkip} variant="outline" disabled={isSkipping}>
+                <Text>{isSkipping ? "Skipping..." : "Skip"}</Text>
+              </Button>
+            </View>
+            <View className="flex-1">
+              <NoahButton
+                onPress={handleSave}
+                isLoading={isSaving || updateLightningAddressMutation.isPending}
+                disabled={!username}
+              >
+                {`${username}@${domain}` === lightningAddress ? "Continue" : "Save"}
+              </NoahButton>
+            </View>
+          </View>
+        ) : (
           <NoahButton
-            onPress={handleSkip}
-            className="mt-4"
-            variant="outline"
-            isLoading={isSkipping}
+            onPress={handleSave}
+            className="mt-8"
+            isLoading={isSaving || updateLightningAddressMutation.isPending}
+            disabled={!username}
           >
-            Skip
+            Save
           </NoahButton>
         )}
       </View>

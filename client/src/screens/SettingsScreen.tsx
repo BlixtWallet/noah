@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
 import logoImage from "../../assets/All_Files/all_sizes/1024.png";
+import { COLORS } from "~/lib/styleConstants";
 
 type Setting = {
   id:
@@ -34,6 +35,7 @@ type Setting = {
     | "vtxos";
   title: string;
   value?: string;
+  description?: string;
   isPressable: boolean;
 };
 
@@ -87,10 +89,12 @@ const SettingsScreen = () => {
     }
   };
 
-  const data: Setting[] = [];
+  const infoData: Setting[] = [];
+  const walletData: Setting[] = [];
+  const debugData: Setting[] = [];
 
   if (isInitialized && peakKeyPair?.public_key) {
-    data.push({
+    infoData.push({
       id: "staticVtxoPubkey",
       title: "Public Key",
       value: peakKeyPair.public_key,
@@ -99,7 +103,7 @@ const SettingsScreen = () => {
   }
 
   if (APP_VARIANT === "regtest") {
-    data.push(
+    infoData.push(
       {
         id: "bitcoind",
         title: "Bitcoind RPC",
@@ -109,7 +113,7 @@ const SettingsScreen = () => {
       { id: "ark", title: "Ark Server", value: config.ark, isPressable: false },
     );
   } else {
-    data.push(
+    infoData.push(
       {
         id: "esplora",
         title: "Esplora Server",
@@ -121,16 +125,92 @@ const SettingsScreen = () => {
   }
 
   if (isInitialized) {
-    data.push({ id: "showMnemonic", title: "Show Mnemonic", isPressable: true });
-    data.push({ id: "vtxos", title: "Show VTXOs", isPressable: true });
-    data.push({ id: "showLogs", title: "Show Logs", isPressable: true });
-    data.push({
-      id: "resetRegistration",
-      title: "Reset Server Registration",
+    walletData.push({
+      id: "showMnemonic",
+      title: "Show Seed Phrase",
+      description:
+        "Never share your seed phrase with anyone. It is important to keep it safe and secure.",
       isPressable: true,
     });
-    data.push({ id: "backup", title: "Backup & Restore", isPressable: true });
+    walletData.push({
+      id: "vtxos",
+      title: "Show VTXOs",
+      description: "VTXOs are to Ark like UTXOs are to Bitcoin",
+      isPressable: true,
+    });
+    walletData.push({
+      id: "backup",
+      title: "Backup & Restore",
+      description: "Automatically or manually backup your wallet after encrypting it.",
+      isPressable: true,
+    });
+
+    debugData.push({
+      id: "showLogs",
+      title: "Show Logs",
+      description: "View application logs for debugging purposes",
+      isPressable: true,
+    });
+    debugData.push({
+      id: "resetRegistration",
+      title: "Reset Server Registration",
+      description: "Clear your registration with the server. You will need to register again.",
+      isPressable: true,
+    });
   }
+
+  const renderSettingItem = (item: Setting) => {
+    if (
+      item.id === "staticVtxoPubkey" ||
+      item.id === "ark" ||
+      item.id === "esplora" ||
+      item.id === "bitcoind"
+    ) {
+      return <CopyableSettingRow key={item.id} label={item.title} value={item.value!} />;
+    }
+
+    if (item.id === "resetRegistration") {
+      return (
+        <ConfirmationDialog
+          key={item.id}
+          trigger={
+            <DangerZoneRow
+              title={item.title}
+              description="Attempt to reset the connection with our server if you're experiencing issues."
+              isPressable={item.isPressable}
+              onPress={() => {}}
+            />
+          }
+          title="Reset Server Registration"
+          description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
+          onConfirm={() => {
+            resetRegistration();
+            setShowResetSuccess(true);
+            setTimeout(() => {
+              setShowResetSuccess(false);
+            }, 3000);
+          }}
+        />
+      );
+    }
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() => handlePress(item)}
+        disabled={!item.isPressable}
+        className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
+      >
+        <View className="flex-1">
+          <Label className="text-foreground text-lg">{item.title}</Label>
+          {item.value && <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>}
+          {item.description && (
+            <Text className="text-muted-foreground text-base mt-1">{item.description}</Text>
+          )}
+        </View>
+        {item.isPressable && <Icon name="chevron-forward-outline" size={24} color="white" />}
+      </Pressable>
+    );
+  };
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -171,84 +251,71 @@ const SettingsScreen = () => {
             </Pressable>
           </View>
 
-          {lightningAddress && (
-            <Pressable
-              onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
-              className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
-            >
-              <View>
-                <Label className="text-foreground text-lg">Lightning Address</Label>
-                <Text className="text-base mt-1 text-muted-foreground">{lightningAddress}</Text>
-              </View>
-              <Icon name="chevron-forward-outline" size={24} color="white" />
-            </Pressable>
+          {(lightningAddress || infoData.length > 0) && (
+            <View className="mb-6">
+              <Text
+                className="text-lg font-bold text-foreground mb-2"
+                style={{ color: COLORS.BITCOIN_ORANGE }}
+              >
+                Info
+              </Text>
+              {lightningAddress && (
+                <Pressable
+                  onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
+                  className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
+                >
+                  <View>
+                    <Label className="text-foreground text-lg">Lightning Address</Label>
+                    <Text className="text-base mt-1 text-muted-foreground">{lightningAddress}</Text>
+                  </View>
+                  <Icon name="chevron-forward-outline" size={24} color="white" />
+                </Pressable>
+              )}
+              {infoData.map(renderSettingItem)}
+            </View>
           )}
 
-          {data.map((item) => {
-            if (item.id === "staticVtxoPubkey") {
-              return <CopyableSettingRow key={item.id} label={item.title} value={item.value!} />;
-            }
-            if (item.id === "resetRegistration") {
-              return (
-                <ConfirmationDialog
-                  key={item.id}
-                  trigger={
-                    <DangerZoneRow
-                      title={item.title}
-                      isPressable={item.isPressable}
-                      onPress={() => {}}
-                    />
-                  }
-                  title="Reset Server Registration"
-                  description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
-                  onConfirm={() => {
-                    resetRegistration();
-                    setShowResetSuccess(true);
-                    setTimeout(() => {
-                      setShowResetSuccess(false);
-                    }, 3000);
-                  }}
-                />
-              );
-            }
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => handlePress(item)}
-                disabled={!item.isPressable}
-                className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
+          {walletData.length > 0 && (
+            <View className="mb-6">
+              <Text
+                className="text-lg font-bold text-foreground mb-2"
+                style={{ color: COLORS.BITCOIN_ORANGE }}
               >
-                <View>
-                  <Label className="text-foreground text-lg">{item.title}</Label>
-                  {item.value && (
-                    <Text className="text-muted-foreground text-base mt-1">{item.value}</Text>
-                  )}
-                </View>
-                {item.isPressable && (
-                  <Icon name="chevron-forward-outline" size={24} color="white" />
-                )}
-              </Pressable>
-            );
-          })}
-
-          <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
-            <View className="flex-1">
-              <Label className="text-foreground text-lg">Auto-Board to Ark</Label>
-              <Text className="text-base mt-1 text-muted-foreground">
-                Automatically board to Ark when onchain balance exceeds 20k sats
+                Wallet
               </Text>
+              {walletData.map(renderSettingItem)}
+              <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
+                <View className="flex-1">
+                  <Label className="text-foreground text-lg">Auto-Board to Ark</Label>
+                  <Text className="text-base mt-1 text-muted-foreground">
+                    Automatically board to Ark when onchain balance exceeds 20k sats
+                  </Text>
+                </View>
+                <Switch
+                  value={isAutoBoardingEnabled}
+                  onValueChange={setAutoBoardingEnabled}
+                  trackColor={{ false: "#767577", true: "#F7931A" }}
+                  thumbColor={isAutoBoardingEnabled ? "#ffffff" : "#f4f3f4"}
+                />
+              </View>
             </View>
-            <Switch
-              value={isAutoBoardingEnabled}
-              onValueChange={setAutoBoardingEnabled}
-              trackColor={{ false: "#767577", true: "#F7931A" }}
-              thumbColor={isAutoBoardingEnabled ? "#ffffff" : "#f4f3f4"}
-            />
-          </View>
+          )}
+
+          {debugData.length > 0 && (
+            <View className="mb-6">
+              <Text
+                className="text-lg font-bold text-foreground mb-2"
+                style={{ color: COLORS.BITCOIN_ORANGE }}
+              >
+                Debug
+              </Text>
+              {debugData.map(renderSettingItem)}
+            </View>
+          )}
 
           {isInitialized && (
-            <View className="mt-4">
-              <Text className="text-lg font-bold text-destructive mb-4">Danger Zone</Text>
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-destructive mb-2">Danger Zone</Text>
 
               <ConfirmationDialog
                 trigger={

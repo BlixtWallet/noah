@@ -18,6 +18,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 
 type DangerZoneRowProps = {
   title: string;
+  description?: string;
   isPressable: boolean;
   variant?: "default" | "destructive";
   onPress?: () => void;
@@ -25,6 +26,7 @@ type DangerZoneRowProps = {
 
 export const DangerZoneRow = ({
   title,
+  description,
   isPressable,
   variant = "default",
   onPress,
@@ -35,12 +37,13 @@ export const DangerZoneRow = ({
       onPress={onPress}
       className="flex-row justify-between items-center p-4 border-b border-border bg-card rounded-lg mb-2"
     >
-      <View>
+      <View className="flex-1">
         <Label
           className={`text-lg ${variant === "destructive" ? "text-destructive" : "text-foreground"}`}
         >
           {title}
         </Label>
+        {description && <Text className="text-muted-foreground text-base mt-1">{description}</Text>}
       </View>
       {isPressable && <Icon name="chevron-forward-outline" size={24} color="white" />}
     </Pressable>
