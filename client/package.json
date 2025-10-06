@@ -35,11 +35,17 @@
     "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
+    "build:ios:ci": "xcrun xcodebuild -scheme 'Noah-Regtest' -workspace 'ios/noah.xcworkspace' -configuration Release -sdk 'iphonesimulator' -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build ARCHS=arm64",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "check": "bun run lint && bun run typecheck",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "fingerprint:android": "bunx expo-updates fingerprint:generate --platform android | jq -r '.hash' | xargs -n 1 echo 'fingerprint:'",
+    "fingerprint:ios": "bunx expo-updates fingerprint:generate --platform ios | jq -r '.hash' | xargs -n 1 echo 'fingerprint:'",
+    "build:debug:android": "bunx expo prebuild --bun && cd android && ./gradlew assembleDebug -DtestBuildType=debug -Dorg.gradle.jvmargs=-Xmx4g",
+    "build:debug:ios": "bunx expo prebuild --bun && xcodebuild ONLY_ACTIVE_ARCH=YES -workspace ios/noah.xcworkspace -UseNewBuildSystem=YES -scheme noah -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build -quiet",
+    "maestro:test": "maestro test --debug-output maestro-debug-output .maestro"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.11.2",
