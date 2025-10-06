@@ -1,0 +1,26 @@
+# setup-wallet.yml
+
+appId: com.anonymous.noah.regtest
+---
+- launchApp
+- tapOn: "Create Wallet"
+- assertVisible: "Your Recovery Phrase"
+- tapOn: "I Have Saved It, Continue"
+- assertVisible: "Choose your Lightning Address"
+- tapOn: "Skip"
+- assertVisible:
+    text: ".*sats.*"
+- assertVisible: "📷 Scan QR Code"
+
+# Clean up: Delete the wallet
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element: "Delete Wallet"
+    direction: DOWN
+    timeout: 10000
+- tapOn: "Delete Wallet"
+- tapOn:
+    text: 'Type "delete" to confirm'
+- inputText: "delete"
+- tapOn: "Confirm"
+- assertVisible: "Welcome to Noah"

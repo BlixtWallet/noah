@@ -1,0 +1,120 @@
+name: CI Pull Request
+on:
+  pull_request:
+    paths:
+      - "client/**"
+      - "scripts/**"
+      - ".github/workflows/pull-request.yml"
+      - "package.json"
+      - "bun.lock"
+
+jobs:
+  check_if_release_commit:
+    runs-on: self-hosted
+    outputs:
+      is_release: ${{ steps.check_tag.outputs.is_release }}
+    steps:
+      - name: Checkout code with tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history and tags
+      - name: Check if commit is tagged for release (v*)
+        id: check_tag
+        run: |
+          # Check if any tag starting with 'v' points to the current commit HEAD
+          if git tag --points-at HEAD | grep -q "^v"; then
+            echo "Commit is tagged with a 'v*' tag. Build/test steps will be skipped in this workflow."
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "Commit is NOT tagged with a 'v*' tag. Build/test steps will proceed."
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+  lint:
+    runs-on: self-hosted
+    needs: check_if_release_commit
+    if: needs.check_if_release_commit.outputs.is_release == 'false'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install signet app dependencies
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+
+      - name: Lint code
+        run: nix develop .# --command bash -c "bun client lint"
+
+      - name: Typecheck code
+        run: nix develop .# --command bash -c "bun client typecheck"
+
+  android_build:
+    runs-on: self-hosted
+    needs: lint
+    outputs:
+      artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
+      apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # - name: Install Nix
+      #   uses: DeterminateSystems/nix-installer-action@main
+
+      # - name: Enable Nix Magic Cache
+      #   uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install signet app dependencies
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+
+      - name: Create sentry.properties
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./scripts/create_sentry_properties.sh
+
+      - name: Build signet Android app
+        run: nix develop .# --command bash -c "bun client build:android:ci"
+
+      - name: Rename APK with timestamp
+        id: rename_apk
+        run: |
+          apk_path="client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
+          timestamp=$(date +'%Y-%m-%d-%H-%M')
+          new_apk_name="noah-android-apk-${timestamp}"
+          apk_filename="${new_apk_name}.apk"
+          new_apk_path="client/android/app/build/outputs/apk/signet/release/${apk_filename}"
+          mv "${apk_path}" "${new_apk_path}"
+          echo "new_path=${new_apk_path}" >> $GITHUB_OUTPUT
+          echo "artifact_name=${new_apk_name}" >> $GITHUB_OUTPUT
+          echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename_apk.outputs.artifact_name }}
+          path: ${{ steps.rename_apk.outputs.new_path }}
+
+  ios_build:
+    runs-on: macOS
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # - name: Install Nix
+      #   uses: DeterminateSystems/nix-installer-action@main
+
+      # - name: Enable Nix Magic Cache
+      #   uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install signet app dependencies
+        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun client ios:prebuild"
+
+      - name: Create sentry.properties
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./scripts/create_sentry_properties.sh
+
+      - name: Build iOS signet app
+        run: nix develop .# --command bash -c "bun client build:ios:signet:release"
