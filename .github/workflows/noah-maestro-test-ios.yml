@@ -25,12 +25,6 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🐛 Restore debug build from cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ios-release-build/
-          key: ${{ needs.build-release-ios.outputs.build-cache-key }}
-
       - name: 📦 Install dependencies
         run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 

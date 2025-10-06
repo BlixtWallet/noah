@@ -3,24 +3,12 @@ name: Build iOS Release App
 on:
   push:
     branches:
-      - master # Build on main for caching purposes, this way every branch will have access to it
+      - master
   workflow_call:
-    outputs:
-      build-cache-key:
-        description: "The primary key used for caching the build"
-        value: ios-release-build-${{ jobs.lookup-cached-build.outputs.fingerprint }}
 
 jobs:
-  lookup-cached-build:
-    name: Lookup cached release build
-    uses: ./.github/workflows/noah-lookup-cached-release-build.yml
-    with:
-      platform: ios
-
   build-release-ios:
     name: Build iOS Release App
-    needs: lookup-cached-build
-    if: needs.lookup-cached-build.outputs.build-exists != 'true'
     runs-on: macOS
     steps:
       - name: 🏗 Checkout repository
@@ -32,14 +20,7 @@ jobs:
       - name: 🛠️ Build
         run: nix develop .# --command bash -c "bun client ios:prebuild && bun client build:ios:ci"
 
-      - name: 📁 Prepare cache folder
+      - name: 📁 Prepare build output
         run: |
           mkdir ios-release-build
           mv client/ios/build/Build/Products/Release-iphonesimulator/Noah-Regtest.app ios-release-build/ios-release.app
-
-      - name: 📡 Store built app in cache
-        id: ios-release-save
-        uses: actions/cache/save@v4
-        with:
-          path: ios-release-build/
-          key: ios-release-build-${{ needs.lookup-cached-build.outputs.fingerprint }}
