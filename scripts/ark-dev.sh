@@ -20,6 +20,12 @@ WALLET_NAME="dev-wallet"
 
 # Bitcoin-cli options (matches the user/pass from the docker-compose.yml healthcheck)
 BITCOIN_CLI_OPTS="-regtest -rpcuser=second -rpcpassword=ark -rpcwallet=$WALLET_NAME"
+
+# Noah server configuration
+NOAH_SERVER_IMAGE="ghcr.io/blixtwallet/noah-server:latest"
+NOAH_SERVER_CONTAINER="noah-server-dev"
+NOAH_SERVER_CONFIG_DIR=".noah-server"
+NOAH_SERVER_CONFIG_FILE="$NOAH_SERVER_CONFIG_DIR/config.toml"
 # --- End Configuration ---
 
 
@@ -38,12 +44,12 @@ usage() {
     echo ""
     echo "SETUP:"
     echo "  setup                      Clone the bark repo and checkout the correct version."
-    echo "  setup-everything           Run complete setup: setup, up, create-wallet, generate 150, fund-aspd 1, create-bark-wallet."
+    echo "  setup-everything           Run complete setup: setup, up, create-wallet, generate 150, fund-aspd 1, create-bark-wallet, start noah-server."
     echo ""
     echo "LIFECYCLE COMMANDS (run after 'setup'):"
     echo "  up                         Start all services in the background (docker-compose up -d)."
     echo "  stop                       Stop all services (docker-compose stop)."
-    echo "  down                       Stop and remove all services (docker-compose down)."
+    echo "  down                       Stop and remove all services (docker-compose down) and noah-server."
     echo ""
     echo "MANAGEMENT COMMANDS (run while services are 'up'):"
     echo "  create-wallet              Create and load a new wallet in bitcoind named '$WALLET_NAME'."
@@ -53,6 +59,9 @@ usage() {
     echo "  send-to <addr> <amt>       Send <amt> BTC from bitcoind to <addr> and mine 1 block."
     echo "  aspd <args...>             Execute a command on the running aspd container."
     echo "  bark <args...>             Execute a command on a new bark container."
+    echo "  create-noah-config         Create Noah server config file."
+    echo "  start-noah-server          Start the Noah server container."
+    echo "  stop-noah-server           Stop and remove the Noah server container."
 }
 
 # Clones the repository and checks out the correct tag.
@@ -159,6 +168,77 @@ fund_aspd() {
     send_to_address "$aspd_address" "$amount"
 }
 
+# Creates a Noah server config file for regtest
+create_noah_server_config() {
+    echo "Creating Noah server config..."
+
+    mkdir -p "$NOAH_SERVER_CONFIG_DIR"
+
+    cat > "$NOAH_SERVER_CONFIG_FILE" << 'EOF'
+# Noah Server Test Configuration (Regtest)
+host = "0.0.0.0"
+port = 3000
+private_port = 3099
+lnurl_domain = "localhost"
+turso_url = "file:local.db"
+turso_api_key = "test-api-key"
+expo_access_token = "test-expo-token"
+ark_server_url = "http://host.docker.internal:3535"
+server_network = "regtest"
+backup_cron = "every 24 hours"
+heartbeat_cron = "every 24 hours"
+deregistration_cron = "every 24 hours"
+maintenance_interval_rounds = 1
+s3_bucket_name = "test-bucket"
+minimum_app_version = "0.0.1"
+EOF
+
+    echo "✅ Noah server config created at $NOAH_SERVER_CONFIG_FILE"
+}
+
+# Starts the Noah server container
+start_noah_server() {
+    echo "🚀 Starting Noah server..."
+
+    # Stop existing container if running
+    if docker ps -a --format '{{.Names}}' | grep -q "^${NOAH_SERVER_CONTAINER}$"; then
+        echo "Removing existing Noah server container..."
+        docker rm -f "$NOAH_SERVER_CONTAINER" > /dev/null 2>&1 || true
+    fi
+
+    # Create config if it doesn't exist
+    if [ ! -f "$NOAH_SERVER_CONFIG_FILE" ]; then
+        create_noah_server_config
+    fi
+
+    # Pull latest image
+    echo "Pulling Noah server image..."
+    docker pull "$NOAH_SERVER_IMAGE"
+
+    # Start container
+    echo "Starting Noah server container..."
+    docker run -d \
+        --name "$NOAH_SERVER_CONTAINER" \
+        -p 3000:3000 \
+        -p 3099:3099 \
+        --add-host=host.docker.internal:host-gateway \
+        -v "$(pwd)/$NOAH_SERVER_CONFIG_FILE:/etc/server/config.toml:ro" \
+        "$NOAH_SERVER_IMAGE"
+
+    echo "✅ Noah server started at http://localhost:3000"
+    echo "   Health check: http://localhost:3099/health"
+}
+
+# Stops and removes the Noah server container
+stop_noah_server() {
+    if docker ps -a --format '{{.Names}}' | grep -q "^${NOAH_SERVER_CONTAINER}$"; then
+        echo "🛑 Stopping Noah server..."
+        docker rm -f "$NOAH_SERVER_CONTAINER" > /dev/null 2>&1 || true
+        echo "✅ Noah server stopped."
+    else
+        echo "ℹ️  Noah server is not running."
+    fi
+}
 
 # Runs the complete setup sequence
 setup_everything() {
@@ -187,8 +267,17 @@ setup_everything() {
     create_bark_wallet
 
     echo ""
+    start_noah_server
+
+    echo ""
     echo "🎉 Complete setup finished successfully!"
     echo "Your Ark dev environment is ready to use."
+    echo ""
+    echo "Services running:"
+    echo "  - Bitcoin Core (regtest): http://localhost:18443"
+    echo "  - ASPD (Ark Server): http://localhost:3535"
+    echo "  - Noah Server: http://localhost:3000"
+    echo "  - Noah Server Health: http://localhost:3099/health"
 }
 
 # --- Main Logic ---
@@ -200,8 +289,8 @@ if [[ -z "$COMMAND" ]]; then
     exit 1
 fi
 
-# For any command other than 'setup', ensure the environment is actually set up.
-if [[ "$COMMAND" != "setup" && ! -f "$COMPOSE_FILE" ]]; then
+# For any command other than 'setup' or 'setup-everything', ensure the environment is actually set up.
+if [[ "$COMMAND" != "setup" && "$COMMAND" != "setup-everything" && ! -f "$COMPOSE_FILE" ]]; then
     echo "Error: Environment not found at '$COMPOSE_FILE'." >&2
     echo "Please run './ark-dev.sh setup' first." >&2
     exit 1
@@ -231,6 +320,19 @@ case "$COMMAND" in
     down)
         echo "🛑 Stopping and removing Ark services..."
         dcr down "$@" --volumes
+        stop_noah_server
+        ;;
+
+    start-noah-server)
+        start_noah_server
+        ;;
+
+    stop-noah-server)
+        stop_noah_server
+        ;;
+
+    create-noah-config)
+        create_noah_server_config
         ;;
 
     create-wallet)
