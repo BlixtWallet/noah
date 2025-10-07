@@ -14,9 +14,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      - name: Check formatting
+      - name: ✨ Check formatting
         run: nix develop .#server --command bash -c "cargo fmt --check"
-      - name: Run tests
+      - name: 🧪 Run tests
         run: nix develop .#server --command bash -c "cargo test"
-      - name: Build
+      - name: 🔨 Build
         run: nix develop .#server --command bash -c "cargo build --release"

@@ -1,0 +1,96 @@
+name: Maestro Test iOS
+
+on:
+  pull_request:
+    paths:
+      - "client/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - "package.json"
+      - "bun.lock"
+
+jobs:
+  build-release-ios:
+    name: Build iOS Release App
+    uses: ./.github/workflows/noah-build-release-ios.yml
+
+  maestro-test-ios:
+    name: Maestro Test iOS
+    needs: build-release-ios
+    runs-on: macOS
+    timeout-minutes: 60
+    permissions:
+      checks: read
+      contents: read
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download iOS app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release-app
+          path: ios-release-build/
+
+      - name: 📦 Install Maestro
+        run: |
+          MAESTRO_VERSION=1.38.1
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: 📱 Boot iOS Simulator (iPhone 16)
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available | grep "iPhone 16" | head -n 1 | awk -F "[()]" '{print $2}')
+          if [ -z "$DEVICE_ID" ]; then
+            echo "No available simulator found for the criteria."
+            exit 1
+          fi
+
+          echo "Booting iPhone 15 simulator with DEVICE_ID=$DEVICE_ID..."
+          xcrun simctl boot "$DEVICE_ID" || true
+
+          TIMEOUT=120
+          START_TIME=$(date +%s)
+          echo "Waiting for simulator to boot..."
+
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+
+            if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
+              echo "Timeout: simulator failed to boot for $TIMEOUT seconds."
+              exit 1
+            fi
+
+            STATUS=$(xcrun simctl list | grep "$DEVICE_ID" | grep "(Booted)")
+            if [[ -n "$STATUS" ]]; then
+              echo "Simulator is booted!"
+              break
+            else
+              echo "Still waiting for the simulator to boot..."
+              sleep 5
+            fi
+          done
+
+      - name: 🧪 Run Maestro tests
+        run: nix develop .# --command bash -c "xcrun simctl install booted ios-release-build/ios-release.app && bun client maestro:test"
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
+
+      - name: 🧹 Uninstall iOS app from simulator
+        if: always()
+        run: |
+          echo "Uninstalling Noah-Signet app with bundle ID: com.anonymous.noah.signet"
+          xcrun simctl uninstall booted "com.anonymous.noah.signet" || true
+
+      - name: 📤 Store debug output if failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-debug-output-ios
+          path: client/maestro-debug-output/**/*
+          include-hidden-files: true
+          overwrite: true

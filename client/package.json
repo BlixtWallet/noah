@@ -35,11 +35,13 @@
     "build:ios:signet:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Signet -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
+    "build:ios:ci": "xcrun xcodebuild -scheme 'Noah-Signet' -workspace 'ios/noah.xcworkspace' -configuration Release -sdk 'iphonesimulator' -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build -quiet ARCHS=arm64",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "check": "bun run lint && bun run typecheck",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "maestro:test": "maestro test --debug-output maestro-debug-output .maestro"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^0.11.2",

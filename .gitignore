@@ -19,6 +19,7 @@ expo-env.d.ts
 *.mobileprovision
 ios/vendor/
 ios/.bundle
+client/build
 
 # Metro
 .metro-health-check*
