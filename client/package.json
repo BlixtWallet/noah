@@ -36,7 +36,6 @@
     "build:ios:regtest:debug": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Debug -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:regtest:release": "xcodebuild build -workspace ios/noah.xcworkspace -scheme Noah-Regtest -configuration Release -sdk iphonesimulator -quiet ARCHS=arm64",
     "build:ios:ci": "xcrun xcodebuild -scheme 'Noah-Signet' -workspace 'ios/noah.xcworkspace' -configuration Release -sdk 'iphonesimulator' -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build -quiet ARCHS=arm64",
-    "build:ios:device:ci": "xcrun xcodebuild -scheme 'Noah-Signet' -workspace 'ios/noah.xcworkspace' -configuration Release -sdk 'iphoneos' -destination 'generic/platform=iOS' -derivedDataPath ios/build -quiet ARCHS=arm64",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",
     "check": "bun run lint && bun run typecheck",
