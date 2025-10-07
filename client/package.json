@@ -41,10 +41,6 @@
     "check": "bun run lint && bun run typecheck",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "fingerprint:android": "bunx expo-updates fingerprint:generate --platform android | jq -r '.hash' | xargs -n 1 echo 'fingerprint:'",
-    "fingerprint:ios": "bunx expo-updates fingerprint:generate --platform ios | jq -r '.hash' | xargs -n 1 echo 'fingerprint:'",
-    "build:debug:android": "bunx expo prebuild --bun && cd android && ./gradlew assembleDebug -DtestBuildType=debug -Dorg.gradle.jvmargs=-Xmx4g",
-    "build:debug:ios": "bunx expo prebuild --bun && xcodebuild ONLY_ACTIVE_ARCH=YES -workspace ios/noah.xcworkspace -UseNewBuildSystem=YES -scheme noah -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build -quiet",
     "maestro:test": "maestro test --debug-output maestro-debug-output .maestro"
   },
   "dependencies": {

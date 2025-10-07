@@ -16,11 +16,11 @@ jobs:
     outputs:
       is_release: ${{ steps.check_tag.outputs.is_release }}
     steps:
-      - name: Checkout code with tags
+      - name: 🏗 Checkout code with tags
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetches all history and tags
-      - name: Check if commit is tagged for release (v*)
+      - name: 🏷️ Check if commit is tagged for release (v*)
         id: check_tag
         run: |
           # Check if any tag starting with 'v' points to the current commit HEAD
@@ -38,16 +38,16 @@ jobs:
     needs: check_if_release_commit
     if: needs.check_if_release_commit.outputs.is_release == 'false'
     steps:
-      - name: Checkout code
+      - name: 🏗 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install signet app dependencies
+      - name: 📦 Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
-      - name: Lint code
+      - name: ✨ Lint code
         run: nix develop .# --command bash -c "bun client lint"
 
-      - name: Typecheck code
+      - name: 🔍 Typecheck code
         run: nix develop .# --command bash -c "bun client typecheck"
 
   android_build:
@@ -57,7 +57,7 @@ jobs:
       artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
       apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
     steps:
-      - name: Checkout code
+      - name: 🏗 Checkout code
         uses: actions/checkout@v4
 
       # - name: Install Nix
@@ -66,18 +66,18 @@ jobs:
       # - name: Enable Nix Magic Cache
       #   uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Install signet app dependencies
+      - name: 📦 Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
 
-      - name: Create sentry.properties
+      - name: 🔧 Create sentry.properties
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: ./scripts/create_sentry_properties.sh
 
-      - name: Build signet Android app
+      - name: 🔨 Build signet Android app
         run: nix develop .# --command bash -c "bun client build:android:ci"
 
-      - name: Rename APK with timestamp
+      - name: 📝 Rename APK with timestamp
         id: rename_apk
         run: |
           apk_path="client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
@@ -91,7 +91,7 @@ jobs:
           echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Upload Android APK
+      - name: 📤 Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
@@ -104,21 +104,21 @@ jobs:
       artifact_name: ${{ steps.rename_app.outputs.artifact_name }}
       app_filename: ${{ steps.rename_app.outputs.app_filename }}
     steps:
-      - name: Checkout code
+      - name: 🏗 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install signet app dependencies
+      - name: 📦 Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun client ios:prebuild"
 
-      - name: Create sentry.properties
+      - name: 🔧 Create sentry.properties
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: ./scripts/create_sentry_properties.sh
 
-      - name: Build iOS signet app
+      - name: 🔨 Build iOS signet app
         run: nix develop .# --command bash -c "bun client build:ios:ci"
 
-      - name: Rename iOS app with timestamp
+      - name: 📝 Rename iOS app with timestamp
         id: rename_app
         run: |
           app_path="client/ios/build/Build/Products/Release-iphonesimulator/Noah-Signet.app"
@@ -132,7 +132,7 @@ jobs:
           echo "app_filename=${app_filename}" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Upload iOS app
+      - name: 📤 Upload iOS app
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.rename_app.outputs.artifact_name }}
@@ -143,17 +143,17 @@ jobs:
     needs: [android_build, ios_build]
     if: success()
     steps:
-      - name: Download APK artifact
+      - name: 📥 Download APK artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.android_build.outputs.artifact_name }}
 
-      - name: Download iOS app artifact
+      - name: 📥 Download iOS app artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.ios_build.outputs.artifact_name }}
 
-      - name: Start local Telegram Bot API server
+      - name: 🚀 Start local Telegram Bot API server
         run: |
           docker run -d --name local-bot-api \
             -p 8081:8081 \
@@ -162,12 +162,12 @@ jobs:
             -e TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }} \
             aiogram/telegram-bot-api:latest --local
 
-      - name: Wait for Bot API server to be ready
+      - name: ⏳ Wait for Bot API server to be ready
         run: |
           echo "Waiting 5 seconds for the local Bot API server to initialize..."
           sleep 5
 
-      - name: Send APK using local Bot API server
+      - name: 📤 Send APK using local Bot API server
         run: |
           curl -s -X POST "http://localhost:8081/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
           -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
@@ -177,7 +177,7 @@ jobs:
           Commit: ${{ github.sha }}
           Message: ${{ github.event.head_commit.message }}"
 
-      - name: Send iOS app using local Bot API server
+      - name: 📤 Send iOS app using local Bot API server
         run: |
           curl -s -X POST "http://localhost:8081/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
           -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
@@ -187,7 +187,7 @@ jobs:
           Commit: ${{ github.sha }}
           Message: ${{ github.event.head_commit.message }}"
 
-      - name: Stop and remove local Bot API server
+      - name: 🛑 Stop and remove local Bot API server
         if: always()
         run: |
           echo "Stopping and removing the Docker container..."
