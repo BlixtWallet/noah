@@ -116,12 +116,12 @@ jobs:
         run: ./scripts/create_sentry_properties.sh
 
       - name: 🔨 Build iOS signet app
-        run: nix develop .# --command bash -c "bun client build:ios:ci"
+        run: nix develop .# --command bash -c "bun client build:ios:device:ci"
 
       - name: 📝 Rename iOS app with timestamp
         id: rename_app
         run: |
-          app_path="client/ios/build/Build/Products/Release-iphonesimulator/Noah-Signet.app"
+          app_path="client/ios/build/Build/Products/Release-iphoneos/Noah-Signet.app"
           timestamp=$(date +'%Y-%m-%d-%H-%M')
           new_app_name="noah-ios-app-${timestamp}"
           app_filename="${new_app_name}.app"
