@@ -5,7 +5,8 @@ on:
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/**"
+      - ".github/workflows/noah-maestro-test-ios.yml"
+      - ".github/workflows/noah-build-release-ios.yml"
       - "package.json"
       - "bun.lock"
 
@@ -40,6 +41,9 @@ jobs:
           MAESTRO_VERSION=1.38.1
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: 🔧 Setup Regtest Environment
+        run: ./scripts/ark-dev.sh setup-everything
 
       - name: 📱 Boot iOS Simulator (iPhone 16)
         run: |
@@ -83,8 +87,12 @@ jobs:
       - name: 🧹 Uninstall iOS app from simulator
         if: always()
         run: |
-          echo "Uninstalling Noah-Signet app with bundle ID: com.anonymous.noah.signet"
-          xcrun simctl uninstall booted "com.anonymous.noah.signet" || true
+          echo "Uninstalling Noah-Regtest app with bundle ID: com.anonymous.noah.regtest"
+          xcrun simctl uninstall booted "com.anonymous.noah.regtest" || true
+
+      - name: 🧹 Teardown Regtest Environment
+        if: always()
+        run: ./scripts/ark-dev.sh down
 
       - name: 📤 Store debug output if failed
         if: failure()

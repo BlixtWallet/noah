@@ -81,7 +81,7 @@ const config: { expo: ExpoConfig } = {
         backgroundColor: "#000000",
       },
       edgeToEdgeEnabled: true,
-      package: "com.anonymous.noah",
+      package: "com.noahwallet",
       splash: {
         image: "./assets/All_Files/splash_screens/splash_screen_android.png",
         resizeMode: "contain",

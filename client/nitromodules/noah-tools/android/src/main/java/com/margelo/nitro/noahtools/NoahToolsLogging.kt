@@ -36,7 +36,7 @@ object NoahToolsLogging {
 
     fun performGetAppVariant(): String {
         try {
-            val buildConfigClass = Class.forName("com.anonymous.noah.BuildConfig")
+            val buildConfigClass = Class.forName("com.noahwallet.BuildConfig")
             val field = buildConfigClass.getField("APP_VARIANT")
             val appVariant = field.get(null) as? String
             if (appVariant != null) {
