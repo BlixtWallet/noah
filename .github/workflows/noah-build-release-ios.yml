@@ -5,11 +5,21 @@ on:
     branches:
       - master
   workflow_call:
+    outputs:
+      artifact_name:
+        description: "The name of the uploaded artifact"
+        value: ${{ jobs.build-release-ios.outputs.artifact_name }}
+      app_filename:
+        description: "The filename of the iOS app"
+        value: ${{ jobs.build-release-ios.outputs.app_filename }}
 
 jobs:
   build-release-ios:
     name: Build iOS Release App
     runs-on: macOS
+    outputs:
+      artifact_name: ${{ steps.set_outputs.outputs.artifact_name }}
+      app_filename: ${{ steps.set_outputs.outputs.app_filename }}
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -21,12 +31,15 @@ jobs:
         run: nix develop .# --command bash -c "bun client ios:prebuild && bun client build:ios:ci"
 
       - name: 📁 Prepare build output
+        id: set_outputs
         run: |
           mkdir ios-release-build
           mv client/ios/build/Build/Products/Release-iphonesimulator/Noah-Signet.app ios-release-build/ios-release.app
+          echo "artifact_name=ios-release-app" >> $GITHUB_OUTPUT
+          echo "app_filename=ios-release.app" >> $GITHUB_OUTPUT
 
       - name: 📤 Upload iOS app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ios-release-app
+          name: ${{ steps.set_outputs.outputs.artifact_name }}
           path: ios-release-build/

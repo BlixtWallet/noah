@@ -100,15 +100,12 @@ jobs:
   ios_build:
     runs-on: macOS
     needs: lint
+    outputs:
+      artifact_name: ${{ steps.rename_app.outputs.artifact_name }}
+      app_filename: ${{ steps.rename_app.outputs.app_filename }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # - name: Install Nix
-      #   uses: DeterminateSystems/nix-installer-action@main
-
-      # - name: Enable Nix Magic Cache
-      #   uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: Install signet app dependencies
         run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun client ios:prebuild"
@@ -119,17 +116,42 @@ jobs:
         run: ./scripts/create_sentry_properties.sh
 
       - name: Build iOS signet app
-        run: nix develop .# --command bash -c "bun client build:ios:signet:release"
+        run: nix develop .# --command bash -c "bun client build:ios:ci"
+
+      - name: Rename iOS app with timestamp
+        id: rename_app
+        run: |
+          app_path="client/ios/build/Build/Products/Release-iphonesimulator/Noah-Signet.app"
+          timestamp=$(date +'%Y-%m-%d-%H-%M')
+          new_app_name="noah-ios-app-${timestamp}"
+          app_filename="${new_app_name}.app"
+          new_app_path="client/ios/build/Build/Products/Release-iphonesimulator/${app_filename}"
+          mv "${app_path}" "${new_app_path}"
+          echo "new_path=${new_app_path}" >> $GITHUB_OUTPUT
+          echo "artifact_name=${new_app_name}" >> $GITHUB_OUTPUT
+          echo "app_filename=${app_filename}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Upload iOS app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename_app.outputs.artifact_name }}
+          path: ${{ steps.rename_app.outputs.new_path }}
 
   send_telegram_notification:
     runs-on: ubuntu-latest
-    needs: android_build
+    needs: [android_build, ios_build]
     if: success()
     steps:
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.android_build.outputs.artifact_name }}
+
+      - name: Download iOS app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.ios_build.outputs.artifact_name }}
 
       - name: Start local Telegram Bot API server
         run: |
@@ -151,7 +173,17 @@ jobs:
           -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
           -F message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
           -F document=@"${{ needs.android_build.outputs.apk_filename }}" \
-          -F caption="New Noah build is available!
+          -F caption="New Noah Android build is available!
+          Commit: ${{ github.sha }}
+          Message: ${{ github.event.head_commit.message }}"
+
+      - name: Send iOS app using local Bot API server
+        run: |
+          curl -s -X POST "http://localhost:8081/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
+          -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
+          -F message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
+          -F document=@"${{ needs.ios_build.outputs.app_filename }}" \
+          -F caption="New Noah iOS build is available!
           Commit: ${{ github.sha }}
           Message: ${{ github.event.head_commit.message }}"
 

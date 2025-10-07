@@ -4,7 +4,7 @@ on:
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/pull-request.yml"
+      - ".github/workflows/**"
       - "package.json"
       - "bun.lock"
 
@@ -94,27 +94,3 @@ jobs:
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
-
-  ios_build:
-    runs-on: macOS
-    needs: lint
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # - name: Install Nix
-      #   uses: DeterminateSystems/nix-installer-action@main
-
-      # - name: Enable Nix Magic Cache
-      #   uses: DeterminateSystems/magic-nix-cache-action@main
-
-      - name: Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install ----frozen-lockfile && bun client ios:prebuild"
-
-      - name: Create sentry.properties
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        run: ./scripts/create_sentry_properties.sh
-
-      - name: Build iOS signet app
-        run: nix develop .# --command bash -c "bun client build:ios:signet:release"

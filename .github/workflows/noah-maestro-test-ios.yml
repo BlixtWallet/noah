@@ -3,7 +3,11 @@ name: Maestro Test iOS
 on:
   pull_request:
     paths:
-      - client/**
+      - "client/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - "package.json"
+      - "bun.lock"
 
 jobs:
   build-release-ios:
