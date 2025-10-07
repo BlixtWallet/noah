@@ -9,12 +9,6 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/server-push.yml"
-  pull_request:
-    paths:
-      - "server/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - ".github/workflows/server-push.yml"
 
 jobs:
   fmt-check:

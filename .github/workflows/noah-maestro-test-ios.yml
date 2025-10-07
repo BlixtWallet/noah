@@ -5,7 +5,8 @@ on:
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/**"
+      - ".github/workflows/noah-maestro-test-ios.yml"
+      - ".github/workflows/noah-build-release-ios.yml"
       - "package.json"
       - "bun.lock"
 
