@@ -1,4 +1,4 @@
-package com.anonymous.noah
+package com.noahwallet
 
 import android.app.Application
 import android.content.res.Configuration
