@@ -25,6 +25,12 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
+      - name: 📥 Download iOS app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-release-app
+          path: ios-release-build/
+
       - name: 📦 Install dependencies
         run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 
