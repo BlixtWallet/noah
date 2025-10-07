@@ -34,7 +34,7 @@ jobs:
         id: set_outputs
         run: |
           mkdir ios-release-build
-          mv client/ios/build/Build/Products/Release-iphonesimulator/Noah-Signet.app ios-release-build/ios-release.app
+          mv client/ios/build/Build/Products/Release-iphonesimulator/Noah-Regtest.app ios-release-build/ios-release.app
           echo "artifact_name=ios-release-app" >> $GITHUB_OUTPUT
           echo "app_filename=ios-release.app" >> $GITHUB_OUTPUT
 

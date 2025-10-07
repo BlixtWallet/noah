@@ -38,6 +38,7 @@ usage() {
     echo ""
     echo "SETUP:"
     echo "  setup                      Clone the bark repo and checkout the correct version."
+    echo "  setup-everything           Run complete setup: setup, up, create-wallet, generate 150, fund-aspd 1, create-bark-wallet."
     echo ""
     echo "LIFECYCLE COMMANDS (run after 'setup'):"
     echo "  up                         Start all services in the background (docker-compose up -d)."
@@ -159,6 +160,37 @@ fund_aspd() {
 }
 
 
+# Runs the complete setup sequence
+setup_everything() {
+    echo "🚀 Running complete setup sequence..."
+
+    setup_environment
+
+    echo ""
+    echo "🚀 Starting Ark services..."
+    dcr up -d
+
+    echo ""
+    echo "⏳ Waiting for services to be ready..."
+    sleep 10
+
+    echo ""
+    create_wallet
+
+    echo ""
+    generate_blocks 150
+
+    echo ""
+    fund_aspd 1
+
+    echo ""
+    create_bark_wallet
+
+    echo ""
+    echo "🎉 Complete setup finished successfully!"
+    echo "Your Ark dev environment is ready to use."
+}
+
 # --- Main Logic ---
 
 COMMAND=$1
@@ -180,6 +212,10 @@ shift
 case "$COMMAND" in
     setup)
         setup_environment
+        ;;
+
+    setup-everything)
+        setup_everything
         ;;
 
     up)

@@ -83,8 +83,8 @@ jobs:
       - name: 🧹 Uninstall iOS app from simulator
         if: always()
         run: |
-          echo "Uninstalling Noah-Signet app with bundle ID: com.anonymous.noah.signet"
-          xcrun simctl uninstall booted "com.anonymous.noah.signet" || true
+          echo "Uninstalling Noah-Regtest app with bundle ID: com.anonymous.noah.regtest"
+          xcrun simctl uninstall booted "com.anonymous.noah.regtest" || true
 
       - name: 📤 Store debug output if failed
         if: failure()
