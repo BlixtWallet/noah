@@ -23,7 +23,7 @@ jobs:
       - name: 📁 Prepare build output
         run: |
           mkdir ios-release-build
-          mv client/ios/build/Build/Products/Release-iphonesimulator/Noah-Regtest.app ios-release-build/ios-release.app
+          mv client/ios/build/Build/Products/Release-iphonesimulator/Noah-Signet.app ios-release-build/ios-release.app
 
       - name: 📤 Upload iOS app artifact
         uses: actions/upload-artifact@v4

@@ -31,14 +31,6 @@ jobs:
           name: ios-release-app
           path: ios-release-build/
 
-      - name: 📦 Install dependencies
-        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
-
-      # - name: 📦 Install macOS dependencies
-      #   run: |
-      #     brew tap facebook/fb
-      #     brew install facebook/fb/idb-companion
-
       - name: 📦 Install Maestro
         run: |
           MAESTRO_VERSION=1.38.1
@@ -79,18 +71,6 @@ jobs:
             fi
           done
 
-      # - name: 🚇 Run Metro bundler in the background
-      #   uses: miguelteixeiraa/action-run-in-background@v1
-      #   with:
-      #     script: bun run --cwd client start
-      #     readiness-script: |
-      #       if curl -sSf http://localhost:8081 > /dev/null; then
-      #           echo "curl request to metro was successful."
-      #       else
-      #           echo "curl request to metro failed."
-      #           exit 1
-      #       fi
-
       - name: 🧪 Run Maestro tests
         run: nix develop .# --command bash -c "xcrun simctl install booted ios-release-build/ios-release.app && bun client maestro:test"
         env:
@@ -99,8 +79,8 @@ jobs:
       - name: 🧹 Uninstall iOS app from simulator
         if: always()
         run: |
-          echo "Uninstalling Noah-Regtest app with bundle ID: com.anonymous.noah.regtest"
-          xcrun simctl uninstall booted "com.anonymous.noah.regtest" || true
+          echo "Uninstalling Noah-Signet app with bundle ID: com.anonymous.noah.signet"
+          xcrun simctl uninstall booted "com.anonymous.noah.signet" || true
 
       - name: 📤 Store debug output if failed
         if: failure()
