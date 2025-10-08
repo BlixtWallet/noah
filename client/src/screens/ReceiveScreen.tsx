@@ -128,7 +128,15 @@ const ReceiveScreen = () => {
   const handleGenerate = () => {
     Keyboard.dismiss();
 
-    if (amountSat && amountSat < 330) {
+    if (!amountSat) {
+      showAlert({
+        title: "Invalid Amount",
+        description: "Please enter an amount.",
+      });
+      return;
+    }
+
+    if (amountSat < 330) {
       showAlert({
         title: "Invalid Amount",
         description: "The minimum amount is 330 sats.",
@@ -138,11 +146,7 @@ const ReceiveScreen = () => {
 
     generateOnchainAddress();
     generateOffchainAddress();
-    if (amountSat >= 330) {
-      generateLightningInvoice(amountSat);
-    } else {
-      generateLightningInvoice(0);
-    }
+    generateLightningInvoice(amountSat);
   };
 
   const handleClear = () => {
