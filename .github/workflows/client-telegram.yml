@@ -1,28 +1,35 @@
 name: Telegram Notification
+
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
+  push:
     branches:
       - master
+    paths:
+      - "client/**"
+      - "scripts/**"
+      - ".github/workflows/client.yml"
+      - ".github/workflows/client-telegram.yml"
+      - "package.json"
+      - "bun.lock"
 
 jobs:
+  build:
+    name: Build Android App
+    uses: ./.github/workflows/client.yml
+
   send_telegram_notification:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: build
     steps:
       - name: 📥 Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: noah-android-apk-*
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          name: ${{ needs.build.outputs.artifact_name }}
 
       - name: 🔍 Find APK filename
         id: find_apk
         run: |
-          apk_file=$(ls *.apk | head -n 1)
+          apk_file=$(find . -name "*.apk" -type f | head -n 1 | xargs basename)
           echo "apk_filename=${apk_file}" >> $GITHUB_OUTPUT
         shell: bash
 
@@ -47,8 +54,8 @@ jobs:
           -F message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
           -F document=@"${{ steps.find_apk.outputs.apk_filename }}" \
           -F caption="New Noah Android build is available!
-          Commit: ${{ github.event.workflow_run.head_sha }}
-          Message: ${{ github.event.workflow_run.head_commit.message }}"
+          Commit: ${{ github.sha }}
+          Message: ${{ github.event.head_commit.message }}"
 
       - name: 🛑 Stop and remove local Bot API server
         if: always()

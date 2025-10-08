@@ -1,4 +1,5 @@
 name: CI
+
 on:
   pull_request:
     paths:
@@ -16,6 +17,14 @@ on:
       - ".github/workflows/client.yml"
       - "package.json"
       - "bun.lock"
+  workflow_call:
+    outputs:
+      artifact_name:
+        description: "The name of the uploaded artifact"
+        value: ${{ jobs.android_build.outputs.artifact_name }}
+      apk_filename:
+        description: "The filename of the APK"
+        value: ${{ jobs.android_build.outputs.apk_filename }}
 
 jobs:
   check_if_release_commit:

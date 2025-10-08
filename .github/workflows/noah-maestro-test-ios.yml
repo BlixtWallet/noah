@@ -19,7 +19,7 @@ jobs:
     name: Maestro Test iOS
     needs: build-release-ios
     runs-on: macOS
-    timeout-minutes: 60
+    timeout-minutes: 15
     permissions:
       checks: read
       contents: read
