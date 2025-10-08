@@ -14,7 +14,7 @@ import {
   maintenanceWithOnchain as maintenanceWithOnchainNitro,
   signMesssageWithMnemonic as signMessageWithMnemonicNitro,
   deriveKeypairFromMnemonic as deriveKeypairFromMnemonicNitro,
-  getVtxos as getVtxosNitro,
+  vtxos as vtxosNitro,
   getExpiringVtxos as getExpiringVtxosNitro,
   type OnchainBalanceResult,
   type OffchainBalanceResult,
@@ -305,7 +305,7 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
 };
 
 export const getVtxos = async () => {
-  return ResultAsync.fromPromise(getVtxosNitro(), (e) => e as Error);
+  return ResultAsync.fromPromise(vtxosNitro(), (e) => e as Error);
 };
 
 export const getExpiringVtxos = async () => {
