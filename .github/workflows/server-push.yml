@@ -11,23 +11,7 @@ on:
       - ".github/workflows/server-push.yml"
 
 jobs:
-  fmt-check:
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-      - name: ✨ Check formatting
-        run: nix develop .#server --command bash -c "cargo fmt --check"
-
-  test:
-    runs-on: self-hosted
-    needs: fmt-check
-    steps:
-      - uses: actions/checkout@v4
-      - name: 🧪 Run tests
-        run: nix develop .#server --command bash -c "cargo test"
-
-  build-and-push:
-    needs: test
+  server-build-and-push:
     strategy:
       matrix:
         include:
@@ -63,7 +47,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
   create-manifest:
-    needs: build-and-push
+    needs: server-build-and-push
     runs-on: ubuntu-latest
     steps:
       - name: 🔐 Login to GitHub Container Registry

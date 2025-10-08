@@ -1,12 +1,19 @@
 name: CI
 on:
+  pull_request:
+    paths:
+      - "client/**"
+      - "scripts/**"
+      - ".github/workflows/client.yml"
+      - "package.json"
+      - "bun.lock"
   push:
     branches:
       - master
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/main.yml"
+      - ".github/workflows/client.yml"
       - "package.json"
       - "bun.lock"
 
@@ -96,44 +103,3 @@ jobs:
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
-
-  send_telegram_notification:
-    runs-on: ubuntu-latest
-    needs: android_build
-    if: success()
-    steps:
-      - name: 📥 Download APK artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.android_build.outputs.artifact_name }}
-
-      - name: 🚀 Start local Telegram Bot API server
-        run: |
-          docker run -d --name local-bot-api \
-            -p 8081:8081 \
-            -v ${{ github.workspace }}:/data \
-            -e TELEGRAM_API_ID=${{ secrets.TELEGRAM_API_ID }} \
-            -e TELEGRAM_API_HASH=${{ secrets.TELEGRAM_API_HASH }} \
-            aiogram/telegram-bot-api:latest --local
-
-      - name: ⏳ Wait for Bot API server to be ready
-        run: |
-          echo "Waiting 5 seconds for the local Bot API server to initialize..."
-          sleep 5
-
-      - name: 📤 Send APK using local Bot API server
-        run: |
-          curl -s -X POST "http://localhost:8081/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument" \
-          -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
-          -F message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
-          -F document=@"${{ needs.android_build.outputs.apk_filename }}" \
-          -F caption="New Noah Android build is available!
-          Commit: ${{ github.sha }}
-          Message: ${{ github.event.head_commit.message }}"
-
-      - name: 🛑 Stop and remove local Bot API server
-        if: always()
-        run: |
-          echo "Stopping and removing the Docker container..."
-          docker stop local-bot-api
-          docker rm local-bot-api

@@ -8,6 +8,15 @@ on:
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/server.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "server/**"
+      - "scripts/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/server.yml"
 
 jobs:
   server_build_and_test:
@@ -18,5 +27,3 @@ jobs:
         run: nix develop .#server --command bash -c "cargo fmt --check"
       - name: 🧪 Run tests
         run: nix develop .#server --command bash -c "cargo test"
-      - name: 🔨 Build
-        run: nix develop .#server --command bash -c "cargo build --release"
