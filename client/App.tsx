@@ -14,7 +14,6 @@ const isDebugModeOrRegtest = __DEV__ || APP_VARIANT === "regtest";
 if (!isDebugModeOrRegtest) {
   Sentry.init({
     dsn: "https://ac229acf494dda7d1d84eebcc14f7769@o4509731937648640.ingest.us.sentry.io/4509731938435072",
-
     // Adds more context data to events (IP address, cookies, user, etc.)
     // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
     sendDefaultPii: true,
