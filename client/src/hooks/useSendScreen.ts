@@ -11,7 +11,7 @@ import {
 import { useSend } from "./usePayments";
 import {
   type ArkoorPaymentResult,
-  type LightningPaymentResult,
+  type Bolt11PaymentResult,
   type LnurlPaymentResult,
   type OnchainPaymentResult,
   type PaymentResult,
@@ -182,7 +182,7 @@ export const useSendScreen = () => {
           };
         }
         case "Bolt11": {
-          const bolt11Res = res as LightningPaymentResult;
+          const bolt11Res = res as Bolt11PaymentResult;
           return {
             success: true,
             amount_sat: amountSat,

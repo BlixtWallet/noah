@@ -10,7 +10,7 @@ import {
   sendLightningPayment,
   sendLnaddr,
   type ArkoorPaymentResult,
-  type LightningPaymentResult,
+  type Bolt11PaymentResult,
   type LnurlPaymentResult,
   type OnchainPaymentResult,
   boardAllArk,
@@ -141,7 +141,7 @@ type SendVariables = {
 
 type SendResult =
   | ArkoorPaymentResult
-  | LightningPaymentResult
+  | Bolt11PaymentResult
   | LnurlPaymentResult
   | OnchainPaymentResult;
 

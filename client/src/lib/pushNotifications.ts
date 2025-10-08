@@ -5,10 +5,11 @@ import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { maintenance, offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
+import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
+import { maintenanceRefresh } from "./walletApi";
 
 const log = logger("pushNotifications");
 
@@ -86,7 +87,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
       (async () => {
         switch (notificationData.notification_type) {
           case "maintenance": {
-            const result = await maintenance();
+            const result = await maintenanceRefresh();
             await handleTaskCompletion("maintenance", result, notificationData.k1);
             break;
           }
