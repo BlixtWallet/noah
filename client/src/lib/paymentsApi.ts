@@ -1,34 +1,32 @@
 import {
   boardAmount as boardAmountNitro,
   boardAll as boardAllNitro,
+  registerAllConfirmedBoards as registerAllConfirmedBoardsNitro,
   offboardAll as offboardAllNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   sendLnaddr as sendLnaddrNitro,
   bolt11Invoice as bolt11InvoiceNitro,
   type ArkoorPaymentResult,
   type OnchainPaymentResult,
-  type LightningPaymentResult,
+  type Bolt11PaymentResult,
   type LnurlPaymentResult,
   newAddress as newAddressNitro,
   onchainAddress as onchainAddressNitro,
   sendLightningPayment as sendLightningPaymentNitro,
   onchainSend as onchainSendNitro,
+  movements as movementsNitro,
   NewAddressResult,
+  BarkMovement,
 } from "react-native-nitro-ark";
 import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
 
-export type {
-  ArkoorPaymentResult,
-  OnchainPaymentResult,
-  LightningPaymentResult,
-  LnurlPaymentResult,
-};
+export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
 
 export type PaymentResult =
   | ArkoorPaymentResult
   | OnchainPaymentResult
-  | LightningPaymentResult
+  | Bolt11PaymentResult
   | LnurlPaymentResult;
 
 export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => {
@@ -107,7 +105,7 @@ export const sendArkoorPayment = async (
 export const sendLightningPayment = async (
   destination: string,
   amountSat: number | undefined,
-): Promise<Result<LightningPaymentResult, Error>> => {
+): Promise<Result<Bolt11PaymentResult, Error>> => {
   return ResultAsync.fromPromise(sendLightningPaymentNitro(destination, amountSat), (error) => {
     const e = new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
@@ -143,6 +141,29 @@ export const sendLnaddr = async (
       `Failed to send to lightning address: ${
         error instanceof Error ? error.message : String(error)
       }`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const registerAllConfirmedBoards = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(registerAllConfirmedBoardsNitro(), (error) => {
+    const e = new Error(
+      `Failed to register all confirmed boards: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const movements = async (
+  pageIndex: number,
+  pageSize: number,
+): Promise<Result<BarkMovement[], Error>> => {
+  return ResultAsync.fromPromise(movementsNitro(pageIndex, pageSize), (error) => {
+    const e = new Error(
+      `Failed to get movements: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;

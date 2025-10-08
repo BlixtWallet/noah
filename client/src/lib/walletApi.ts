@@ -10,9 +10,11 @@ import {
   isWalletLoaded as isWalletLoadedNitro,
   verifyMessage as verifyMessageNitro,
   maintenance as maintenanceNitro,
+  maintenanceRefresh as maintenanceRefreshNitro,
+  maintenanceWithOnchain as maintenanceWithOnchainNitro,
   signMesssageWithMnemonic as signMessageWithMnemonicNitro,
   deriveKeypairFromMnemonic as deriveKeypairFromMnemonicNitro,
-  getVtxos as getVtxosNitro,
+  vtxos as vtxosNitro,
   getExpiringVtxos as getExpiringVtxosNitro,
   type OnchainBalanceResult,
   type OffchainBalanceResult,
@@ -257,6 +259,14 @@ export const maintanance = async (): Promise<Result<void, Error>> => {
   return ResultAsync.fromPromise(maintenanceNitro(), (e) => e as Error);
 };
 
+export const maintenanceRefresh = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(maintenanceRefreshNitro(), (e) => e as Error);
+};
+
+export const maintenanceWithOnchain = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(maintenanceWithOnchainNitro(), (e) => e as Error);
+};
+
 export const deleteWallet = async (): Promise<Result<void, Error>> => {
   // Check if document directory path exists
   // Then recursively delete all files and directories within it
@@ -295,7 +305,7 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
 };
 
 export const getVtxos = async () => {
-  return ResultAsync.fromPromise(getVtxosNitro(), (e) => e as Error);
+  return ResultAsync.fromPromise(vtxosNitro(), (e) => e as Error);
 };
 
 export const getExpiringVtxos = async () => {

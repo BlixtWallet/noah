@@ -12,13 +12,13 @@
   },
   "languages": {
     "TypeScript": {
-      "format_on_save": "prettier"
+      "format_on_save": "on"
     },
     "JavaScript": {
-      "format_on_save": "prettier"
+      "format_on_save": "on"
     },
     "TSX": {
-      "format_on_save": "prettier"
+      "format_on_save": "on"
     },
     "Rust": {
       "format_on_save": "on"
