@@ -213,8 +213,8 @@ const SettingsScreen = () => {
   };
 
   return (
-    <NoahSafeAreaView className="flex-1 bg-background">
-      <View className="p-4 flex-1">
+    <NoahSafeAreaView className="flex-1 bg-background" style={{ paddingBottom: 0 }}>
+      <View className="px-4 pt-4">
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
@@ -240,131 +240,135 @@ const SettingsScreen = () => {
             <AlertDescription>{exportError}</AlertDescription>
           </Alert>
         )}
-        <ScrollView className="flex-1">
-          <View className="items-center mb-6">
-            <Pressable onPress={() => navigation.navigate("NoahStory")}>
-              <Image
-                source={logoImage}
-                style={{ width: 120, height: 120, borderRadius: 12 }}
-                resizeMode="contain"
-              />
-            </Pressable>
-          </View>
-
-          {(lightningAddress || infoData.length > 0) && (
-            <View className="mb-6">
-              <Text
-                className="text-lg font-bold text-foreground mb-2"
-                style={{ color: COLORS.BITCOIN_ORANGE }}
-              >
-                Info
-              </Text>
-              {lightningAddress && (
-                <Pressable
-                  onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
-                  className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
-                >
-                  <View>
-                    <Label className="text-foreground text-lg">Lightning Address</Label>
-                    <Text className="text-base mt-1 text-muted-foreground">{lightningAddress}</Text>
-                  </View>
-                  <Icon name="chevron-forward-outline" size={24} color="white" />
-                </Pressable>
-              )}
-              {infoData.map(renderSettingItem)}
-            </View>
-          )}
-
-          {walletData.length > 0 && (
-            <View className="mb-6">
-              <Text
-                className="text-lg font-bold text-foreground mb-2"
-                style={{ color: COLORS.BITCOIN_ORANGE }}
-              >
-                Wallet
-              </Text>
-              {walletData.map(renderSettingItem)}
-              <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
-                <View className="flex-1">
-                  <Label className="text-foreground text-lg">Auto-Board to Ark</Label>
-                  <Text className="text-base mt-1 text-muted-foreground">
-                    Automatically board to Ark when onchain balance exceeds 20k sats
-                  </Text>
-                </View>
-                <Switch
-                  value={isAutoBoardingEnabled}
-                  onValueChange={setAutoBoardingEnabled}
-                  trackColor={{ false: "#767577", true: "#F7931A" }}
-                  thumbColor={isAutoBoardingEnabled ? "#ffffff" : "#f4f3f4"}
-                />
-              </View>
-            </View>
-          )}
-
-          {debugData.length > 0 && (
-            <View className="mb-6">
-              <Text
-                className="text-lg font-bold text-foreground mb-2"
-                style={{ color: COLORS.BITCOIN_ORANGE }}
-              >
-                Debug
-              </Text>
-              {debugData.map(renderSettingItem)}
-            </View>
-          )}
-
-          {isInitialized && (
-            <View className="mb-6">
-              <Text className="text-lg font-bold text-destructive mb-2">Danger Zone</Text>
-
-              <ConfirmationDialog
-                trigger={
-                  <Button variant="outline" disabled={isExporting} className="mb-4">
-                    <Text>{isExporting ? "Exporting..." : "Export Database"}</Text>
-                  </Button>
-                }
-                title="Export Database"
-                description="This will create an encrypted backup file containing your wallet's databases. Keep this file secure, as it can be used to restore your wallet."
-                onConfirm={exportDatabase}
-                confirmText="Export"
-                confirmVariant="default"
-              />
-
-              <ConfirmationDialog
-                trigger={
-                  <Button variant="destructive">
-                    <Text>Delete Wallet</Text>
-                  </Button>
-                }
-                title="Delete Wallet"
-                description={`This action is irreversible. To confirm, please type "delete" in the box below.`}
-                onConfirm={() => {
-                  if (confirmText.toLowerCase() === "delete") {
-                    deleteWalletMutation.mutate();
-                  }
-                }}
-                isConfirmDisabled={confirmText.toLowerCase() !== "delete"}
-              >
-                <Input
-                  value={confirmText}
-                  onChangeText={setConfirmText}
-                  placeholder='Type "delete" to confirm'
-                  className="h-12"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </ConfirmationDialog>
-            </View>
-          )}
-
-          <View className="items-center py-8 px-4">
-            <Text className="text-muted-foreground text-sm mb-1">
-              v{Constants.expoConfig?.version || "0.0.1"}
-            </Text>
-            <Text className="text-muted-foreground text-sm">Made with ❤️ from Noah team</Text>
-          </View>
-        </ScrollView>
       </View>
+      <ScrollView
+        className="flex-1 px-4"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        <View className="items-center mb-6">
+          <Pressable onPress={() => navigation.navigate("NoahStory")}>
+            <Image
+              source={logoImage}
+              style={{ width: 120, height: 120, borderRadius: 12 }}
+              resizeMode="contain"
+            />
+          </Pressable>
+        </View>
+
+        {(lightningAddress || infoData.length > 0) && (
+          <View className="mb-6">
+            <Text
+              className="text-lg font-bold text-foreground mb-2"
+              style={{ color: COLORS.BITCOIN_ORANGE }}
+            >
+              Info
+            </Text>
+            {lightningAddress && (
+              <Pressable
+                onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
+                className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
+              >
+                <View>
+                  <Label className="text-foreground text-lg">Lightning Address</Label>
+                  <Text className="text-base mt-1 text-muted-foreground">{lightningAddress}</Text>
+                </View>
+                <Icon name="chevron-forward-outline" size={24} color="white" />
+              </Pressable>
+            )}
+            {infoData.map(renderSettingItem)}
+          </View>
+        )}
+
+        {walletData.length > 0 && (
+          <View className="mb-6">
+            <Text
+              className="text-lg font-bold text-foreground mb-2"
+              style={{ color: COLORS.BITCOIN_ORANGE }}
+            >
+              Wallet
+            </Text>
+            {walletData.map(renderSettingItem)}
+            <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
+              <View className="flex-1">
+                <Label className="text-foreground text-lg">Auto-Board to Ark</Label>
+                <Text className="text-base mt-1 text-muted-foreground">
+                  Automatically board to Ark when onchain balance exceeds 20k sats
+                </Text>
+              </View>
+              <Switch
+                value={isAutoBoardingEnabled}
+                onValueChange={setAutoBoardingEnabled}
+                trackColor={{ false: "#767577", true: "#F7931A" }}
+                thumbColor={isAutoBoardingEnabled ? "#ffffff" : "#f4f3f4"}
+              />
+            </View>
+          </View>
+        )}
+
+        {debugData.length > 0 && (
+          <View className="mb-6">
+            <Text
+              className="text-lg font-bold text-foreground mb-2"
+              style={{ color: COLORS.BITCOIN_ORANGE }}
+            >
+              Debug
+            </Text>
+            {debugData.map(renderSettingItem)}
+          </View>
+        )}
+
+        {isInitialized && (
+          <View className="mb-6">
+            <Text className="text-lg font-bold text-destructive mb-2">Danger Zone</Text>
+
+            <ConfirmationDialog
+              trigger={
+                <Button variant="outline" disabled={isExporting} className="mb-4">
+                  <Text>{isExporting ? "Exporting..." : "Export Database"}</Text>
+                </Button>
+              }
+              title="Export Database"
+              description="This will create an encrypted backup file containing your wallet's databases. Keep this file secure, as it can be used to restore your wallet."
+              onConfirm={exportDatabase}
+              confirmText="Export"
+              confirmVariant="default"
+            />
+
+            <ConfirmationDialog
+              trigger={
+                <Button variant="destructive">
+                  <Text>Delete Wallet</Text>
+                </Button>
+              }
+              title="Delete Wallet"
+              description={`This action is irreversible. To confirm, please type "delete" in the box below.`}
+              onConfirm={() => {
+                if (confirmText.toLowerCase() === "delete") {
+                  deleteWalletMutation.mutate();
+                }
+              }}
+              isConfirmDisabled={confirmText.toLowerCase() !== "delete"}
+            >
+              <Input
+                value={confirmText}
+                onChangeText={setConfirmText}
+                placeholder='Type "delete" to confirm'
+                className="h-12"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </ConfirmationDialog>
+          </View>
+        )}
+
+        <View className="items-center py-8 px-4">
+          <Text className="text-muted-foreground text-sm mb-1">
+            v{Constants.expoConfig?.version || "0.0.1"}
+          </Text>
+          <Text className="text-muted-foreground text-sm">Made with ❤️ from Noah team</Text>
+        </View>
+      </ScrollView>
     </NoahSafeAreaView>
   );
 };
