@@ -48,7 +48,7 @@ jobs:
       - name: 🔍 Typecheck code
         run: nix develop .# --command bash -c "bun client typecheck"
 
-  android_build:
+  android_build_pull_request:
     runs-on: self-hosted
     needs: lint
     outputs:

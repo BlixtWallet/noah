@@ -10,7 +10,7 @@ on:
       - ".github/workflows/server.yml"
 
 jobs:
-  build_and_test:
+  server_build_and_test:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
