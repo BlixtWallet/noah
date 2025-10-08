@@ -14,7 +14,9 @@ import {
   onchainAddress as onchainAddressNitro,
   sendLightningPayment as sendLightningPaymentNitro,
   onchainSend as onchainSendNitro,
+  movements as movementsNitro,
   NewAddressResult,
+  BarkMovement,
 } from "react-native-nitro-ark";
 import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
@@ -149,6 +151,19 @@ export const registerAllConfirmedBoards = async (): Promise<Result<void, Error>>
   return ResultAsync.fromPromise(registerAllConfirmedBoardsNitro(), (error) => {
     const e = new Error(
       `Failed to register all confirmed boards: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const movements = async (
+  pageIndex: number,
+  pageSize: number,
+): Promise<Result<BarkMovement[], Error>> => {
+  return ResultAsync.fromPromise(movementsNitro(pageIndex, pageSize), (error) => {
+    const e = new Error(
+      `Failed to get movements: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;
