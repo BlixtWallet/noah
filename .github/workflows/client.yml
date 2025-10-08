@@ -8,15 +8,6 @@ on:
       - ".github/workflows/client.yml"
       - "package.json"
       - "bun.lock"
-  push:
-    branches:
-      - master
-    paths:
-      - "client/**"
-      - "scripts/**"
-      - ".github/workflows/client.yml"
-      - "package.json"
-      - "bun.lock"
   workflow_call:
     outputs:
       artifact_name:
