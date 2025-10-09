@@ -17,10 +17,16 @@ export const syncArkReceives = async () => {
   }
 
   const allMovements = movementsResult.value;
-  const arkoorReceives = allMovements.filter((m) => m.kind === "arkoor-receive");
+  const relevantMovements = allMovements.filter(
+    (m) =>
+      m.kind === "arkoor-receive" ||
+      m.kind === "onboard" ||
+      m.kind === "offboard" ||
+      m.kind === "exit",
+  );
 
-  if (arkoorReceives.length === 0) {
-    log.d("No Arkoor receives found");
+  if (relevantMovements.length === 0) {
+    log.d("No relevant transactions found");
     useTransactionStore.getState().loadTransactions();
     return;
   }
@@ -31,16 +37,31 @@ export const syncArkReceives = async () => {
     return;
   }
 
-  const currentTransactions = currentTransactionsResult.value.filter((tx) => tx.type === "Arkoor");
+  const currentTransactions = currentTransactionsResult.value;
 
-  for (const movement of arkoorReceives) {
+  for (const movement of relevantMovements) {
     const movementIdString = movement.id.toString();
     const existingTx = currentTransactions.find((t) => t.txid === movementIdString);
 
     if (!existingTx) {
-      log.d(`Syncing new Arkoor receive from movements: ${movement.id}`, [movement]);
+      const isArkoor = movement.kind === "arkoor-receive";
+      const isIncoming = movement.kind === "arkoor-receive" || movement.kind === "onboard";
 
-      const totalAmount = movement.receives.reduce((sum, vtxo) => sum + vtxo.amount, 0);
+      let transactionType: Transaction["type"];
+      if (isArkoor) {
+        transactionType = "Arkoor";
+      } else {
+        transactionType = "Onchain";
+      }
+
+      let totalAmount: number;
+      if (isIncoming) {
+        totalAmount = movement.receives.reduce((sum, vtxo) => sum + vtxo.amount, 0);
+      } else {
+        totalAmount = movement.recipients.reduce((sum, recipient) => sum + recipient.amount_sat, 0);
+      }
+
+      log.d(`Syncing new ${movement.kind} transaction: ${movement.id}`, [movement]);
 
       const btcPriceResult = await getHistoricalBtcToUsdRate(
         new Date(movement.created_at + "Z").toISOString(),
@@ -55,8 +76,8 @@ export const syncArkReceives = async () => {
         txid: movementIdString,
         amount: totalAmount,
         date: new Date(movement.created_at + "Z").toISOString(),
-        direction: "incoming",
-        type: "Arkoor",
+        direction: isIncoming ? "incoming" : "outgoing",
+        type: transactionType,
         btcPrice: btcPriceResult.value,
         description: "",
         destination: "",
@@ -66,6 +87,6 @@ export const syncArkReceives = async () => {
     }
   }
 
-  log.d("Successfully synced Arkoor receives from movements API");
+  log.d("Successfully synced transactions from movements API");
   useTransactionStore.getState().loadTransactions();
 };

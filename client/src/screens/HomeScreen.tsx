@@ -29,6 +29,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
+import { registerAllConfirmedBoards } from "~/lib/paymentsApi";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -58,6 +59,7 @@ const HomeScreen = () => {
 
     await balanceSync();
     await refetch();
+    await registerAllConfirmedBoards();
     getRandomFact();
   }, [balanceSync, refetch, getRandomFact, loadWallet]);
 
@@ -71,7 +73,8 @@ const HomeScreen = () => {
     ? balance.offchain.pending_exit +
       balance.offchain.pending_lightning_send +
       balance.offchain.pending_in_round +
-      balance.offchain.spendable
+      balance.offchain.spendable +
+      balance.offchain.pending_board
     : 0;
   const totalBalance = onchainBalance + offchainBalance;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
@@ -251,6 +254,12 @@ const HomeScreen = () => {
                             <Text className="text-muted-foreground">Pending Exit</Text>
                             <Text>
                               {(balance?.offchain.pending_exit ?? 0).toLocaleString()} sats
+                            </Text>
+                          </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Pending Board</Text>
+                            <Text>
+                              {(balance?.offchain.pending_board ?? 0).toLocaleString()} sats
                             </Text>
                           </View>
                         </View>
