@@ -8,21 +8,13 @@ interface CurrencyToggleProps {
   disabled?: boolean;
 }
 
-export const CurrencyToggle: React.FC<CurrencyToggleProps> = ({
-  onPress,
-  disabled = false,
-}) => {
+export const CurrencyToggle: React.FC<CurrencyToggleProps> = ({ onPress, disabled = false }) => {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled}
-      className="ml-3"
-      activeOpacity={0.7}
-    >
-      <View className="bg-card border border-border rounded-full p-3 items-center justify-center min-w-[48px] min-h-[48px]">
+    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.7}>
+      <View className="bg-background border border-border rounded-lg px-3 py-2 items-center justify-center">
         <FontAwesome
-          name="arrows-v"
-          size={20}
+          name="exchange"
+          size={16}
           color={disabled ? "#6b7280" : COLORS.BITCOIN_ORANGE}
         />
       </View>

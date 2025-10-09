@@ -165,115 +165,130 @@ const ReceiveScreen = () => {
   };
 
   return (
-    <NoahSafeAreaView className="flex-1 bg-background p-4">
+    <NoahSafeAreaView className="flex-1 bg-background">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-        <View className="flex-1 p-4">
-          <View className="flex-row items-center mb-8">
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
-            </Pressable>
-            <Text className="text-2xl font-bold text-foreground">Receive</Text>
-          </View>
+        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
+          <View className="p-4">
+            <View className="flex-row items-center mb-4">
+              <Pressable onPress={() => navigation.goBack()} className="mr-4">
+                <Icon name="arrow-back-outline" size={24} color="white" />
+              </Pressable>
+              <Text className="text-2xl font-bold text-foreground">Receive</Text>
+            </View>
 
-          <View className="flex-row items-center justify-center my-2">
-            {currency === "USD" && <Text className="text-white text-3xl font-bold mr-2">$</Text>}
-            <TextInput
-              className="text-white text-3xl font-bold text-center h-20"
-              placeholder="0"
-              placeholderTextColor="#6b7280"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-            />
-            {currency === "SATS" && (
-              <Text className="text-white text-3xl font-bold ml-2">sats</Text>
-            )}
-            <View className="ml-2">
+            <View className="flex-row items-center justify-between mb-4 px-2">
+              <Text className="text-muted-foreground text-base font-medium">Amount to receive</Text>
               <CurrencyToggle onPress={toggleCurrency} />
             </View>
-          </View>
-          <Text className="text-gray-400 text-center text-xl">
-            {currency === "SATS"
-              ? `$${
-                  btcPrice && amountSat && !isNaN(amountSat)
-                    ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
-                    : "0.00"
-                }`
-              : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
-          </Text>
 
-          <View className="mt-3 px-4 py-2 bg-card/50 rounded-lg mx-auto">
-            <Text className="text-muted-foreground text-sm text-center">
-              {`Minimum receive amount: ${minAmount} sats`}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center justify-between mt-6 gap-4">
-            {bip321Uri ? (
-              <View className="flex-1">
-                <Button onPress={handleClear} variant="outline">
-                  <Text>Clear</Text>
-                </Button>
-              </View>
-            ) : null}
-            <View className="flex-1">
-              <NoahButton
-                onPress={handleGenerate}
-                isLoading={isLoading}
-                disabled={isLoading || amount === "" || amountSat < minAmount}
-              >
-                Generate
-              </NoahButton>
-            </View>
-          </View>
-
-          {bip321Uri && (
-            <ScrollView className="mt-8">
-              <View className="p-4 bg-card rounded-lg items-center">
-                <View className="p-2 bg-white rounded-lg">
-                  <QRCode value={bip321Uri} size={200} backgroundColor="white" color="black" />
+            <View className="mb-4">
+              <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
+                <View className="flex-row items-center justify-center">
+                  {currency === "USD" && (
+                    <Text className="text-white text-2xl font-bold mr-2">$</Text>
+                  )}
+                  <TextInput
+                    className="text-white text-3xl font-bold text-center min-w-[50px]"
+                    placeholder={currency === "USD" ? "0.00" : "0"}
+                    placeholderTextColor="#4b5563"
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    autoFocus={false}
+                    maxLength={12}
+                  />
+                  {currency === "SATS" && (
+                    <Text className="text-white text-2xl font-bold ml-1">sats</Text>
+                  )}
                 </View>
-                <Pressable
-                  onPress={() => handleCopyToClipboard(bip321Uri, "bip321")}
-                  className="mt-4 p-2"
+              </View>
+
+              <View className="flex-row items-center justify-center px-2">
+                <Text className="text-muted-foreground text-lg">
+                  {currency === "SATS"
+                    ? `≈ $${
+                        btcPrice && amountSat && !isNaN(amountSat)
+                          ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
+                          : "0.00"
+                      }`
+                    : `≈ ${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
+                </Text>
+              </View>
+            </View>
+
+            <View className="px-4 py-2 bg-card/50 rounded-lg mx-auto">
+              <Text className="text-muted-foreground text-sm text-center">
+                {`Minimum receive amount: ${minAmount} sats`}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center justify-between mt-4 gap-4">
+              {bip321Uri ? (
+                <View className="flex-1">
+                  <Button onPress={handleClear} variant="outline">
+                    <Text>Clear</Text>
+                  </Button>
+                </View>
+              ) : null}
+              <View className="flex-1">
+                <NoahButton
+                  onPress={handleGenerate}
+                  isLoading={isLoading}
+                  disabled={isLoading || amount === "" || amountSat < minAmount}
                 >
-                  <Text className="text-sm text-center text-primary">
-                    {isCopied("bip321") ? "Copied!" : "Tap to copy BIP321"}
-                  </Text>
-                </Pressable>
+                  Generate
+                </NoahButton>
               </View>
+            </View>
 
-              <View>
-                {onchainAddress && (
-                  <CopyableDetail
-                    label="On-chain"
-                    value={onchainAddress}
-                    onCopy={() => handleCopyToClipboard(onchainAddress, "onchain")}
-                    isCopied={isCopied("onchain")}
-                  />
-                )}
+            {bip321Uri && (
+              <View className="mt-4">
+                <View className="p-3 bg-card rounded-lg items-center">
+                  <View className="p-2 bg-white rounded-lg">
+                    <QRCode value={bip321Uri} size={180} backgroundColor="white" color="black" />
+                  </View>
+                  <Pressable
+                    onPress={() => handleCopyToClipboard(bip321Uri, "bip321")}
+                    className="mt-4 p-2"
+                  >
+                    <Text className="text-sm text-center text-primary">
+                      {isCopied("bip321") ? "Copied!" : "Tap to copy BIP321"}
+                    </Text>
+                  </Pressable>
+                </View>
 
-                {vtxoPubkey && (
-                  <CopyableDetail
-                    label="Ark"
-                    value={vtxoPubkey}
-                    onCopy={() => handleCopyToClipboard(vtxoPubkey, "ark")}
-                    isCopied={isCopied("ark")}
-                  />
-                )}
+                <View className="mt-2">
+                  {onchainAddress && (
+                    <CopyableDetail
+                      label="On-chain"
+                      value={onchainAddress}
+                      onCopy={() => handleCopyToClipboard(onchainAddress, "onchain")}
+                      isCopied={isCopied("onchain")}
+                    />
+                  )}
 
-                {lightningInvoice && (
-                  <CopyableDetail
-                    label="Lightning"
-                    value={lightningInvoice}
-                    onCopy={() => handleCopyToClipboard(lightningInvoice, "lightning")}
-                    isCopied={isCopied("lightning")}
-                  />
-                )}
+                  {vtxoPubkey && (
+                    <CopyableDetail
+                      label="Ark"
+                      value={vtxoPubkey}
+                      onCopy={() => handleCopyToClipboard(vtxoPubkey, "ark")}
+                      isCopied={isCopied("ark")}
+                    />
+                  )}
+
+                  {lightningInvoice && (
+                    <CopyableDetail
+                      label="Lightning"
+                      value={lightningInvoice}
+                      onCopy={() => handleCopyToClipboard(lightningInvoice, "lightning")}
+                      isCopied={isCopied("lightning")}
+                    />
+                  )}
+                </View>
               </View>
-            </ScrollView>
-          )}
-        </View>
+            )}
+          </View>
+        </ScrollView>
       </TouchableWithoutFeedback>
     </NoahSafeAreaView>
   );

@@ -91,38 +91,51 @@ const SendScreen = () => {
             </View>
           </View>
           <View className="flex-1">
-            <View className="flex-row items-center justify-center my-4">
-              {currency === "USD" && <Text className="text-white text-3xl font-bold mr-2">$</Text>}
-              <TextInput
-                className="text-white text-3xl font-bold text-center h-20"
-                placeholder="0"
-                placeholderTextColor="#6b7280"
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-                editable={isAmountEditable}
-                style={!isAmountEditable ? { color: "gray" } : {}}
-              />
-              {currency === "SATS" && (
-                <Text className="text-white text-3xl font-bold ml-2">sats</Text>
-              )}
-              <View className="ml-2">
-                <CurrencyToggle onPress={toggleCurrency} disabled={!!parsedAmount} />
+            <View className="flex-row items-center justify-between mb-4 mx-4">
+              <Text className="text-muted-foreground text-base font-medium">Amount to send</Text>
+              <CurrencyToggle onPress={toggleCurrency} disabled={!!parsedAmount} />
+            </View>
+
+            <View className="mx-4">
+              <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
+                <View className="flex-row items-center justify-center">
+                  {currency === "USD" && (
+                    <Text className="text-white text-2xl font-bold mr-2">$</Text>
+                  )}
+                  <TextInput
+                    className="text-white text-3xl font-bold text-center min-w-[50px]"
+                    placeholder={currency === "USD" ? "0.00" : "0"}
+                    placeholderTextColor="#4b5563"
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    editable={isAmountEditable}
+                    style={!isAmountEditable ? { color: "gray" } : {}}
+                    autoFocus={false}
+                    maxLength={12}
+                  />
+                  {currency === "SATS" && (
+                    <Text className="text-white text-2xl font-bold ml-1">sats</Text>
+                  )}
+                </View>
+              </View>
+
+              <View className="flex-row items-center justify-center">
+                <Text className="text-muted-foreground text-lg">
+                  {parsedAmount
+                    ? `${formatNumber(parsedAmount)} sats ($${
+                        btcPrice ? formatNumber(satsToUsd(parsedAmount, btcPrice)) : "0.00"
+                      })`
+                    : currency === "SATS"
+                      ? `≈ $${
+                          btcPrice && amountSat && !isNaN(amountSat)
+                            ? formatNumber(satsToUsd(amountSat, btcPrice))
+                            : "0.00"
+                        }`
+                      : `≈ ${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
+                </Text>
               </View>
             </View>
-            <Text className="text-gray-400 text-center text-xl">
-              {parsedAmount
-                ? `${formatNumber(parsedAmount)} sats ($${
-                    btcPrice ? formatNumber(satsToUsd(parsedAmount, btcPrice)) : "0.00"
-                  })`
-                : currency === "SATS"
-                  ? `$${
-                      btcPrice && amountSat && !isNaN(amountSat)
-                        ? formatNumber(satsToUsd(amountSat, btcPrice))
-                        : "0.00"
-                    }`
-                  : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
-            </Text>
 
             {bip321Data ? (
               <Bip321Picker
