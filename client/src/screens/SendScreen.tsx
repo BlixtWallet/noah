@@ -15,7 +15,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { formatNumber, satsToUsd } from "~/lib/utils";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
 import { Text } from "~/components/ui/text";
@@ -25,6 +25,7 @@ import { CurrencyToggle } from "~/components/CurrencyToggle";
 
 const SendScreen = () => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const {
     destination,
     setDestination,
@@ -62,6 +63,13 @@ const SendScreen = () => {
     const text = await Clipboard.getStringAsync();
     setDestination(text);
   };
+
+  // Close scanner when navigating away from the screen
+  React.useEffect(() => {
+    if (!isFocused && showCamera) {
+      setShowCamera(false);
+    }
+  }, [isFocused, showCamera, setShowCamera]);
 
   if (showCamera) {
     return <QRCodeScanner codeScanner={codeScanner} onClose={() => setShowCamera(false)} />;

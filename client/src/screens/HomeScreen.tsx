@@ -1,5 +1,5 @@
 import { View, ScrollView, RefreshControl, Pressable } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { NoahButton } from "../components/ui/NoahButton";
 import type { HomeStackParamList } from "../Navigators";
@@ -32,6 +32,7 @@ import { useWalletStore } from "~/store/walletStore";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const isFocused = useIsFocused();
   const { walletError } = useWalletStore();
   const { data: balance, isFetching, refetch, error } = useBalance();
   const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
@@ -87,6 +88,13 @@ const HomeScreen = () => {
       navigation.navigate("Send", { destination: value });
     },
   });
+
+  // Close scanner when navigating away from the screen
+  useEffect(() => {
+    if (!isFocused && showCamera) {
+      setShowCamera(false);
+    }
+  }, [isFocused, showCamera, setShowCamera]);
 
   if (showCamera) {
     return <QRCodeScanner codeScanner={codeScanner} onClose={() => setShowCamera(false)} />;

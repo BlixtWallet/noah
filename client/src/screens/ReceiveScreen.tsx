@@ -27,6 +27,8 @@ import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
 
+const minAmount = 330;
+
 const truncateAddress = (addr: string) => {
   if (addr.length <= 40) {
     return addr;
@@ -112,7 +114,7 @@ const ReceiveScreen = () => {
       if (lightningInvoice) {
         params.push(`lightning=${lightningInvoice.toUpperCase()}`);
       }
-      if (amountSat >= 330) {
+      if (amountSat >= minAmount) {
         const amountInBtc = satsToBtc(amountSat);
         params.push(`amount=${amountInBtc}`);
       }
@@ -136,10 +138,10 @@ const ReceiveScreen = () => {
       return;
     }
 
-    if (amountSat < 330) {
+    if (amountSat < minAmount) {
       showAlert({
         title: "Invalid Amount",
-        description: "The minimum amount is 330 sats.",
+        description: `The minimum amount is ${minAmount} sats.`,
       });
       return;
     }
@@ -200,6 +202,12 @@ const ReceiveScreen = () => {
               : `${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
           </Text>
 
+          <View className="mt-3 px-4 py-2 bg-card/50 rounded-lg mx-auto">
+            <Text className="text-muted-foreground text-sm text-center">
+              {`Minimum receive amount: ${minAmount} sats`}
+            </Text>
+          </View>
+
           <View className="flex-row items-center justify-between mt-6 gap-4">
             {bip321Uri ? (
               <View className="flex-1">
@@ -209,7 +217,11 @@ const ReceiveScreen = () => {
               </View>
             ) : null}
             <View className="flex-1">
-              <NoahButton onPress={handleGenerate} isLoading={isLoading} disabled={isLoading}>
+              <NoahButton
+                onPress={handleGenerate}
+                isLoading={isLoading}
+                disabled={isLoading || amount === "" || amountSat < minAmount}
+              >
                 Generate
               </NoahButton>
             </View>
