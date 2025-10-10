@@ -40,12 +40,23 @@ export const syncArkReceives = async () => {
   const currentTransactions = currentTransactionsResult.value;
 
   for (const movement of relevantMovements) {
-    const movementIdString = movement.id.toString();
-    const existingTx = currentTransactions.find((t) => t.txid === movementIdString);
+    const isIncoming = movement.kind === "arkoor-receive" || movement.kind === "onboard";
+
+    // Use VTXO point as unique identifier instead of sequential ID
+    let uniqueId: string;
+    if (isIncoming && movement.receives.length > 0) {
+      uniqueId = movement.receives[0].point;
+    } else if (movement.spends.length > 0) {
+      uniqueId = movement.spends[0].point;
+    } else {
+      log.w(`Movement ${movement.id} has no VTXOs, skipping`, [movement]);
+      continue;
+    }
+
+    const existingTx = currentTransactions.find((t) => t.txid === uniqueId);
 
     if (!existingTx) {
       const isArkoor = movement.kind === "arkoor-receive";
-      const isIncoming = movement.kind === "arkoor-receive" || movement.kind === "onboard";
 
       let transactionType: Transaction["type"];
       if (isArkoor) {
@@ -73,7 +84,7 @@ export const syncArkReceives = async () => {
 
       const newTransaction: Transaction = {
         id: uuid.v4().toString(),
-        txid: movementIdString,
+        txid: uniqueId,
         amount: totalAmount,
         date: new Date(movement.created_at + "Z").toISOString(),
         direction: isIncoming ? "incoming" : "outgoing",
