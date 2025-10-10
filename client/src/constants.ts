@@ -81,7 +81,7 @@ export const SIGNET_CONFIG: WalletCreationOptions = {
   config: {
     esplora: "esplora.signet.2nd.dev",
     ark: "ark.signet.2nd.dev",
-    vtxo_refresh_expiry_threshold: 288,
+    vtxo_refresh_expiry_threshold: 48,
     fallback_fee_rate: 10000,
   },
 };
@@ -95,7 +95,7 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
     ark: `http://${REGTEST_URL}:3535`,
     bitcoind_user: "second",
     bitcoind_pass: "ark",
-    vtxo_refresh_expiry_threshold: 288,
+    vtxo_refresh_expiry_threshold: 24,
     fallback_fee_rate: 10000,
   },
 };

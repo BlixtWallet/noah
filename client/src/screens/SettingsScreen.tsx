@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, View, Switch, Image } from "react-native";
 import Constants from "expo-constants";
-import { useWalletStore, type WalletConfig } from "../store/walletStore";
+import { useWalletStore } from "../store/walletStore";
+import { ACTIVE_WALLET_CONFIG } from "../constants";
 import { useServerStore } from "../store/serverStore";
 import { useTransactionStore } from "../store/transactionStore";
 import { APP_VARIANT } from "../config";
@@ -26,7 +27,9 @@ import { COLORS } from "~/lib/styleConstants";
 
 type Setting = {
   id:
-    | keyof WalletConfig
+    | "bitcoind"
+    | "ark"
+    | "esplora"
     | "showMnemonic"
     | "showLogs"
     | "staticVtxoPubkey"
@@ -61,7 +64,7 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
-  const { config, isInitialized } = useWalletStore();
+  const { isInitialized } = useWalletStore();
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
@@ -107,20 +110,30 @@ const SettingsScreen = () => {
       {
         id: "bitcoind",
         title: "Bitcoind RPC",
-        value: config.bitcoind,
+        value: ACTIVE_WALLET_CONFIG.config?.bitcoind,
         isPressable: false,
       },
-      { id: "ark", title: "Ark Server", value: config.ark, isPressable: false },
+      {
+        id: "ark",
+        title: "Ark Server",
+        value: ACTIVE_WALLET_CONFIG.config?.ark,
+        isPressable: false,
+      },
     );
   } else {
     infoData.push(
       {
         id: "esplora",
         title: "Esplora Server",
-        value: config.esplora,
+        value: ACTIVE_WALLET_CONFIG.config?.esplora,
         isPressable: false,
       },
-      { id: "ark", title: "Ark Server", value: config.ark, isPressable: false },
+      {
+        id: "ark",
+        title: "Ark Server",
+        value: ACTIVE_WALLET_CONFIG.config?.ark,
+        isPressable: false,
+      },
     );
   }
 

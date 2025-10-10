@@ -34,11 +34,10 @@ export interface BarkVtxo {
 
 export function useCreateWallet() {
   const { showAlert } = useAlert();
-  const { config } = useWalletStore();
 
   return useMutation({
     mutationFn: async () => {
-      const result = await createWalletAction(config);
+      const result = await createWalletAction();
       if (result.isErr()) {
         throw result.error;
       }

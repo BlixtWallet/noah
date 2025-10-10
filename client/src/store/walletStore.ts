@@ -1,7 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
-import { APP_VARIANT } from "../config";
-import { ACTIVE_WALLET_CONFIG } from "~/constants";
 import { mmkv } from "~/lib/mmkv";
 import logger from "~/lib/log";
 
@@ -39,33 +37,6 @@ const zustandStorage: StateStorage = {
   },
 };
 
-export type WalletConfig = {
-  bitcoind?: string;
-  ark?: string;
-  esplora?: string;
-  bitcoind_user?: string;
-  bitcoind_pass?: string;
-  staticVtxoPubkey?: string;
-};
-
-const initialConfig = (): WalletConfig => {
-  if (!ACTIVE_WALLET_CONFIG.config) return {};
-
-  if (APP_VARIANT === "regtest") {
-    return {
-      bitcoind: ACTIVE_WALLET_CONFIG.config.bitcoind,
-      ark: ACTIVE_WALLET_CONFIG.config.ark,
-      bitcoind_user: ACTIVE_WALLET_CONFIG.config.bitcoind_user,
-      bitcoind_pass: ACTIVE_WALLET_CONFIG.config.bitcoind_pass,
-    };
-  }
-
-  return {
-    esplora: ACTIVE_WALLET_CONFIG.config.esplora,
-    ark: ACTIVE_WALLET_CONFIG.config.ark,
-  };
-};
-
 export type RestoreProgress = {
   step: string;
   progress: number;
@@ -75,13 +46,12 @@ interface WalletState {
   isInitialized: boolean;
   isWalletLoaded: boolean;
   walletError: boolean;
-  config: WalletConfig;
+  staticVtxoPubkey: string | null;
   restoreProgress: RestoreProgress | null;
   finishOnboarding: () => void;
   setWalletLoaded: () => void;
   setWalletUnloaded: () => void;
   setWalletError: (error: boolean) => void;
-  setConfig: (config: WalletConfig) => void;
   setStaticVtxoPubkey: (pubkey: string) => void;
   setRestoreProgress: (progress: RestoreProgress | null) => void;
   reset: () => void;
@@ -91,7 +61,7 @@ const initialState = {
   isInitialized: false,
   isWalletLoaded: false,
   walletError: false,
-  config: initialConfig(),
+  staticVtxoPubkey: null,
   restoreProgress: null,
 };
 
@@ -103,9 +73,7 @@ export const useWalletStore = create<WalletState>()(
       setWalletLoaded: () => set({ isWalletLoaded: true, walletError: false }),
       setWalletUnloaded: () => set({ isWalletLoaded: false }),
       setWalletError: (error) => set({ walletError: error }),
-      setConfig: (config) => set({ config }),
-      setStaticVtxoPubkey: (pubkey) =>
-        set((state) => ({ config: { ...state.config, staticVtxoPubkey: pubkey } })),
+      setStaticVtxoPubkey: (pubkey) => set({ staticVtxoPubkey: pubkey }),
       setRestoreProgress: (progress) => set({ restoreProgress: progress }),
       reset: () => set(initialState),
     }),
@@ -115,7 +83,7 @@ export const useWalletStore = create<WalletState>()(
       partialize: (state) => ({
         isInitialized: state.isInitialized,
         isWalletLoaded: state.isWalletLoaded,
-        config: state.config,
+        staticVtxoPubkey: state.staticVtxoPubkey,
       }),
     },
   ),

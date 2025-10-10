@@ -6,7 +6,7 @@ export function usePeakKeyPair() {
   return useQuery({
     queryKey: ["peakKeyPair"],
     queryFn: async () => {
-      const pubkey = useWalletStore.getState().config.staticVtxoPubkey;
+      const pubkey = useWalletStore.getState().staticVtxoPubkey;
       if (pubkey) {
         return { public_key: pubkey };
       }

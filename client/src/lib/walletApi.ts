@@ -22,63 +22,20 @@ import {
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
-import { useWalletStore, type WalletConfig } from "../store/walletStore";
 import {
   ARK_DATA_PATH,
   CACHES_DIRECTORY_PATH,
   DOCUMENT_DIRECTORY_PATH,
   MNEMONIC_KEYCHAIN_SERVICE,
+  ACTIVE_WALLET_CONFIG,
 } from "../constants";
-import { APP_VARIANT } from "../config";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 
 const log = logger("walletApi");
 
-const vtxoRefreshExpiryThreshold = 288;
-const fallBackFeeRate = 10000;
-
-// Helper function to create network configuration
-const createNetworkConfig = (config: WalletConfig) => {
-  const baseConfig = {
-    vtxo_refresh_expiry_threshold: vtxoRefreshExpiryThreshold,
-    fallback_fee_rate: fallBackFeeRate,
-  };
-
-  if (APP_VARIANT === "regtest") {
-    return {
-      ...baseConfig,
-      bitcoind: config.bitcoind,
-      ark: config.ark,
-      bitcoind_user: config.bitcoind_user,
-      bitcoind_pass: config.bitcoind_pass,
-    };
-  } else {
-    return {
-      ...baseConfig,
-      esplora: config.esplora,
-      ark: config.ark,
-    };
-  }
-};
-
-// Helper function to create wallet creation configuration
-const createWalletConfig = (config: WalletConfig) => {
-  return {
-    regtest: APP_VARIANT === "regtest",
-    signet: APP_VARIANT === "signet",
-    bitcoin: APP_VARIANT === "mainnet",
-    config: createNetworkConfig(config),
-  };
-};
-
-const createWalletFromMnemonic = async (
-  mnemonic: string,
-  config: WalletConfig,
-): Promise<Result<void, Error>> => {
-  const creationConfig = createWalletConfig(config);
-
+const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, Error>> => {
   const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
   if (isLoadedResult.isErr()) return err(isLoadedResult.error);
 
@@ -88,7 +45,7 @@ const createWalletFromMnemonic = async (
   }
 
   const createResult = await ResultAsync.fromPromise(
-    createWalletNitro(ARK_DATA_PATH, { ...creationConfig, mnemonic }),
+    createWalletNitro(ARK_DATA_PATH, { ...ACTIVE_WALLET_CONFIG, mnemonic }),
     (e) => e as Error,
   );
 
@@ -102,7 +59,7 @@ const createWalletFromMnemonic = async (
     return err(setMnemonicResult.error);
   }
 
-  const loadResult = await loadWallet(mnemonic, config);
+  const loadResult = await loadWallet(mnemonic);
   if (loadResult.isErr()) {
     return err(loadResult.error);
   }
@@ -120,34 +77,27 @@ const createWalletFromMnemonic = async (
   return ok(undefined);
 };
 
-export const createWallet = async (config: WalletConfig): Promise<Result<void, Error>> => {
+export const createWallet = async (): Promise<Result<void, Error>> => {
   const mnemonicResult = await ResultAsync.fromPromise(createMnemonic(), (e) => e as Error);
   if (mnemonicResult.isErr()) {
     return err(mnemonicResult.error);
   }
-  return createWalletFromMnemonic(mnemonicResult.value, config);
+  return createWalletFromMnemonic(mnemonicResult.value);
 };
 
-export const restoreWallet = async (
-  mnemonic: string,
-  config: WalletConfig,
-): Promise<Result<boolean, Error>> => {
+export const restoreWallet = async (mnemonic: string): Promise<Result<boolean, Error>> => {
   const setResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
   if (setResult.isErr()) {
     return err(setResult.error);
   }
-  return loadWallet(mnemonic, config);
+  return loadWallet(mnemonic);
 };
 
-const loadWallet = async (
-  mnemonic: string,
-  config: WalletConfig,
-): Promise<Result<boolean, Error>> => {
-  const loadConfig = createWalletConfig(config);
+const loadWallet = async (mnemonic: string): Promise<Result<boolean, Error>> => {
   const loadResult = await ResultAsync.fromPromise(
     loadWalletNitro(ARK_DATA_PATH, {
       mnemonic,
-      ...loadConfig,
+      ...ACTIVE_WALLET_CONFIG,
     }),
     (e) => e as Error,
   );
@@ -159,7 +109,7 @@ const loadWallet = async (
   return ok(true);
 };
 
-const loadWalletFromStorage = async (config: WalletConfig): Promise<Result<boolean, Error>> => {
+const loadWalletFromStorage = async (): Promise<Result<boolean, Error>> => {
   const mnemonicResult = await getMnemonic();
 
   if (mnemonicResult.isErr()) {
@@ -171,7 +121,7 @@ const loadWalletFromStorage = async (config: WalletConfig): Promise<Result<boole
     return err(new Error("No wallet found. Please create a wallet first."));
   }
 
-  return loadWallet(mnemonic, config);
+  return loadWallet(mnemonic);
 };
 
 export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
@@ -184,8 +134,7 @@ export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
     return ok(true);
   }
 
-  const config = useWalletStore.getState().config;
-  return loadWalletFromStorage(config);
+  return loadWalletFromStorage();
 };
 
 export const closeWalletIfLoaded = async (): Promise<Result<boolean, Error>> => {
