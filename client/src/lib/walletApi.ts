@@ -258,5 +258,8 @@ export const getVtxos = async () => {
 };
 
 export const getExpiringVtxos = async () => {
-  return ResultAsync.fromPromise(getExpiringVtxosNitro(288), (e) => e as Error);
+  return ResultAsync.fromPromise(
+    getExpiringVtxosNitro(ACTIVE_WALLET_CONFIG.config?.vtxo_refresh_expiry_threshold || 288),
+    (e) => e as Error,
+  );
 };
