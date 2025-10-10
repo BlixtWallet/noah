@@ -6,7 +6,6 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { type NativeStackScreenProps } from "@react-navigation/native-stack";
 import { OnboardingStackParamList } from "../Navigators";
@@ -36,10 +35,7 @@ const RestoreWalletScreen = ({ navigation }: Props) => {
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+      <KeyboardAvoidingView className="flex-1">
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
           <View className="p-4 flex-1">
             <View className="flex-row items-center mb-4">

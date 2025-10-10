@@ -87,6 +87,7 @@ const config: { expo: ExpoConfig } = {
         resizeMode: "contain",
         backgroundColor: "#000000",
       },
+      softwareKeyboardLayoutMode: "pan",
     },
     androidStatusBar: {
       barStyle: "light-content",
