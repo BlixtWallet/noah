@@ -59,3 +59,4 @@ server/target/
 .env
 noah-regtest.db
 config.toml
+.lnd-data

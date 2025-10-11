@@ -14,6 +14,16 @@ COMPOSE_FILE="$REPO_DIR/contrib/docker/docker-compose.yml"
 BITCOIND_SERVICE="bitcoind"
 ASPD_SERVICE="captaind"
 BARK_SERVICE="bark"
+CLN_SERVICE="cln"
+
+# LND Configuration
+LND_CONTAINER="lnd-regtest-dev"
+LND_IMAGE="lightninglabs/lnd:v0.19.3-beta"
+LND_DATA_DIR=".lnd-data"
+LND_BITCOIND_HOST="host.docker.internal"
+LND_BITCOIND_RPCPORT="18443"
+LND_BITCOIND_RPCUSER="second"
+LND_BITCOIND_RPCPASS="ark"
 
 # Bitcoin Core wallet name to be used by this script
 WALLET_NAME="dev-wallet"
@@ -62,6 +72,10 @@ usage() {
     echo "  create-noah-config         Create Noah server config file."
     echo "  start-noah-server          Start the Noah server container."
     echo "  stop-noah-server           Stop and remove the Noah server container."
+    echo "  start-lnd                  Start LND node in regtest mode."
+    echo "  stop-lnd                   Stop and remove LND container."
+    echo "  lncli <args...>            Execute lncli commands on the running LND container."
+    echo "  cln <args...>              Execute lightning-cli commands on the running CLN container."
 }
 
 # Clones the repository and checks out the correct tag.
@@ -240,6 +254,68 @@ stop_noah_server() {
     fi
 }
 
+# Starts the LND container in regtest mode
+start_lnd() {
+    echo "🚀 Starting LND node in regtest mode..."
+
+    # Stop existing container if running
+    if docker ps -a --format '{{.Names}}' | grep -q "^${LND_CONTAINER}$"; then
+        echo "Removing existing LND container..."
+        docker rm -f "$LND_CONTAINER" > /dev/null 2>&1 || true
+    fi
+
+    # Create data directory
+    mkdir -p "$LND_DATA_DIR"
+
+    # Pull latest image
+    echo "Pulling LND image..."
+    docker pull "$LND_IMAGE"
+
+    # Start container
+    echo "Starting LND container..."
+    docker run -d \
+        --name "$LND_CONTAINER" \
+        -p 9735:9735 \
+        -p 10009:10009 \
+        --add-host=host.docker.internal:host-gateway \
+        -v "$(pwd)/$LND_DATA_DIR:/root/.lnd" \
+        "$LND_IMAGE" \
+        --bitcoin.regtest \
+        --bitcoin.node=bitcoind \
+        --bitcoind.rpcpolling \
+        --bitcoind.blockpollinginterval=5s \
+        --bitcoind.rpchost="$LND_BITCOIND_HOST:$LND_BITCOIND_RPCPORT" \
+        --bitcoind.rpcuser="$LND_BITCOIND_RPCUSER" \
+        --bitcoind.rpcpass="$LND_BITCOIND_RPCPASS" \
+        --debuglevel=info \
+        --noseedbackup
+
+    echo "⏳ Waiting for LND to start..."
+    sleep 5
+
+    echo "✅ LND started successfully"
+    echo "   RPC Port: 10009"
+    echo "   P2P Port: 9735"
+    echo ""
+    echo "Note: Update the placeholder flags in the script:"
+    echo "  - <BITCOIND_RPC_PORT>"
+    echo "  - <BITCOIND_RPC_USER>"
+    echo "  - <BITCOIND_RPC_PASS>"
+    echo "  - <ZMQ_RAWBLOCK_PORT>"
+    echo "  - <ZMQ_RAWTX_PORT>"
+}
+
+# Stops and removes the LND container
+stop_lnd() {
+    if docker ps -a --format '{{.Names}}' | grep -q "^${LND_CONTAINER}$"; then
+        echo "🛑 Stopping LND node..."
+        docker rm -f "$LND_CONTAINER" > /dev/null 2>&1 || true
+        echo "✅ LND stopped."
+    else
+        echo "ℹ️  LND is not running."
+    fi
+}
+
 # Runs the complete setup sequence
 setup_everything() {
     echo "🚀 Running complete setup sequence..."
@@ -270,6 +346,9 @@ setup_everything() {
     start_noah_server
 
     echo ""
+    start_lnd
+
+    echo ""
     echo "🎉 Complete setup finished successfully!"
     echo "Your Ark dev environment is ready to use."
     echo ""
@@ -278,6 +357,7 @@ setup_everything() {
     echo "  - ASPD (Ark Server): http://localhost:3535"
     echo "  - Noah Server: http://localhost:3000"
     echo "  - Noah Server Health: http://localhost:3099/health"
+    echo "  - LND (Lightning): RPC at localhost:10009, P2P at localhost:9735"
 }
 
 # --- Main Logic ---
@@ -310,17 +390,21 @@ case "$COMMAND" in
     up)
         echo "🚀 Starting Ark services in the background..."
         dcr up -d "$@"
+        echo ""
+        start_lnd
         ;;
 
     stop)
-        echo "🛑 Stopping and removing Ark services..."
+        echo "🛑 Stopping Ark services..."
         dcr stop "$@"
+        stop_lnd
         ;;
 
     down)
         echo "🛑 Stopping and removing Ark services..."
         dcr down "$@" --volumes
         stop_noah_server
+        stop_lnd
         ;;
 
     start-noah-server)
@@ -329,6 +413,14 @@ case "$COMMAND" in
 
     stop-noah-server)
         stop_noah_server
+        ;;
+
+    start-lnd)
+        start_lnd
+        ;;
+
+    stop-lnd)
+        stop_lnd
         ;;
 
     create-noah-config)
@@ -375,6 +467,16 @@ case "$COMMAND" in
     bcli)
         echo "Running bitcoin-cli command: $@"
         dcr exec "$BITCOIND_SERVICE" bitcoin-cli $BITCOIN_CLI_OPTS "$@"
+        ;;
+
+    lncli)
+        echo "Running lncli command: $@"
+        docker exec "$LND_CONTAINER" lncli --network=regtest "$@"
+        ;;
+
+    cln)
+        echo "Running lightning-cli command: $@"
+        dcr exec "$CLN_SERVICE" lightning-cli --regtest "$@"
         ;;
 
     *)
