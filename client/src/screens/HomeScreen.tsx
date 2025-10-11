@@ -64,17 +64,27 @@ const HomeScreen = () => {
   }, [balanceSync, refetch, getRandomFact, loadWallet]);
 
   const onchainBalance = balance
-    ? balance.onchain.confirmed +
-      balance.onchain.immature +
-      balance.onchain.trusted_pending +
-      balance.onchain.untrusted_pending
+    ? (balance.onchain.confirmed ?? 0) +
+      (balance.onchain.immature ?? 0) +
+      (balance.onchain.trusted_pending ?? 0) +
+      (balance.onchain.untrusted_pending ?? 0)
     : 0;
   const offchainBalance = balance
-    ? balance.offchain.pending_exit +
-      balance.offchain.pending_lightning_send +
-      balance.offchain.pending_in_round +
-      balance.offchain.spendable +
-      balance.offchain.pending_board
+    ? (balance.offchain.pending_exit ?? 0) +
+      (balance.offchain.pending_lightning_send ?? 0) +
+      (balance.offchain.pending_in_round ?? 0) +
+      (balance.offchain.spendable ?? 0) +
+      (balance.offchain.pending_board ?? 0)
+    : 0;
+
+  const totalPendingBalance = balance
+    ? (balance.onchain.trusted_pending ?? 0) +
+      (balance.onchain.untrusted_pending ?? 0) +
+      (balance.onchain.immature ?? 0) +
+      (balance.offchain.pending_exit ?? 0) +
+      (balance.offchain.pending_lightning_send ?? 0) +
+      (balance.offchain.pending_in_round ?? 0) +
+      (balance.offchain.pending_board ?? 0)
     : 0;
   const totalBalance = onchainBalance + offchainBalance;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
@@ -186,6 +196,13 @@ const HomeScreen = () => {
                           <ChevronDown color="white" size={28} />
                         </Animated.View>
                       </View>
+                      {totalPendingBalance > 0 && (
+                        <View className="mt-2 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40">
+                          <Text className="text-yellow-500 text-sm">
+                            Pending balance: {totalPendingBalance.toLocaleString()} sats
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </Pressable>
                 </CollapsibleTrigger>
