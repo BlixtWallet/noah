@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import { NavigationContainer, DarkTheme, NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -10,6 +10,7 @@ import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 import HomeScreen from "~/screens/HomeScreen";
 import OnboardingScreen from "~/screens/OnboardingScreen";
 import ReceiveScreen from "~/screens/ReceiveScreen";
+import ReceiveSuccessScreen from "~/screens/ReceiveSuccessScreen";
 import SendScreen from "~/screens/SendScreen";
 import SettingsScreen from "~/screens/SettingsScreen";
 import BoardArkScreen from "~/screens/BoardArkScreen";
@@ -39,7 +40,7 @@ type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
   type: "onboarding" | "offboarding";
 };
 export type TabParamList = {
-  Home: undefined;
+  Home: NavigatorScreenParams<HomeStackParamList> | undefined;
   Receive: undefined;
   Send: { destination?: string };
   Settings: undefined;
@@ -72,6 +73,7 @@ export type HomeStackParamList = {
   TransactionDetail: { transaction: Transaction };
   BoardingTransactions: undefined;
   BoardingTransactionDetail: { transaction: BoardingTransaction };
+  ReceiveSuccess: { amountSat: number };
 };
 
 const Tab = createNativeBottomTabNavigator<TabParamList>();
@@ -143,6 +145,11 @@ const HomeStackScreen = () => (
     <HomeStack.Screen
       name="BoardingTransactionDetail"
       component={BoardingTransactionDetailScreen}
+      options={{ headerShown: false, animation: "default" }}
+    />
+    <HomeStack.Screen
+      name="ReceiveSuccess"
+      component={ReceiveSuccessScreen}
       options={{ headerShown: false, animation: "default" }}
     />
   </HomeStack.Navigator>

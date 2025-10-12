@@ -19,7 +19,7 @@ CLN_SERVICE="cln"
 # LND Configuration
 LND_CONTAINER="lnd-regtest-dev"
 LND_IMAGE="lightninglabs/lnd:v0.19.3-beta"
-LND_DATA_DIR=".lnd-data"
+LND_VOLUME="lnd-data"
 LND_BITCOIND_HOST="host.docker.internal"
 LND_BITCOIND_RPCPORT="18443"
 LND_BITCOIND_RPCUSER="second"
@@ -264,9 +264,6 @@ start_lnd() {
         docker rm -f "$LND_CONTAINER" > /dev/null 2>&1 || true
     fi
 
-    # Create data directory
-    mkdir -p "$LND_DATA_DIR"
-
     # Pull latest image
     echo "Pulling LND image..."
     docker pull "$LND_IMAGE"
@@ -278,12 +275,11 @@ start_lnd() {
         -p 9735:9735 \
         -p 10009:10009 \
         --add-host=host.docker.internal:host-gateway \
-        -v "$(pwd)/$LND_DATA_DIR:/root/.lnd" \
+        -v "$LND_VOLUME:/root/.lnd" \
         "$LND_IMAGE" \
         --bitcoin.regtest \
         --bitcoin.node=bitcoind \
         --bitcoind.rpcpolling \
-        --bitcoind.blockpollinginterval=5s \
         --bitcoind.rpchost="$LND_BITCOIND_HOST:$LND_BITCOIND_RPCPORT" \
         --bitcoind.rpcuser="$LND_BITCOIND_RPCUSER" \
         --bitcoind.rpcpass="$LND_BITCOIND_RPCPASS" \
@@ -405,6 +401,12 @@ case "$COMMAND" in
         dcr down "$@" --volumes
         stop_noah_server
         stop_lnd
+
+        if docker volume ls -q | grep -q "^${LND_VOLUME}$"; then
+            echo "🗑️  Removing LND volume..."
+            docker volume rm "$LND_VOLUME"
+            echo "✅ LND volume removed."
+        fi
         ;;
 
     start-noah-server)

@@ -138,6 +138,7 @@
             androidSdk
             bacon
             bun
+            grpcurl
             just
             rust-analyzer
             (bark-wrapper pkgs)

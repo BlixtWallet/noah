@@ -15,6 +15,7 @@ import {
   sendLightningPayment as sendLightningPaymentNitro,
   onchainSend as onchainSendNitro,
   movements as movementsNitro,
+  finishLightningReceive as finishLightningReceiveNitro,
   NewAddressResult,
   BarkMovement,
 } from "react-native-nitro-ark";
@@ -164,6 +165,16 @@ export const movements = async (
   return ResultAsync.fromPromise(movementsNitro(pageIndex, pageSize), (error) => {
     const e = new Error(
       `Failed to get movements: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const finishLightningReceive = async (bolt11: string): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(finishLightningReceiveNitro(bolt11), (error) => {
+    const e = new Error(
+      `Failed to finish lightning receive: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;

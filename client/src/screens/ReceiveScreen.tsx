@@ -16,11 +16,14 @@ import {
   useGenerateLightningInvoice,
   useGenerateOnchainAddress,
   useGenerateOffchainAddress,
+  useFinishLightningReceive,
 } from "../hooks/usePayments";
 import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
 import { satsToBtc, formatNumber } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
@@ -72,7 +75,7 @@ const CopyableDetail = ({
 };
 
 const ReceiveScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
@@ -98,6 +101,12 @@ const ReceiveScreen = () => {
     isPending: isGeneratingLightning,
     reset: resetLightningInvoice,
   } = useGenerateLightningInvoice();
+
+  const {
+    mutate: finishLightningReceive,
+    isSuccess: isReceiveSuccess,
+    data: receiveData,
+  } = useFinishLightningReceive();
 
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
 
@@ -127,6 +136,22 @@ const ReceiveScreen = () => {
     }
   }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
 
+  useEffect(() => {
+    if (lightningInvoice && amountSat) {
+      finishLightningReceive({ bolt11: lightningInvoice, amountSat });
+    }
+  }, [lightningInvoice, amountSat, finishLightningReceive]);
+
+  useEffect(() => {
+    if (isReceiveSuccess && receiveData) {
+      handleClear();
+      navigation.navigate("Home", {
+        screen: "ReceiveSuccess",
+        params: { amountSat: receiveData.amountSat },
+      });
+    }
+  }, [isReceiveSuccess, receiveData, navigation]);
+
   const handleGenerate = () => {
     Keyboard.dismiss();
 
@@ -154,7 +179,6 @@ const ReceiveScreen = () => {
   const handleClear = () => {
     setBip321Uri(undefined);
     setAmount("");
-    // Reset all mutations to clear their data
     resetOffchainAddress();
     resetOnchainAddress();
     resetLightningInvoice();

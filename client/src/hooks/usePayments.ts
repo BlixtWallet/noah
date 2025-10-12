@@ -15,12 +15,16 @@ import {
   type OnchainPaymentResult,
   boardAllArk,
   offboardAllArk,
+  finishLightningReceive,
 } from "../lib/paymentsApi";
 import { queryClient } from "~/queryClient";
 import { addTransaction } from "~/lib/transactionsDb";
 import { Transaction, PaymentTypes } from "~/types/transaction";
 import uuid from "react-native-uuid";
 import { DestinationTypes } from "~/lib/sendUtils";
+import logger from "~/lib/log";
+
+const log = logger("usePayments");
 
 export function useGenerateOffchainAddress() {
   const { showAlert } = useAlert();
@@ -222,6 +226,24 @@ export function useSend(destinationType: DestinationTypes) {
     },
     onError: (error: Error) => {
       showAlert({ title: "Send Failed", description: error.message });
+    },
+  });
+}
+
+export function useFinishLightningReceive() {
+  return useMutation({
+    mutationFn: async ({ bolt11, amountSat }: { bolt11: string; amountSat: number }) => {
+      const result = await finishLightningReceive(bolt11);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      return { amountSat };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["balance"] });
+    },
+    onError: (error: Error) => {
+      log.e("Failed to finish lightning receive:", [error.message]);
     },
   });
 }
