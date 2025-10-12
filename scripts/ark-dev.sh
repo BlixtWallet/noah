@@ -317,7 +317,17 @@ setup_lightning_channels() {
 
     echo ""
     echo "⏳ Waiting for LND to fully start..."
-    sleep 10
+    local retries=20
+    local count=0
+    until docker exec "$LND_CONTAINER" lncli --network=regtest getinfo &> /dev/null; do
+        count=$((count+1))
+        if [ $count -ge $retries ]; then
+            echo "Error: LND did not start within the expected time." >&2
+            exit 1
+        fi
+        echo "   (waiting for lnd to be ready...)"
+        sleep 2
+    done
 
     echo ""
     echo "🔍 Getting LND node pubkey..."
@@ -347,7 +357,18 @@ setup_lightning_channels() {
 
     echo ""
     echo "⏳ Waiting for LND to sync to chain..."
-    sleep 10
+    local sync_retries=30
+    local sync_count=0
+    until docker exec "$LND_CONTAINER" lncli --network=regtest getinfo | jq -e '.synced_to_chain == true' &> /dev/null; do
+        sync_count=$((sync_count+1))
+        if [ $sync_count -ge $sync_retries ]; then
+            echo "Error: LND did not sync to chain within the expected time." >&2
+            exit 1
+        fi
+        echo "   (waiting for lnd to sync...)"
+        sleep 2
+    done
+    echo "   ✅ LND is synced to chain"
 
     echo ""
     echo "🔗 Connecting LND to CLN..."
