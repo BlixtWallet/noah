@@ -293,12 +293,6 @@ start_lnd() {
     echo "   RPC Port: 10009"
     echo "   P2P Port: 9735"
     echo ""
-    echo "Note: Update the placeholder flags in the script:"
-    echo "  - <BITCOIND_RPC_PORT>"
-    echo "  - <BITCOIND_RPC_USER>"
-    echo "  - <BITCOIND_RPC_PASS>"
-    echo "  - <ZMQ_RAWBLOCK_PORT>"
-    echo "  - <ZMQ_RAWTX_PORT>"
 }
 
 # Stops and removes the LND container
@@ -310,6 +304,64 @@ stop_lnd() {
     else
         echo "ℹ️  LND is not running."
     fi
+}
+
+# Sets up Lightning Network channels between LND and CLN
+setup_lightning_channels() {
+    echo "⚡ Setting up Lightning Network channels..."
+
+    if ! command -v jq &> /dev/null; then
+        echo "Error: 'jq' is not installed. Please install it to continue." >&2
+        exit 1
+    fi
+
+    echo ""
+    echo "⏳ Waiting for LND to fully start..."
+    sleep 10
+
+    echo ""
+    echo "🔍 Getting LND node pubkey..."
+    local lnd_pubkey
+    lnd_pubkey=$(docker exec "$LND_CONTAINER" lncli --network=regtest getinfo | jq -r '.identity_pubkey')
+    echo "   LND pubkey: $lnd_pubkey"
+
+    echo ""
+    echo "🔍 Getting CLN node pubkey..."
+    local cln_pubkey
+    cln_pubkey=$(dcr exec "$CLN_SERVICE" lightning-cli --regtest getinfo | jq -r '.id')
+    echo "   CLN pubkey: $cln_pubkey"
+
+    echo ""
+    echo "💰 Generating new address on LND node..."
+    local lnd_address
+    lnd_address=$(docker exec "$LND_CONTAINER" lncli --network=regtest newaddress p2tr | jq -r '.address')
+    echo "   Address: $lnd_address"
+
+    echo ""
+    echo "💸 Sending 0.1 BTC to LND address..."
+    send_to_address "$lnd_address" "0.1"
+
+    echo ""
+    echo "⛏️  Generating 10 blocks..."
+    generate_blocks 10
+
+    echo ""
+    echo "⏳ Waiting for LND to sync to chain..."
+    sleep 10
+
+    echo ""
+    echo "🔗 Connecting LND to CLN..."
+    dcr exec "$CLN_SERVICE" lightning-cli --regtest connect "$lnd_pubkey@host.docker.internal:9735" || echo "   (Already connected or connection failed, continuing...)"
+
+    echo ""
+    echo "⚡ Opening channel from LND to CLN (1,000,000 sats with 900,000 push amount)..."
+    docker exec "$LND_CONTAINER" lncli --network=regtest openchannel "$cln_pubkey" 1000000 900000
+
+    echo ""
+    echo "⛏️  Generating 10 more blocks to confirm channel..."
+    generate_blocks 10
+
+    echo "✅ Lightning Network channels setup complete!"
 }
 
 # Runs the complete setup sequence
@@ -345,6 +397,9 @@ setup_everything() {
     start_lnd
 
     echo ""
+    setup_lightning_channels
+
+    echo ""
     echo "🎉 Complete setup finished successfully!"
     echo "Your Ark dev environment is ready to use."
     echo ""
@@ -354,6 +409,7 @@ setup_everything() {
     echo "  - Noah Server: http://localhost:3000"
     echo "  - Noah Server Health: http://localhost:3099/health"
     echo "  - LND (Lightning): RPC at localhost:10009, P2P at localhost:9735"
+    echo "  - CLN (Lightning): Connected to LND with open channel"
 }
 
 # --- Main Logic ---

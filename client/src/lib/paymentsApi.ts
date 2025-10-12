@@ -16,13 +16,22 @@ import {
   onchainSend as onchainSendNitro,
   movements as movementsNitro,
   finishLightningReceive as finishLightningReceiveNitro,
+  claimAllOpenInvoices as claimAllOpenInvoicesNitro,
+  lightningReceiveStatus as lightningReceiveStatusNitro,
   NewAddressResult,
   BarkMovement,
+  LightningReceive,
 } from "react-native-nitro-ark";
 import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
 
-export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
+export type {
+  ArkoorPaymentResult,
+  OnchainPaymentResult,
+  Bolt11PaymentResult,
+  LnurlPaymentResult,
+  LightningReceive,
+};
 
 export type PaymentResult =
   | ArkoorPaymentResult
@@ -175,6 +184,28 @@ export const finishLightningReceive = async (bolt11: string): Promise<Result<voi
   return ResultAsync.fromPromise(finishLightningReceiveNitro(bolt11), (error) => {
     const e = new Error(
       `Failed to finish lightning receive: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const claimAllOpenInvoices = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(claimAllOpenInvoicesNitro(), (error) => {
+    const e = new Error(
+      `Failed to claim all open invoices: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const lightningReceiveStatus = async (
+  paymentHash: string,
+): Promise<Result<LightningReceive | undefined, Error>> => {
+  return ResultAsync.fromPromise(lightningReceiveStatusNitro(paymentHash), (error) => {
+    const e = new Error(
+      `Failed to get lightning receive status: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;
