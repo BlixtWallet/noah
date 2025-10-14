@@ -111,45 +111,97 @@ Once your environment is set up, follow these steps:
 
 ## ⚡️ Local Ark Regtest Environment
 
-For development and testing, you can run a local Ark stack (bitcoind, aspd, bark) using Docker. The [`scripts/ark-dev.sh`](./scripts/ark-dev.sh) script helps manage this environment.
+For development and testing, you can run a complete local Ark stack using Docker Compose. The environment includes:
+
+- **bitcoind** - Bitcoin Core in regtest mode
+- **captaind** (aspd) - Ark Server Protocol Daemon
+- **bark** - Ark CLI client
+- **postgres** - Database for captaind
+- **cln** - Core Lightning node
+- **lnd** - Lightning Network Daemon
+- **noah-server** - Noah backend server
+
+The [`scripts/ark-dev.sh`](./scripts/ark-dev.sh) script helps manage this environment.
 
 **Prerequisites:**
 
 - **Docker**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+- **jq**: Command-line JSON processor. Install via your package manager (e.g., `brew install jq` on macOS).
 
-**Setup & Usage:**
+**Quick Start - Complete Setup:**
 
-1.  **Bootstrap the environment**
-    This clones the `bark` repository and prepares the Docker setup.
+Run the automated setup script that will start all services, create wallets, mine blocks, fund the Ark server, and set up Lightning channels:
 
-    ```bash
-    ./scripts/ark-dev.sh setup
-    ```
+```bash
+./scripts/ark-dev.sh setup-everything
+```
 
-2.  **Start the services**
-    This will start `bitcoind`, `aspd`, and `bark` in the background.
+This single command will:
+- Start all Docker services (bitcoind, captaind, postgres, cln, lnd, bark, noah-server)
+- Create and fund a Bitcoin Core wallet
+- Generate 150 blocks
+- Fund the Ark server with 1 BTC
+- Create a bark wallet
+- Fund LND with 0.1 BTC
+- Open a Lightning channel between LND and CLN (1M sats, 900k pushed to CLN)
+
+**Manual Setup (Step by Step):**
+
+1.  **Start all services**
 
     ```bash
     ./scripts/ark-dev.sh up
     ```
 
-3.  **Create and fund wallets**
-    - Create a Bitcoin Core wallet: `./scripts/ark-dev.sh create-wallet`
-    - Generate blocks to fund it: `./scripts/ark-dev.sh generate 101`
-    - Create a bark wallet: `./scripts/ark-dev.sh create-bark-wallet`
-    - Fund the ASPD: `./scripts/ark-dev.sh fund-aspd 1`
-    - For interacting bark wallet: `./scripts/ark-dev.sh bark`
-    - For interacting with ASPD RPC: `./scripts/ark-dev.sh aspd`
-
-4.  **Stop the services**
-
+2.  **Create and fund wallets**
     ```bash
-    # Stop services
-    ./scripts/ark-dev.sh stop
-
-    # Stop and delete volumes
-    ./scripts/ark-dev.sh down
+    # Create a Bitcoin Core wallet
+    ./scripts/ark-dev.sh create-wallet
+    
+    # Generate blocks to fund it
+    ./scripts/ark-dev.sh generate 150
+    
+    # Fund the Ark server
+    ./scripts/ark-dev.sh fund-aspd 1
+    
+    # Create a bark wallet
+    ./scripts/ark-dev.sh create-bark-wallet
     ```
+
+3.  **Setup Lightning channels (optional)**
+    ```bash
+    ./scripts/ark-dev.sh setup-lightning-channels
+    ```
+
+**Managing Services:**
+
+```bash
+# Stop services (keeps data)
+./scripts/ark-dev.sh stop
+
+# Stop and delete all data
+./scripts/ark-dev.sh down
+```
+
+**Useful Commands:**
+
+- Interact with bark wallet: `./scripts/ark-dev.sh bark <command>`
+- Interact with ASPD RPC: `./scripts/ark-dev.sh aspd <command>`
+- Use bitcoin-cli: `./scripts/ark-dev.sh bcli <command>`
+- Use lncli: `./scripts/ark-dev.sh lncli <command>`
+- Use lightning-cli (CLN): `./scripts/ark-dev.sh cln <command>`
+- Generate blocks: `./scripts/ark-dev.sh generate <num_blocks>`
+- Send to address: `./scripts/ark-dev.sh send-to <address> <amount>`
+
+**Service Endpoints:**
+
+- Bitcoin Core RPC: `http://localhost:18443`
+- Ark Server (captaind): `http://localhost:3535`
+- Noah Server: `http://localhost:3000`
+- Noah Server Health: `http://localhost:3099/health`
+- PostgreSQL: `localhost:5432`
+- LND RPC: `localhost:10009` (P2P: `localhost:9735`)
+- CLN RPC: `localhost:9988` (P2P: `localhost:9736`)
 
 For more commands and details, run `./scripts/ark-dev.sh` without arguments.
 
