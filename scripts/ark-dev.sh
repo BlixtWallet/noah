@@ -6,37 +6,26 @@
 set -e
 
 # --- Configuration ---
-# This script assumes it lives one level above the 'bark' repo directory.
-# The 'setup' command will create this structure.
-REPO_DIR="bark"
-COMPOSE_FILE="$REPO_DIR/contrib/docker/docker-compose.yml"
+# This script uses the local docker-compose.yml file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 
 BITCOIND_SERVICE="bitcoind"
 ASPD_SERVICE="captaind"
 BARK_SERVICE="bark"
 CLN_SERVICE="cln"
-
-# LND Configuration
-LND_CONTAINER="lnd-regtest-dev"
-LND_IMAGE="lightninglabs/lnd:v0.19.3-beta"
-LND_VOLUME="lnd-data"
-LND_BITCOIND_HOST="host.docker.internal"
-LND_BITCOIND_RPCPORT="18443"
-LND_BITCOIND_RPCUSER="second"
-LND_BITCOIND_RPCPASS="ark"
+LND_SERVICE="lnd"
+NOAH_SERVER_SERVICE="noah-server"
 
 # Bitcoin Core wallet name to be used by this script
 WALLET_NAME="dev-wallet"
 
-# Bitcoin-cli options (matches the user/pass from the docker-compose.yml healthcheck)
+# Bitcoin-cli options (matches the user/pass from the docker-compose.yml)
 BITCOIN_CLI_OPTS="-regtest -rpcuser=second -rpcpassword=ark -rpcwallet=$WALLET_NAME"
-
-# Noah server configuration
-NOAH_SERVER_IMAGE="ghcr.io/blixtwallet/noah-server:latest"
-NOAH_SERVER_CONTAINER="noah-server-dev"
-NOAH_SERVER_CONFIG_DIR=".noah-server"
-NOAH_SERVER_CONFIG_FILE="$NOAH_SERVER_CONFIG_DIR/config.toml"
 # --- End Configuration ---
+    echo "SETUP:"
+    echo "  setup                      Clone the bark repo and checkout the correct version."
+    echo "  setup-everything           Run complete setup: setup, up, create-wallet, generate 150, fund-aspd 1, create-bark-wallet, start noah-server."
 
 
 # Helper function to avoid repeating the long docker-compose command
@@ -69,38 +58,11 @@ usage() {
     echo "  send-to <addr> <amt>       Send <amt> BTC from bitcoind to <addr> and mine 1 block."
     echo "  aspd <args...>             Execute a command on the running aspd container."
     echo "  bark <args...>             Execute a command on a new bark container."
-    echo "  create-noah-config         Create Noah server config file."
-    echo "  start-noah-server          Start the Noah server container."
-    echo "  stop-noah-server           Stop and remove the Noah server container."
-    echo "  start-lnd                  Start LND node in regtest mode."
-    echo "  stop-lnd                   Stop and remove LND container."
+    echo "  setup-lightning-channels   Fund LND and open channel from LND to CLN."
     echo "  lncli <args...>            Execute lncli commands on the running LND container."
     echo "  cln <args...>              Execute lightning-cli commands on the running CLN container."
 }
 
-# Clones the repository and checks out the correct tag.
-setup_environment() {
-    local repo_url="https://codeberg.org/ark-bitcoin/bark.git"
-    local repo_tag="bark-0.1.0-beta.1"
-
-    if ! command -v git &> /dev/null; then
-        echo "Error: 'git' is not installed. Please install it to continue." >&2
-        exit 1
-    fi
-
-    if [ -d "$REPO_DIR" ]; then
-        echo "✅ Directory '$REPO_DIR' already exists. Setup is likely complete."
-        echo "To re-run setup, please remove the '$REPO_DIR' directory first."
-        return
-    fi
-
-    echo "Cloning repository '$repo_url' into './$REPO_DIR'..."
-    git clone --branch "$repo_tag" "$repo_url" "$REPO_DIR"
-
-    dcr pull
-
-    echo "✅ Setup complete. You can now run management commands."
-}
 
 # Creates a new wallet in bitcoind if it doesn't already exist
 create_wallet() {
@@ -182,149 +144,95 @@ fund_aspd() {
     send_to_address "$aspd_address" "$amount"
 }
 
-# Creates a Noah server config file for regtest
-create_noah_server_config() {
-    echo "Creating Noah server config..."
+# Sets up Lightning Network channels between LND and CLN
+setup_lightning_channels() {
+    echo "⚡ Setting up Lightning Network channels..."
 
-    mkdir -p "$NOAH_SERVER_CONFIG_DIR"
-
-    cat > "$NOAH_SERVER_CONFIG_FILE" << 'EOF'
-# Noah Server Test Configuration (Regtest)
-host = "0.0.0.0"
-port = 3000
-private_port = 3099
-lnurl_domain = "localhost"
-turso_url = "file:local.db"
-turso_api_key = "test-api-key"
-expo_access_token = "test-expo-token"
-ark_server_url = "http://host.docker.internal:3535"
-server_network = "regtest"
-backup_cron = "every 24 hours"
-heartbeat_cron = "every 24 hours"
-deregistration_cron = "every 24 hours"
-maintenance_interval_rounds = 1
-s3_bucket_name = "test-bucket"
-minimum_app_version = "0.0.1"
-EOF
-
-    echo "✅ Noah server config created at $NOAH_SERVER_CONFIG_FILE"
-}
-
-# Starts the Noah server container
-start_noah_server() {
-    echo "🚀 Starting Noah server..."
-
-    # Stop existing container if running
-    if docker ps -a --format '{{.Names}}' | grep -q "^${NOAH_SERVER_CONTAINER}$"; then
-        echo "Removing existing Noah server container..."
-        docker rm -f "$NOAH_SERVER_CONTAINER" > /dev/null 2>&1 || true
+    if ! command -v jq &> /dev/null; then
+        echo "Error: 'jq' is not installed. Please install it to continue." >&2
+        exit 1
     fi
 
-    # Create config if it doesn't exist
-    if [ ! -f "$NOAH_SERVER_CONFIG_FILE" ]; then
-        create_noah_server_config
-    fi
-
-    # Pull latest image
-    echo "Pulling Noah server image..."
-    docker pull "$NOAH_SERVER_IMAGE"
-
-    # Start container
-    echo "Starting Noah server container..."
-    docker run -d \
-        --name "$NOAH_SERVER_CONTAINER" \
-        -p 3000:3000 \
-        -p 3099:3099 \
-        --add-host=host.docker.internal:host-gateway \
-        -v "$(pwd)/$NOAH_SERVER_CONFIG_FILE:/etc/server/config.toml:ro" \
-        "$NOAH_SERVER_IMAGE"
-
-    echo "✅ Noah server started at http://localhost:3000"
-    echo "   Health check: http://localhost:3099/health"
-}
-
-# Stops and removes the Noah server container
-stop_noah_server() {
-    if docker ps -a --format '{{.Names}}' | grep -q "^${NOAH_SERVER_CONTAINER}$"; then
-        echo "🛑 Stopping Noah server..."
-        docker rm -f "$NOAH_SERVER_CONTAINER" > /dev/null 2>&1 || true
-        echo "✅ Noah server stopped."
-    else
-        echo "ℹ️  Noah server is not running."
-    fi
-}
-
-# Starts the LND container in regtest mode
-start_lnd() {
-    echo "🚀 Starting LND node in regtest mode..."
-
-    # Stop existing container if running
-    if docker ps -a --format '{{.Names}}' | grep -q "^${LND_CONTAINER}$"; then
-        echo "Removing existing LND container..."
-        docker rm -f "$LND_CONTAINER" > /dev/null 2>&1 || true
-    fi
-
-    # Pull latest image
-    echo "Pulling LND image..."
-    docker pull "$LND_IMAGE"
-
-    # Start container
-    echo "Starting LND container..."
-    docker run -d \
-        --name "$LND_CONTAINER" \
-        -p 9735:9735 \
-        -p 10009:10009 \
-        --add-host=host.docker.internal:host-gateway \
-        -v "$LND_VOLUME:/root/.lnd" \
-        "$LND_IMAGE" \
-        --bitcoin.regtest \
-        --bitcoin.node=bitcoind \
-        --bitcoind.rpcpolling \
-        --bitcoind.rpchost="$LND_BITCOIND_HOST:$LND_BITCOIND_RPCPORT" \
-        --bitcoind.rpcuser="$LND_BITCOIND_RPCUSER" \
-        --bitcoind.rpcpass="$LND_BITCOIND_RPCPASS" \
-        --debuglevel=info \
-        --noseedbackup
-
-    echo "⏳ Waiting for LND to start..."
-    sleep 5
-
-    echo "✅ LND started successfully"
-    echo "   RPC Port: 10009"
-    echo "   P2P Port: 9735"
     echo ""
-    echo "Note: Update the placeholder flags in the script:"
-    echo "  - <BITCOIND_RPC_PORT>"
-    echo "  - <BITCOIND_RPC_USER>"
-    echo "  - <BITCOIND_RPC_PASS>"
-    echo "  - <ZMQ_RAWBLOCK_PORT>"
-    echo "  - <ZMQ_RAWTX_PORT>"
-}
+    echo "⏳ Waiting for LND to fully start..."
+    local retries=20
+    local count=0
+    until dcr exec "$LND_SERVICE" lncli --network=regtest getinfo &> /dev/null; do
+        count=$((count+1))
+        if [ $count -ge $retries ]; then
+            echo "Error: LND did not start within the expected time." >&2
+            exit 1
+        fi
+        echo "   (waiting for lnd to be ready...)"
+        sleep 2
+    done
 
-# Stops and removes the LND container
-stop_lnd() {
-    if docker ps -a --format '{{.Names}}' | grep -q "^${LND_CONTAINER}$"; then
-        echo "🛑 Stopping LND node..."
-        docker rm -f "$LND_CONTAINER" > /dev/null 2>&1 || true
-        echo "✅ LND stopped."
-    else
-        echo "ℹ️  LND is not running."
-    fi
+    echo ""
+    echo "🔍 Getting LND node pubkey..."
+    local lnd_pubkey
+    lnd_pubkey=$(dcr exec "$LND_SERVICE" lncli --network=regtest getinfo | jq -r '.identity_pubkey')
+    echo "   LND pubkey: $lnd_pubkey"
+
+    echo ""
+    echo "🔍 Getting CLN node pubkey..."
+    local cln_pubkey
+    cln_pubkey=$(dcr exec "$CLN_SERVICE" lightning-cli --regtest getinfo | jq -r '.id')
+    echo "   CLN pubkey: $cln_pubkey"
+
+    echo ""
+    echo "💰 Generating new address on LND node..."
+    local lnd_address
+    lnd_address=$(dcr exec "$LND_SERVICE" lncli --network=regtest newaddress p2tr | jq -r '.address')
+    echo "   Address: $lnd_address"
+
+    echo ""
+    echo "💸 Sending 0.1 BTC to LND address..."
+    send_to_address "$lnd_address" "0.1"
+
+    echo ""
+    echo "⛏️  Generating 10 blocks..."
+    generate_blocks 10
+
+    echo ""
+    echo "⏳ Waiting for LND to sync to chain..."
+    local sync_retries=30
+    local sync_count=0
+    until dcr exec "$LND_SERVICE" lncli --network=regtest getinfo | jq -e '.synced_to_chain == true' &> /dev/null; do
+        sync_count=$((sync_count+1))
+        if [ $sync_count -ge $sync_retries ]; then
+            echo "Error: LND did not sync to chain within the expected time." >&2
+            exit 1
+        fi
+        echo "   (waiting for lnd to sync...)"
+        sleep 2
+    done
+    echo "   ✅ LND is synced to chain"
+
+    echo ""
+    echo "🔗 Connecting LND to CLN..."
+    dcr exec "$CLN_SERVICE" lightning-cli --regtest connect "$lnd_pubkey@lnd:9735" || echo "   (Already connected or connection failed, continuing...)"
+
+    echo ""
+    echo "⚡ Opening channel from LND to CLN (1,000,000 sats with 900,000 push amount)..."
+    dcr exec "$LND_SERVICE" lncli --network=regtest openchannel "$cln_pubkey" 1000000 900000
+
+    echo ""
+    echo "⛏️  Generating 10 more blocks to confirm channel..."
+    generate_blocks 10
+
+    echo "✅ Lightning Network channels setup complete!"
 }
 
 # Runs the complete setup sequence
 setup_everything() {
     echo "🚀 Running complete setup sequence..."
 
-    setup_environment
-
-    echo ""
-    echo "🚀 Starting Ark services..."
+    echo "🚀 Starting all services..."
     dcr up -d
 
     echo ""
     echo "⏳ Waiting for services to be ready..."
-    sleep 10
+    sleep 15
 
     echo ""
     create_wallet
@@ -339,10 +247,7 @@ setup_everything() {
     create_bark_wallet
 
     echo ""
-    start_noah_server
-
-    echo ""
-    start_lnd
+    setup_lightning_channels
 
     echo ""
     echo "🎉 Complete setup finished successfully!"
@@ -354,6 +259,8 @@ setup_everything() {
     echo "  - Noah Server: http://localhost:3000"
     echo "  - Noah Server Health: http://localhost:3099/health"
     echo "  - LND (Lightning): RPC at localhost:10009, P2P at localhost:9735"
+    echo "  - CLN (Core Lightning): RPC at localhost:9988, P2P at localhost:9736"
+    echo "  - Lightning Channel: LND <-> CLN (1M sats with 900k pushed to CLN)"
 }
 
 # --- Main Logic ---
@@ -365,68 +272,32 @@ if [[ -z "$COMMAND" ]]; then
     exit 1
 fi
 
-# For any command other than 'setup' or 'setup-everything', ensure the environment is actually set up.
-if [[ "$COMMAND" != "setup" && "$COMMAND" != "setup-everything" && ! -f "$COMPOSE_FILE" ]]; then
-    echo "Error: Environment not found at '$COMPOSE_FILE'." >&2
-    echo "Please run './ark-dev.sh setup' first." >&2
+# Ensure the docker-compose file exists
+if [[ "$COMMAND" != "setup-everything" && ! -f "$COMPOSE_FILE" ]]; then
+    echo "Error: docker-compose.yml not found at '$COMPOSE_FILE'." >&2
     exit 1
 fi
 
 shift
 
 case "$COMMAND" in
-    setup)
-        setup_environment
-        ;;
-
     setup-everything)
         setup_everything
         ;;
 
     up)
-        echo "🚀 Starting Ark services in the background..."
+        echo "🚀 Starting all services in the background..."
         dcr up -d "$@"
-        echo ""
-        start_lnd
         ;;
 
     stop)
-        echo "🛑 Stopping Ark services..."
+        echo "🛑 Stopping all services..."
         dcr stop "$@"
-        stop_lnd
         ;;
 
     down)
-        echo "🛑 Stopping and removing Ark services..."
+        echo "🛑 Stopping and removing all services..."
         dcr down "$@" --volumes
-        stop_noah_server
-        stop_lnd
-
-        if docker volume ls -q | grep -q "^${LND_VOLUME}$"; then
-            echo "🗑️  Removing LND volume..."
-            docker volume rm "$LND_VOLUME"
-            echo "✅ LND volume removed."
-        fi
-        ;;
-
-    start-noah-server)
-        start_noah_server
-        ;;
-
-    stop-noah-server)
-        stop_noah_server
-        ;;
-
-    start-lnd)
-        start_lnd
-        ;;
-
-    stop-lnd)
-        stop_lnd
-        ;;
-
-    create-noah-config)
-        create_noah_server_config
         ;;
 
     create-wallet)
@@ -471,9 +342,13 @@ case "$COMMAND" in
         dcr exec "$BITCOIND_SERVICE" bitcoin-cli $BITCOIN_CLI_OPTS "$@"
         ;;
 
+    setup-lightning-channels)
+        setup_lightning_channels
+        ;;
+
     lncli)
         echo "Running lncli command: $@"
-        docker exec "$LND_CONTAINER" lncli --network=regtest "$@"
+        dcr exec "$LND_SERVICE" lncli --network=regtest "$@"
         ;;
 
     cln)
@@ -489,6 +364,6 @@ case "$COMMAND" in
 esac
 
 # Don't print success message for passthrough or lifecycle commands
-if [[ "$COMMAND" != "aspd" && "$COMMAND" != "bark" && "$COMMAND" != "setup" && "$COMMAND" != "up" && "$COMMAND" != "down" ]]; then
+if [[ "$COMMAND" != "aspd" && "$COMMAND" != "bark" && "$COMMAND" != "up" && "$COMMAND" != "down" ]]; then
     echo "🎉 Script finished successfully."
 fi

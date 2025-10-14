@@ -1,0 +1,35 @@
+data_dir = "/data/captaind"
+network = "regtest"
+
+[bitcoind]
+url = "bitcoind:18443"
+rpc_user = "second"
+rpc_pass = "ark"
+
+[postgres]
+host = "postgres"
+port = 5432
+name = "bark-server-db"
+user = "postgres"
+password = "postgres"
+
+[rpc]
+public_address = "0.0.0.0:3535"
+
+[[cln_array]]
+uri = "https://cln:9736"
+priority = 1
+server_cert_path = "/data/cln/regtest/ca.pem"
+client_cert_path = "/data/cln/regtest/client.pem"
+client_key_path = "/data/cln/regtest/client-key.pem"
+hodl_invoice.uri = "https://cln:9988"
+hodl_invoice.server_cert_path = "/data/cln/regtest/hold/ca.pem"
+hodl_invoice.client_cert_path = "/data/cln/regtest/hold/client.pem"
+hodl_invoice.client_key_path = "/data/cln/regtest/hold/client-key.pem"
+
+[vtxopool]
+vtxo_targets = [
+    "100000 sat:10",
+    "50000 sat:20",
+    "10000 sat:30",
+]

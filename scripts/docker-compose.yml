@@ -1,0 +1,136 @@
+services:
+  bitcoind:
+    image: bitcoin/bitcoin:29
+    command:
+      [
+        "bitcoind",
+        "-regtest",
+        "-printtoconsole",
+        "-rpcbind=0.0.0.0",
+        "-rpcallowip=0.0.0.0/0",
+        "-fallbackfee=0.00001",
+        "-server",
+        "-txindex",
+        "-blockfilterindex",
+        "-coinstatsindex",
+        "-rpcuser=second",
+        "-rpcpassword=ark",
+      ]
+    volumes:
+      - bitcoind:/home/bitcoin/.bitcoin
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./contrib/config/
+          target: /home/bitcoin/bitcoin.conf
+    ports:
+      - "18443:18443"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bitcoin-cli -regtest -rpcuser=second -rpcpassword=ark -rpcconnect=127.0.0.1 getblockchaininfo || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bark-server-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  cln:
+    image: niteshbalusu/bark-cln:latest
+    restart: on-failure
+    entrypoint: ["/usr/local/bin/cln_start.sh"]
+    volumes:
+      - bitcoind:/root/.bitcoin
+      - cln:/root/.lightning
+    ports:
+      - "9988:9988"
+      - "9736:9736"
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+
+  captaind:
+    image: niteshbalusu/captaind:nightly-2025-10-13
+    volumes:
+      - captaind:/data/captaind
+      - ./captaind.toml:/data/captaind/captaind.toml
+      - postgres:/var/lib/postgresql/data
+      - cln:/data/cln
+    ports:
+      - "3535:3535"
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+      cln:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  bark:
+    image: niteshbalusu/bark:nightly-2025-10-14
+    volumes:
+      - bark:/root
+    depends_on:
+      captaind:
+        condition: service_started
+  lnd:
+    image: lightninglabs/lnd:v0.19.3-beta
+    command:
+      [
+        "--bitcoin.regtest",
+        "--bitcoin.node=bitcoind",
+        "--bitcoind.rpcpolling",
+        "--bitcoind.rpchost=bitcoind:18443",
+        "--bitcoind.rpcuser=second",
+        "--bitcoind.rpcpass=ark",
+        "--debuglevel=info",
+        "--noseedbackup",
+      ]
+    volumes:
+      - lnd:/root/.lnd
+      - bitcoind:/root/.bitcoin
+    ports:
+      - "9735:9735"
+      - "10009:10009"
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+
+  noah-server:
+    image: ghcr.io/blixtwallet/noah-server:latest
+    volumes:
+      - ./server-config.toml:/etc/server/config.toml:ro
+    ports:
+      - "3000:3000"
+      - "3099:3099"
+    depends_on:
+      captaind:
+        condition: service_started
+
+volumes:
+  captaind:
+  bark:
+  cln:
+  bitcoind:
+  postgres:
+  lnd:
+
+networks:
+  bark:
+    external: true

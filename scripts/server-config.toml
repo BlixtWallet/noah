@@ -1,0 +1,16 @@
+# Noah Server Configuration (Regtest - Docker Compose)
+host = "0.0.0.0"
+port = 3000
+private_port = 3099
+lnurl_domain = "localhost"
+turso_url = "file:local.db"
+turso_api_key = "test-api-key"
+expo_access_token = "test-expo-token"
+ark_server_url = "http://captaind:3535"
+server_network = "regtest"
+backup_cron = "every 24 hours"
+heartbeat_cron = "every 24 hours"
+deregistration_cron = "every 24 hours"
+maintenance_interval_rounds = 1
+s3_bucket_name = "test-bucket"
+minimum_app_version = "0.0.1"
