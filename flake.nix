@@ -116,18 +116,6 @@
 
       };
 
-      bark-wrapper =
-        pkgs:
-        pkgs.stdenv.mkDerivation {
-          name = "bark-wrapper";
-          src = ./.;
-          buildInputs = [ pkgs.makeWrapper ];
-          installPhase = ''
-            mkdir -p $out/bin
-            makeWrapper $src/scripts/ark-dev.sh $out/bin/bark
-          '';
-        };
-
       # System-specific shell configuration
       mkShellFor =
         system:
@@ -141,7 +129,6 @@
             grpcurl
             just
             rust-analyzer
-            (bark-wrapper pkgs)
           ];
 
           darwinPackages = with pkgs; [

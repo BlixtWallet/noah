@@ -97,3 +97,16 @@ check-all: check server-check
 # Run tests
 test:
     cargo test
+
+# Local regtest environment commands
+setup-everything:
+    ./scripts/ark-dev.sh setup-everything
+
+up:
+    ./scripts/ark-dev.sh up
+
+down:
+    ./scripts/ark-dev.sh down
+
+stop:
+    ./scripts/ark-dev.sh stop

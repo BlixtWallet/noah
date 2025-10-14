@@ -67,16 +67,16 @@ This project uses [Nix](https://nixos.org/) to provide a reproducible developmen
     ```
 
 3.  **Install JavaScript Dependencies**
-    Once the Nix shell is active, you can install the project's dependencies using Bun.
+    Once the Nix shell is active, you can install the project's dependencies.
 
     ```bash
-    bun install
+    just install
     ```
 
 4.  **Install iOS Dependencies (for macOS users)**
     This step links the native iOS libraries.
     ```bash
-    bun client ios:prebuild
+    just ios-prebuild
     ```
 
 Now the project is ready to run.
@@ -99,12 +99,12 @@ Once your environment is set up, follow these steps:
 2.  **Install JavaScript Dependencies**
 
     ```bash
-    bun install
+    just install
     ```
 
 3.  **Install iOS Dependencies (for macOS users)**
     ```bash
-    bun client ios:prebuild
+    just ios-prebuild
     ```
 
 ---
@@ -133,7 +133,7 @@ The [`scripts/ark-dev.sh`](./scripts/ark-dev.sh) script helps manage this enviro
 Run the automated setup script that will start all services, create wallets, mine blocks, fund the Ark server, and set up Lightning channels:
 
 ```bash
-./scripts/ark-dev.sh setup-everything
+just setup-everything
 ```
 
 This single command will:
@@ -150,7 +150,7 @@ This single command will:
 1.  **Start all services**
 
     ```bash
-    ./scripts/ark-dev.sh up
+    just up
     ```
 
 2.  **Create and fund wallets**
@@ -177,10 +177,10 @@ This single command will:
 
 ```bash
 # Stop services (keeps data)
-./scripts/ark-dev.sh stop
+just stop
 
 # Stop and delete all data
-./scripts/ark-dev.sh down
+just down
 ```
 
 **Useful Commands:**
@@ -209,20 +209,38 @@ For more commands and details, run `./scripts/ark-dev.sh` without arguments.
 
 ## 🏃 Running the Application
 
-This project uses various scripts to run the application in different environments (Mainnet, Signet, Regtest).
+This project uses [just](https://github.com/casey/just) commands to run the application in different environments (Mainnet, Signet, Regtest).
 
-Please see the `scripts` section in the [`package.json`](./package.json) file for a full list of available commands.
+For a full list of available commands, run:
+
+```bash
+just
+```
 
 **Example (running on Android Regtest):**
 
 ```bash
-bun client android:regtest:debug
+just android
+# or
+just android-regtest
 ```
 
 **Example (running on iOS Regtest):**
 
 ```bash
-bun client ios:regtest:debug
+just ios
+# or
+just ios-regtest
+```
+
+**Other useful commands:**
+
+```bash
+just check              # Run type checking and linting
+just ios-prebuild       # Install iOS dependencies
+just clean-all          # Clean all build artifacts
+just server             # Run server with hot reload (bacon)
+just test               # Run server tests
 ```
 
 ## 📡 Running the server
@@ -274,9 +292,25 @@ The server uses a TOML configuration file instead of environment variables.
 
 ## 📦 Building for Production
 
-You can create production-ready application binaries using the build scripts.
+You can create production-ready application binaries using just commands:
 
-Please see the `scripts` section in the [`package.json`](./package.json) file for commands starting with `build:`.
+**Android Production Builds:**
+
+```bash
+just android-regtest-release
+just android-signet-release
+just android-mainnet-release
+```
+
+**iOS Production Builds:**
+
+```bash
+just ios-regtest-release
+just ios-signet-release
+just ios-mainnet-release
+```
+
+For a complete list of build commands, run `just` to see all available recipes.
 
 **Note on Code Signing:** For production builds, you will need to configure your own signing keys. Refer to the official React Native and Expo documentation for code signing on [Android](https://reactnative.dev/docs/signed-apk-android) and iOS.
 
