@@ -110,3 +110,39 @@ down:
 
 stop:
     ./scripts/ark-dev.sh stop
+
+# Ark dev shortcuts - pass arguments directly
+bark *args:
+    ./scripts/ark-dev.sh bark {{args}}
+
+aspd *args:
+    ./scripts/ark-dev.sh aspd {{args}}
+
+bcli *args:
+    ./scripts/ark-dev.sh bcli {{args}}
+
+lncli *args:
+    ./scripts/ark-dev.sh lncli {{args}}
+
+cln *args:
+    ./scripts/ark-dev.sh cln {{args}}
+
+# Bitcoin commands
+create-wallet:
+    ./scripts/ark-dev.sh create-wallet
+
+create-bark-wallet:
+    ./scripts/ark-dev.sh create-bark-wallet
+
+generate blocks="101":
+    ./scripts/ark-dev.sh generate {{blocks}}
+
+fund-aspd amount:
+    ./scripts/ark-dev.sh fund-aspd {{amount}}
+
+send-to address amount:
+    ./scripts/ark-dev.sh send-to {{address}} {{amount}}
+
+# Lightning commands
+setup-lightning:
+    ./scripts/ark-dev.sh setup-lightning-channels

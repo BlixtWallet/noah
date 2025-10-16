@@ -41,7 +41,7 @@ export async function submitInvoice(transaction_id: string, k1: string, amountMs
     log.e("Failed to create bolt11 invoice", [invoiceResult.error]);
     return;
   }
-  const invoice = invoiceResult.value;
+  const invoice = invoiceResult.value.payment_request;
 
   const responseResult = await submitInvoiceApi({
     invoice,

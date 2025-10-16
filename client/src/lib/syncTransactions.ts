@@ -9,7 +9,7 @@ import { movements } from "./paymentsApi";
 const log = logger("useSyncManager");
 
 export const syncArkReceives = async () => {
-  const movementsResult = await movements(0, 100);
+  const movementsResult = await movements();
 
   if (movementsResult.isErr()) {
     log.e("Failed to fetch movements:", [movementsResult.error]);

@@ -15,7 +15,7 @@ import {
   type OnchainPaymentResult,
   boardAllArk,
   offboardAllArk,
-  finishLightningReceive,
+  checkAndClaimLnReceive,
 } from "../lib/paymentsApi";
 import { queryClient } from "~/queryClient";
 import { addTransaction } from "~/lib/transactionsDb";
@@ -230,20 +230,33 @@ export function useSend(destinationType: DestinationTypes) {
   });
 }
 
-export function useFinishLightningReceive() {
+export function useCheckAndClaimLnReceive() {
   return useMutation({
-    mutationFn: async ({ bolt11, amountSat }: { bolt11: string; amountSat: number }) => {
-      const result = await finishLightningReceive(bolt11);
-      if (result.isErr()) {
-        throw result.error;
+    mutationFn: async ({ paymentHash, amountSat }: { paymentHash: string; amountSat: number }) => {
+      const maxAttempts = 20;
+      const intervalMs = 1000;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        const result = await checkAndClaimLnReceive(paymentHash);
+
+        if (result.isOk()) {
+          return { amountSat };
+        }
+
+        log.w(`Attempt ${i + 1}/${maxAttempts} failed:`, [result.error.message]);
+
+        if (i < maxAttempts - 1) {
+          await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        }
       }
-      return { amountSat };
+
+      throw new Error(`Failed to claim lightning receive after ${maxAttempts} attempts`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
     onError: (error: Error) => {
-      log.e("Failed to finish lightning receive:", [error.message]);
+      log.e("Failed to claim lightning receive:", [error.message]);
     },
   });
 }

@@ -15,9 +15,11 @@ import {
   sendLightningPayment as sendLightningPaymentNitro,
   onchainSend as onchainSendNitro,
   movements as movementsNitro,
-  finishLightningReceive as finishLightningReceiveNitro,
+  checkAndClaimLnReceive as checkAndClaimLnReceiveNitro,
+  checkAndClaimAllOpenLnReceives as checkAndClaimAllOpenLnReceivesNitro,
   NewAddressResult,
   BarkMovement,
+  Bolt11Invoice,
 } from "react-native-nitro-ark";
 import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
@@ -50,7 +52,7 @@ export const onchainAddress = async (): Promise<Result<string, Error>> => {
   );
 };
 
-export const bolt11Invoice = async (amountSat: number): Promise<Result<string, Error>> => {
+export const bolt11Invoice = async (amountSat: number): Promise<Result<Bolt11Invoice, Error>> => {
   return ResultAsync.fromPromise(
     bolt11InvoiceNitro(amountSat),
     (error) =>
@@ -158,11 +160,8 @@ export const registerAllConfirmedBoards = async (): Promise<Result<void, Error>>
   });
 };
 
-export const movements = async (
-  pageIndex: number,
-  pageSize: number,
-): Promise<Result<BarkMovement[], Error>> => {
-  return ResultAsync.fromPromise(movementsNitro(pageIndex, pageSize), (error) => {
+export const movements = async (): Promise<Result<BarkMovement[], Error>> => {
+  return ResultAsync.fromPromise(movementsNitro(), (error) => {
     const e = new Error(
       `Failed to get movements: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -171,10 +170,20 @@ export const movements = async (
   });
 };
 
-export const finishLightningReceive = async (bolt11: string): Promise<Result<void, Error>> => {
-  return ResultAsync.fromPromise(finishLightningReceiveNitro(bolt11), (error) => {
+export const checkAndClaimLnReceive = async (paymentHash: string): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(checkAndClaimLnReceiveNitro(paymentHash, false), (error) => {
     const e = new Error(
-      `Failed to finish lightning receive: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to check and claim lightning receive: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    captureException(e);
+    return e;
+  });
+};
+
+export const checkAndClaimAllOpenLnReceives = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(checkAndClaimAllOpenLnReceivesNitro(false), (error) => {
+    const e = new Error(
+      `Failed to check and claim all open lightning receives: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;

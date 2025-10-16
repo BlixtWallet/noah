@@ -16,7 +16,7 @@ import {
   useGenerateLightningInvoice,
   useGenerateOnchainAddress,
   useGenerateOffchainAddress,
-  useFinishLightningReceive,
+  useCheckAndClaimLnReceive,
 } from "../hooks/usePayments";
 import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
@@ -103,25 +103,25 @@ const ReceiveScreen = () => {
   } = useGenerateLightningInvoice();
 
   const {
-    mutate: finishLightningReceive,
+    mutate: checkAndClaimLnReceive,
     isSuccess: isReceiveSuccess,
     data: receiveData,
-  } = useFinishLightningReceive();
+  } = useCheckAndClaimLnReceive();
 
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
 
   useEffect(() => {
     let uri = "";
 
-    if (onchainAddress && vtxoPubkey && lightningInvoice) {
+    if (onchainAddress && vtxoPubkey && lightningInvoice?.payment_request) {
       uri = `bitcoin:${onchainAddress.toUpperCase()}`;
       const params = [];
 
       if (vtxoPubkey) {
         params.push(`ark=${vtxoPubkey.toUpperCase()}`);
       }
-      if (lightningInvoice) {
-        params.push(`lightning=${lightningInvoice.toUpperCase()}`);
+      if (lightningInvoice?.payment_request) {
+        params.push(`lightning=${lightningInvoice.payment_request.toUpperCase()}`);
       }
       if (amountSat >= minAmount) {
         const amountInBtc = satsToBtc(amountSat);
@@ -138,9 +138,9 @@ const ReceiveScreen = () => {
 
   useEffect(() => {
     if (lightningInvoice && amountSat) {
-      finishLightningReceive({ bolt11: lightningInvoice, amountSat });
+      checkAndClaimLnReceive({ paymentHash: lightningInvoice.payment_hash, amountSat });
     }
-  }, [lightningInvoice, amountSat, finishLightningReceive]);
+  }, [lightningInvoice, amountSat, checkAndClaimLnReceive]);
 
   useEffect(() => {
     if (isReceiveSuccess && receiveData) {
@@ -303,8 +303,10 @@ const ReceiveScreen = () => {
                   {lightningInvoice && (
                     <CopyableDetail
                       label="Lightning"
-                      value={lightningInvoice}
-                      onCopy={() => handleCopyToClipboard(lightningInvoice, "lightning")}
+                      value={lightningInvoice.payment_request}
+                      onCopy={() =>
+                        handleCopyToClipboard(lightningInvoice.payment_request, "lightning")
+                      }
                       isCopied={isCopied("lightning")}
                     />
                   )}

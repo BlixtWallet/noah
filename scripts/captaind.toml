@@ -1,5 +1,76 @@
 data_dir = "/data/captaind"
 network = "regtest"
+vtxo_lifetime = 4320
+vtxo_exit_delta = 12
+max_arkoor_depth = 5
+required_board_confirmations = 3
+round_tx_untrusted_input_confirmations = 2
+rpc_rich_errors = true
+txindex_check_interval = "30s"
+forfeit_watcher_min_balance = "1 btc"
+transaction_rebroadcast_interval = "1m"
+
+##########
+# ROUNDS #
+##########
+
+# The interval to start new rounds
+round_interval = "10s"
+
+# The time users have to submit payments when a round starts
+round_submit_time = "2s"
+
+# The time users have to provide VTXO tree and forfeit tx signatures
+round_sign_time = "2s"
+
+# The amount of round cosign nonces we require users to provide
+#
+# This effectively caps the maximum number of leaf VTXOs in a round.
+nb_round_nonces = 64
+
+# The feerate we set for round funding transactions
+round_tx_feerate = "2500sat/kwu"
+
+#############
+# LIGHTNING #
+#############
+
+# FIXME Expiry delta of HTLCs
+htlc_expiry_delta = 6
+
+# Interval to retry connecting to disconnected CLN nodes
+cln_reconnect_interval = "10s"
+
+# Interval to double check on pending invoices
+invoice_check_interval = "3s"
+
+# Minimum interval to keep between two consecutive checks of an invoice
+invoice_recheck_delay = "2s"
+
+# FIXME
+invoice_check_base_delay = "10s"
+
+# FIXME
+invoice_check_max_delay = "10m"
+
+# FIXME
+invoice_poll_interval = "30s"
+
+# Timeout on the HTLC subscription RPC call
+htlc_subscription_timeout = "10m"
+
+################
+# VTXO SWEEPER #
+################
+
+[vtxo_sweeper]
+enabled = true
+# Fallback feerate to use for sweep txs
+sweep_tx_fallback_feerate = "2500sat/kwu"
+# Interval to check if sweeps can be made
+round_sweep_interval = "1h"
+# Minimum total sweep value to merit a sweep tx
+sweep_threshold = 1000000
 
 [bitcoind]
 url = "bitcoind:18443"
@@ -12,9 +83,14 @@ port = 5432
 name = "bark-server-db"
 user = "postgres"
 password = "postgres"
+max_connections = 10
 
 [rpc]
 public_address = "0.0.0.0:3535"
+# Listen address for the private admin gRPC API
+admin_address = "127.0.0.1:3536"
+# Listen address for the integration manager gRPC API
+integration_address = "127.0.0.1:3537"
 
 [[cln_array]]
 uri = "https://cln:9736"
@@ -27,9 +103,29 @@ hodl_invoice.server_cert_path = "/data/cln/regtest/hold/ca.pem"
 hodl_invoice.client_cert_path = "/data/cln/regtest/hold/client.pem"
 hodl_invoice.client_key_path = "/data/cln/regtest/hold/client-key.pem"
 
+[forfeit_watcher]
+enabled = true
+# Fallback feerate to use for forfeit claims
+claim_fallback_feerate = "6250sat/kwu"
+# Interval to check of forfeited exits have been broadcast
+wake_interval = "1m"
+
 [vtxopool]
-vtxo_targets = [
-    "100000 sat:10",
-    "50000 sat:20",
-    "10000 sat:30",
-]
+# The target set of VTXOs to maintain in the pool
+# Format: "<amount>:<count>", f.e. "1000sat:50"
+vtxo_targets = [ "1000sat:10", "10000sat:10" ]
+# At what % of the target should new VTXOs be issued
+#
+# Once one of the target amounts falls below target, all amounts
+# will be replenished.
+vtxo_target_issue_threshold = 80
+# The lifetime in blocks of the VTXOs in the pool
+vtxo_lifetime = 432
+# Time in blocks before the expiry to no longer use VTXOs
+vtxo_pre_expiry = 144
+# Maximum depth for pool VTXOs
+vtxo_max_arkoor_depth = 3
+# Fallback feerate for VTXO pool issuance txs
+issue_tx_fallback_feerate = "250sat/kwu"
+# The interval at which to check if an issuance should be made
+issue_interval = "1m"

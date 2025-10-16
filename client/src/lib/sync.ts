@@ -3,7 +3,7 @@ import { useWalletStore } from "~/store/walletStore";
 import { onchainSync, sync } from "~/lib/walletApi";
 import { syncArkReceives } from "~/lib/syncTransactions";
 import logger from "~/lib/log";
-import { registerAllConfirmedBoards } from "./paymentsApi";
+import { checkAndClaimAllOpenLnReceives, registerAllConfirmedBoards } from "./paymentsApi";
 
 const log = logger("sync");
 
@@ -16,7 +16,12 @@ export const syncWallet = async () => {
 
   log.i("syncWallet");
 
-  const results = await Promise.allSettled([sync(), onchainSync(), registerAllConfirmedBoards()]);
+  const results = await Promise.allSettled([
+    sync(),
+    onchainSync(),
+    registerAllConfirmedBoards(),
+    checkAndClaimAllOpenLnReceives(),
+  ]);
   results.forEach((result) => {
     if (result.status === "rejected") {
       log.e("background sync failed:", [result.reason]);
