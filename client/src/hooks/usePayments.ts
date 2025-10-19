@@ -237,7 +237,7 @@ export function useCheckAndClaimLnReceive() {
       const intervalMs = 1000;
 
       for (let i = 0; i < maxAttempts; i++) {
-        const result = await checkAndClaimLnReceive(paymentHash);
+        const result = await checkAndClaimLnReceive(paymentHash, false);
 
         if (result.isOk()) {
           return { amountSat };

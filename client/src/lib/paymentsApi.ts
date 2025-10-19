@@ -170,8 +170,11 @@ export const movements = async (): Promise<Result<BarkMovement[], Error>> => {
   });
 };
 
-export const checkAndClaimLnReceive = async (paymentHash: string): Promise<Result<void, Error>> => {
-  return ResultAsync.fromPromise(checkAndClaimLnReceiveNitro(paymentHash, false), (error) => {
+export const checkAndClaimLnReceive = async (
+  paymentHash: string,
+  wait: boolean = false,
+): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(checkAndClaimLnReceiveNitro(paymentHash, wait), (error) => {
     const e = new Error(
       `Failed to check and claim lightning receive: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -180,8 +183,10 @@ export const checkAndClaimLnReceive = async (paymentHash: string): Promise<Resul
   });
 };
 
-export const checkAndClaimAllOpenLnReceives = async (): Promise<Result<void, Error>> => {
-  return ResultAsync.fromPromise(checkAndClaimAllOpenLnReceivesNitro(false), (error) => {
+export const checkAndClaimAllOpenLnReceives = async (
+  wait: boolean = false,
+): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(checkAndClaimAllOpenLnReceivesNitro(wait), (error) => {
     const e = new Error(
       `Failed to check and claim all open lightning receives: ${error instanceof Error ? error.message : String(error)}`,
     );

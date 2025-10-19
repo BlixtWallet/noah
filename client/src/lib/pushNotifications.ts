@@ -10,6 +10,7 @@ import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
 import { maintenanceRefresh } from "./walletApi";
+import { checkAndClaimLnReceive } from "./paymentsApi";
 
 const log = logger("pushNotifications");
 
@@ -94,11 +95,17 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
           case "lightning_invoice_request": {
             log.i("Received lightning invoice request", [notificationData]);
-            await submitInvoice(
+            const invoiceResult = await submitInvoice(
               notificationData.transaction_id,
               notificationData.k1,
               notificationData.amount,
             );
+
+            // Wait for the invoice to be paid
+            // This is a terrible solution, but it is what it is for now
+            if (invoiceResult.isOk()) {
+              await checkAndClaimLnReceive(invoiceResult.value.payment_hash, true);
+            }
             break;
           }
 

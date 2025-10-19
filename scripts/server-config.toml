@@ -2,7 +2,7 @@
 host = "0.0.0.0"
 port = 3000
 private_port = 3099
-lnurl_domain = "localhost"
+lnurl_domain = "localhost.com"
 turso_url = "file:local.db"
 turso_api_key = "test-api-key"
 expo_access_token = "test-expo-token"

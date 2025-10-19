@@ -142,6 +142,7 @@ This single command will:
 - Generate 150 blocks
 - Fund the Ark server with 1 BTC
 - Create a bark wallet
+- Funds the bark wallet with 0.1 BTC and boards into Ark with 0.01 BTC
 - Fund LND with 0.1 BTC
 - Open a Lightning channel between LND and CLN (1M sats, 900k pushed to CLN)
 
@@ -157,13 +158,13 @@ This single command will:
     ```bash
     # Create a Bitcoin Core wallet
     ./scripts/ark-dev.sh create-wallet
-    
+
     # Generate blocks to fund it
     ./scripts/ark-dev.sh generate 150
-    
+
     # Fund the Ark server
     ./scripts/ark-dev.sh fund-aspd 1
-    
+
     # Create a bark wallet
     ./scripts/ark-dev.sh create-bark-wallet
     ```
@@ -270,7 +271,7 @@ The server uses a TOML configuration file instead of environment variables.
    server_network = "regtest"
    backup_cron = "every 2 hours"
    s3_bucket_name = "noah-regtest-backups"
-   
+
    # Optional: AWS credentials for S3 (if not using environment variables)
    # aws_access_key_id = "your-aws-access-key-id"
    # aws_secret_access_key = "your-aws-secret-access-key"

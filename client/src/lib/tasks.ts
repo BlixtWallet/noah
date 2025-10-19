@@ -7,6 +7,7 @@ import { submitInvoice as submitInvoiceApi } from "./api";
 import { updateOffboardingRequestStatus } from "./transactionsDb";
 import { verifyMessage } from "./crypto";
 import { isValidBitcoinAddress } from "~/constants";
+import { Bolt11Invoice } from "react-native-nitro-ark";
 
 const log = logger("tasks");
 
@@ -27,11 +28,15 @@ export async function maintenance(): Promise<Result<void, Error>> {
   return ok(undefined);
 }
 
-export async function submitInvoice(transaction_id: string, k1: string, amountMsat: number) {
+export async function submitInvoice(
+  transaction_id: string,
+  k1: string,
+  amountMsat: number,
+): Promise<Result<Bolt11Invoice, Error>> {
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
     log.e("Failed to load wallet for submitting invoice", [loadResult.error]);
-    return;
+    return err(loadResult.error);
   }
 
   const sats = amountMsat / 1000;
@@ -39,7 +44,7 @@ export async function submitInvoice(transaction_id: string, k1: string, amountMs
   const invoiceResult = await bolt11Invoice(sats);
   if (invoiceResult.isErr()) {
     log.e("Failed to create bolt11 invoice", [invoiceResult.error]);
-    return;
+    return err(invoiceResult.error);
   }
   const invoice = invoiceResult.value.payment_request;
 
@@ -51,10 +56,12 @@ export async function submitInvoice(transaction_id: string, k1: string, amountMs
 
   if (responseResult.isErr()) {
     log.e("Failed to submit invoice", [responseResult.error]);
-    return;
+    return err(responseResult.error);
   }
 
   log.d("[Submit Invoice Job] completed");
+
+  return ok(invoiceResult.value);
 }
 
 // Shared backup function that can be used by both hooks and background tasks

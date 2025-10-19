@@ -20,7 +20,7 @@ export const syncWallet = async () => {
     sync(),
     onchainSync(),
     registerAllConfirmedBoards(),
-    checkAndClaimAllOpenLnReceives(),
+    checkAndClaimAllOpenLnReceives(false),
   ]);
   results.forEach((result) => {
     if (result.status === "rejected") {

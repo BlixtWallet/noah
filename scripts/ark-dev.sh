@@ -247,6 +247,28 @@ setup_everything() {
     create_bark_wallet
 
     echo ""
+    echo "🔍 Getting bark onchain address..."
+    local bark_address
+    bark_address=$(dcr run --rm "$BARK_SERVICE" bark onchain address | jq -r '.address')
+    echo "   Bark address: $bark_address"
+
+    echo ""
+    echo "💸 Sending 0.1 BTC to bark wallet..."
+    send_to_address "$bark_address" "0.1"
+
+    echo ""
+    echo "⛏️  Generating 6 blocks..."
+    generate_blocks 6
+
+    echo ""
+    echo "🚢 Boarding onto Ark with 1000000 sats..."
+    dcr run --rm "$BARK_SERVICE" bark board '1000000 sats'
+
+    echo ""
+    echo "⛏️  Generating 6 more blocks to confirm boarding..."
+    generate_blocks 6
+
+    echo ""
     setup_lightning_channels
 
     echo ""
