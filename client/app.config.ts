@@ -18,7 +18,6 @@ const config: { expo: ExpoConfig } = {
     },
     plugins: [
       "expo-sqlite",
-      "react-native-bottom-tabs",
       [
         "react-native-share",
         {
