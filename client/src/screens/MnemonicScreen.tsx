@@ -11,6 +11,8 @@ import { Button } from "../components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
+import * as LocalAuthentication from "expo-local-authentication";
+import { useWalletStore } from "../store/walletStore";
 
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
@@ -28,9 +30,36 @@ const MnemonicScreen = () => {
   const { fromOnboarding } = route.params || {};
 
   const [mnemonic, setMnemonic] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { showAlert } = useAlert();
+  const { isBiometricsEnabled } = useWalletStore();
 
   useEffect(() => {
+    const authenticate = async () => {
+      if (!fromOnboarding && isBiometricsEnabled) {
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: "Authenticate to view your seed phrase",
+          disableDeviceFallback: false,
+        });
+
+        if (!result.success) {
+          showAlert({
+            title: "Authentication Failed",
+            description: "You must authenticate to view your seed phrase.",
+          });
+          navigation.goBack();
+          return;
+        }
+      }
+
+      setIsAuthenticated(true);
+    };
+    authenticate();
+  }, [showAlert, navigation, fromOnboarding, isBiometricsEnabled]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     const fetchMnemonic = async () => {
       const mnemonicResult = await getMnemonic();
       if (mnemonicResult.isOk()) {
@@ -44,7 +73,7 @@ const MnemonicScreen = () => {
       }
     };
     fetchMnemonic();
-  }, [showAlert, navigation]);
+  }, [isAuthenticated, showAlert, navigation]);
 
   const handleCopy = async () => {
     await copyToClipboard(mnemonic, {
@@ -79,7 +108,12 @@ const MnemonicScreen = () => {
           recover your wallet.
         </Text>
 
-        {mnemonic ? (
+        {!isAuthenticated ? (
+          <View className="flex-1 justify-center items-center">
+            <NoahActivityIndicator size="large" />
+            <Text className="text-muted-foreground mt-4">Authenticating...</Text>
+          </View>
+        ) : mnemonic ? (
           <Card>
             <CardContent className="p-4">
               <Text className="text-xl text-center text-foreground tracking-widest leading-loose">

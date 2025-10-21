@@ -48,12 +48,14 @@ interface WalletState {
   walletError: boolean;
   staticVtxoPubkey: string | null;
   restoreProgress: RestoreProgress | null;
+  isBiometricsEnabled: boolean;
   finishOnboarding: () => void;
   setWalletLoaded: () => void;
   setWalletUnloaded: () => void;
   setWalletError: (error: boolean) => void;
   setStaticVtxoPubkey: (pubkey: string) => void;
   setRestoreProgress: (progress: RestoreProgress | null) => void;
+  setBiometricsEnabled: (enabled: boolean) => void;
   reset: () => void;
 }
 
@@ -63,6 +65,7 @@ const initialState = {
   walletError: false,
   staticVtxoPubkey: null,
   restoreProgress: null,
+  isBiometricsEnabled: false,
 };
 
 export const useWalletStore = create<WalletState>()(
@@ -75,6 +78,7 @@ export const useWalletStore = create<WalletState>()(
       setWalletError: (error) => set({ walletError: error }),
       setStaticVtxoPubkey: (pubkey) => set({ staticVtxoPubkey: pubkey }),
       setRestoreProgress: (progress) => set({ restoreProgress: progress }),
+      setBiometricsEnabled: (enabled) => set({ isBiometricsEnabled: enabled }),
       reset: () => set(initialState),
     }),
     {
@@ -84,6 +88,7 @@ export const useWalletStore = create<WalletState>()(
         isInitialized: state.isInitialized,
         isWalletLoaded: state.isWalletLoaded,
         staticVtxoPubkey: state.staticVtxoPubkey,
+        isBiometricsEnabled: state.isBiometricsEnabled,
       }),
     },
   ),

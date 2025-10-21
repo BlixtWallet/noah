@@ -60,6 +60,8 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
+	<key>NSFaceIDUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to use FaceID</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIBackgroundModes</key>

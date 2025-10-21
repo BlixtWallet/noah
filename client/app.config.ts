@@ -19,6 +19,12 @@ const config: { expo: ExpoConfig } = {
     plugins: [
       "expo-sqlite",
       [
+        "expo-local-authentication",
+        {
+          faceIDPermission: "Allow $(PRODUCT_NAME) to use Face ID.",
+        },
+      ],
+      [
         "react-native-share",
         {
           ios: ["whatsapp", "telegram", "signal"],

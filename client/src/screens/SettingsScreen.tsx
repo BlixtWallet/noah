@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, View, Switch, Image } from "react-native";
 import Constants from "expo-constants";
+import * as LocalAuthentication from "expo-local-authentication";
 import { useWalletStore } from "../store/walletStore";
 import { ACTIVE_WALLET_CONFIG } from "../constants";
 import { useServerStore } from "../store/serverStore";
@@ -9,7 +10,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Text } from "../components/ui/text";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
@@ -64,10 +65,11 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
-  const { isInitialized } = useWalletStore();
+  const { isInitialized, isBiometricsEnabled, setBiometricsEnabled } = useWalletStore();
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
+  const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
     useExportDatabase();
@@ -75,6 +77,29 @@ const SettingsScreen = () => {
 
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
+
+  useEffect(() => {
+    const checkBiometrics = async () => {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      setIsBiometricsAvailable(compatible && enrolled);
+    };
+    checkBiometrics();
+  }, []);
+
+  const handleBiometricsToggle = async (value: boolean) => {
+    if (value) {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Authenticate to enable biometrics",
+        disableDeviceFallback: false,
+      });
+      if (result.success) {
+        setBiometricsEnabled(true);
+      }
+    } else {
+      setBiometricsEnabled(false);
+    }
+  };
 
   const handlePress = (item: Setting) => {
     if (!item.isPressable) return;
@@ -316,6 +341,22 @@ const SettingsScreen = () => {
                 thumbColor={isAutoBoardingEnabled ? "#ffffff" : "#f4f3f4"}
               />
             </View>
+            {isBiometricsAvailable && (
+              <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
+                <View className="flex-1">
+                  <Label className="text-foreground text-lg">Biometric Authentication</Label>
+                  <Text className="text-base mt-1 text-muted-foreground">
+                    Require biometric authentication to view seed phrase
+                  </Text>
+                </View>
+                <Switch
+                  value={isBiometricsEnabled}
+                  onValueChange={handleBiometricsToggle}
+                  trackColor={{ false: "#767577", true: "#F7931A" }}
+                  thumbColor={isBiometricsEnabled ? "#ffffff" : "#f4f3f4"}
+                />
+              </View>
+            )}
           </View>
         )}
 

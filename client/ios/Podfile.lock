@@ -218,6 +218,8 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
+  - ExpoLocalAuthentication (17.0.7):
+    - ExpoModulesCore
   - ExpoModulesCore (3.0.21):
     - hermes-engine
     - RCTRequired
@@ -303,7 +305,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.31.1):
+  - NitroModules (0.29.8):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2598,6 +2600,7 @@ DEPENDENCIES:
   - ExpoFont (from `../../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../../node_modules/expo-haptics/ios`)
   - ExpoKeepAwake (from `../../node_modules/expo-keep-awake/ios`)
+  - ExpoLocalAuthentication (from `../../node_modules/expo-local-authentication/ios`)
   - ExpoModulesCore (from `../../node_modules/expo-modules-core`)
   - ExpoSQLite (from `../../node_modules/expo-sqlite/ios`)
   - ExpoSystemUI (from `../../node_modules/expo-system-ui/ios`)
@@ -2741,6 +2744,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-haptics/ios"
   ExpoKeepAwake:
     :path: "../../node_modules/expo-keep-awake/ios"
+  ExpoLocalAuthentication:
+    :path: "../../node_modules/expo-local-authentication/ios"
   ExpoModulesCore:
     :path: "../../node_modules/expo-modules-core"
   ExpoSQLite:
@@ -2949,6 +2954,7 @@ SPEC CHECKSUMS:
   ExpoFont: b881d43057dceb7b31ff767b24f612609e80f60f
   ExpoHaptics: b48d913e7e5f23816c6f130e525c9a6501b160b5
   ExpoKeepAwake: 3f5e3ac53627849174f3603271df8e08f174ed4a
+  ExpoLocalAuthentication: 8f11d958b956fa372c0a49975f54ed1dc617ae1d
   ExpoModulesCore: 4a96f8ae1f6caa63eea03d7a2406de1a87b1e961
   ExpoSQLite: f9d1202877e12bfa78a58309a3977ee4ea0b1314
   ExpoSystemUI: 5e7fbe4b716edb9e3a7bc0441e4a3b6b1f9eb1ea
@@ -2959,7 +2965,7 @@ SPEC CHECKSUMS:
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   NitroArk: 11785ad1db43ab99745197b83583095dd7367277
   NitroMmkv: 6f057a8cedcf97339b60151a75245cd5055cbee7
-  NitroModules: 5f544a228c155c72e1896f4a4cd64dc1289742ea
+  NitroModules: d11f6267e7e59198a3305e1971559a8844c94a5b
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: 7487d6dda857ccd4cb3dd6ecfccdc3170e85dcbc
   RCTRequired: 54128b7df8be566881d48c7234724a78cb9b6157
