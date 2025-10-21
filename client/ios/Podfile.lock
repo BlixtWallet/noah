@@ -8,7 +8,7 @@ PODS:
     - ExpoModulesCore
   - EXNotifications (0.32.12):
     - ExpoModulesCore
-  - Expo (54.0.10):
+  - Expo (54.0.13):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -218,7 +218,7 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.18):
+  - ExpoModulesCore (3.0.21):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -245,7 +245,7 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (6.0.7):
     - ExpoModulesCore
-  - EXTaskManager (14.0.7):
+  - EXTaskManager (14.0.8):
     - ExpoModulesCore
     - UMAppLoader
   - EXUpdatesInterface (2.0.0):
@@ -2937,7 +2937,7 @@ SPEC CHECKSUMS:
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 7469efed75d694ce3c43a6da9c6f3886f66d3c26
   EXNotifications: 7aab54f0e5f3023122bc95699eaff7c52bacb559
-  Expo: 3d042ea779f0053cce219e99a5d80ff5e87a986e
+  Expo: 31753d0721fff50684ffccad30e73dc19acb52be
   expo-dev-client: ae83ec9417f6f75bdc566a42da26974bd416018b
   expo-dev-launcher: 7759ce507b05b8f45eadaff37965af7f3ee8d238
   expo-dev-menu: 84200bf9c4c0966228d7c43255923bed1ba682f7
@@ -2949,10 +2949,10 @@ SPEC CHECKSUMS:
   ExpoFont: b881d43057dceb7b31ff767b24f612609e80f60f
   ExpoHaptics: b48d913e7e5f23816c6f130e525c9a6501b160b5
   ExpoKeepAwake: 3f5e3ac53627849174f3603271df8e08f174ed4a
-  ExpoModulesCore: f35e51bd73613b2d3556c5c7d13f2f42f58b1ea9
+  ExpoModulesCore: 4a96f8ae1f6caa63eea03d7a2406de1a87b1e961
   ExpoSQLite: f9d1202877e12bfa78a58309a3977ee4ea0b1314
   ExpoSystemUI: 5e7fbe4b716edb9e3a7bc0441e4a3b6b1f9eb1ea
-  EXTaskManager: 7d80cb59c1faa3dcfa42035b185bcb5209ca7b1b
+  EXTaskManager: 53f87ed11659341c3f3f02c0041498ef293f5684
   EXUpdatesInterface: 1436757deb0d574b84bba063bd024c315e0ec08b
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394

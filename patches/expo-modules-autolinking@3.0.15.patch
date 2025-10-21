@@ -1,0 +1,16 @@
+diff --git a/android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/ExpoAutolinkingPlugin.kt b/android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/ExpoAutolinkingPlugin.kt
+index 75d1202a9a54a875d0a01466cbf0effbe5f77dbc..7a6f1bbd37509a9c6c36a2a7835dbd7f4da4ebb4 100644
+--- a/android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/ExpoAutolinkingPlugin.kt
++++ b/android/expo-gradle-plugin/expo-autolinking-plugin/src/main/kotlin/expo/modules/plugin/ExpoAutolinkingPlugin.kt
+@@ -159,11 +159,6 @@ open class ExpoAutolinkingPlugin : Plugin<Project> {
+ 
+         consumerFlavors.create(appFlavor.name).apply {
+           this.dimension = dimension
+-          appFlavor.applicationIdSuffix?.let { this.applicationIdSuffix = it }
+-          appFlavor.versionNameSuffix?.let { this.versionNameSuffix = it }
+-          if (appFlavor.manifestPlaceholders.isNotEmpty()) {
+-            this.manifestPlaceholders.putAll(appFlavor.manifestPlaceholders)
+-          }
+         }
+ 
+         project.logger.quiet("  -> Created flavor '${appFlavor.name}' (dimension='$dimension') in :${project.path}")
