@@ -113,7 +113,7 @@ services:
         condition: service_healthy
 
   noah-server:
-    image: ghcr.io/blixtwallet/noah-server:latest
+    image: niteshbalusu/noah-server:latest
     volumes:
       - ./server-config.toml:/etc/server/config.toml:ro
     ports:
