@@ -63,7 +63,7 @@ const config: { expo: ExpoConfig } = {
     ],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.anonymous.noah",
+      bundleIdentifier: "com.noahwallet.mainnet",
       scheme: "Noah-Signet",
       infoPlist: {
         UIBackgroundModes: ["remote-notification", "fetch"],
