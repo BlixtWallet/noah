@@ -104,7 +104,22 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
             // Wait for the invoice to be paid
             // This is a terrible solution, but it is what it is for now
             if (invoiceResult.isOk()) {
-              await checkAndClaimLnReceive(invoiceResult.value.payment_hash, true);
+              const claimResult = await checkAndClaimLnReceive(
+                invoiceResult.value.payment_hash,
+                true,
+              );
+
+              if (claimResult.isOk()) {
+                const sats = notificationData.amount / 1000;
+                await Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: "Lightning Payment Received! ⚡",
+                    body: `You received ${sats} sats`,
+                  },
+                  trigger: null,
+                });
+                log.d("Local notification triggered for payment", [sats]);
+              }
             }
             break;
           }
