@@ -17,7 +17,7 @@ buildscript {
 
 def reactNativeArchitectures() {
   def value = rootProject.getProperties().get("reactNativeArchitectures")
-  return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+  return value ? value.split(",") : ["x86_64", "arm64-v8a"]
 }
 
 apply plugin: "com.android.library"
@@ -125,8 +125,7 @@ dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   implementation project(":react-native-nitro-modules")
-  
+
   // OkHttp for background networking
   implementation "com.squareup.okhttp3:okhttp:4.12.0"
 }
-

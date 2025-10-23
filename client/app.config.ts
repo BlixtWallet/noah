@@ -44,6 +44,9 @@ const config: { expo: ExpoConfig } = {
       [
         "expo-build-properties",
         {
+          android: {
+            buildArchs: ["arm64-v8a", "x86_64"],
+          },
           ios: {
             extraPods: [
               { name: "SDWebImage", modular_headers: true },
