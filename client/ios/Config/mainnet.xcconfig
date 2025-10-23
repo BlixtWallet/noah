@@ -1,10 +1,10 @@
 // Configuration settings for the mainnet flavor
 
 // App Scheme for deep linking
-APP_SCHEME = com.anonymous.noah
+APP_SCHEME = com.noahwallet.mainnet
 
 // Bundle Identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah
+PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.mainnet
 PRODUCT_NAME = Noah
 
 // Display Name

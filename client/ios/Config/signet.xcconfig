@@ -1,10 +1,10 @@
 // Configuration settings for the signet flavor
 
 // App Scheme for deep linking
-APP_SCHEME = com.anonymous.noah.signet
+APP_SCHEME = com.noahwallet.signet
 
 // Bundle Identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.anonymous.noah.signet
+PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.signet
 PRODUCT_NAME = Noah (Signet)
 
 // Display Name

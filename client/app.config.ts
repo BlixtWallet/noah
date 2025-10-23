@@ -44,6 +44,9 @@ const config: { expo: ExpoConfig } = {
       [
         "expo-build-properties",
         {
+          android: {
+            buildArchs: ["arm64-v8a", "x86_64"],
+          },
           ios: {
             extraPods: [
               { name: "SDWebImage", modular_headers: true },
@@ -63,7 +66,7 @@ const config: { expo: ExpoConfig } = {
     ],
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.anonymous.noah",
+      bundleIdentifier: "com.noahwallet.mainnet",
       scheme: "Noah-Signet",
       infoPlist: {
         UIBackgroundModes: ["remote-notification", "fetch"],

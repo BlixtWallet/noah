@@ -1,6 +1,6 @@
 # setup-wallet.yml
 
-appId: com.anonymous.noah.regtest
+appId: com.noahwallet.regtest
 ---
 - launchApp
 - tapOn: "Create Wallet"
