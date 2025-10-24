@@ -243,7 +243,7 @@ export function useCheckAndClaimLnReceive() {
           return { amountSat };
         }
 
-        log.w(`Attempt ${i + 1}/${maxAttempts} failed:`, [result.error.message]);
+        log.d(`Attempt ${i + 1}/${maxAttempts} failed:`, [result.error.message]);
 
         if (i < maxAttempts - 1) {
           await new Promise((resolve) => setTimeout(resolve, intervalMs));
@@ -256,7 +256,7 @@ export function useCheckAndClaimLnReceive() {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
     },
     onError: (error: Error) => {
-      log.e("Failed to claim lightning receive:", [error.message]);
+      log.w("Failed to claim lightning receive:", [error.message]);
     },
   });
 }

@@ -81,7 +81,7 @@ export const useSendScreen = () => {
         setCurrency("SATS");
         setAmount(newAmount.toString());
         setParsedAmount(newAmount);
-      } else {
+      } else if (parsedAmount) {
         setAmount("");
         setParsedAmount(null);
       }
