@@ -58,7 +58,11 @@ namespace margelo::nitro::noahtools {
      */
     [[maybe_unused]]
     static jni::local_ref<JHttpResponse::javaobject> fromCpp(const HttpResponse& value) {
-      return newInstance(
+      using JSignature = JHttpResponse(double, jni::alias_ref<jni::JString>, jni::alias_ref<jni::JMap<jni::JString, jni::JString>>);
+      static const auto clazz = javaClassStatic();
+      static const auto create = clazz->getStaticMethod<JSignature>("fromCpp");
+      return create(
+        clazz,
         value.status,
         jni::make_jstring(value.body),
         [&]() -> jni::local_ref<jni::JMap<jni::JString, jni::JString>> {

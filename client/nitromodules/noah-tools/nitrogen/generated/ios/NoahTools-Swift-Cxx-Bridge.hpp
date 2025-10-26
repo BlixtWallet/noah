@@ -20,7 +20,6 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 // Include C++ defined types
 #include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
-#include <NitroModules/FastVectorCopy.hpp>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
 #include <NitroModules/Result.hpp>
@@ -271,7 +270,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
    */
   using std__shared_ptr_HybridNoahToolsSpec_ = std::shared_ptr<HybridNoahToolsSpec>;
   std::shared_ptr<HybridNoahToolsSpec> create_std__shared_ptr_HybridNoahToolsSpec_(void* NON_NULL swiftUnsafePointer) noexcept;
-  void* NON_NULL get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept;
+  void* NON_NULL get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType);
   
   // pragma MARK: std::weak_ptr<HybridNoahToolsSpec>
   using std__weak_ptr_HybridNoahToolsSpec_ = std::weak_ptr<HybridNoahToolsSpec>;

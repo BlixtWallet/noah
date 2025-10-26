@@ -9,7 +9,6 @@ package com.margelo.nitro.noahtools
 
 import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
-import com.margelo.nitro.core.*
 
 
 /**
@@ -17,19 +16,27 @@ import com.margelo.nitro.core.*
  */
 @DoNotStrip
 @Keep
-data class HttpResponse
+data class HttpResponse(
   @DoNotStrip
   @Keep
-  constructor(
+  val status: Double,
+  @DoNotStrip
+  @Keep
+  val body: String,
+  @DoNotStrip
+  @Keep
+  val headers: Map<String, String>
+) {
+  private companion object {
+    /**
+     * Constructor called from C++
+     */
     @DoNotStrip
     @Keep
-    val status: Double,
-    @DoNotStrip
-    @Keep
-    val body: String,
-    @DoNotStrip
-    @Keep
-    val headers: Map<String, String>
-  ) {
-  /* main constructor */
+    @Suppress("unused")
+    @JvmStatic
+    private fun fromCpp(status: Double, body: String, headers: Map<String, String>): HttpResponse {
+      return HttpResponse(status, body, headers)
+    }
+  }
 }

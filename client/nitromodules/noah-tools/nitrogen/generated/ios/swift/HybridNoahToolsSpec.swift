@@ -7,6 +7,7 @@
 
 import Foundation
 import NitroModules
+import NitroModules
 
 /// See ``HybridNoahToolsSpec``
 public protocol HybridNoahToolsSpec_protocol: HybridObject {

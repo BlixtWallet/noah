@@ -66,7 +66,7 @@ namespace margelo::nitro::noahtools::bridge::swift {
     NoahTools::HybridNoahToolsSpec_cxx swiftPart = NoahTools::HybridNoahToolsSpec_cxx::fromUnsafe(swiftUnsafePointer);
     return std::make_shared<margelo::nitro::noahtools::HybridNoahToolsSpecSwift>(swiftPart);
   }
-  void* NON_NULL get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) noexcept {
+  void* NON_NULL get_std__shared_ptr_HybridNoahToolsSpec_(std__shared_ptr_HybridNoahToolsSpec_ cppType) {
     std::shared_ptr<margelo::nitro::noahtools::HybridNoahToolsSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::noahtools::HybridNoahToolsSpecSwift>(cppType);
     #ifdef NITRO_DEBUG
     if (swiftWrapper == nullptr) [[unlikely]] {
