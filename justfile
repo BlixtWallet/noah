@@ -1,5 +1,7 @@
 # Noah Wallet Justfile
 
+set positional-arguments
+
 # Default recipe to display available commands
 default:
     @just --list
@@ -113,19 +115,19 @@ stop:
 
 # Ark dev shortcuts - pass arguments directly
 bark *args:
-    ./scripts/ark-dev.sh bark {{args}}
+    ./scripts/ark-dev.sh bark "$@"
 
 aspd *args:
-    ./scripts/ark-dev.sh aspd {{args}}
+    ./scripts/ark-dev.sh aspd "$@"
 
 bcli *args:
-    ./scripts/ark-dev.sh bcli {{args}}
+    ./scripts/ark-dev.sh bcli "$@"
 
 lncli *args:
-    ./scripts/ark-dev.sh lncli {{args}}
+    ./scripts/ark-dev.sh lncli "$@"
 
 cln *args:
-    ./scripts/ark-dev.sh cln {{args}}
+    ./scripts/ark-dev.sh cln "$@"
 
 # Bitcoin commands
 create-wallet:

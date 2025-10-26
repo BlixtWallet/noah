@@ -1,7 +1,7 @@
 import {
   boardAmount as boardAmountNitro,
   boardAll as boardAllNitro,
-  registerAllConfirmedBoards as registerAllConfirmedBoardsNitro,
+  syncPendingBoards as syncPendingBoardsNitro,
   offboardAll as offboardAllNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   sendLnaddr as sendLnaddrNitro,
@@ -150,10 +150,10 @@ export const sendLnaddr = async (
   });
 };
 
-export const registerAllConfirmedBoards = async (): Promise<Result<void, Error>> => {
-  return ResultAsync.fromPromise(registerAllConfirmedBoardsNitro(), (error) => {
+export const syncPendingBoards = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(syncPendingBoardsNitro(), (error) => {
     const e = new Error(
-      `Failed to register all confirmed boards: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to sync pending boards: ${error instanceof Error ? error.message : String(error)}`,
     );
     captureException(e);
     return e;

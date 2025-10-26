@@ -257,7 +257,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.81.4)
   - hermes-engine/Pre-built (0.81.4)
   - MMKVCore (2.2.4)
-  - NitroArk (0.0.64):
+  - NitroArk (0.0.65):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -1632,7 +1632,7 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-  - react-native-bottom-tabs (1.0.1):
+  - react-native-bottom-tabs (1.0.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1644,7 +1644,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-bottom-tabs/common (= 1.0.1)
+    - react-native-bottom-tabs/common (= 1.0.2)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1656,7 +1656,7 @@ PODS:
     - ReactNativeDependencies
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
-  - react-native-bottom-tabs/common (1.0.1):
+  - react-native-bottom-tabs/common (1.0.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1748,7 +1748,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-slider (5.0.1):
+  - react-native-slider (5.1.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1760,7 +1760,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-slider/common (= 5.0.1)
+    - react-native-slider/common (= 5.1.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1771,7 +1771,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-slider/common (5.0.1):
+  - react-native-slider/common (5.1.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2210,7 +2210,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNFSTurbo (0.3.7):
+  - RNFSTurbo (0.4.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2963,7 +2963,7 @@ SPEC CHECKSUMS:
   FBLazyVector: 9e0cd874afd81d9a4d36679daca991b58b260d42
   hermes-engine: 35c763d57c9832d0eef764316ca1c4d043581394
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
-  NitroArk: 11785ad1db43ab99745197b83583095dd7367277
+  NitroArk: d1d72d33b63863bfe0f3294aa2f6356163009ab8
   NitroMmkv: 6f057a8cedcf97339b60151a75245cd5055cbee7
   NitroModules: d11f6267e7e59198a3305e1971559a8844c94a5b
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
@@ -3000,9 +3000,9 @@ SPEC CHECKSUMS:
   React-logger: 472e292c035c024ac73070cd6cbd011a827136f9
   React-Mapbuffer: 823a2c0e0d1826c784f808174626d5229f59be17
   React-microtasksnativemodule: 70cdf4826e52c7bcf98bc55255c3e30b5455d318
-  react-native-bottom-tabs: 411014a3223816a339d943acd2d0c3ba81dd852c
+  react-native-bottom-tabs: 08ad7b306d6024cffcc37b9ec69f7f98363abb7f
   react-native-safe-area-context: add9b4ba236fe95ec600604d0fc72f395433dd59
-  react-native-slider: b76fa3dd989d25e8c2751c2a546674dfc0c2b6f8
+  react-native-slider: d110f6a0a8dc77071c9b52531f87f3a6e3fb0d96
   react-native-vector-icons: 2c084b9997443aaf79527ac0454b50cc081c98de
   react-native-vector-icons-ionicons: ad07e944a092a5cf71b8b569d8f5ce2bf674c415
   react-native-worklets-core: 5357708fd3915bf1c870a03ff969578c69bd3909
@@ -3038,7 +3038,7 @@ SPEC CHECKSUMS:
   ReactCommon: b720ccad5e1e8a528746c39b671825fcb7207d3c
   ReactNativeDependencies: ed6d1e64802b150399f04f1d5728ec16b437251e
   RNCClipboard: 398455e1ad6a44a94d679452b951ffb788e8599b
-  RNFSTurbo: 09c3e17659592d1fd1542331abdebe1911bda1c6
+  RNFSTurbo: a60562495b9cb34c0767601c3e89d6b4835efbf4
   RNGestureHandler: 6a488ce85c88e82d8610db1108daf04e9b2d5162
   RNKeychain: 91be81cd32b30c7d4c2569dcad29b472d9b93982
   RNReanimated: f97bea0965d6db461ca5f0849422fcfa95e72da5

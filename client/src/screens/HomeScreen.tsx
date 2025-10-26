@@ -29,7 +29,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
-import { registerAllConfirmedBoards } from "~/lib/paymentsApi";
+import { syncPendingBoards } from "~/lib/paymentsApi";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -59,7 +59,7 @@ const HomeScreen = () => {
 
     await balanceSync();
     await refetch();
-    await registerAllConfirmedBoards();
+    await syncPendingBoards();
     getRandomFact();
   }, [balanceSync, refetch, getRandomFact, loadWallet]);
 

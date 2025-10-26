@@ -3,7 +3,7 @@ import { useWalletStore } from "~/store/walletStore";
 import { onchainSync, sync } from "~/lib/walletApi";
 import { syncArkReceives } from "~/lib/syncTransactions";
 import logger from "~/lib/log";
-import { checkAndClaimAllOpenLnReceives, registerAllConfirmedBoards } from "./paymentsApi";
+import { checkAndClaimAllOpenLnReceives } from "./paymentsApi";
 
 const log = logger("sync");
 
@@ -19,7 +19,6 @@ export const syncWallet = async () => {
   const results = await Promise.allSettled([
     sync(),
     onchainSync(),
-    registerAllConfirmedBoards(),
     checkAndClaimAllOpenLnReceives(false),
   ]);
   results.forEach((result) => {

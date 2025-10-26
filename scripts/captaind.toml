@@ -38,6 +38,8 @@ round_tx_feerate = "2500sat/kwu"
 # FIXME Expiry delta of HTLCs
 htlc_expiry_delta = 6
 
+htlc_send_expiry_delta = 258
+
 # Interval to retry connecting to disconnected CLN nodes
 cln_reconnect_interval = "10s"
 
