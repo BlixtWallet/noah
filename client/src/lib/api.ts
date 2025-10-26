@@ -187,6 +187,8 @@ export const getK1 = async (): Promise<Result<string, Error>> => {
     return err(responseResult.error);
   }
 
+  console.log(responseResult);
+
   const response = responseResult.value;
 
   if (response.status < 200 || response.status >= 300) {

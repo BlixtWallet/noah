@@ -11,6 +11,9 @@
     "NoahTools": {
       "swift": "NoahTools",
       "kotlin": "NoahTools"
+    },
+    "NoahToolsCpp": {
+      "cpp": "HybridNoahToolsCpp"
     }
   },
   "ignorePaths": ["node_modules"]

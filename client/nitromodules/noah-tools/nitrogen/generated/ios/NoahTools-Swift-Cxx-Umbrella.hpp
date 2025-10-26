@@ -8,20 +8,16 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-// Forward declaration of `HttpResponse` to properly resolve imports.
-namespace margelo::nitro::noahtools { struct HttpResponse; }
 // Forward declaration of `HybridNoahToolsSpec` to properly resolve imports.
 namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
 
 // Include C++ defined types
-#include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 // C++ helpers for Swift

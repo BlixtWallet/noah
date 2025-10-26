@@ -8,19 +8,6 @@ import ZIPFoundation
 class NoahTools: HybridNoahToolsSpec {
     // MARK: - Public API Methods (called by Nitro)
 
-    func nativePost(url: String, body: String, headers: [String: String], timeoutSeconds: Double)
-        throws -> Promise<HttpResponse>
-    {
-        return try performNativePost(
-            url: url, body: body, headers: headers, timeoutSeconds: timeoutSeconds)
-    }
-
-    func nativeGet(url: String, headers: [String: String], timeoutSeconds: Double) throws
-        -> Promise<HttpResponse>
-    {
-        return try performNativeGet(url: url, headers: headers, timeoutSeconds: timeoutSeconds)
-    }
-
     func getAppVariant() throws -> String {
         return try performGetAppVariant()
     }
