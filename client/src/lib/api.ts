@@ -183,8 +183,6 @@ export const getK1 = async (): Promise<Result<string, Error>> => {
     (e) => e as Error,
   );
 
-  console.log(responseResult);
-
   if (responseResult.isErr()) {
     return err(responseResult.error);
   }
