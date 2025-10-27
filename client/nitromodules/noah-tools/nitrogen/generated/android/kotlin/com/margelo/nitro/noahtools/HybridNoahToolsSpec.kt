@@ -59,14 +59,6 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   
   @DoNotStrip
   @Keep
-  abstract fun nativePost(url: String, body: String, headers: Map<String, String>, timeoutSeconds: Double): Promise<HttpResponse>
-  
-  @DoNotStrip
-  @Keep
-  abstract fun nativeGet(url: String, headers: Map<String, String>, timeoutSeconds: Double): Promise<HttpResponse>
-  
-  @DoNotStrip
-  @Keep
   abstract fun nativeLog(level: String, tag: String, message: String): Unit
   
   @DoNotStrip

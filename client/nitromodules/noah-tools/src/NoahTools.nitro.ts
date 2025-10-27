@@ -12,6 +12,21 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
   createBackup(mnemonic: string): Promise<string>;
   restoreBackup(encryptedData: string, mnemonic: string): Promise<boolean>;
 
+  // Native logging
+  nativeLog(level: string, tag: string, message: string): void;
+
+  // Audio playback
+  playAudio(filePath: string): Promise<void>;
+  pauseAudio(): void;
+  stopAudio(): void;
+  resumeAudio(): void;
+  seekAudio(positionSeconds: number): void;
+  getAudioDuration(): number;
+  getAudioPosition(): number;
+  isAudioPlaying(): boolean;
+}
+
+export interface NoahToolsCpp extends HybridObject<{ ios: "c++"; android: "c++" }> {
   // Native HTTP client for POST requests
   nativePost(
     url: string,
@@ -26,17 +41,4 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
     headers: Record<string, string>,
     timeoutSeconds: number,
   ): Promise<HttpResponse>;
-
-  // Native logging
-  nativeLog(level: string, tag: string, message: string): void;
-
-  // Audio playback
-  playAudio(filePath: string): Promise<void>;
-  pauseAudio(): void;
-  stopAudio(): void;
-  resumeAudio(): void;
-  seekAudio(positionSeconds: number): void;
-  getAudioDuration(): number;
-  getAudioPosition(): number;
-  isAudioPlaying(): boolean;
 }

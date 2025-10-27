@@ -1,7 +1,9 @@
 import { NitroModules } from "react-native-nitro-modules";
-import type { NoahTools, HttpResponse } from "./NoahTools.nitro";
+import type { NoahTools, NoahToolsCpp, HttpResponse } from "./NoahTools.nitro";
 
 const NoahToolsHybridObject = NitroModules.createHybridObject<NoahTools>("NoahTools");
+const NoahToolsCppHybridObject = NitroModules.createHybridObject<NoahToolsCpp>("NoahToolsCpp");
+
 export type LogLevel = "verbose" | "debug" | "info" | "warn" | "error";
 
 export function getAppVariant(): "mainnet" | "signet" | "regtest" {
@@ -26,7 +28,7 @@ export function nativePost(
   headers: Record<string, string>,
   timeoutSeconds: number = 30,
 ): Promise<HttpResponse> {
-  return NoahToolsHybridObject.nativePost(url, body, headers, timeoutSeconds);
+  return NoahToolsCppHybridObject.nativePost(url, body, headers, timeoutSeconds);
 }
 
 export function nativeGet(
@@ -34,7 +36,7 @@ export function nativeGet(
   headers: Record<string, string>,
   timeoutSeconds: number = 30,
 ): Promise<HttpResponse> {
-  return NoahToolsHybridObject.nativeGet(url, headers, timeoutSeconds);
+  return NoahToolsCppHybridObject.nativeGet(url, headers, timeoutSeconds);
 }
 
 export function nativeLog(level: LogLevel, tag: string, message: string): void {

@@ -331,6 +331,7 @@ PODS:
   - NoahTools (0.0.0):
     - hermes-engine
     - NitroModules
+    - OpenSSL-Universal
     - RCTRequired
     - RCTTypeSafety
     - React-callinvoker
@@ -353,6 +354,7 @@ PODS:
     - ReactNativeDependencies
     - Yoga
     - ZIPFoundation
+  - OpenSSL-Universal (3.3.3001)
   - RCTDeprecation (0.81.5)
   - RCTRequired (0.81.5)
   - RCTTypeSafety (0.81.5):
@@ -2703,6 +2705,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - MMKVCore
+    - OpenSSL-Universal
     - SDWebImage
     - SDWebImageSVGCoder
     - Sentry
@@ -2966,7 +2969,8 @@ SPEC CHECKSUMS:
   NitroArk: d1d72d33b63863bfe0f3294aa2f6356163009ab8
   NitroMmkv: 6f057a8cedcf97339b60151a75245cd5055cbee7
   NitroModules: d11f6267e7e59198a3305e1971559a8844c94a5b
-  NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
+  NoahTools: 1e57db3127b9ca05616ee9302f67751b94f39bbf
+  OpenSSL-Universal: 6082b0bf950e5636fe0d78def171184e2b3899c2
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
   RCTTypeSafety: 16a4144ca3f959583ab019b57d5633df10b5e97c

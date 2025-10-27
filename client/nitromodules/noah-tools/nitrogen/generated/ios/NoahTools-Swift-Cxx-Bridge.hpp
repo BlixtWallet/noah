@@ -8,8 +8,6 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-// Forward declaration of `HttpResponse` to properly resolve imports.
-namespace margelo::nitro::noahtools { struct HttpResponse; }
 // Forward declaration of `HybridNoahToolsSpec` to properly resolve imports.
 namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
 
@@ -18,7 +16,6 @@ namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
 namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
 // Include C++ defined types
-#include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/PromiseHolder.hpp>
@@ -27,7 +24,6 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 /**
@@ -171,65 +167,6 @@ namespace margelo::nitro::noahtools::bridge::swift {
     return Func_void_bool_Wrapper(std::move(value));
   }
   
-  // pragma MARK: std::unordered_map<std::string, std::string>
-  /**
-   * Specialized version of `std::unordered_map<std::string, std::string>`.
-   */
-  using std__unordered_map_std__string__std__string_ = std::unordered_map<std::string, std::string>;
-  inline std::unordered_map<std::string, std::string> create_std__unordered_map_std__string__std__string_(size_t size) noexcept {
-    std::unordered_map<std::string, std::string> map;
-    map.reserve(size);
-    return map;
-  }
-  inline std::vector<std::string> get_std__unordered_map_std__string__std__string__keys(const std__unordered_map_std__string__std__string_& map) noexcept {
-    std::vector<std::string> keys;
-    keys.reserve(map.size());
-    for (const auto& entry : map) {
-      keys.push_back(entry.first);
-    }
-    return keys;
-  }
-  inline std::string get_std__unordered_map_std__string__std__string__value(const std__unordered_map_std__string__std__string_& map, const std::string& key) noexcept {
-    return map.find(key)->second;
-  }
-  inline void emplace_std__unordered_map_std__string__std__string_(std__unordered_map_std__string__std__string_& map, const std::string& key, const std::string& value) noexcept {
-    map.emplace(key, value);
-  }
-  
-  // pragma MARK: std::shared_ptr<Promise<HttpResponse>>
-  /**
-   * Specialized version of `std::shared_ptr<Promise<HttpResponse>>`.
-   */
-  using std__shared_ptr_Promise_HttpResponse__ = std::shared_ptr<Promise<HttpResponse>>;
-  inline std::shared_ptr<Promise<HttpResponse>> create_std__shared_ptr_Promise_HttpResponse__() noexcept {
-    return Promise<HttpResponse>::create();
-  }
-  inline PromiseHolder<HttpResponse> wrap_std__shared_ptr_Promise_HttpResponse__(std::shared_ptr<Promise<HttpResponse>> promise) noexcept {
-    return PromiseHolder<HttpResponse>(std::move(promise));
-  }
-  
-  // pragma MARK: std::function<void(const HttpResponse& /* result */)>
-  /**
-   * Specialized version of `std::function<void(const HttpResponse&)>`.
-   */
-  using Func_void_HttpResponse = std::function<void(const HttpResponse& /* result */)>;
-  /**
-   * Wrapper class for a `std::function<void(const HttpResponse& / * result * /)>`, this can be used from Swift.
-   */
-  class Func_void_HttpResponse_Wrapper final {
-  public:
-    explicit Func_void_HttpResponse_Wrapper(std::function<void(const HttpResponse& /* result */)>&& func): _function(std::make_unique<std::function<void(const HttpResponse& /* result */)>>(std::move(func))) {}
-    inline void call(HttpResponse result) const noexcept {
-      _function->operator()(result);
-    }
-  private:
-    std::unique_ptr<std::function<void(const HttpResponse& /* result */)>> _function;
-  } SWIFT_NONCOPYABLE;
-  Func_void_HttpResponse create_Func_void_HttpResponse(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_HttpResponse_Wrapper wrap_Func_void_HttpResponse(Func_void_HttpResponse value) noexcept {
-    return Func_void_HttpResponse_Wrapper(std::move(value));
-  }
-  
   // pragma MARK: std::shared_ptr<Promise<void>>
   /**
    * Specialized version of `std::shared_ptr<Promise<void>>`.
@@ -310,15 +247,6 @@ namespace margelo::nitro::noahtools::bridge::swift {
   }
   inline Result_std__shared_ptr_Promise_bool___ create_Result_std__shared_ptr_Promise_bool___(const std::exception_ptr& error) noexcept {
     return Result<std::shared_ptr<Promise<bool>>>::withError(error);
-  }
-  
-  // pragma MARK: Result<std::shared_ptr<Promise<HttpResponse>>>
-  using Result_std__shared_ptr_Promise_HttpResponse___ = Result<std::shared_ptr<Promise<HttpResponse>>>;
-  inline Result_std__shared_ptr_Promise_HttpResponse___ create_Result_std__shared_ptr_Promise_HttpResponse___(const std::shared_ptr<Promise<HttpResponse>>& value) noexcept {
-    return Result<std::shared_ptr<Promise<HttpResponse>>>::withValue(value);
-  }
-  inline Result_std__shared_ptr_Promise_HttpResponse___ create_Result_std__shared_ptr_Promise_HttpResponse___(const std::exception_ptr& error) noexcept {
-    return Result<std::shared_ptr<Promise<HttpResponse>>>::withError(error);
   }
   
   // pragma MARK: Result<void>

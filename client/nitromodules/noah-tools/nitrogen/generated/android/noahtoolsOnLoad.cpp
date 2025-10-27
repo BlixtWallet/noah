@@ -17,6 +17,7 @@
 
 #include "JHybridNoahToolsSpec.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
+#include "HybridNoahToolsCpp.hpp"
 
 namespace margelo::nitro::noahtools {
 
@@ -36,6 +37,15 @@ int initialize(JavaVM* vm) {
         static DefaultConstructableObject<JHybridNoahToolsSpec::javaobject> object("com/margelo/nitro/noahtools/NoahTools");
         auto instance = object.create();
         return instance->cthis()->shared();
+      }
+    );
+    HybridObjectRegistry::registerHybridObjectConstructor(
+      "NoahToolsCpp",
+      []() -> std::shared_ptr<HybridObject> {
+        static_assert(std::is_default_constructible_v<HybridNoahToolsCpp>,
+                      "The HybridObject \"HybridNoahToolsCpp\" is not default-constructible! "
+                      "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
+        return std::make_shared<HybridNoahToolsCpp>();
       }
     );
   });
