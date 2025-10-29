@@ -51,11 +51,11 @@ export const getServerEndpoint = (): string => {
     case "regtest":
       return REGTEST_SERVER_URL;
     case "signet":
-      return "https://noah.noderunner.wtf";
+      return "https://signet.noahwallet.io";
     case "mainnet":
-      return "https://noah.noderunner.wtf";
+      return "https://noahwallet.io";
     default:
-      return "https://noah.noderunner.wtf";
+      return "https://signet.noahwallet.io";
   }
 };
 
@@ -64,11 +64,11 @@ export const getLnurlDomain = (): string => {
     case "regtest":
       return "localhost.com";
     case "signet":
-      return "noah.noderunner.wtf";
+      return "signet.noahwallet.io";
     case "mainnet":
-      return "noah.noderunner.wtf";
+      return "noahwallet.io";
     default:
-      return "noah.noderunner.wtf";
+      return "signet.noahwallet.io";
   }
 };
 
