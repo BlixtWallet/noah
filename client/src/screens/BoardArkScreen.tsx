@@ -27,9 +27,9 @@ import { cn } from "../lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
-import { Result } from "neverthrow";
 import logger from "~/lib/log";
 import { HomeStackParamList } from "~/Navigators";
+import { BoardResult } from "react-native-nitro-ark";
 
 const log = logger("BoardArkScreen");
 
@@ -54,8 +54,8 @@ type Flow = "onboard" | "offboard";
 
 // Custom hook for parsing boarding results
 const useParsedBoardingResult = (
-  boardResult?: string,
-  boardAllResult?: string,
+  boardResult?: BoardResult,
+  boardAllResult?: BoardResult,
   offboardResult?: string,
 ) => {
   const [parsedData, setParsedData] = useState<BoardingResponse | null>(null);
@@ -63,11 +63,8 @@ const useParsedBoardingResult = (
   useEffect(() => {
     const result = boardResult || boardAllResult || offboardResult;
     if (result) {
-      const parseResult = Result.fromThrowable(JSON.parse)(result);
-      if (parseResult.isOk()) {
-        setParsedData(parseResult.value);
-      } else {
-        log.e("Failed to parse boarding result:", [parseResult.error]);
+      if (parsedData) {
+        setParsedData(parsedData);
       }
     }
   }, [boardResult, boardAllResult, offboardResult]);

@@ -1,6 +1,7 @@
 data_dir = "/data/captaind"
 network = "regtest"
 vtxo_lifetime = 4320
+min_board_amount = "20000 sat"
 vtxo_exit_delta = 12
 max_arkoor_depth = 5
 required_board_confirmations = 3
@@ -39,6 +40,10 @@ round_tx_feerate = "2500sat/kwu"
 htlc_expiry_delta = 6
 
 htlc_send_expiry_delta = 258
+
+# Maximum CLTV delta server will allow clients to request an
+# invoice generation with.
+max_user_invoice_cltv_delta = 250
 
 # Interval to retry connecting to disconnected CLN nodes
 cln_reconnect_interval = "10s"

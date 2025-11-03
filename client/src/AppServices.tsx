@@ -8,7 +8,6 @@ import { useBalance } from "~/hooks/useWallet";
 import { useBoardAllAmountArk } from "~/hooks/usePayments";
 import { useAlert } from "~/contexts/AlertProvider";
 import { addOnboardingRequest } from "~/lib/transactionsDb";
-import { Result } from "neverthrow";
 import logger from "~/lib/log";
 
 const log = logger("AppServices");
@@ -49,25 +48,19 @@ const AppServices = memo(() => {
         onSuccess: async (data) => {
           log.d("Auto-boarding successful");
 
-          const parseResult = Result.fromThrowable(JSON.parse)(data);
-          if (parseResult.isOk()) {
-            const parsedData = parseResult.value;
-            const onboardingRequestId = uuid.v4();
+          const onboardingRequestId = uuid.v4();
 
-            const addResult = await addOnboardingRequest({
-              request_id: onboardingRequestId,
-              date: new Date().toISOString(),
-              status: "completed",
-              onchain_txid: parsedData.funding_txid,
-            });
+          const addResult = await addOnboardingRequest({
+            request_id: onboardingRequestId,
+            date: new Date().toISOString(),
+            status: "completed",
+            onchain_txid: data.funding_txid,
+          });
 
-            if (addResult.isErr()) {
-              log.e("Failed to store auto-boarding request in database", [addResult.error]);
-            } else {
-              log.d("Successfully stored auto-boarding request", [onboardingRequestId]);
-            }
+          if (addResult.isErr()) {
+            log.e("Failed to store auto-boarding request in database", [addResult.error]);
           } else {
-            log.e("Failed to parse auto-boarding result", [parseResult.error]);
+            log.d("Successfully stored auto-boarding request", [onboardingRequestId]);
           }
 
           showAlert({

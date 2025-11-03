@@ -20,6 +20,7 @@ import {
   NewAddressResult,
   BarkMovement,
   Bolt11Invoice,
+  BoardResult,
 } from "react-native-nitro-ark";
 import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
@@ -62,7 +63,7 @@ export const bolt11Invoice = async (amountSat: number): Promise<Result<Bolt11Inv
   );
 };
 
-export const boardArk = async (amountSat: number): Promise<Result<string, Error>> => {
+export const boardArk = async (amountSat: number): Promise<Result<BoardResult, Error>> => {
   return ResultAsync.fromPromise(boardAmountNitro(amountSat), (error) => {
     const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
@@ -72,7 +73,7 @@ export const boardArk = async (amountSat: number): Promise<Result<string, Error>
   });
 };
 
-export const boardAllArk = async (): Promise<Result<string, Error>> => {
+export const boardAllArk = async (): Promise<Result<BoardResult, Error>> => {
   return ResultAsync.fromPromise(boardAllNitro(), (error) => {
     const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
