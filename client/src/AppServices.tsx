@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, useRef } from "react";
+import { memo, useEffect, useState } from "react";
 import uuid from "react-native-uuid";
 import { useSyncManager } from "~/hooks/useSyncManager";
 import { useServerRegistration } from "~/hooks/useServerRegistration";
@@ -14,9 +14,9 @@ const log = logger("AppServices");
 
 const AppServices = memo(() => {
   const [isReady, setIsReady] = useState(false);
-  const hasAttemptedAutoBoard = useRef(false);
 
-  const { isAutoBoardingEnabled } = useTransactionStore();
+  const { isAutoBoardingEnabled, hasAttemptedAutoBoarding, setHasAttemptedAutoBoarding } =
+    useTransactionStore();
   const { data: balance } = useBalance();
   const { mutate: boardAllArk, isPending: isBoardingAll } = useBoardAllAmountArk();
   const { showAlert } = useAlert();
@@ -33,15 +33,21 @@ const AppServices = memo(() => {
 
   // Auto-boarding logic
   useEffect(() => {
-    if (!isReady || !isAutoBoardingEnabled || !balance || isBoardingAll) {
+    if (
+      !isReady ||
+      !isAutoBoardingEnabled ||
+      !balance ||
+      isBoardingAll ||
+      hasAttemptedAutoBoarding
+    ) {
       return;
     }
 
     const onchainConfirmedBalance = balance.onchain.confirmed;
-    const MIN_AUTO_BOARD_AMOUNT = 20_000;
+    const MIN_AUTO_BOARD_AMOUNT = 50_000;
 
-    if (onchainConfirmedBalance >= MIN_AUTO_BOARD_AMOUNT && !hasAttemptedAutoBoard.current) {
-      hasAttemptedAutoBoard.current = true;
+    if (onchainConfirmedBalance >= MIN_AUTO_BOARD_AMOUNT) {
+      setHasAttemptedAutoBoarding(true);
       log.d("Auto-boarding triggered", [`Balance: ${onchainConfirmedBalance} sats`]);
 
       boardAllArk(undefined, {
@@ -70,11 +76,19 @@ const AppServices = memo(() => {
         },
         onError: (error) => {
           log.e("Auto-boarding failed", [error]);
-          hasAttemptedAutoBoard.current = false;
         },
       });
     }
-  }, [isReady, isAutoBoardingEnabled, balance, boardAllArk, isBoardingAll, showAlert]);
+  }, [
+    isReady,
+    isAutoBoardingEnabled,
+    hasAttemptedAutoBoarding,
+    balance,
+    boardAllArk,
+    isBoardingAll,
+    setHasAttemptedAutoBoarding,
+    showAlert,
+  ]);
 
   return null;
 });

@@ -42,10 +42,12 @@ const zustandStorage: StateStorage = {
 interface TransactionState {
   transactions: Transaction[];
   isAutoBoardingEnabled: boolean;
+  hasAttemptedAutoBoarding: boolean;
   loadTransactions: () => Promise<void>;
   addTransaction: (transaction: Transaction) => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
   setAutoBoardingEnabled: (enabled: boolean) => void;
+  setHasAttemptedAutoBoarding: (attempted: boolean) => void;
   reset: () => void;
   deleteAllTransactions: () => void;
 }
@@ -55,6 +57,7 @@ export const useTransactionStore = create<TransactionState>()(
     (set) => ({
       transactions: [],
       isAutoBoardingEnabled: true,
+      hasAttemptedAutoBoarding: false,
       loadTransactions: async () => {
         const result = await getTransactions();
         if (result.isOk()) {
@@ -76,6 +79,8 @@ export const useTransactionStore = create<TransactionState>()(
         }
       },
       setAutoBoardingEnabled: (enabled: boolean) => set({ isAutoBoardingEnabled: enabled }),
+      setHasAttemptedAutoBoarding: (attempted: boolean) =>
+        set({ hasAttemptedAutoBoarding: attempted }),
       reset: () => set({ transactions: [] }),
       deleteAllTransactions: () => {
         // TODO: Implement this
@@ -84,7 +89,10 @@ export const useTransactionStore = create<TransactionState>()(
     {
       name: "transaction-storage",
       storage: createJSONStorage(() => zustandStorage),
-      partialize: (state) => ({ isAutoBoardingEnabled: state.isAutoBoardingEnabled }),
+      partialize: (state) => ({
+        isAutoBoardingEnabled: state.isAutoBoardingEnabled,
+        hasAttemptedAutoBoarding: state.hasAttemptedAutoBoarding,
+      }),
     },
   ),
 );

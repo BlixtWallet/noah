@@ -83,6 +83,9 @@ export const SIGNET_CONFIG: WalletCreationOptions = {
     ark: "ark.signet.2nd.dev",
     vtxo_refresh_expiry_threshold: 48,
     fallback_fee_rate: 10000,
+    htlc_recv_claim_delta: 18,
+    vtxo_exit_margin: 12,
+    deep_round_confirmations: 1,
   },
 };
 
@@ -97,6 +100,9 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
     bitcoind_pass: "ark",
     vtxo_refresh_expiry_threshold: 24,
     fallback_fee_rate: 10000,
+    htlc_recv_claim_delta: 18,
+    vtxo_exit_margin: 12,
+    deep_round_confirmations: 1,
   },
 };
 
@@ -113,6 +119,9 @@ export const PRODUCTION_CONFIG: WalletCreationOptions = {
     ark: "http://192.168.4.252:3535",
     vtxo_refresh_expiry_threshold: 288,
     fallback_fee_rate: 10000,
+    htlc_recv_claim_delta: 18,
+    vtxo_exit_margin: 12,
+    deep_round_confirmations: 1,
   },
 };
 
