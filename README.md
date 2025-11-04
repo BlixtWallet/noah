@@ -121,7 +121,7 @@ For development and testing, you can run a complete local Ark stack using Docker
 - **lnd** - Lightning Network Daemon
 - **noah-server** - Noah backend server
 
-The [`scripts/ark-dev.sh`](./scripts/ark-dev.sh) script helps manage this environment.
+The [`scripts/ark-dev.sh`](just) script helps manage this environment.
 
 **Prerequisites:**
 
@@ -157,21 +157,21 @@ This single command will:
 2.  **Create and fund wallets**
     ```bash
     # Create a Bitcoin Core wallet
-    ./scripts/ark-dev.sh create-wallet
+    just create-wallet
 
     # Generate blocks to fund it
-    ./scripts/ark-dev.sh generate 150
+    just generate 150
 
     # Fund the Ark server
-    ./scripts/ark-dev.sh fund-aspd 1
+    just fund-aspd 1
 
     # Create a bark wallet
-    ./scripts/ark-dev.sh create-bark-wallet
+    just create-bark-wallet
     ```
 
 3.  **Setup Lightning channels (optional)**
     ```bash
-    ./scripts/ark-dev.sh setup-lightning-channels
+    just setup-lightning-channels
     ```
 
 **Managing Services:**
@@ -186,13 +186,13 @@ just down
 
 **Useful Commands:**
 
-- Interact with bark wallet: `./scripts/ark-dev.sh bark <command>`
-- Interact with ASPD RPC: `./scripts/ark-dev.sh aspd <command>`
-- Use bitcoin-cli: `./scripts/ark-dev.sh bcli <command>`
-- Use lncli: `./scripts/ark-dev.sh lncli <command>`
-- Use lightning-cli (CLN): `./scripts/ark-dev.sh cln <command>`
-- Generate blocks: `./scripts/ark-dev.sh generate <num_blocks>`
-- Send to address: `./scripts/ark-dev.sh send-to <address> <amount>`
+- Interact with bark wallet: `just bark <command>`
+- Interact with ASPD RPC: `just aspd <command>`
+- Use bitcoin-cli: `just bcli <command>`
+- Use lncli: `just lncli <command>`
+- Use lightning-cli (CLN): `just cln <command>`
+- Generate blocks: `just generate <num_blocks>`
+- Send to address: `just send-to <address> <amount>`
 
 **Service Endpoints:**
 
@@ -204,7 +204,7 @@ just down
 - LND RPC: `localhost:10009` (P2P: `localhost:9735`)
 - CLN RPC: `localhost:9988` (P2P: `localhost:9736`)
 
-For more commands and details, run `./scripts/ark-dev.sh` without arguments.
+For more commands and details, run `just` without arguments.
 
 ---
 
