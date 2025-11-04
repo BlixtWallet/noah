@@ -4,6 +4,7 @@ use crate::db::job_status_repo::JobStatusRepository;
 use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
+use crate::push::{PushNotificationData, send_push_notification};
 use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
@@ -42,6 +43,24 @@ pub async fn register_push_token(
     push_token_repo
         .upsert(&auth_payload.key, &payload.push_token)
         .await?;
+
+    let app_state_clone = app_state.clone();
+    let pubkey = auth_payload.key.clone();
+    tokio::spawn(async move {
+        let notification_data = PushNotificationData {
+            title: Some("Welcome to Noah!".to_string()),
+            body: Some("You're all set! You'll now receive notifications for payment requests and important updates.".to_string()),
+            data: "{}".to_string(),
+            priority: "normal".to_string(),
+            content_available: false,
+        };
+
+        if let Err(e) =
+            send_push_notification(app_state_clone, notification_data, Some(pubkey)).await
+        {
+            tracing::warn!("Failed to send welcome push notification: {}", e);
+        }
+    });
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
