@@ -22,7 +22,6 @@ import {
   Bolt11Invoice,
   BoardResult,
 } from "react-native-nitro-ark";
-import { captureException } from "@sentry/react-native";
 import { Result, ResultAsync } from "neverthrow";
 
 export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
@@ -68,7 +67,6 @@ export const boardArk = async (amountSat: number): Promise<Result<BoardResult, E
     const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
     return e;
   });
 };
@@ -78,7 +76,6 @@ export const boardAllArk = async (): Promise<Result<BoardResult, Error>> => {
     const e = new Error(
       `Failed to board funds: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
     return e;
   });
 };
@@ -88,7 +85,6 @@ export const offboardAllArk = async (address: string): Promise<Result<string, Er
     const e = new Error(
       `Failed to offboard funds: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
     return e;
   });
 };
@@ -101,7 +97,6 @@ export const sendArkoorPayment = async (
     const e = new Error(
       `Failed to send arkoor payment: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
     return e;
   });
 };
@@ -114,7 +109,6 @@ export const sendLightningPayment = async (
     const e = new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
     return e;
   });
 };
@@ -130,7 +124,7 @@ export const onchainSend = async ({
     const e = new Error(
       `Failed to send onchain funds: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
+
     return e;
   });
 };
@@ -146,7 +140,7 @@ export const sendLnaddr = async (
         error instanceof Error ? error.message : String(error)
       }`,
     );
-    captureException(e);
+
     return e;
   });
 };
@@ -156,7 +150,7 @@ export const syncPendingBoards = async (): Promise<Result<void, Error>> => {
     const e = new Error(
       `Failed to sync pending boards: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
+
     return e;
   });
 };
@@ -166,7 +160,7 @@ export const movements = async (): Promise<Result<BarkMovement[], Error>> => {
     const e = new Error(
       `Failed to get movements: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
+
     return e;
   });
 };
@@ -179,7 +173,7 @@ export const checkAndClaimLnReceive = async (
     const e = new Error(
       `Failed to check and claim lightning receive: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
+
     return e;
   });
 };
@@ -191,7 +185,7 @@ export const checkAndClaimAllOpenLnReceives = async (
     const e = new Error(
       `Failed to check and claim all open lightning receives: ${error instanceof Error ? error.message : String(error)}`,
     );
-    captureException(e);
+
     return e;
   });
 };
