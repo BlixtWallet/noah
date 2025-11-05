@@ -9,7 +9,7 @@ import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
-import { maintenanceRefresh } from "./walletApi";
+import { maintenanceRefresh, sync } from "./walletApi";
 import { checkAndClaimLnReceive } from "./paymentsApi";
 
 const log = logger("pushNotifications");

@@ -23,15 +23,6 @@ import logger from "~/lib/log";
 
 const log = logger("useWallet");
 
-export interface BarkVtxo {
-  amount: number;
-  expiry_height: number;
-  server_pubkey: string;
-  exit_delta: number;
-  anchor_point: string;
-  point: string;
-}
-
 export function useCreateWallet() {
   const { showAlert } = useAlert();
 

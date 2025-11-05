@@ -72,6 +72,7 @@ const HomeScreen = () => {
   const offchainBalance = balance
     ? (balance.offchain.pending_exit ?? 0) +
       (balance.offchain.pending_lightning_send ?? 0) +
+      (balance.offchain.pending_lightning_receive.claimable ?? 0) +
       (balance.offchain.pending_in_round ?? 0) +
       (balance.offchain.spendable ?? 0) +
       (balance.offchain.pending_board ?? 0)
@@ -261,6 +262,16 @@ const HomeScreen = () => {
                               sats
                             </Text>
                           </View>
+                          <View className="flex-row justify-between">
+                            <Text className="text-muted-foreground">Pending Receive</Text>
+                            <Text>
+                              {(
+                                balance?.offchain.pending_lightning_receive.claimable ?? 0
+                              ).toLocaleString()}{" "}
+                              sats
+                            </Text>
+                          </View>
+
                           <View className="flex-row justify-between mb-2">
                             <Text className="text-muted-foreground">Pending In Round</Text>
                             <Text>

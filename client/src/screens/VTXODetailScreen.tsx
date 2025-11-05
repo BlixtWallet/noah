@@ -6,7 +6,7 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
-import type { BarkVtxo } from "~/hooks/useWallet";
+import type { BarkVtxo } from "react-native-nitro-ark";
 import { useGetBlockHeight } from "~/hooks/useMarketData";
 
 type VTXOWithStatus = BarkVtxo & {
@@ -76,20 +76,24 @@ const VTXODetailScreen = () => {
     return (amount / 100000000).toFixed(8); // Convert sats to BTC
   };
 
-  const getStatusColor = (isExpiring: boolean) => {
-    return isExpiring ? "text-orange-500" : "text-green-500";
+  const getStatusColor = (vtxo: VTXOWithStatus) => {
+    if (vtxo.state === "Locked") return "text-gray-500";
+    return vtxo.isExpiring ? "text-orange-500" : "text-green-500";
   };
 
-  const getStatusIcon = (isExpiring: boolean) => {
-    return isExpiring ? "warning-outline" : "checkmark-circle-outline";
+  const getStatusIcon = (vtxo: VTXOWithStatus) => {
+    if (vtxo.state === "Locked") return "lock-closed-outline";
+    return vtxo.isExpiring ? "warning-outline" : "checkmark-circle-outline";
   };
 
-  const getVtxoIcon = (isExpiring: boolean) => {
-    return isExpiring ? "warning-outline" : "cube-outline";
+  const getVtxoIcon = (vtxo: VTXOWithStatus) => {
+    if (vtxo.state === "Locked") return "lock-closed-outline";
+    return vtxo.isExpiring ? "warning-outline" : "cube-outline";
   };
 
-  const getVtxoColor = (isExpiring: boolean) => {
-    return isExpiring ? "#f97316" : "#22c55e";
+  const getVtxoColor = (vtxo: VTXOWithStatus) => {
+    if (vtxo.state === "Locked") return "#6b7280";
+    return vtxo.isExpiring ? "#f97316" : "#22c55e";
   };
 
   return (
@@ -109,23 +113,15 @@ const VTXODetailScreen = () => {
         >
           <View className="items-center my-8">
             <View className="mb-4">
-              <Icon
-                name={getVtxoIcon(vtxo.isExpiring)}
-                size={64}
-                color={getVtxoColor(vtxo.isExpiring)}
-              />
+              <Icon name={getVtxoIcon(vtxo)} size={64} color={getVtxoColor(vtxo)} />
             </View>
             <Text className="text-3xl font-bold text-foreground mb-2">
               {formatAmount(vtxo.amount)} BTC
             </Text>
             <View className="flex-row items-center">
-              <Icon
-                name={getStatusIcon(vtxo.isExpiring)}
-                size={20}
-                color={vtxo.isExpiring ? "#f97316" : "#22c55e"}
-              />
-              <Text className={`text-xl font-medium ml-2 ${getStatusColor(vtxo.isExpiring)}`}>
-                {vtxo.isExpiring ? "Expiring" : "Active"}
+              <Icon name={getStatusIcon(vtxo)} size={20} color={getVtxoColor(vtxo)} />
+              <Text className={`text-xl font-medium ml-2 ${getStatusColor(vtxo)}`}>
+                {vtxo.state === "Locked" ? "Locked" : vtxo.isExpiring ? "Expiring" : "Active"}
               </Text>
             </View>
           </View>
@@ -135,7 +131,11 @@ const VTXODetailScreen = () => {
               label="Amount"
               value={`${formatAmount(vtxo.amount)} BTC (${vtxo.amount.toLocaleString()} sats)`}
             />
-            <VTXODetailRow label="Status" value={vtxo.isExpiring ? "Expiring" : "Active"} />
+            <VTXODetailRow label="State" value={vtxo.state} />
+            <VTXODetailRow
+              label="Status"
+              value={vtxo.state === "Locked" ? "Locked" : vtxo.isExpiring ? "Expiring" : "Active"}
+            />
             <VTXODetailRow
               label="Current Block Height"
               value={blockHeight ? blockHeight.toLocaleString() : "Loading..."}

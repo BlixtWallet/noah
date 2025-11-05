@@ -23,7 +23,7 @@ import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDia
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
-import logoImage from "../../assets/All_Files/all_sizes/1024.png";
+import logoImage from "../../assets/1024_no_background.png";
 import { COLORS } from "~/lib/styleConstants";
 
 type Setting = {

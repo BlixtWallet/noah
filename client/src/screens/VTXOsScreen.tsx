@@ -9,7 +9,8 @@ import { Label } from "~/components/ui/label";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SettingsStackParamList } from "~/Navigators";
-import { useGetVtxos, useGetExpiringVtxos, type BarkVtxo } from "~/hooks/useWallet";
+import { useGetVtxos, useGetExpiringVtxos } from "~/hooks/useWallet";
+import { BarkVtxo } from "react-native-nitro-ark";
 
 export type VTXOWithStatus = BarkVtxo & {
   isExpiring: boolean;
@@ -17,7 +18,7 @@ export type VTXOWithStatus = BarkVtxo & {
 
 const VTXOsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
-  const [filter, setFilter] = useState<"all" | "active" | "expiring">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "expiring" | "locked">("all");
 
   const { data: allVtxos = [], isLoading: isLoadingAll } = useGetVtxos();
   const { data: expiringVtxos = [], isLoading: isLoadingExpiring } = useGetExpiringVtxos();
@@ -35,20 +36,26 @@ const VTXOsScreen = () => {
   const filteredVtxos = (() => {
     switch (filter) {
       case "active":
-        return vtxosWithStatus.filter((vtxo) => !vtxo.isExpiring);
+        return vtxosWithStatus.filter((vtxo) => !vtxo.isExpiring && vtxo.state === "Spendable");
       case "expiring":
         return vtxosWithStatus.filter((vtxo) => vtxo.isExpiring);
+      case "locked":
+        return vtxosWithStatus.filter((vtxo) => vtxo.state === "Locked");
       default:
         return vtxosWithStatus;
     }
   })();
 
-  const getVtxoIcon = (isExpiring: boolean) => {
-    return isExpiring ? "warning-outline" : "cube-outline";
+  const getVtxoIcon = (vtxo: VTXOWithStatus) => {
+    if (vtxo.state === "Locked") return "lock-closed-outline";
+    if (vtxo.isExpiring) return "warning-outline";
+    return "cube-outline";
   };
 
-  const getVtxoColor = (isExpiring: boolean) => {
-    return isExpiring ? "#f97316" : "#22c55e"; // Orange for expiring, green for active
+  const getVtxoColor = (vtxo: VTXOWithStatus) => {
+    if (vtxo.state === "Locked") return "#6b7280"; // Gray for locked
+    if (vtxo.isExpiring) return "#f97316"; // Orange for expiring
+    return "#22c55e"; // Green for active
   };
 
   return (
@@ -71,7 +78,7 @@ const VTXOsScreen = () => {
           </View>
 
           <View className="flex-row justify-around mb-4">
-            {(["all", "active", "expiring"] as const).map((f) => (
+            {(["all", "active", "expiring", "locked"] as const).map((f) => (
               <Pressable
                 key={f}
                 onPress={() => setFilter(f)}
@@ -82,8 +89,18 @@ const VTXOsScreen = () => {
                     filter === f ? "text-primary-foreground" : "text-foreground"
                   }`}
                 >
-                  {f === "all" ? "All" : f === "active" ? "Active" : "Expiring"}
-                  {f === "expiring" && expiringVtxos.length > 0 && ` (${expiringVtxos.length})`}
+                  {f === "all"
+                    ? "All"
+                    : f === "active"
+                      ? "Active"
+                      : f === "expiring"
+                        ? "Expiring"
+                        : "Locked"}
+                  {f === "active" &&
+                    ` (${vtxosWithStatus.filter((v) => !v.isExpiring && v.state === "Spendable").length})`}
+                  {f === "expiring" && ` (${expiringVtxos.length})`}
+                  {f === "locked" &&
+                    ` (${vtxosWithStatus.filter((v) => v.state === "Locked").length})`}
                 </Text>
               </Pressable>
             ))}
@@ -101,7 +118,9 @@ const VTXOsScreen = () => {
                   ? "No VTXOs found"
                   : filter === "active"
                     ? "No active VTXOs found"
-                    : "No expiring VTXOs found"}
+                    : filter === "expiring"
+                      ? "No expiring VTXOs found"
+                      : "No locked VTXOs found"}
               </Text>
               <Text className="text-muted-foreground text-sm mt-2 text-center">
                 You have no VTXOs.
@@ -115,11 +134,7 @@ const VTXOsScreen = () => {
                   <Pressable onPress={() => navigation.navigate("VTXODetail", { vtxo: item })}>
                     <View className="flex-row items-center p-4 bg-card rounded-lg">
                       <View className="mr-4">
-                        <Icon
-                          name={getVtxoIcon(item.isExpiring)}
-                          size={24}
-                          color={getVtxoColor(item.isExpiring)}
-                        />
+                        <Icon name={getVtxoIcon(item)} size={24} color={getVtxoColor(item)} />
                       </View>
                       <View className="flex-1">
                         <View className="flex-row justify-between items-center">

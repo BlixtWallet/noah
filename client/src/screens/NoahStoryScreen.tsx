@@ -19,7 +19,7 @@ import {
   isAudioPlaying,
 } from "noah-tools";
 import audioFile from "../../assets/noahs-ark-story.m4a";
-import logoImage from "../../assets/All_Files/all_sizes/1024.png";
+import logoImage from "../../assets/1024_no_background.png";
 import logger from "~/lib/log";
 
 const log = logger("NoahStoryScreen");
