@@ -34,7 +34,7 @@ const CopyableRow = ({ label, value }: { label: string; value: string }) => {
   };
 
   // Trim the displayed value to make it more readable
-  const displayValue = value.length > 20 ? `${value.slice(0, 15)}...${value.slice(-10)}` : value;
+  const displayValue = value.length > 20 ? `${value.slice(0, 10)}...${value.slice(-10)}` : value;
 
   return (
     <View className="flex-row justify-between items-start py-3">

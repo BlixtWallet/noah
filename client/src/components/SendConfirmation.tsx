@@ -74,8 +74,8 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
   };
 
   const formatDestination = (dest: string) => {
-    if (dest.length > 30) {
-      return `${dest.slice(0, 15)}...${dest.slice(-10)}`;
+    if (dest.length > 20) {
+      return `${dest.slice(0, 10)}...${dest.slice(-10)}`;
     }
     return dest;
   };
