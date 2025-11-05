@@ -98,7 +98,7 @@
     "react-native-gesture-handler": "~2.28.0",
     "react-native-keychain": "^10.0.0",
     "react-native-mmkv": "^4.0.0",
-    "react-native-nitro-ark": "^0.0.69",
+    "react-native-nitro-ark": "^0.0.70",
     "react-native-nitro-modules": "^0.29.8",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "~4.1.1",
