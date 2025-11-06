@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build:
@@ -23,21 +23,12 @@ jobs:
         with:
           name: ${{ needs.build.outputs.artifact_name }}
 
-      - name: 🔍 Find APK filename
-        id: find_apk
-        run: |
-          apk_file=$(find . -name "*.apk" -type f | head -n 1)
-          apk_name=$(basename "${apk_file}")
-          echo "apk_path=${apk_file}" >> $GITHUB_OUTPUT
-          echo "apk_filename=${apk_name}" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: 🚀 Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ github.ref_name }}" \
-            "${{ steps.find_apk.outputs.apk_path }}" \
+            "${{ needs.build.outputs.apk_filename }}" \
             --repo "${{ github.repository }}" \
             --title "Noah ${{ github.ref_name }}" \
             --generate-notes
