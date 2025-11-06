@@ -1,6 +1,9 @@
 # Noah Wallet Privacy Policy
 
-**Last Updated: 2025-11-04**
+**Apps Covered:** Noah, Noah (Signet)  
+**Developer:** Hampus Sjöberg  
+**Privacy Contact:** hampus.sjoberg at protonmail.com  
+**Last Updated: 2025-11-06**
 
 ## Our Commitment to Privacy
 
