@@ -18,32 +18,8 @@ on:
         value: ${{ jobs.android_build.outputs.apk_filename }}
 
 jobs:
-  check_if_release_commit:
-    runs-on: self-hosted
-    outputs:
-      is_release: ${{ steps.check_tag.outputs.is_release }}
-    steps:
-      - name: 🏗 Checkout code with tags
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetches all history and tags
-      - name: 🏷️ Check if commit is tagged for release (v*)
-        id: check_tag
-        run: |
-          # Check if any tag starting with 'v' points to the current commit HEAD
-          if git tag --points-at HEAD | grep -q "^v"; then
-            echo "Commit is tagged with a 'v*' tag. Build/test steps will be skipped in this workflow."
-            echo "is_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "Commit is NOT tagged with a 'v*' tag. Build/test steps will proceed."
-            echo "is_release=false" >> $GITHUB_OUTPUT
-          fi
-        shell: bash
-
   lint:
     runs-on: self-hosted
-    needs: check_if_release_commit
-    if: needs.check_if_release_commit.outputs.is_release == 'false'
     steps:
       - name: 🏗 Checkout code
         uses: actions/checkout@v4
