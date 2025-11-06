@@ -78,6 +78,7 @@
     "expo-dev-client": "~6.0.16",
     "expo-device": "~8.0.9",
     "expo-haptics": "~15.0.7",
+    "expo-image-picker": "~17.0.8",
     "expo-local-authentication": "~17.0.7",
     "expo-notifications": "~0.32.12",
     "expo-sqlite": "~16.0.8",

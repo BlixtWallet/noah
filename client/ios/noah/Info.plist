@@ -62,6 +62,8 @@
 	<string>$(PRODUCT_NAME) needs access to your Camera.</string>
 	<key>NSFaceIDUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to use FaceID</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your photos so that you can pick screenshots to share feedback.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIBackgroundModes</key>

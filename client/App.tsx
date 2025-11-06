@@ -6,6 +6,7 @@ import React from "react";
 import { AlertProvider } from "~/contexts/AlertProvider";
 import AppNavigation from "~/Navigators";
 import * as Sentry from "@sentry/react-native";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "~/queryClient";
 import { APP_VARIANT } from "~/config";
@@ -17,7 +18,14 @@ if (!isDebugModeOrRegtest) {
     // Adds more context data to events (IP address, cookies, user, etc.)
     // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
     sendDefaultPii: true,
-    integrations: [Sentry.feedbackIntegration()],
+    integrations: [
+      Sentry.feedbackIntegration({
+        showName: true,
+        showEmail: true,
+        isNameRequired: false,
+        isEmailRequired: false,
+      }),
+    ],
 
     // uncomment the line below to enable Spotlight (https://spotlightjs.com)
     // spotlight: __DEV__,

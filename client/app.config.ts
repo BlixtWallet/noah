@@ -25,6 +25,13 @@ const config: { expo: ExpoConfig } = {
         },
       ],
       [
+        "expo-image-picker",
+        {
+          photosPermission:
+            "Allow $(PRODUCT_NAME) to access your photos so that you can pick screenshots to share feedback.",
+        },
+      ],
+      [
         "react-native-share",
         {
           ios: ["whatsapp", "telegram", "signal"],

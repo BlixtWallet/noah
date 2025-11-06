@@ -3,6 +3,9 @@ PODS:
     - ExpoModulesCore
   - EXConstants (18.0.10):
     - ExpoModulesCore
+  - EXImageLoader (6.0.0):
+    - ExpoModulesCore
+    - React-Core
   - EXJSONUtils (0.15.0)
   - EXManifests (1.0.8):
     - ExpoModulesCore
@@ -215,6 +218,8 @@ PODS:
   - ExpoFont (14.0.9):
     - ExpoModulesCore
   - ExpoHaptics (15.0.7):
+    - ExpoModulesCore
+  - ExpoImagePicker (17.0.8):
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.7):
     - ExpoModulesCore
@@ -2585,6 +2590,7 @@ PODS:
 DEPENDENCIES:
   - EXApplication (from `../../node_modules/expo-application/ios`)
   - EXConstants (from `../../node_modules/expo-constants/ios`)
+  - EXImageLoader (from `../../node_modules/expo-image-loader/ios`)
   - EXJSONUtils (from `../../node_modules/expo-json-utils/ios`)
   - EXManifests (from `../../node_modules/expo-manifests/ios`)
   - EXNotifications (from `../../node_modules/expo-notifications/ios`)
@@ -2599,6 +2605,7 @@ DEPENDENCIES:
   - ExpoFileSystem (from `../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../../node_modules/expo-haptics/ios`)
+  - ExpoImagePicker (from `../../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../../node_modules/expo-keep-awake/ios`)
   - ExpoLocalAuthentication (from `../../node_modules/expo-local-authentication/ios`)
   - ExpoModulesCore (from `../../node_modules/expo-modules-core`)
@@ -2714,6 +2721,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-application/ios"
   EXConstants:
     :path: "../../node_modules/expo-constants/ios"
+  EXImageLoader:
+    :path: "../../node_modules/expo-image-loader/ios"
   EXJSONUtils:
     :path: "../../node_modules/expo-json-utils/ios"
   EXManifests:
@@ -2742,6 +2751,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/expo-font/ios"
   ExpoHaptics:
     :path: "../../node_modules/expo-haptics/ios"
+  ExpoImagePicker:
+    :path: "../../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../../node_modules/expo-keep-awake/ios"
   ExpoLocalAuthentication:
@@ -2939,6 +2950,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   EXApplication: a9d1c46d473d36f61302a9a81db2379441f3f094
   EXConstants: e6e50cdfcb4524f40121d1fdcff24e97b7dcd2fd
+  EXImageLoader: e501c001bc40b8326605e82e6e80363c80fe06b5
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 7469efed75d694ce3c43a6da9c6f3886f66d3c26
   EXNotifications: 7aab54f0e5f3023122bc95699eaff7c52bacb559
@@ -2953,6 +2965,7 @@ SPEC CHECKSUMS:
   ExpoFileSystem: 56f081328f5b48a6dcc8302eee51d4f2d9d0049b
   ExpoFont: b881d43057dceb7b31ff767b24f612609e80f60f
   ExpoHaptics: b48d913e7e5f23816c6f130e525c9a6501b160b5
+  ExpoImagePicker: bd0a5c81d7734548f6908a480609257e85d19ea8
   ExpoKeepAwake: 3f5e3ac53627849174f3603271df8e08f174ed4a
   ExpoLocalAuthentication: 8f11d958b956fa372c0a49975f54ed1dc617ae1d
   ExpoModulesCore: 08a1e47dfb85e295c67ecc98da58317d66f64818

@@ -10,6 +10,7 @@ const isEmail = (n: string): boolean => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-
 const isOnion = (n: string): boolean => /.onion$/.test(n);
 const isUsername = (n: string): boolean => /^[a-z0-9_.]*$/.test(n);
 const parseEmail = (email: string): string[] => email.split("@");
+export const MIN_AUTO_BOARD_AMOUNT = 10_000;
 
 export const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 export const KEYCHAIN_USERNAME = "noah";

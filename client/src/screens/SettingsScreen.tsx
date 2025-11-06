@@ -25,6 +25,7 @@ import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
 import logoImage from "../../assets/1024_no_background.png";
 import { COLORS } from "~/lib/styleConstants";
+import { FeedbackModal } from "~/components/FeedbackModal";
 
 type Setting = {
   id:
@@ -36,7 +37,8 @@ type Setting = {
     | "staticVtxoPubkey"
     | "resetRegistration"
     | "backup"
-    | "vtxos";
+    | "vtxos"
+    | "feedback";
   title: string;
   value?: string;
   description?: string;
@@ -65,6 +67,7 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
+  const [showFeedback, setShowFeedback] = useState(false);
   const { isInitialized, isBiometricsEnabled, setBiometricsEnabled } = useWalletStore();
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
@@ -114,6 +117,8 @@ const SettingsScreen = () => {
       navigation.navigate("BackupSettings");
     } else if (item.id === "vtxos") {
       navigation.navigate("VTXOs");
+    } else if (item.id === "feedback") {
+      setShowFeedback(true);
     }
   };
 
@@ -193,6 +198,12 @@ const SettingsScreen = () => {
       id: "resetRegistration",
       title: "Reset Server Registration",
       description: "Clear your registration with the server. You will need to register again.",
+      isPressable: true,
+    });
+    debugData.push({
+      id: "feedback",
+      title: "Send Feedback",
+      description: "Report bugs or share feedback with the Noah team",
       isPressable: true,
     });
   }
@@ -423,6 +434,8 @@ const SettingsScreen = () => {
           <Text className="text-muted-foreground text-sm">Made with ❤️ from Noah team</Text>
         </View>
       </ScrollView>
+
+      <FeedbackModal visible={showFeedback} onClose={() => setShowFeedback(false)} />
     </NoahSafeAreaView>
   );
 };

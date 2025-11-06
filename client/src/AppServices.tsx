@@ -9,6 +9,7 @@ import { useBoardAllAmountArk } from "~/hooks/usePayments";
 import { useAlert } from "~/contexts/AlertProvider";
 import { addOnboardingRequest } from "~/lib/transactionsDb";
 import logger from "~/lib/log";
+import { MIN_AUTO_BOARD_AMOUNT } from "./constants";
 
 const log = logger("AppServices");
 
@@ -44,7 +45,6 @@ const AppServices = memo(() => {
     }
 
     const onchainConfirmedBalance = balance.onchain.confirmed;
-    const MIN_AUTO_BOARD_AMOUNT = 50_000;
 
     if (onchainConfirmedBalance >= MIN_AUTO_BOARD_AMOUNT) {
       setHasAttemptedAutoBoarding(true);
