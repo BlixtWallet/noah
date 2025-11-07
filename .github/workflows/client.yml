@@ -60,6 +60,28 @@ jobs:
       - name: 🔨 Build signet Android app
         run: nix develop .# --command bash -c "bun client build:android:ci"
 
+      - name: 🔐 Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
+
+      - name: ✍️ Sign APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          nix develop .# --command bash -c "\$ANDROID_HOME/build-tools/35.0.0/apksigner sign --ks keystore.jks \
+            --ks-pass pass:\$KEYSTORE_PASSWORD \
+            --key-pass pass:\$KEY_PASSWORD \
+            --ks-key-alias \$KEY_ALIAS \
+            client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
+
+      - name: 🧹 Clean up keystore
+        if: always()
+        run: rm -f keystore.jks
+
       - name: 📝 Rename APK with timestamp
         id: rename_apk
         run: |
