@@ -9,6 +9,12 @@ on:
       - "package.json"
       - "bun.lock"
   workflow_call:
+    inputs:
+      build_aab:
+        description: "Whether to build AAB in addition to APK"
+        required: false
+        type: boolean
+        default: false
     outputs:
       artifact_name:
         description: "The name of the uploaded artifact"
@@ -16,6 +22,9 @@ on:
       apk_filename:
         description: "The filename of the APK"
         value: ${{ jobs.android_build.outputs.apk_filename }}
+      aab_filename:
+        description: "The filename of the AAB"
+        value: ${{ jobs.android_build.outputs.aab_filename }}
 
 jobs:
   lint:
@@ -25,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 📦 Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 
       - name: ✨ Lint code
         run: nix develop .# --command bash -c "bun client lint"
@@ -39,6 +48,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
       apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
+      aab_filename: ${{ steps.aab_meta.outputs.aab_filename }}
     steps:
       - name: 🏗 Checkout code
         uses: actions/checkout@v4
@@ -50,7 +60,7 @@ jobs:
       #   uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: 📦 Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 
       - name: 🔧 Create sentry.properties
         env:
@@ -70,12 +80,18 @@ jobs:
           MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./scripts/create_local_properties.sh
 
-      - name: 🔨 Build signet Android app
+      - name: 🔨 Build signet Android app (APK)
         run: nix develop .# --command bash -c "bun client build:android:ci"
 
-      - name: 🧹 Clean up keystore
-        if: always()
-        run: rm -f client/android/app/release.keystore
+      - name: 📦 Build signet Android app (AAB)
+        if: ${{ inputs.build_aab }}
+        run: nix develop .# --command bash -c "cd client/android && ./gradlew bundleSignetRelease -PreactNativeArchitectures=arm64-v8a"
+
+      - name: 🧹 Clean up keystore & local.properties
+        if: ${{ always() }}
+        run: |
+          rm -f client/android/app/release.keystore
+          rm -f client/android/local.properties
 
       - name: 📝 Rename APK with timestamp
         id: rename_apk
@@ -91,8 +107,37 @@ jobs:
           echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: 📝 Prepare AAB outputs
+        id: aab_meta
+        # Always run so job outputs are defined whether or not we built an AAB
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          aab_expected="client/android/app/build/outputs/bundle/signetRelease/app-signet-release.aab"
+          if [[ "${{ inputs.build_aab }}" == 'true' && -f "$aab_expected" ]]; then
+            timestamp=$(date +'%Y-%m-%d-%H-%M')
+            aab_filename="noah-android-aab-${timestamp}.aab"
+            new_aab_path="client/android/app/build/outputs/bundle/signetRelease/${aab_filename}"
+            mv "$aab_expected" "$new_aab_path"
+            echo "new_path=${new_aab_path}" >> "$GITHUB_OUTPUT"
+            echo "aab_filename=${aab_filename}" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_path=" >> "$GITHUB_OUTPUT"
+            echo "aab_filename=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 📤 Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
+          if-no-files-found: error
+
+      - name: 📤 Upload Android AAB
+        if: ${{ inputs.build_aab && steps.aab_meta.outputs.new_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.aab_meta.outputs.aab_filename }}
+          path: ${{ steps.aab_meta.outputs.new_path }}
+          if-no-files-found: error
