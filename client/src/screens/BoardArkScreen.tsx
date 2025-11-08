@@ -14,7 +14,8 @@ import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { isValidBitcoinAddress } from "../constants";
+import { validateBitcoinAddress } from "bip-321";
+import { APP_VARIANT } from "../config";
 import { NoahButton } from "../components/ui/NoahButton";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance } from "../hooks/useWallet";
@@ -335,10 +336,20 @@ const BoardArkScreen = () => {
   };
 
   const handleOffboard = async () => {
-    if (!address || !isValidBitcoinAddress(address)) {
+    const btcValidation = validateBitcoinAddress(address);
+
+    if (!address || !btcValidation.valid) {
       showAlert({
         title: "Invalid Address",
         description: "Please enter a valid Bitcoin address.",
+      });
+      return;
+    }
+
+    if (btcValidation.network !== APP_VARIANT) {
+      showAlert({
+        title: "Network Mismatch",
+        description: `Please enter a ${APP_VARIANT} address. Detected ${btcValidation.network} address.`,
       });
       return;
     }

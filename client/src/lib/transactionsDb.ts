@@ -26,8 +26,8 @@ export const addTransaction = async (transaction: Transaction) => {
   const db = await openDatabase();
   return ResultAsync.fromPromise(
     db.runAsync(
-      `INSERT INTO transactions (id, txid, type, direction, amount, date, description, destination, btcPrice)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO transactions (id, txid, type, direction, amount, date, description, destination, btcPrice, preimage)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       transaction.id,
       transaction.txid || null,
       transaction.type,
@@ -37,6 +37,7 @@ export const addTransaction = async (transaction: Transaction) => {
       transaction.description || null,
       transaction.destination || null,
       transaction.btcPrice || null,
+      transaction.preimage || null,
     ),
     (e) => {
       log.e("Failed to add transaction", [e]);

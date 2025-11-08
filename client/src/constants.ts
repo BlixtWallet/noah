@@ -2,7 +2,6 @@ import type { BarkCreateOpts } from "react-native-nitro-ark";
 import RNFSTurbo from "react-native-fs-turbo";
 import { APP_VARIANT } from "./config";
 import { decode } from "light-bolt11-decoder";
-import { validate, Network } from "bitcoin-address-validation";
 import { Result } from "neverthrow";
 import { Platform } from "react-native";
 
@@ -142,26 +141,6 @@ const getActiveWalletConfig = (): WalletCreationOptions => {
 
 export const ACTIVE_WALLET_CONFIG = getActiveWalletConfig();
 
-const network = () => {
-  switch (APP_VARIANT) {
-    case "mainnet":
-      return Network.mainnet;
-    // Note that signet addresses will be validated as testnet by the parsing lib.
-    case "signet":
-      return Network.testnet;
-    case "regtest":
-      return Network.regtest;
-  }
-};
-
-export const isArkPublicKey = (n: string) => !!n && /^0[2-3][0-9A-F]{64}$/i.test(n);
-
-export const isValidBitcoinAddress = (address: string) => validate(address, network());
-
-export const isValidBolt11 = (invoice: string) => {
-  return Result.fromThrowable(decode)(invoice).isOk();
-};
-
 export const decodeBolt11 = (invoice: string) => {
   return Result.fromThrowable(decode)(invoice).unwrapOr(null);
 };
@@ -200,19 +179,6 @@ export const isValidLightningAddress = (url: string): boolean => {
 
   return true;
 };
-
-const getArkHrp = (): "ark" | "tark" => {
-  switch (APP_VARIANT) {
-    case "mainnet":
-      return "ark";
-    case "signet":
-    case "regtest":
-    default:
-      return "tark";
-  }
-};
-
-export const isValidArkAddress = (address: string) => address.startsWith(getArkHrp());
 
 export const stringToUint8Array = (str: string) => {
   return Uint8Array.from(str, (x) => x.charCodeAt(0));

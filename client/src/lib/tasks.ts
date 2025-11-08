@@ -6,8 +6,9 @@ import { BackupService } from "~/lib/backupService";
 import { submitInvoice as submitInvoiceApi } from "./api";
 import { updateOffboardingRequestStatus } from "./transactionsDb";
 import { verifyMessage } from "./crypto";
-import { isValidBitcoinAddress } from "~/constants";
+import { validateBitcoinAddress } from "bip-321";
 import { Bolt11Invoice } from "react-native-nitro-ark";
+import { APP_VARIANT } from "~/config";
 
 const log = logger("tasks");
 
@@ -120,8 +121,15 @@ export async function offboardTask(
 
   log.d("[Offboard Job] address signature verified successfully");
 
-  if (!isValidBitcoinAddress(address)) {
+  const btcValidation = validateBitcoinAddress(address);
+  if (!btcValidation.valid) {
     const e = new Error("Invalid Bitcoin address");
+    log.e(e.message, [address]);
+    return err(e);
+  }
+
+  if (btcValidation.network !== APP_VARIANT) {
+    const e = new Error(`Network mismatch: expected ${APP_VARIANT}, got ${btcValidation.network}`);
     log.e(e.message, [address]);
     return err(e);
   }

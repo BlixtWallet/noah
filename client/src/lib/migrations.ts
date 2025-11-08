@@ -30,6 +30,11 @@ const migrations: Migration[] = [
     name: "create_onboarding_requests_table",
     up: migration_v4_create_onboarding_requests,
   },
+  {
+    version: 5,
+    name: "add_preimage_to_transactions",
+    up: migration_v5_add_preimage_to_transactions,
+  },
 ];
 
 export const runMigrations = async (db: SQLite.SQLiteDatabase): Promise<void> => {
@@ -94,5 +99,11 @@ async function migration_v4_create_onboarding_requests(db: SQLite.SQLiteDatabase
       status TEXT NOT NULL,
       onchain_txid TEXT
     );
+  `);
+}
+
+async function migration_v5_add_preimage_to_transactions(db: SQLite.SQLiteDatabase): Promise<void> {
+  await db.execAsync(`
+    ALTER TABLE transactions ADD COLUMN preimage TEXT;
   `);
 }

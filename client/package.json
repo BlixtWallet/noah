@@ -66,6 +66,7 @@
     "@shopify/flash-list": "2.0.2",
     "@tanstack/react-query": "^5.90.5",
     "babel-plugin-react-compiler": "^19.0.0-beta-af1b7da-20250417",
+    "bip-321": "^0.0.7",
     "bitcoin-address-validation": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
