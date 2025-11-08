@@ -84,12 +84,14 @@ jobs:
         run: nix develop .# --command bash -c "bun client build:android:ci"
 
       - name: 📦 Build signet Android app (AAB)
-        if: inputs.build_aab == true
+        if: ${{ inputs.build_aab }}
         run: nix develop .# --command bash -c "cd client/android && ./gradlew bundleSignetRelease -PreactNativeArchitectures=arm64-v8a"
 
-      - name: 🧹 Clean up keystore
+      - name: 🧹 Clean up keystore & local.properties
         if: always()
-        run: rm -f client/android/app/release.keystore
+        run: |
+          rm -f client/android/app/release.keystore
+          rm -f client/android/local.properties
 
       - name: 📝 Rename APK with timestamp
         id: rename_apk
@@ -105,36 +107,37 @@ jobs:
           echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: 📝 Rename AAB with timestamp
-        if: inputs.build_aab == true
-        id: rename_aab
-        run: |
-          aab_path="client/android/app/build/outputs/bundle/signetRelease/app-signet-release.aab"
-          timestamp=$(date +'%Y-%m-%d-%H-%M')
-          new_aab_name="noah-android-aab-${timestamp}"
-          aab_filename="${new_aab_name}.aab"
-          new_aab_path="client/android/app/build/outputs/bundle/signetRelease/${aab_filename}"
-          mv "${aab_path}" "${new_aab_path}"
-          echo "new_path=${new_aab_path}" >> $GITHUB_OUTPUT
-          echo "aab_filename=${aab_filename}" >> $GITHUB_OUTPUT
+      - name: 📝 Prepare AAB outputs
+        id: aab_meta
+        # Always run so job outputs are defined whether or not we built an AAB
+        if: ${{ always() }}
         shell: bash
-
-      - name: Set empty AAB filename
-        if: inputs.build_aab != true
-        id: rename_aab
         run: |
-          echo "aab_filename=" >> $GITHUB_OUTPUT
-        shell: bash
+          set -euo pipefail
+          aab_expected="client/android/app/build/outputs/bundle/signetRelease/app-signet-release.aab"
+          if [[ "${{ inputs.build_aab }}" == 'true' && -f "$aab_expected" ]]; then
+            timestamp=$(date +'%Y-%m-%d-%H-%M')
+            aab_filename="noah-android-aab-${timestamp}.aab"
+            new_aab_path="client/android/app/build/outputs/bundle/signetRelease/${aab_filename}"
+            mv "$aab_expected" "$new_aab_path"
+            echo "new_path=${new_aab_path}" >> "$GITHUB_OUTPUT"
+            echo "aab_filename=${aab_filename}" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_path=" >> "$GITHUB_OUTPUT"
+            echo "aab_filename=" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 📤 Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
+          if-no-files-found: error
 
       - name: 📤 Upload Android AAB
-        if: inputs.build_aab == true
+        if: ${{ inputs.build_aab && steps.aab_meta.outputs.new_path != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.rename_aab.outputs.aab_filename }}
-          path: ${{ steps.rename_aab.outputs.new_path }}
+          name: ${{ steps.aab_meta.outputs.aab_filename }}
+          path: ${{ steps.aab_meta.outputs.new_path }}
+          if-no-files-found: error
