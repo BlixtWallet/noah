@@ -141,3 +141,19 @@ jobs:
           name: ${{ steps.aab_meta.outputs.aab_filename }}
           path: ${{ steps.aab_meta.outputs.new_path }}
           if-no-files-found: error
+
+  client_gate:
+    runs-on: ubuntu-latest
+    needs: [lint, android_build]
+    if: always()
+    steps:
+      - name: ✅ Gate
+        run: |
+          if [[ "${{ needs.lint.result }}" == "success" || "${{ needs.lint.result }}" == "skipped" ]] && \
+             [[ "${{ needs.android_build.result }}" == "success" || "${{ needs.android_build.result }}" == "skipped" ]]; then
+            echo "Client checks passed or skipped"
+            exit 0
+          else
+            echo "Client checks failed"
+            exit 1
+          fi

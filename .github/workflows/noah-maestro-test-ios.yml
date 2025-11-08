@@ -102,3 +102,19 @@ jobs:
           path: client/maestro-debug-output/**/*
           include-hidden-files: true
           overwrite: true
+
+  maestro_test_gate:
+    name: Maestro Test iOS Gate
+    runs-on: ubuntu-latest
+    needs: maestro-test-ios
+    if: always()
+    steps:
+      - name: ✅ Gate
+        run: |
+          if [[ "${{ needs.maestro-test-ios.result }}" == "success" || "${{ needs.maestro-test-ios.result }}" == "skipped" ]]; then
+            echo "Maestro tests passed or skipped"
+            exit 0
+          else
+            echo "Maestro tests failed"
+            exit 1
+          fi
