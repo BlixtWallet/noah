@@ -60,3 +60,6 @@ server/target/
 noah-regtest.db
 config.toml
 .lnd-data
+
+client/android/app/release.keystore
+local.properties
