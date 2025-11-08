@@ -57,30 +57,25 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: ./scripts/create_sentry_properties.sh
 
-      - name: 🔨 Build signet Android app
-        run: nix develop .# --command bash -c "bun client build:android:ci"
-
       - name: 🔐 Decode keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > keystore.jks
+          echo "$KEYSTORE_BASE64" | base64 -d > client/android/app/release.keystore
 
-      - name: ✍️ Sign APK
+      - name: 🔧 Create local.properties for release signing
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          nix develop .# --command bash -c "\$ANDROID_HOME/build-tools/35.0.0/apksigner sign --ks keystore.jks \
-            --ks-pass pass:\$KEYSTORE_PASSWORD \
-            --key-pass pass:\$KEY_PASSWORD \
-            --ks-key-alias \$KEY_ALIAS \
-            client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
+          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./scripts/create_local_properties.sh
+
+      - name: 🔨 Build signet Android app
+        run: nix develop .# --command bash -c "bun client build:android:ci"
 
       - name: 🧹 Clean up keystore
         if: always()
-        run: rm -f keystore.jks
+        run: rm -f client/android/app/release.keystore
 
       - name: 📝 Rename APK with timestamp
         id: rename_apk
