@@ -60,7 +60,7 @@ jobs:
       #   uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: 📦 Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install ----frozen-lockfile"
+        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 
       - name: 🔧 Create sentry.properties
         env:
