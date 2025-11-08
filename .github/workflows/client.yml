@@ -9,6 +9,12 @@ on:
       - "package.json"
       - "bun.lock"
   workflow_call:
+    inputs:
+      build_aab:
+        description: "Whether to build AAB in addition to APK"
+        required: false
+        type: boolean
+        default: false
     outputs:
       artifact_name:
         description: "The name of the uploaded artifact"
@@ -16,6 +22,9 @@ on:
       apk_filename:
         description: "The filename of the APK"
         value: ${{ jobs.android_build.outputs.apk_filename }}
+      aab_filename:
+        description: "The filename of the AAB"
+        value: ${{ jobs.android_build.outputs.aab_filename }}
 
 jobs:
   lint:
@@ -39,6 +48,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
       apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
+      aab_filename: ${{ steps.rename_aab.outputs.aab_filename }}
     steps:
       - name: 🏗 Checkout code
         uses: actions/checkout@v4
@@ -70,8 +80,12 @@ jobs:
           MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./scripts/create_local_properties.sh
 
-      - name: 🔨 Build signet Android app
+      - name: 🔨 Build signet Android app (APK)
         run: nix develop .# --command bash -c "bun client build:android:ci"
+
+      - name: 📦 Build signet Android app (AAB)
+        if: inputs.build_aab == true
+        run: nix develop .# --command bash -c "cd client/android && ./gradlew bundleSignetRelease -PreactNativeArchitectures=arm64-v8a"
 
       - name: 🧹 Clean up keystore
         if: always()
@@ -91,8 +105,36 @@ jobs:
           echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: 📝 Rename AAB with timestamp
+        if: inputs.build_aab == true
+        id: rename_aab
+        run: |
+          aab_path="client/android/app/build/outputs/bundle/signetRelease/app-signet-release.aab"
+          timestamp=$(date +'%Y-%m-%d-%H-%M')
+          new_aab_name="noah-android-aab-${timestamp}"
+          aab_filename="${new_aab_name}.aab"
+          new_aab_path="client/android/app/build/outputs/bundle/signetRelease/${aab_filename}"
+          mv "${aab_path}" "${new_aab_path}"
+          echo "new_path=${new_aab_path}" >> $GITHUB_OUTPUT
+          echo "aab_filename=${aab_filename}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Set empty AAB filename
+        if: inputs.build_aab != true
+        id: rename_aab
+        run: |
+          echo "aab_filename=" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: 📤 Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
+
+      - name: 📤 Upload Android AAB
+        if: inputs.build_aab == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.rename_aab.outputs.aab_filename }}
+          path: ${{ steps.rename_aab.outputs.new_path }}
