@@ -220,6 +220,7 @@ export function useSend(destinationType: DestinationTypes) {
           amount: amountSat || 0,
           date: new Date().toISOString(),
           destination: destination,
+          preimage: "preimage" in data ? (data.preimage as string) : undefined,
         };
         addTransaction(transaction);
       }

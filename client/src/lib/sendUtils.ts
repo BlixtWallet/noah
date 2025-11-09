@@ -1,11 +1,12 @@
+import { decodeBolt11, isValidLightningAddress } from "../constants";
 import {
-  decodeBolt11,
-  isArkPublicKey,
-  isValidArkAddress,
-  isValidBitcoinAddress,
-  isValidBolt11,
-  isValidLightningAddress,
-} from "../constants";
+  parseBIP321,
+  type BIP321ParseResult,
+  validateBitcoinAddress,
+  validateLightningInvoice,
+  validateArkAddress,
+} from "bip-321";
+import { APP_VARIANT } from "../config";
 import logger from "./log";
 
 const log = logger("sendUtils");
@@ -26,39 +27,57 @@ export type ParsedDestination = {
   bip321?: ParsedBip321;
 };
 
+const isNetworkMatch = (network: string | undefined, paymentType: "ark" | "other"): boolean => {
+  if (!network) return false;
+
+  if (paymentType === "ark") {
+    // For Ark, testnet covers testnet, signet, and regtest
+    if (APP_VARIANT === "mainnet") {
+      return network === "mainnet";
+    } else {
+      // APP_VARIANT is testnet, signet, or regtest
+      // Ark network should be "testnet"
+      return network === "testnet";
+    }
+  } else {
+    // For Bitcoin addresses and Lightning invoices, exact network match required
+    return network === APP_VARIANT;
+  }
+};
+
 export const isValidDestination = (dest: string): boolean => {
   if (dest.toLowerCase().startsWith("bitcoin:")) {
-    try {
-      const url = new URL(dest);
-      // For BIP-321 URIs, the onchain address is optional
-      // Check if we have at least one valid payment method
-      const onchainAddress = url.pathname;
-      const arkAddress = url.searchParams.get("ark") || url.searchParams.get("ARK");
-      const lightningInvoice =
-        url.searchParams.get("lightning") || url.searchParams.get("LIGHTNING");
-
-      // Valid if we have at least one payment method
-      const hasOnchain = !!(onchainAddress && isValidBitcoinAddress(onchainAddress));
-      const hasArk = !!(
-        arkAddress &&
-        (isArkPublicKey(arkAddress) || isValidArkAddress(arkAddress))
-      );
-      const hasLightning = !!(lightningInvoice && isValidBolt11(lightningInvoice));
-
-      return hasOnchain || hasArk || hasLightning;
-    } catch (e) {
-      log.w("Failed to parse BIP-321 URI", [e]);
-      return false;
-    }
+    const expectedNetwork = APP_VARIANT;
+    const result = parseBIP321(dest, expectedNetwork);
+    return result.valid && result.paymentMethods.length > 0;
   }
+
   const cleanedDest = dest.replace(/^(lightning:)/i, "");
-  return (
-    isArkPublicKey(cleanedDest) ||
-    isValidBitcoinAddress(cleanedDest) ||
-    isValidBolt11(cleanedDest) ||
-    isValidLightningAddress(cleanedDest) ||
-    isValidArkAddress(cleanedDest)
-  );
+
+  // Check Bitcoin address
+  const btcResult = validateBitcoinAddress(cleanedDest);
+  if (btcResult.valid && isNetworkMatch(btcResult.network, "other")) {
+    return true;
+  }
+
+  // Check Lightning invoice (BOLT11)
+  const lnResult = validateLightningInvoice(cleanedDest);
+  if (lnResult.valid && isNetworkMatch(lnResult.network, "other")) {
+    return true;
+  }
+
+  // Check Ark address
+  const arkResult = validateArkAddress(cleanedDest);
+  if (arkResult.valid && isNetworkMatch(arkResult.network, "ark")) {
+    return true;
+  }
+
+  // Check Lightning address (LNURL)
+  if (isValidLightningAddress(cleanedDest)) {
+    return true;
+  }
+
+  return false;
 };
 
 const btcToSats = (btc: number) => {
@@ -67,27 +86,57 @@ const btcToSats = (btc: number) => {
 
 export const parseBip321Uri = (uri: string): ParsedDestination => {
   try {
-    const url = new URL(uri);
-    const onchainAddress = url.pathname;
-    const amountBtc = url.searchParams.get("amount") || url.searchParams.get("AMOUNT");
-    const arkAddress = url.searchParams.get("ark") || url.searchParams.get("ARK");
-    const lightningInvoice = url.searchParams.get("lightning") || url.searchParams.get("LIGHTNING");
+    const expectedNetwork = APP_VARIANT;
+    const result: BIP321ParseResult = parseBIP321(uri, expectedNetwork);
 
-    const bip321: ParsedBip321 = { onchainAddress };
-    if (arkAddress) bip321.arkAddress = arkAddress;
-    if (lightningInvoice) bip321.lightningInvoice = lightningInvoice;
+    if (!result.valid) {
+      const errorMsg = result.errors.join(", ");
+      log.w("Failed to parse BIP-321 URI", [errorMsg]);
+      return {
+        destinationType: null,
+        isAmountEditable: true,
+        error: errorMsg || "Invalid BIP-321 URI",
+      };
+    }
 
-    const result: ParsedDestination = {
+    if (result.paymentMethods.length === 0) {
+      return {
+        destinationType: null,
+        isAmountEditable: true,
+        error: "No valid payment methods found",
+      };
+    }
+
+    const bip321: ParsedBip321 = {};
+
+    // Extract payment methods
+    for (const method of result.paymentMethods) {
+      if (!method.valid) continue;
+
+      switch (method.type) {
+        case "onchain":
+          bip321.onchainAddress = method.value;
+          break;
+        case "ark":
+          bip321.arkAddress = method.value;
+          break;
+        case "lightning":
+          bip321.lightningInvoice = method.value;
+          break;
+      }
+    }
+
+    const parsed: ParsedDestination = {
       destinationType: "bip321",
-      isAmountEditable: !amountBtc,
+      isAmountEditable: !result.amount,
       bip321,
     };
 
-    if (amountBtc) {
-      result.amount = btcToSats(parseFloat(amountBtc));
+    if (result.amount) {
+      parsed.amount = btcToSats(result.amount);
     }
 
-    return result;
+    return parsed;
   } catch (error) {
     log.w("Failed to parse BIP-321 URI", [error]);
     return {
@@ -110,7 +159,17 @@ export const parseDestination = (destination: string): ParsedDestination => {
       destinationType: "lnurl",
       isAmountEditable: true,
     };
-  } else if (isValidBolt11(cleanedDestination)) {
+  }
+
+  const lnResult = validateLightningInvoice(cleanedDestination);
+  if (lnResult.valid) {
+    if (!isNetworkMatch(lnResult.network, "other")) {
+      return {
+        destinationType: null,
+        isAmountEditable: true,
+        error: `Network mismatch: expected ${APP_VARIANT}, got ${lnResult.network}`,
+      };
+    }
     const decoded = decodeBolt11(cleanedDestination);
     if (decoded === null) {
       return {
@@ -151,17 +210,32 @@ export const parseDestination = (destination: string): ParsedDestination => {
         isAmountEditable: true,
       };
     }
-  } else if (isValidBitcoinAddress(cleanedDestination)) {
+  }
+
+  const btcResult = validateBitcoinAddress(cleanedDestination);
+  if (btcResult.valid) {
+    if (!isNetworkMatch(btcResult.network, "other")) {
+      return {
+        destinationType: null,
+        isAmountEditable: true,
+        error: `Network mismatch: expected ${APP_VARIANT}, got ${btcResult.network}`,
+      };
+    }
     return {
       destinationType: "onchain",
       isAmountEditable: true,
     };
-  } else if (isArkPublicKey(cleanedDestination)) {
-    return {
-      destinationType: "ark",
-      isAmountEditable: true,
-    };
-  } else if (isValidArkAddress(cleanedDestination)) {
+  }
+
+  const arkResult = validateArkAddress(cleanedDestination);
+  if (arkResult.valid) {
+    if (!isNetworkMatch(arkResult.network, "ark")) {
+      return {
+        destinationType: null,
+        isAmountEditable: true,
+        error: `Network mismatch: expected ${APP_VARIANT}, got ${arkResult.network}`,
+      };
+    }
     return {
       destinationType: "ark",
       isAmountEditable: true,

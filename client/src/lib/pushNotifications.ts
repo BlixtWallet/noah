@@ -11,6 +11,10 @@ import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
 import { maintenanceRefresh } from "./walletApi";
 import { checkAndClaimLnReceive } from "./paymentsApi";
+import { addTransaction } from "~/lib/transactionsDb";
+import type { Transaction } from "~/types/transaction";
+import uuid from "react-native-uuid";
+import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 
 const log = logger("pushNotifications");
 
@@ -119,6 +123,27 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
                   trigger: null,
                 });
                 log.d("Local notification triggered for payment", [sats]);
+
+                // Add inbound transaction to database
+                const btcPriceResult = await getHistoricalBtcToUsdRate(new Date().toISOString());
+                const transaction: Transaction = {
+                  id: uuid.v4().toString(),
+                  txid: invoiceResult.value.payment_hash,
+                  type: "Bolt11",
+                  direction: "incoming",
+                  amount: sats,
+                  date: new Date().toISOString(),
+                  btcPrice: btcPriceResult.isOk() ? btcPriceResult.value : undefined,
+                };
+
+                const addTxResult = await addTransaction(transaction);
+                if (addTxResult.isErr()) {
+                  log.w("Failed to add Lightning receive transaction to database", [
+                    addTxResult.error,
+                  ]);
+                } else {
+                  log.d("Successfully added Lightning receive transaction to database", [sats]);
+                }
               }
             }
             break;
