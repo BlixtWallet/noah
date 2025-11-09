@@ -2,8 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
+const nitroPackageJson = require("react-native-nitro-ark/package.json");
 
-const NITRO_ARK_VERSION = "v0.0.70";
+const NITRO_ARK_VERSION = `v${nitroPackageJson.version}`;
 
 // --- Configuration ---
 const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
