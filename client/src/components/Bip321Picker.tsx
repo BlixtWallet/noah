@@ -71,13 +71,15 @@ export const Bip321Picker = ({
           onSelect={onSelect}
         />
       )}
-      <PaymentOption
-        method="onchain"
-        icon={<OnchainIcon className="w-6 h-6 text-primary" />}
-        label="On-chain"
-        isSelected={selectedPaymentMethod === "onchain"}
-        onSelect={onSelect}
-      />
+      {bip321Data.onchainAddress && (
+        <PaymentOption
+          method="onchain"
+          icon={<OnchainIcon className="w-6 h-6 text-primary" />}
+          label="On-chain"
+          isSelected={selectedPaymentMethod === "onchain"}
+          onSelect={onSelect}
+        />
+      )}
     </View>
   );
 };

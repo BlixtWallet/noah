@@ -113,19 +113,23 @@ const ReceiveScreen = () => {
   useEffect(() => {
     let uri = "";
 
-    if (onchainAddress && vtxoPubkey && lightningInvoice?.payment_request) {
-      uri = `bitcoin:${onchainAddress.toUpperCase()}`;
+    if (vtxoPubkey && lightningInvoice?.payment_request) {
+      // Use empty path for unified QR codes with multiple payment methods
+      uri = `bitcoin:`;
       const params = [];
 
+      // Amount should come first per BIP-321 convention
+      if (amountSat >= minAmount) {
+        const amountInBtc = satsToBtc(amountSat);
+        params.push(`amount=${amountInBtc}`);
+      }
+
+      // Add payment methods - use uppercase for QR code efficiency
       if (vtxoPubkey) {
         params.push(`ark=${vtxoPubkey.toUpperCase()}`);
       }
       if (lightningInvoice?.payment_request) {
         params.push(`lightning=${lightningInvoice.payment_request.toUpperCase()}`);
-      }
-      if (amountSat >= minAmount) {
-        const amountInBtc = satsToBtc(amountSat);
-        params.push(`amount=${amountInBtc}`);
       }
 
       if (params.length > 0) {
@@ -134,7 +138,7 @@ const ReceiveScreen = () => {
 
       setBip321Uri(uri);
     }
-  }, [onchainAddress, vtxoPubkey, lightningInvoice, amountSat]);
+  }, [vtxoPubkey, lightningInvoice, amountSat]);
 
   useEffect(() => {
     if (lightningInvoice && amountSat) {
