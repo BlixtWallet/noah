@@ -45,14 +45,6 @@ namespace margelo::nitro::noahtools::bridge::swift {
     };
   }
   
-  // pragma MARK: std::function<void(const HttpResponse& /* result */)>
-  Func_void_HttpResponse create_Func_void_HttpResponse(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = NoahTools::Func_void_HttpResponse::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const HttpResponse& result) mutable -> void {
-      swiftClosure.call(result);
-    };
-  }
-  
   // pragma MARK: std::function<void()>
   Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept {
     auto swiftClosure = NoahTools::Func_void::fromUnsafe(swiftClosureWrapper);

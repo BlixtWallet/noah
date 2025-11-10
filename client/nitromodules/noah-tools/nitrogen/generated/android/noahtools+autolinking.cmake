@@ -34,6 +34,7 @@ target_sources(
   ../nitrogen/generated/android/noahtoolsOnLoad.cpp
   # Shared Nitrogen C++ sources
   ../nitrogen/generated/shared/c++/HybridNoahToolsSpec.cpp
+  ../nitrogen/generated/shared/c++/HybridNoahToolsCppSpec.cpp
   # Android-specific Nitrogen C++ sources
   ../nitrogen/generated/android/c++/JHybridNoahToolsSpec.cpp
 )

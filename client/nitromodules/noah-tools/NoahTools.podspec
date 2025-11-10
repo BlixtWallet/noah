@@ -17,17 +17,20 @@ Pod::Spec.new do |s|
   s.source_files = [
     "ios/**/*.{swift}",
     "ios/**/*.{m,mm}",
-    "cpp/**/*.{hpp,cpp}",
+    "cpp/**/*.{hpp,cpp,mm}",
   ]
+
+  s.resources = ["cpp/cacert.pem"]
 
   s.pod_target_xcconfig = {
     # C++ compiler flags, mainly for folly.
-    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) FOLLY_NO_CONFIG FOLLY_CFG_NO_COROUTINES"
+    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) FOLLY_NO_CONFIG FOLLY_CFG_NO_COROUTINES CPPHTTPLIB_OPENSSL_SUPPORT"
   }
 
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
   s.dependency 'ZIPFoundation'
+  s.dependency 'OpenSSL-Universal'
 
   load 'nitrogen/generated/ios/NoahTools+autolinking.rb'
   add_nitrogen_files(s)

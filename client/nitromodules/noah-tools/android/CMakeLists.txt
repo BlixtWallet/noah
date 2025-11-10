@@ -5,20 +5,26 @@ set(PACKAGE_NAME noahtools)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 20)
 
-# Define C++ library and add all sources
-add_library(${PACKAGE_NAME} SHARED src/main/cpp/cpp-adapter.cpp)
+add_compile_definitions(CPPHTTPLIB_OPENSSL_SUPPORT)
 
-# Add Nitrogen specs :)
+add_library(
+    ${PACKAGE_NAME}
+    SHARED
+    src/main/cpp/cpp-adapter.cpp
+    ../cpp/HybridNoahToolsCpp.cpp
+)
+
 include(${CMAKE_SOURCE_DIR}/../nitrogen/generated/android/noahtools+autolinking.cmake)
 
-# Set up local includes
 include_directories("src/main/cpp" "../cpp")
 
 find_library(LOG_LIB log)
+find_package(OpenSSL REQUIRED)
 
-# Link all libraries together
 target_link_libraries(
-        ${PACKAGE_NAME}
-        ${LOG_LIB}
-        android # <-- Android core
+    ${PACKAGE_NAME}
+    ${LOG_LIB}
+    android
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
