@@ -1,17 +1,7 @@
 name: iOS Telegram Notification
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths:
-      - "client/**"
-      - "scripts/**"
-      - ".github/workflows/noah-build-release-ios.yml"
-      - ".github/workflows/ios-telegram.yml"
-      - "package.json"
-      - "bun.lock"
+  pull_request:
 
 jobs:
   build:
