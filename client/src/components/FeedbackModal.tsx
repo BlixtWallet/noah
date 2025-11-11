@@ -71,13 +71,13 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
 
       if (screenshot) {
         const file = new File(screenshot);
-        const base64Data = file.base64Sync();
+        const bytes = await file.bytes();
 
         feedbackHint = {
           attachments: [
             {
               filename: "screenshot.jpg",
-              data: base64Data,
+              data: bytes,
               contentType: "image/jpeg",
             },
           ],
