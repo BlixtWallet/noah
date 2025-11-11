@@ -28,32 +28,31 @@ jobs:
       - name: 🛠️ Build for device
         run: |
           nix develop .# --command bash -c "bun client ios:prebuild && \
-          xcrun xcodebuild -scheme 'Noah-Regtest' \
+          xcrun xcodebuild -scheme 'Noah-Signet' \
           -workspace 'client/ios/noah.xcworkspace' \
           -configuration Release \
           -sdk iphoneos \
-          -destination 'generic/platform=iOS' \
           -derivedDataPath client/ios/build \
-          -archivePath client/ios/build/Noah.xcarchive \
           -allowProvisioningUpdates \
-          archive"
+          build \
+          ARCHS=arm64"
 
       - name: 📦 Create IPA
         run: |
           mkdir -p client/ios/build/ipa
           mkdir -p Payload
-          cp -R client/ios/build/Noah.xcarchive/Products/Applications/Noah-Regtest.app Payload/
-          zip -r client/ios/build/ipa/noah-device.ipa Payload
+          cp -R client/ios/build/Build/Products/Release-iphoneos/Noah-Signet.app Payload/
+          zip -r client/ios/build/ipa/noah-signet.ipa Payload
           rm -rf Payload
 
       - name: 📁 Set outputs
         id: set_outputs
         run: |
-          echo "artifact_name=ios-device-ipa" >> $GITHUB_OUTPUT
-          echo "ipa_filename=noah-device.ipa" >> $GITHUB_OUTPUT
+          echo "artifact_name=ios-signet-ipa" >> $GITHUB_OUTPUT
+          echo "ipa_filename=noah-signet.ipa" >> $GITHUB_OUTPUT
 
       - name: 📤 Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.set_outputs.outputs.artifact_name }}
-          path: client/ios/build/ipa/noah-device.ipa
+          path: client/ios/build/ipa/noah-signet.ipa
