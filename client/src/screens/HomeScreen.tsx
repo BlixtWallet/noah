@@ -18,6 +18,7 @@ import { APP_VARIANT } from "~/config";
 import { BITCOIN_FACTS, PLATFORM } from "~/constants";
 import { useAppVersionCheck } from "~/hooks/useAppVersionCheck";
 import { UpdateWarningBanner } from "~/components/UpdateWarningBanner";
+import { useBackgroundJobCoordination } from "~/hooks/useBackgroundJobCoordination";
 
 import Animated, {
   FadeInDown,
@@ -35,6 +36,7 @@ const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const isFocused = useIsFocused();
   const { walletError } = useWalletStore();
+  const { safelyExecuteWhenReady, isBackgroundJobRunning } = useBackgroundJobCoordination();
   const { data: balance, isFetching, refetch, error } = useBalance();
   const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
   const { mutateAsync: loadWallet } = useLoadWallet();
@@ -50,18 +52,18 @@ const HomeScreen = () => {
   }, []);
 
   useEffect(() => {
-    loadWallet();
+    safelyExecuteWhenReady(() => loadWallet());
     getRandomFact();
-  }, [getRandomFact, loadWallet]);
+  }, [getRandomFact, safelyExecuteWhenReady, loadWallet]);
 
   const onRefresh = useCallback(async () => {
-    await loadWallet();
+    await safelyExecuteWhenReady(() => loadWallet());
 
     await balanceSync();
     await refetch();
     await syncPendingBoards();
     getRandomFact();
-  }, [balanceSync, refetch, getRandomFact, loadWallet]);
+  }, [balanceSync, refetch, getRandomFact, safelyExecuteWhenReady, loadWallet]);
 
   const onchainBalance = balance
     ? (balance.onchain.confirmed ?? 0) +
@@ -157,6 +159,14 @@ const HomeScreen = () => {
             currentVersion={currentVersion}
             minimumVersion={minimumVersion || "0.0.1"}
           />
+        )}
+        {isBackgroundJobRunning && (
+          <View className="px-4 py-2 bg-blue-500/20 border-b border-blue-500/40">
+            <View className="flex-row items-center justify-center space-x-2">
+              <NoahActivityIndicator size="small" />
+              <Text className="text-blue-400 text-sm">Background task in progress...</Text>
+            </View>
+          </View>
         )}
         <View className="items-center justify-center flex-1">
           {isFetching && !balance ? (

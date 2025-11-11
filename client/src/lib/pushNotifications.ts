@@ -15,10 +15,16 @@ import { addTransaction } from "~/lib/transactionsDb";
 import type { Transaction } from "~/types/transaction";
 import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
+import { useWalletStore } from "~/store/walletStore";
 
 const log = logger("pushNotifications");
 
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
+
+/**
+ * Reports job completion status to the server.
+ * Called after each background task completes or fails.
+ */
 async function handleTaskCompletion(
   report_type: ReportType,
   result: Result<void, Error>,
@@ -57,148 +63,181 @@ async function handleTaskCompletion(
 TaskManager.defineTask<Notifications.NotificationTaskPayload>(
   BACKGROUND_NOTIFICATION_TASK,
   async ({ data, error }) => {
-    log.i("[Background Job] dataReceived", [data, typeof data]);
-    if (error) {
-      log.e("[Background Job] error", [error]);
-      captureException(error);
-      return;
-    }
+    /**
+     * BACKGROUND JOB COORDINATION:
+     *
+     * Set flag to true at the start of any background job. This signals to the
+     * foreground app (HomeScreen) that wallet operations are in progress.
+     *
+     * If the user opens the app while this is true, the app will wait for this
+     * flag to clear before attempting its own wallet operations, preventing
+     * concurrent access conflicts that cause the app to hang.
+     *
+     * The flag is cleared in the finally block below to ensure it's always reset,
+     * even if the task fails. If the task crashes before finally executes, the
+     * timestamp-based stale flag detection will clear it after 60 seconds.
+     */
+    useWalletStore.getState().setBackgroundJobRunning(true);
 
-    const notificationDataResult = Result.fromThrowable(
-      () => {
-        const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
-        if (typeof rawBody === "string") {
-          return JSON.parse(rawBody) as NotificationData;
-        }
-        return rawBody as NotificationData;
-      },
-      (e) => new Error(`Failed to parse notification data: ${e}`),
-    )();
+    try {
+      log.i("[Background Job] dataReceived", [data, typeof data]);
+      if (error) {
+        log.e("[Background Job] error", [error]);
+        captureException(error);
+        return;
+      }
 
-    if (notificationDataResult.isErr()) {
-      captureException(notificationDataResult.error);
-      log.e("[Background Job] error", [notificationDataResult.error]);
-      return;
-    }
-
-    const notificationData = notificationDataResult.value;
-
-    if (!notificationData || !notificationData.notification_type) {
-      log.w("[Background Job] No data or type received", [notificationData]);
-      return;
-    }
-
-    const taskResult = await ResultAsync.fromPromise(
-      (async () => {
-        switch (notificationData.notification_type) {
-          case "maintenance": {
-            const result = await maintenanceRefresh();
-            // Also perform a sync after maintenance
-            await sync();
-            await handleTaskCompletion("maintenance", result, notificationData.k1);
-            break;
+      const notificationDataResult = Result.fromThrowable(
+        () => {
+          const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
+          if (typeof rawBody === "string") {
+            return JSON.parse(rawBody) as NotificationData;
           }
+          return rawBody as NotificationData;
+        },
+        (e) => new Error(`Failed to parse notification data: ${e}`),
+      )();
 
-          case "lightning_invoice_request": {
-            log.i("Received lightning invoice request", [notificationData]);
-            const invoiceResult = await submitInvoice(
-              notificationData.transaction_id,
-              notificationData.k1,
-              notificationData.amount,
-            );
+      if (notificationDataResult.isErr()) {
+        captureException(notificationDataResult.error);
+        log.e("[Background Job] error", [notificationDataResult.error]);
+        return;
+      }
 
-            // Wait for the invoice to be paid
-            // This is a terrible solution, but it is what it is for now
-            if (invoiceResult.isOk()) {
-              const claimResult = await checkAndClaimLnReceive(
-                invoiceResult.value.payment_hash,
-                true,
+      const notificationData = notificationDataResult.value;
+
+      if (!notificationData || !notificationData.notification_type) {
+        log.w("[Background Job] No data or type received", [notificationData]);
+        return;
+      }
+
+      const taskResult = await ResultAsync.fromPromise(
+        (async () => {
+          switch (notificationData.notification_type) {
+            case "maintenance": {
+              const result = await maintenanceRefresh();
+              // Also perform a sync after maintenance
+              await sync();
+              await handleTaskCompletion("maintenance", result, notificationData.k1);
+              break;
+            }
+
+            case "lightning_invoice_request": {
+              log.i("Received lightning invoice request", [notificationData]);
+              const invoiceResult = await submitInvoice(
+                notificationData.transaction_id,
+                notificationData.k1,
+                notificationData.amount,
               );
 
-              if (claimResult.isOk()) {
-                const sats = notificationData.amount / 1000;
-                await Notifications.scheduleNotificationAsync({
-                  content: {
-                    title: "Lightning Payment Received! ⚡",
-                    body: `You received ${sats} sats`,
-                  },
-                  trigger: null,
-                });
-                log.d("Local notification triggered for payment", [sats]);
+              // Wait for the invoice to be paid
+              // This is a terrible solution, but it is what it is for now
+              if (invoiceResult.isOk()) {
+                const claimResult = await checkAndClaimLnReceive(
+                  invoiceResult.value.payment_hash,
+                  true,
+                );
 
-                // Add inbound transaction to database
-                const btcPriceResult = await getHistoricalBtcToUsdRate(new Date().toISOString());
-                const transaction: Transaction = {
-                  id: uuid.v4().toString(),
-                  txid: invoiceResult.value.payment_hash,
-                  type: "Bolt11",
-                  direction: "incoming",
-                  amount: sats,
-                  date: new Date().toISOString(),
-                  btcPrice: btcPriceResult.isOk() ? btcPriceResult.value : undefined,
-                };
+                if (claimResult.isOk()) {
+                  const sats = notificationData.amount / 1000;
+                  await Notifications.scheduleNotificationAsync({
+                    content: {
+                      title: "Lightning Payment Received! ⚡",
+                      body: `You received ${sats} sats`,
+                    },
+                    trigger: null,
+                  });
+                  log.d("Local notification triggered for payment", [sats]);
 
-                const addTxResult = await addTransaction(transaction);
-                if (addTxResult.isErr()) {
-                  log.w("Failed to add Lightning receive transaction to database", [
-                    addTxResult.error,
-                  ]);
-                } else {
-                  log.d("Successfully added Lightning receive transaction to database", [sats]);
+                  // Add inbound transaction to database
+                  const btcPriceResult = await getHistoricalBtcToUsdRate(new Date().toISOString());
+                  const transaction: Transaction = {
+                    id: uuid.v4().toString(),
+                    txid: invoiceResult.value.payment_hash,
+                    type: "Bolt11",
+                    direction: "incoming",
+                    amount: sats,
+                    date: new Date().toISOString(),
+                    btcPrice: btcPriceResult.isOk() ? btcPriceResult.value : undefined,
+                  };
+
+                  const addTxResult = await addTransaction(transaction);
+                  if (addTxResult.isErr()) {
+                    log.w("Failed to add Lightning receive transaction to database", [
+                      addTxResult.error,
+                    ]);
+                  } else {
+                    log.d("Successfully added Lightning receive transaction to database", [sats]);
+                  }
                 }
               }
+              break;
             }
-            break;
-          }
 
-          case "backup_trigger": {
-            const result = await triggerBackupTask();
-            await handleTaskCompletion("backup", result, notificationData.k1);
-            log.d("Backup task completed");
-            break;
-          }
-
-          case "offboarding": {
-            const result = await offboardTask(
-              notificationData.offboarding_request_id,
-              notificationData.address,
-              notificationData.address_signature,
-            );
-            await handleTaskCompletion("offboarding", result, notificationData.k1);
-            log.d("Offboarding task completed");
-            break;
-          }
-
-          case "heartbeat": {
-            log.i("Received heartbeat notification", [notificationData]);
-            const heartbeatResult = await heartbeatResponse({
-              notification_id: notificationData.notification_id,
-              k1: notificationData.k1,
-            });
-
-            if (heartbeatResult.isErr()) {
-              log.w("Failed to respond to heartbeat", [heartbeatResult.error]);
-            } else {
-              log.d("Successfully responded to heartbeat", [notificationData.notification_id]);
+            case "backup_trigger": {
+              const result = await triggerBackupTask();
+              await handleTaskCompletion("backup", result, notificationData.k1);
+              log.d("Backup task completed");
+              break;
             }
-            break;
-          }
 
-          default: {
-            const _exhaustiveCheck: never = notificationData;
-            log.w("Unknown notification type received", [_exhaustiveCheck]);
-          }
-        }
-      })(),
-      (e) =>
-        new Error(
-          `Failed to handle background notification: ${e instanceof Error ? e.message : String(e)}`,
-        ),
-    );
+            case "offboarding": {
+              const result = await offboardTask(
+                notificationData.offboarding_request_id,
+                notificationData.address,
+                notificationData.address_signature,
+              );
+              await handleTaskCompletion("offboarding", result, notificationData.k1);
+              log.d("Offboarding task completed");
+              break;
+            }
 
-    if (taskResult.isErr()) {
-      captureException(taskResult.error);
-      log.e("[Background Job] error", [taskResult.error]);
+            case "heartbeat": {
+              log.i("Received heartbeat notification", [notificationData]);
+              const heartbeatResult = await heartbeatResponse({
+                notification_id: notificationData.notification_id,
+                k1: notificationData.k1,
+              });
+
+              if (heartbeatResult.isErr()) {
+                log.w("Failed to respond to heartbeat", [heartbeatResult.error]);
+              } else {
+                log.d("Successfully responded to heartbeat", [notificationData.notification_id]);
+              }
+              break;
+            }
+
+            default: {
+              const _exhaustiveCheck: never = notificationData;
+              log.w("Unknown notification type received", [_exhaustiveCheck]);
+            }
+          }
+        })(),
+        (e) =>
+          new Error(
+            `Failed to handle background notification: ${e instanceof Error ? e.message : String(e)}`,
+          ),
+      );
+
+      if (taskResult.isErr()) {
+        captureException(taskResult.error);
+        log.e("[Background Job] error", [taskResult.error]);
+      }
+    } finally {
+      /**
+       * Always clear the background job flag, even if an error occurred.
+       *
+       * This ensures the foreground app doesn't wait indefinitely. The finally
+       * block executes even if there are errors in the try block, ensuring
+       * proper cleanup.
+       *
+       * Note: In catastrophic failures (OS kills task, out of memory, etc.),
+       * the finally block may not execute. In those cases, the timestamp-based
+       * stale flag detection in walletStore.clearStaleBackgroundJobFlag() will
+       * clean up after 60 seconds.
+       */
+      useWalletStore.getState().setBackgroundJobRunning(false);
+      log.d("[Background Job] Completed, flag cleared");
     }
   },
 );

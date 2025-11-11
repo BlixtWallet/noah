@@ -49,6 +49,10 @@ interface WalletState {
   staticVtxoPubkey: string | null;
   restoreProgress: RestoreProgress | null;
   isBiometricsEnabled: boolean;
+  /** Flag indicating if a background push notification job is currently running */
+  isBackgroundJobRunning: boolean;
+  /** Timestamp (Date.now()) when the current background job started, used to detect stale flags */
+  backgroundJobStartTime: number | null;
   finishOnboarding: () => void;
   setWalletLoaded: () => void;
   setWalletUnloaded: () => void;
@@ -56,6 +60,8 @@ interface WalletState {
   setStaticVtxoPubkey: (pubkey: string) => void;
   setRestoreProgress: (progress: RestoreProgress | null) => void;
   setBiometricsEnabled: (enabled: boolean) => void;
+  setBackgroundJobRunning: (running: boolean) => void;
+  clearStaleBackgroundJobFlag: () => void;
   reset: () => void;
 }
 
@@ -66,6 +72,8 @@ const initialState = {
   staticVtxoPubkey: null,
   restoreProgress: null,
   isBiometricsEnabled: false,
+  isBackgroundJobRunning: false,
+  backgroundJobStartTime: null,
 };
 
 export const useWalletStore = create<WalletState>()(
@@ -79,6 +87,56 @@ export const useWalletStore = create<WalletState>()(
       setStaticVtxoPubkey: (pubkey) => set({ staticVtxoPubkey: pubkey }),
       setRestoreProgress: (progress) => set({ restoreProgress: progress }),
       setBiometricsEnabled: (enabled) => set({ isBiometricsEnabled: enabled }),
+      /**
+       * Sets the background job running flag and records the start time.
+       *
+       * Called from pushNotifications.ts:
+       * - Set to true when background task starts
+       * - Set to false in finally block when task completes
+       *
+       * The timestamp allows us to detect stale flags (e.g., if the task crashed
+       * and the finally block never executed).
+       */
+      setBackgroundJobRunning: (running) =>
+        set({
+          isBackgroundJobRunning: running,
+          backgroundJobStartTime: running ? Date.now() : null,
+        }),
+      /**
+       * Clears the background job flag if it has been set for too long (>60s).
+       *
+       * This prevents the app from getting stuck waiting for a background job that:
+       * - Crashed before completing
+       * - Was killed by the OS (iOS/Android ~30s timeout)
+       * - Had an error that prevented the finally block from executing
+       *
+       * Called automatically:
+       * - Before loading wallet (useBackgroundJobCoordination hook)
+       * - When app comes to foreground (AppState listener)
+       *
+       * Why 60 seconds?
+       * - Background tasks timeout after ~30s on iOS/Android
+       * - Real jobs complete within 10-20s
+       * - 60s buffer catches stale flags while avoiding false positives
+       */
+      clearStaleBackgroundJobFlag: () =>
+        set((state) => {
+          const STALE_TIMEOUT = 60000; // 60 seconds
+          if (
+            state.isBackgroundJobRunning &&
+            state.backgroundJobStartTime &&
+            Date.now() - state.backgroundJobStartTime > STALE_TIMEOUT
+          ) {
+            log.w("Clearing stale background job flag", [
+              `Age: ${Date.now() - state.backgroundJobStartTime}ms`,
+            ]);
+            return {
+              isBackgroundJobRunning: false,
+              backgroundJobStartTime: null,
+            };
+          }
+          return state;
+        }),
       reset: () => set(initialState),
     }),
     {
