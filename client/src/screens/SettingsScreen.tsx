@@ -52,15 +52,21 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
     await copyToClipboard(value, {
       onCopy: () => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 1000);
+        setTimeout(() => setCopied(false), 2000);
       },
     });
   };
 
   return (
-    <Pressable onPress={onCopy} className="p-4 border-b border-border bg-card rounded-lg mb-2">
-      <Label className="text-foreground text-lg">{label}</Label>
-      <Text className={`text-base mt-1 text-muted-foreground`}>{copied ? "Copied!" : value}</Text>
+    <Pressable
+      onPress={onCopy}
+      className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
+    >
+      <View className="flex-1">
+        <Label className="text-foreground text-lg">{label}</Label>
+        <Text className={`text-base mt-1 text-muted-foreground`}>{copied ? "Copied!" : value}</Text>
+      </View>
+      {copied && <Icon name="checkmark-circle" size={24} color={COLORS.BITCOIN_ORANGE} />}
     </Pressable>
   );
 };
@@ -68,6 +74,7 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
+  const [copiedLightningAddress, setCopiedLightningAddress] = useState(false);
   const { isInitialized, isBiometricsEnabled, setBiometricsEnabled } = useWalletStore();
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
@@ -316,13 +323,30 @@ const SettingsScreen = () => {
             {lightningAddress && (
               <Pressable
                 onPress={() => navigation.navigate("LightningAddress", { fromOnboarding: false })}
+                onLongPress={async () => {
+                  await copyToClipboard(lightningAddress, {
+                    onCopy: () => {
+                      setCopiedLightningAddress(true);
+                      setTimeout(() => setCopiedLightningAddress(false), 2000);
+                    },
+                  });
+                }}
                 className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center"
               >
-                <View>
-                  <Label className="text-foreground text-lg">Lightning Address</Label>
-                  <Text className="text-base mt-1 text-muted-foreground">{lightningAddress}</Text>
+                <View className="flex-1">
+                  <View className="flex-row items-center">
+                    <Label className="text-foreground text-lg">Lightning Address</Label>
+                    <Text className="text-xs text-zinc-500 ml-2">(Long press to copy)</Text>
+                  </View>
+                  <Text className="text-base mt-1 text-muted-foreground">
+                    {copiedLightningAddress ? "Copied!" : lightningAddress}
+                  </Text>
                 </View>
-                <Icon name="chevron-forward-outline" size={24} color="white" />
+                {copiedLightningAddress ? (
+                  <Icon name="checkmark-circle" size={24} color={COLORS.BITCOIN_ORANGE} />
+                ) : (
+                  <Icon name="chevron-forward-outline" size={24} color="white" />
+                )}
               </Pressable>
             )}
             {infoData.map(renderSettingItem)}

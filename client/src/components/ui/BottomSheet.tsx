@@ -7,8 +7,8 @@ import Animated, {
   useDerivedValue,
   withDelay,
   withTiming,
-  runOnJS,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -39,13 +39,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   }));
 
   const handleBackdropPress = () => {
-    runOnJS(onClose)();
+    scheduleOnRN(onClose);
   };
 
   if (!isOpen && progress.value === 1) {
     return null;
   }
-
   return (
     <>
       <Animated.View
