@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { File } from "expo-file-system";
 import * as Sentry from "@sentry/react-native";
 import { COLORS } from "~/lib/styleConstants";
 import { NoahSafeAreaView } from "./NoahSafeAreaView";
@@ -66,16 +67,22 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
         associatedEventId: eventId,
       };
 
-      const feedbackHint = screenshot
-        ? {
-            attachments: [
-              {
-                filename: "screenshot.jpg",
-                data: screenshot,
-              },
-            ],
-          }
-        : undefined;
+      let feedbackHint;
+
+      if (screenshot) {
+        const file = new File(screenshot);
+        const base64Data = file.base64Sync();
+
+        feedbackHint = {
+          attachments: [
+            {
+              filename: "screenshot.jpg",
+              data: base64Data,
+              contentType: "image/jpeg",
+            },
+          ],
+        };
+      }
 
       Sentry.captureFeedback(feedbackParams, feedbackHint);
 
@@ -94,7 +101,7 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
 
   const handleAddScreenshot = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
+      mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.8,
     });
