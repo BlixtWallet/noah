@@ -1,0 +1,58 @@
+name: Build iOS Device App
+
+on:
+  workflow_call:
+    outputs:
+      artifact_name:
+        description: "The name of the uploaded artifact"
+        value: ${{ jobs.build-device-ios.outputs.artifact_name }}
+      ipa_filename:
+        description: "The filename of the iOS IPA"
+        value: ${{ jobs.build-device-ios.outputs.ipa_filename }}
+
+jobs:
+  build-device-ios:
+    name: Build iOS Device App
+    runs-on: macOS
+    outputs:
+      artifact_name: ${{ steps.set_outputs.outputs.artifact_name }}
+      ipa_filename: ${{ steps.set_outputs.outputs.ipa_filename }}
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📦 Install dependencies
+        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
+
+      - name: 🛠️ Build for device
+        run: |
+          nix develop .# --command bash -c "bun client ios:prebuild && \
+          xcrun xcodebuild -scheme 'Noah-Regtest' \
+          -workspace 'client/ios/noah.xcworkspace' \
+          -configuration Release \
+          -sdk iphoneos \
+          -destination 'generic/platform=iOS' \
+          -derivedDataPath client/ios/build \
+          -archivePath client/ios/build/Noah.xcarchive \
+          -allowProvisioningUpdates \
+          archive"
+
+      - name: 📦 Create IPA
+        run: |
+          mkdir -p client/ios/build/ipa
+          mkdir -p Payload
+          cp -R client/ios/build/Noah.xcarchive/Products/Applications/Noah-Regtest.app Payload/
+          zip -r client/ios/build/ipa/noah-device.ipa Payload
+          rm -rf Payload
+
+      - name: 📁 Set outputs
+        id: set_outputs
+        run: |
+          echo "artifact_name=ios-device-ipa" >> $GITHUB_OUTPUT
+          echo "ipa_filename=noah-device.ipa" >> $GITHUB_OUTPUT
+
+      - name: 📤 Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set_outputs.outputs.artifact_name }}
+          path: client/ios/build/ipa/noah-device.ipa
