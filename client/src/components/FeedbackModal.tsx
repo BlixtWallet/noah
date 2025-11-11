@@ -59,12 +59,25 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
     try {
       const eventId = Sentry.captureMessage("User Feedback");
 
-      Sentry.captureFeedback({
+      const feedbackParams = {
         message: trimmedMessage,
         name: trimmedName,
         email: trimmedEmail,
         associatedEventId: eventId,
-      });
+      };
+
+      const feedbackHint = screenshot
+        ? {
+            attachments: [
+              {
+                filename: "screenshot.jpg",
+                data: screenshot,
+              },
+            ],
+          }
+        : undefined;
+
+      Sentry.captureFeedback(feedbackParams, feedbackHint);
 
       setSubmitState("success");
       setTimeout(() => {
