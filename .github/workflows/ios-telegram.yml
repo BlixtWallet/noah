@@ -1,7 +1,16 @@
 name: iOS Telegram Notification
 
 on:
-  pull_request:
+  push:
+    branches:
+      - master
+    paths:
+      - "client/**"
+      - "scripts/**"
+      - ".github/workflows/ios-device-build.yml"
+      - ".github/workflows/ios-telegram.yml"
+      - "package.json"
+      - "bun.lock"
 
 jobs:
   build:

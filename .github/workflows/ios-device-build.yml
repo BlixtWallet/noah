@@ -1,7 +1,6 @@
 name: Build iOS Device App
 
 on:
-  pull_request:
   workflow_call:
     outputs:
       artifact_name:
