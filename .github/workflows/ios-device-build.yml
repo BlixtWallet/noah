@@ -25,16 +25,7 @@ jobs:
         run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 
       - name: 🛠️ Build for device
-        run: |
-          nix develop .# --command bash -c "bun client ios:prebuild && \
-          xcrun xcodebuild -scheme 'Noah-Signet' \
-          -workspace 'client/ios/noah.xcworkspace' \
-          -configuration Release \
-          -sdk iphoneos \
-          -derivedDataPath client/ios/build \
-          -allowProvisioningUpdates \
-          build \
-          ARCHS=arm64"
+        run: nix develop .# --command bash -c "bun client ios:prebuild && bun client build:ios:signet:device"
 
       - name: 📦 Create IPA
         run: |
@@ -55,3 +46,9 @@ jobs:
         with:
           name: ${{ steps.set_outputs.outputs.artifact_name }}
           path: client/ios/build/ipa/noah-signet.ipa
+
+      - name: 🧹 Clean up build artifacts
+        if: always()
+        run: |
+          rm -rf client/ios/build
+          rm -rf Payload
