@@ -54,9 +54,10 @@ jobs:
           -F chat_id="${{ secrets.BLIXT_CHAT_ID }}" \
           -F message_thread_id="${{ secrets.BLIXT_TOPIC_ID }}" \
           -F document=@"${{ steps.find_apk.outputs.apk_filename }}" \
-          -F caption="New Noah Android build is available!
-          Commit: ${{ github.sha }}
-          Message: ${{ github.event.head_commit.message }}"
+          -F caption="🤖 New Noah Android build is available!
+
+          📝 Commit: ${{ github.sha }}
+          💬 Message: ${{ github.event.head_commit.message }}"
 
       - name: 🛑 Stop and remove local Bot API server
         if: always()

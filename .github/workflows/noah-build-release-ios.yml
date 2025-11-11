@@ -1,9 +1,6 @@
-name: Build iOS Release App
+name: Build iOS Release Simulator App
 
 on:
-  push:
-    branches:
-      - master
   workflow_call:
     outputs:
       artifact_name:
