@@ -37,7 +37,9 @@ class BalanceProvider: TimelineProvider {
         let entry = loadBalanceEntry()
 
         // Refresh every 15 minutes
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        let nextUpdate =
+            Calendar.current.date(byAdding: .minute, value: 15, to: Date())
+            ?? Date().addingTimeInterval(15 * 60)
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
 
         completion(timeline)
@@ -72,6 +74,13 @@ struct NoahBalanceWidgetView: View {
     var variantColor: Color?
     @Environment(\.widgetFamily) var family
 
+    private static let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return formatter
+    }()
+
     var body: some View {
         if family == .systemSmall {
             smallWidgetLayout
@@ -84,12 +93,14 @@ struct NoahBalanceWidgetView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top) {
                 Text("Noah Wallet")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.caption2)
+                    .fontWeight(.semibold)
                     .foregroundColor(.white)
                 Spacer(minLength: 4)
                 if let variantName = variantName, let variantColor = variantColor {
                     Text(variantName)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.caption2)
+                        .fontWeight(.bold)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
                         .background(variantColor)
@@ -102,18 +113,20 @@ struct NoahBalanceWidgetView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("\(formatSatsCompact(entry.totalBalance))")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.title3)
+                    .fontWeight(.bold)
                     .foregroundColor(.white)
                     .minimumScaleFactor(0.7)
                     .lineLimit(1)
 
                 Text("sats")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.caption2)
+                    .fontWeight(.medium)
                     .foregroundColor(.gray)
 
                 if entry.pendingBalance > 0 {
                     Text("Pending: \(formatSatsCompact(entry.pendingBalance))")
-                        .font(.system(size: 9))
+                        .font(.caption2)
                         .foregroundColor(.yellow)
                         .lineLimit(1)
                 }
@@ -124,10 +137,11 @@ struct NoahBalanceWidgetView: View {
             HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("On")
-                        .font(.system(size: 9))
+                        .font(.caption2)
                         .foregroundColor(.gray)
                     Text("\(formatSatsCompact(entry.onchainBalance))")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.caption)
+                        .fontWeight(.medium)
                         .foregroundColor(.white)
                         .minimumScaleFactor(0.8)
                         .lineLimit(1)
@@ -137,10 +151,11 @@ struct NoahBalanceWidgetView: View {
 
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("Off")
-                        .font(.system(size: 9))
+                        .font(.caption2)
                         .foregroundColor(.gray)
                     Text("\(formatSatsCompact(entry.offchainBalance))")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.caption)
+                        .fontWeight(.medium)
                         .foregroundColor(.white)
                         .minimumScaleFactor(0.8)
                         .lineLimit(1)
@@ -213,18 +228,11 @@ struct NoahBalanceWidgetView: View {
     }
 
     private func formatSats(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? "0"
+        return Self.numberFormatter.string(from: NSNumber(value: value)) ?? "0"
     }
 
     private func formatSatsCompact(_ value: Double) -> String {
-        if value >= 100_000_000 {
-            // 100M+ sats - show as "1.5M" format
-            let millions = value / 1_000_000
-            return String(format: "%.1fM", millions)
-        } else if value >= 1_000_000 {
+        if value >= 1_000_000 {
             // 1M+ sats - show as "1.5M" format
             let millions = value / 1_000_000
             return String(format: "%.1fM", millions)

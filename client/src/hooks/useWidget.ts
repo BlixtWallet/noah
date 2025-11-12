@@ -27,26 +27,11 @@ const getAppGroup = (): string => {
 
 export function useWidget(balanceData: BalanceData | null) {
   useEffect(() => {
-    if (Platform.OS !== "ios") {
-      return;
-    }
-
     if (!balanceData) {
       return;
     }
 
-    try {
-      const appGroup = getAppGroup();
-      saveBalanceForWidget(
-        balanceData.totalBalance,
-        balanceData.onchainBalance,
-        balanceData.offchainBalance,
-        balanceData.pendingBalance,
-        appGroup,
-      );
-    } catch (error) {
-      log.e("Failed to update widget:", [error]);
-    }
+    updateWidget(balanceData);
   }, [balanceData]);
 }
 

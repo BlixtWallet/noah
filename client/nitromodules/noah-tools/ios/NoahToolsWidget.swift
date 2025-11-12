@@ -26,7 +26,6 @@ extension NoahTools {
         ]
 
         userDefaults.set(balanceData, forKey: "widgetBalance")
-        userDefaults.synchronize()
 
         // Trigger widget refresh
         WidgetCenter.shared.reloadAllTimelines()
