@@ -16,6 +16,7 @@ open class NoahWidgetProvider : AppWidgetProvider() {
     protected open val appGroup: String = "com.noahwallet.regtest"
     protected open val variantName: String? = "REGTEST"
     protected open val layoutResId: Int = R.layout.widget_noah
+    protected open val badgeBackgroundResId: Int = R.drawable.badge_background
 
     override fun onReceive(context: Context, intent: android.content.Intent) {
         super.onReceive(context, intent)
@@ -86,6 +87,7 @@ open class NoahWidgetProvider : AppWidgetProvider() {
             // Set variant badge if present
             if (variantName != null) {
                 views.setTextViewText(R.id.variant_badge, variantName)
+                views.setInt(R.id.variant_badge, "setBackgroundResource", badgeBackgroundResId)
                 views.setViewVisibility(R.id.variant_badge, android.view.View.VISIBLE)
             } else {
                 views.setViewVisibility(R.id.variant_badge, android.view.View.GONE)
