@@ -98,9 +98,9 @@ class NoahTools : HybridNoahToolsSpec() {
             apply()
         }
 
-        // Trigger widget update by sending a broadcast
-        // Widgets will listen for this action
-        val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+        // Trigger widget update by sending a custom broadcast
+        // Using custom action to prevent other apps from triggering updates
+        val intent = Intent("com.noahwallet.action.WIDGET_DATA_CHANGED")
         intent.setPackage(context.packageName)
         context.sendBroadcast(intent)
     }

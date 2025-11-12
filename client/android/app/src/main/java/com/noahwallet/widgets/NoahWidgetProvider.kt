@@ -14,6 +14,8 @@ import java.util.Locale
 open class NoahWidgetProvider : AppWidgetProvider() {
 
     companion object {
+        const val ACTION_WIDGET_DATA_CHANGED = "com.noahwallet.action.WIDGET_DATA_CHANGED"
+
         private val numberFormatter: NumberFormat by lazy {
             NumberFormat.getNumberInstance(Locale.US).apply {
                 maximumFractionDigits = 0
@@ -30,8 +32,8 @@ open class NoahWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: android.content.Intent) {
         super.onReceive(context, intent)
 
-        // Handle generic widget update broadcast from noah-tools
-        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE && intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) == null) {
+        // Handle widget update broadcast from within the app
+        if (intent.action == ACTION_WIDGET_DATA_CHANGED) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val componentName = android.content.ComponentName(context, javaClass)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
