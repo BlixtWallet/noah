@@ -11,7 +11,7 @@ struct NoahWidgetMainnet: Widget {
         ) { entry in
             if #available(iOS 17.0, *) {
                 NoahBalanceWidgetView(entry: entry)
-                    .containerBackground(.fill.tertiary, for: .widget)
+                    .containerBackground(Color(red: 0.05, green: 0.05, blue: 0.05), for: .widget)
             } else {
                 NoahBalanceWidgetView(entry: entry)
             }

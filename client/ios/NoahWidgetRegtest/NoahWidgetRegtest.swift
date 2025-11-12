@@ -15,7 +15,7 @@ struct NoahWidgetRegtest: Widget {
                     variantName: "REGTEST",
                     variantColor: .yellow
                 )
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(Color(red: 0.05, green: 0.05, blue: 0.05), for: .widget)
             } else {
                 NoahBalanceWidgetView(
                     entry: entry,

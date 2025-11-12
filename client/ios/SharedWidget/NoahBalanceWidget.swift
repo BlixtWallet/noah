@@ -73,15 +73,10 @@ struct NoahBalanceWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        ZStack {
-            Color(red: 0.05, green: 0.05, blue: 0.05)
-                .ignoresSafeArea()
-
-            if family == .systemSmall {
-                smallWidgetLayout
-            } else {
-                mediumWidgetLayout
-            }
+        if family == .systemSmall {
+            smallWidgetLayout
+        } else {
+            mediumWidgetLayout
         }
     }
 
