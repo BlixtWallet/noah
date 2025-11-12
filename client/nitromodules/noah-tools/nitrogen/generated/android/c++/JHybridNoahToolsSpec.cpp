@@ -40,6 +40,12 @@ namespace margelo::nitro::noahtools {
     method(_javaPart);
   }
 
+  std::string JHybridNoahToolsSpec::toString() {
+    static const auto method = javaClassStatic()->getMethod<jni::JString()>("toString");
+    auto javaString = method(_javaPart);
+    return javaString->toStdString();
+  }
+
   // Properties
   
 

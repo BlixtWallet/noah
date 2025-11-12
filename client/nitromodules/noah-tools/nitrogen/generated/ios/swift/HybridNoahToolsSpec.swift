@@ -32,6 +32,13 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func isAudioPlaying() throws -> Bool
 }
 
+public extension HybridNoahToolsSpec_protocol {
+  /// Default implementation of ``HybridObject.toString``
+  func toString() -> String {
+    return "[HybridObject NoahTools]"
+  }
+}
+
 /// See ``HybridNoahToolsSpec``
 open class HybridNoahToolsSpec_base {
   private weak var cxxWrapper: HybridNoahToolsSpec_cxx? = nil
