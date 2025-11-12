@@ -73,6 +73,7 @@ struct NoahBalanceWidgetView: View {
     var variantName: String?
     var variantColor: Color?
     @Environment(\.widgetFamily) var family
+    @Environment(\.widgetRenderingMode) var renderingMode
 
     private static let numberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -103,8 +104,8 @@ struct NoahBalanceWidgetView: View {
                         .fontWeight(.bold)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
-                        .background(variantColor)
-                        .foregroundColor(.black)
+                        .background(badgeBackground(color: variantColor))
+                        .foregroundColor(badgeForeground(color: variantColor))
                         .cornerRadius(3)
                 }
             }
@@ -179,8 +180,8 @@ struct NoahBalanceWidgetView: View {
                         .fontWeight(.bold)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(variantColor)
-                        .foregroundColor(.black)
+                        .background(badgeBackground(color: variantColor))
+                        .foregroundColor(badgeForeground(color: variantColor))
                         .cornerRadius(4)
                 }
             }
@@ -247,6 +248,36 @@ struct NoahBalanceWidgetView: View {
         } else {
             // Less than 10K - show full number
             return formatSats(value)
+        }
+    }
+
+    private func badgeBackground(color: Color) -> Color {
+        if #available(iOS 26.0, *) {
+            switch renderingMode {
+            case .fullColor:
+                return color
+            case .accented, .vibrant:
+                return color.opacity(0.3)
+            default:
+                return Color.clear
+            }
+        } else {
+            return color
+        }
+    }
+
+    private func badgeForeground(color: Color) -> Color {
+        if #available(iOS 26.0, *) {
+            switch renderingMode {
+            case .fullColor:
+                return .black
+            case .accented, .vibrant:
+                return .primary
+            default:
+                return .primary
+            }
+        } else {
+            return .black
         }
     }
 }
