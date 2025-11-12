@@ -13,15 +13,18 @@ interface BalanceData {
 }
 
 const getAppGroup = (): string => {
+  const isIOS = Platform.OS === "ios";
+  const prefix = isIOS ? "group." : "";
+
   switch (APP_VARIANT) {
     case "regtest":
-      return "group.com.noahwallet.regtest";
+      return `${prefix}com.noahwallet.regtest`;
     case "signet":
-      return "group.com.noahwallet.signet";
+      return `${prefix}com.noahwallet.signet`;
     case "mainnet":
-      return "group.com.noahwallet.mainnet";
+      return `${prefix}com.noahwallet.mainnet`;
     default:
-      return "group.com.noahwallet.regtest";
+      return `${prefix}com.noahwallet.regtest`;
   }
 };
 
@@ -36,7 +39,7 @@ export function useWidget(balanceData: BalanceData | null) {
 }
 
 export function updateWidget(balanceData: BalanceData): void {
-  if (Platform.OS !== "ios") {
+  if (Platform.OS !== "ios" && Platform.OS !== "android") {
     return;
   }
 

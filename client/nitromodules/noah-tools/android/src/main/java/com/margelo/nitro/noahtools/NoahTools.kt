@@ -1,7 +1,12 @@
 package com.margelo.nitro.noahtools
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import com.margelo.nitro.core.Promise
 import com.margelo.nitro.noahtools.audio.NoahToolsAudio
+import com.margelo.nitro.NitroModules
 
 class NoahTools : HybridNoahToolsSpec() {
 
@@ -81,6 +86,22 @@ class NoahTools : HybridNoahToolsSpec() {
         pendingBalance: Double,
         appGroup: String
     ) {
-        // No-op on Android - widgets not yet supported
+        val context = NitroModules.applicationContext ?: return
+        val prefs = context.getSharedPreferences(appGroup, Context.MODE_PRIVATE)
+
+        prefs.edit().apply {
+            putString("totalBalance", totalBalance.toString())
+            putString("onchainBalance", onchainBalance.toString())
+            putString("offchainBalance", offchainBalance.toString())
+            putString("pendingBalance", pendingBalance.toString())
+            putLong("lastUpdated", System.currentTimeMillis())
+            apply()
+        }
+
+        // Trigger widget update by sending a broadcast
+        // Widgets will listen for this action
+        val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+        intent.setPackage(context.packageName)
+        context.sendBroadcast(intent)
     }
 }
