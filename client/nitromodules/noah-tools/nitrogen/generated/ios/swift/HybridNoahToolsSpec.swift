@@ -30,6 +30,7 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func getAudioDuration() throws -> Double
   func getAudioPosition() throws -> Double
   func isAudioPlaying() throws -> Bool
+  func saveBalanceForWidget(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, appGroup: String) throws -> Void
 }
 
 public extension HybridNoahToolsSpec_protocol {

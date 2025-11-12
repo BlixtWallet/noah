@@ -105,6 +105,10 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun isAudioPlaying(): Boolean
+  
+  @DoNotStrip
+  @Keep
+  abstract fun saveBalanceForWidget(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, appGroup: String): Unit
 
   private external fun initHybrid(): HybridData
 

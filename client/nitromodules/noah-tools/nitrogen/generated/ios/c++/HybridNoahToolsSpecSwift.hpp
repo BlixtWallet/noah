@@ -175,6 +175,12 @@ namespace margelo::nitro::noahtools {
       auto __value = std::move(__result.value());
       return __value;
     }
+    inline void saveBalanceForWidget(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, const std::string& appGroup) override {
+      auto __result = _swiftPart.saveBalanceForWidget(std::forward<decltype(totalBalance)>(totalBalance), std::forward<decltype(onchainBalance)>(onchainBalance), std::forward<decltype(offchainBalance)>(offchainBalance), std::forward<decltype(pendingBalance)>(pendingBalance), appGroup);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
 
   private:
     NoahTools::HybridNoahToolsSpec_cxx _swiftPart;

@@ -72,6 +72,22 @@ class NoahTools: HybridNoahToolsSpec {
     func isAudioPlaying() throws -> Bool {
         return try performIsAudioPlaying()
     }
+
+    func saveBalanceForWidget(
+        totalBalance: Double,
+        onchainBalance: Double,
+        offchainBalance: Double,
+        pendingBalance: Double,
+        appGroup: String
+    ) throws {
+        try performSaveBalanceForWidget(
+            totalBalance: totalBalance,
+            onchainBalance: onchainBalance,
+            offchainBalance: offchainBalance,
+            pendingBalance: pendingBalance,
+            appGroup: appGroup
+        )
+    }
 }
 
 // Include the extensions from other files

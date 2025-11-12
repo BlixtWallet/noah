@@ -73,4 +73,20 @@ export function isAudioPlaying(): boolean {
   return NoahToolsHybridObject.isAudioPlaying();
 }
 
+export function saveBalanceForWidget(
+  totalBalance: number,
+  onchainBalance: number,
+  offchainBalance: number,
+  pendingBalance: number,
+  appGroup: string,
+): void {
+  return NoahToolsHybridObject.saveBalanceForWidget(
+    totalBalance,
+    onchainBalance,
+    offchainBalance,
+    pendingBalance,
+    appGroup,
+  );
+}
+
 export type { HttpResponse } from "./NoahTools.nitro";

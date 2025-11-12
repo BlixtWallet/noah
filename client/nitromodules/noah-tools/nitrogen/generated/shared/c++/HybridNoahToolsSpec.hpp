@@ -68,6 +68,7 @@ namespace margelo::nitro::noahtools {
       virtual double getAudioDuration() = 0;
       virtual double getAudioPosition() = 0;
       virtual bool isAudioPlaying() = 0;
+      virtual void saveBalanceForWidget(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, const std::string& appGroup) = 0;
 
     protected:
       // Hybrid Setup

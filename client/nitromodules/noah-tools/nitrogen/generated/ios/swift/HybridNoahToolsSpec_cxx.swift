@@ -356,4 +356,15 @@ open class HybridNoahToolsSpec_cxx {
       return bridge.create_Result_bool_(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func saveBalanceForWidget(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, appGroup: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.saveBalanceForWidget(totalBalance: totalBalance, onchainBalance: onchainBalance, offchainBalance: offchainBalance, pendingBalance: pendingBalance, appGroup: String(appGroup))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
 }
