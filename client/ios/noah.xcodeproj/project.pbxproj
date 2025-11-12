@@ -49,6 +49,9 @@
 		C3C8E73B2EC4E26A00A7BF32 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B55F2EC4D043004DFDC1 /* WidgetKit.framework */; };
 		C3C8E73C2EC4E26A00A7BF32 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B5612EC4D043004DFDC1 /* SwiftUI.framework */; };
 		C3C8E74B2EC4E26C00A7BF32 /* NoahWidgetRegtestExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C3C8E73A2EC4E26A00A7BF32 /* NoahWidgetRegtestExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C3C8E7BF2EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */; };
+		C3C8E7C02EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */; };
+		C3C8E7C12EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */; };
 		CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
@@ -150,6 +153,7 @@
 		C3C8E7352EC4DFF700A7BF32 /* NoahWidgetMainnetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoahWidgetMainnetExtension.entitlements; sourceTree = "<group>"; };
 		C3C8E73A2EC4E26A00A7BF32 /* NoahWidgetRegtestExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoahWidgetRegtestExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3C8E7502EC4E28300A7BF32 /* NoahWidgetRegtestExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoahWidgetRegtestExtension.entitlements; sourceTree = "<group>"; };
+		C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoahBalanceWidget.swift; sourceTree = "<group>"; };
 		D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah.release.xcconfig"; sourceTree = "<group>"; };
 		D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Signet.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet.release.xcconfig"; sourceTree = "<group>"; };
 		DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah-common-Noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -340,6 +344,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				C3C8E7BE2EC4E76200A7BF32 /* SharedWidget */,
 				C3C8E7502EC4E28300A7BF32 /* NoahWidgetRegtestExtension.entitlements */,
 				C3C8E7352EC4DFF700A7BF32 /* NoahWidgetMainnetExtension.entitlements */,
 				C3C8E7192EC4DF9400A7BF32 /* NoahWidgetSignetExtension.entitlements */,
@@ -392,6 +397,14 @@
 			);
 			name = Supporting;
 			path = noah/Supporting;
+			sourceTree = "<group>";
+		};
+		C3C8E7BE2EC4E76200A7BF32 /* SharedWidget */ = {
+			isa = PBXGroup;
+			children = (
+				C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */,
+			);
+			path = SharedWidget;
 			sourceTree = "<group>";
 		};
 		D904AA8E51C51D3019C8988A /* Noah */ = {
@@ -1016,6 +1029,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3C8E7C02EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1023,6 +1037,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3C8E7BF2EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1030,6 +1045,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3C8E7C12EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

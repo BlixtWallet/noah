@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 import { saveBalanceForWidget } from "noah-tools";
 import { APP_VARIANT } from "~/config";
+import logger from "~/lib/log";
+const log = logger("useWidget");
 
 interface BalanceData {
   totalBalance: number;
@@ -35,7 +37,6 @@ export function useWidget(balanceData: BalanceData | null) {
 
     try {
       const appGroup = getAppGroup();
-      console.log("App Group:", appGroup);
       saveBalanceForWidget(
         balanceData.totalBalance,
         balanceData.onchainBalance,
@@ -44,7 +45,7 @@ export function useWidget(balanceData: BalanceData | null) {
         appGroup,
       );
     } catch (error) {
-      console.error("Failed to update widget:", error);
+      log.e("Failed to update widget:", [error]);
     }
   }, [balanceData]);
 }
@@ -64,6 +65,6 @@ export function updateWidget(balanceData: BalanceData): void {
       appGroup,
     );
   } catch (error) {
-    console.error("Failed to update widget:", error);
+    log.e("Failed to update widget:", [error]);
   }
 }
