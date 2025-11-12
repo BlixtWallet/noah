@@ -27,6 +27,8 @@ data class HttpResponse(
   @Keep
   val headers: Map<String, String>
 ) {
+  /* primary constructor */
+
   private companion object {
     /**
      * Constructor called from C++
