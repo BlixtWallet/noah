@@ -13,6 +13,15 @@ import java.util.Locale
 
 open class NoahWidgetProvider : AppWidgetProvider() {
 
+    companion object {
+        private val numberFormatter: NumberFormat by lazy {
+            NumberFormat.getNumberInstance(Locale.US).apply {
+                maximumFractionDigits = 0
+                isGroupingUsed = true
+            }
+        }
+    }
+
     protected open val appGroup: String = "com.noahwallet.regtest"
     protected open val variantName: String? = "REGTEST"
     protected open val layoutResId: Int = R.layout.widget_noah
@@ -50,10 +59,10 @@ open class NoahWidgetProvider : AppWidgetProvider() {
     ) {
         val prefs = context.getSharedPreferences(appGroup, Context.MODE_PRIVATE)
 
-        val totalBalance = prefs.getString("totalBalance", "0")?.toDoubleOrNull() ?: 0.0
-        val onchainBalance = prefs.getString("onchainBalance", "0")?.toDoubleOrNull() ?: 0.0
-        val offchainBalance = prefs.getString("offchainBalance", "0")?.toDoubleOrNull() ?: 0.0
-        val pendingBalance = prefs.getString("pendingBalance", "0")?.toDoubleOrNull() ?: 0.0
+        val totalBalance = prefs.getLong("totalBalance", 0L)
+        val onchainBalance = prefs.getLong("onchainBalance", 0L)
+        val offchainBalance = prefs.getLong("offchainBalance", 0L)
+        val pendingBalance = prefs.getLong("pendingBalance", 0L)
 
         try {
             val views = RemoteViews(context.packageName, layoutResId)
@@ -99,11 +108,8 @@ open class NoahWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun formatSats(value: Double): String {
-        val formatter = NumberFormat.getNumberInstance(Locale.US)
-        formatter.maximumFractionDigits = 0
-        formatter.isGroupingUsed = true
-        return formatter.format(value)
+    private fun formatSats(value: Long): String {
+        return numberFormatter.format(value)
     }
 
     override fun onEnabled(context: Context) {

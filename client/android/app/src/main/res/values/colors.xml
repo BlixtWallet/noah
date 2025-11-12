@@ -4,4 +4,10 @@
   <color name="colorPrimary">#023c69</color>
   <color name="colorPrimaryDark">#000000</color>
   <color name="rootBackground">#0a0a0a</color>
+
+  <!-- Widget colors -->
+  <color name="widgetTextPrimary">#FFFFFF</color>
+  <color name="widgetTextSecondary">#888888</color>
+  <color name="widgetBadgeText">#000000</color>
+  <color name="widgetPendingText">#FFEB3B</color>
 </resources>

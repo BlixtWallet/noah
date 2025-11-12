@@ -90,10 +90,10 @@ class NoahTools : HybridNoahToolsSpec() {
         val prefs = context.getSharedPreferences(appGroup, Context.MODE_PRIVATE)
 
         prefs.edit().apply {
-            putString("totalBalance", totalBalance.toString())
-            putString("onchainBalance", onchainBalance.toString())
-            putString("offchainBalance", offchainBalance.toString())
-            putString("pendingBalance", pendingBalance.toString())
+            putLong("totalBalance", totalBalance.toLong())
+            putLong("onchainBalance", onchainBalance.toLong())
+            putLong("offchainBalance", offchainBalance.toLong())
+            putLong("pendingBalance", pendingBalance.toLong())
             putLong("lastUpdated", System.currentTimeMillis())
             apply()
         }

@@ -14,7 +14,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:text="Noah Wallet"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/widgetTextPrimary"
         android:textSize="12sp"
         android:textStyle="bold" />
 
@@ -25,7 +25,7 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:text="REGTEST"
-        android:textColor="#000000"
+        android:textColor="@color/widgetBadgeText"
         android:textSize="10sp"
         android:textStyle="bold"
         android:paddingStart="6dp"
@@ -57,7 +57,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Pending: 0 sats"
-            android:textColor="#FFEB3B"
+            android:textColor="@color/widgetPendingText"
             android:textSize="10sp"
             android:layout_marginTop="4dp"
             android:visibility="gone" />
@@ -82,7 +82,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Onchain"
-                android:textColor="#888888"
+                android:textColor="@color/widgetTextSecondary"
                 android:textSize="10sp" />
 
             <TextView
@@ -90,7 +90,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/widgetTextPrimary"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
@@ -107,7 +107,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Offchain"
-                android:textColor="#888888"
+                android:textColor="@color/widgetTextSecondary"
                 android:textSize="10sp" />
 
             <TextView
@@ -115,7 +115,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/widgetTextPrimary"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
