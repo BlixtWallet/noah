@@ -31,6 +31,7 @@ import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
 import { syncPendingBoards } from "~/lib/paymentsApi";
+import { useWidget } from "~/hooks/useWidget";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -92,6 +93,17 @@ const HomeScreen = () => {
   const totalBalance = onchainBalance + offchainBalance;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
   const errorMessage = error instanceof Error ? error.message : String(error);
+
+  useWidget(
+    balance
+      ? {
+          totalBalance,
+          onchainBalance,
+          offchainBalance,
+          pendingBalance: totalPendingBalance,
+        }
+      : null,
+  );
 
   const animatedRotation = useAnimatedStyle(() => {
     return {

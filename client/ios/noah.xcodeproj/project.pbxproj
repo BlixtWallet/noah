@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -40,10 +40,82 @@
 		C39DD7512E0C9DF1000CB6A9 /* signet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */; };
 		C39DD7522E0C9DF1000CB6A9 /* mainnet.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */; };
 		C39DD7532E0C9DF1000CB6A9 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */; };
+		C3C8E7032EC4DF3A00A7BF32 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B55F2EC4D043004DFDC1 /* WidgetKit.framework */; };
+		C3C8E7042EC4DF3A00A7BF32 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B5612EC4D043004DFDC1 /* SwiftUI.framework */; };
+		C3C8E7132EC4DF3C00A7BF32 /* NoahWidgetSignetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C3C8E7022EC4DF3A00A7BF32 /* NoahWidgetSignetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C3C8E71F2EC4DFD200A7BF32 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B55F2EC4D043004DFDC1 /* WidgetKit.framework */; };
+		C3C8E7202EC4DFD200A7BF32 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B5612EC4D043004DFDC1 /* SwiftUI.framework */; };
+		C3C8E72F2EC4DFD300A7BF32 /* NoahWidgetMainnetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C3C8E71E2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C3C8E73B2EC4E26A00A7BF32 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B55F2EC4D043004DFDC1 /* WidgetKit.framework */; };
+		C3C8E73C2EC4E26A00A7BF32 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C379B5612EC4D043004DFDC1 /* SwiftUI.framework */; };
+		C3C8E74B2EC4E26C00A7BF32 /* NoahWidgetRegtestExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C3C8E73A2EC4E26A00A7BF32 /* NoahWidgetRegtestExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C3C8E7BF2EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */; };
+		C3C8E7C02EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */; };
+		C3C8E7C12EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */; };
 		CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C3C8E7112EC4DF3C00A7BF32 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3C8E7012EC4DF3A00A7BF32;
+			remoteInfo = NoahWidgetSignetExtension;
+		};
+		C3C8E72D2EC4DFD300A7BF32 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3C8E71D2EC4DFD200A7BF32;
+			remoteInfo = NoahWidgetMainnetExtension;
+		};
+		C3C8E7492EC4E26C00A7BF32 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C3C8E7392EC4E26A00A7BF32;
+			remoteInfo = NoahWidgetRegtestExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C379B5722EC4D046004DFDC1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C3C8E74B2EC4E26C00A7BF32 /* NoahWidgetRegtestExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E7142EC4DF3C00A7BF32 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C3C8E7132EC4DF3C00A7BF32 /* NoahWidgetSignetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E7342EC4DFD300A7BF32 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C3C8E72F2EC4DFD300A7BF32 /* NoahWidgetMainnetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* Noah.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Noah.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -65,6 +137,9 @@
 		B2CF17E77D223D7EC1A61FF9 /* libPods-noah-common-Noah-Signet.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah-common-Noah-Signet.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		BCDAA6B157059A8D05E8F8C5 /* Pods-noah-common-noah-regtest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-noah-regtest.release.xcconfig"; path = "Target Support Files/Pods-noah-common-noah-regtest/Pods-noah-common-noah-regtest.release.xcconfig"; sourceTree = "<group>"; };
+		C379B55F2EC4D043004DFDC1 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		C379B5612EC4D043004DFDC1 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		C379B5772EC4D0D2004DFDC1 /* NoahWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoahWidgetExtension.entitlements; sourceTree = "<group>"; };
 		C39DD7152E0C95AF000CB6A9 /* Noah-Signet.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noah-Signet.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Noah-Regtest.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Config/Debug.xcconfig; sourceTree = "<group>"; };
@@ -72,6 +147,13 @@
 		C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = regtest.xcconfig; path = Config/regtest.xcconfig; sourceTree = "<group>"; };
 		C39DD7432E0C9DF1000CB6A9 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Config/Release.xcconfig; sourceTree = "<group>"; };
 		C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = signet.xcconfig; path = Config/signet.xcconfig; sourceTree = "<group>"; };
+		C3C8E7022EC4DF3A00A7BF32 /* NoahWidgetSignetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoahWidgetSignetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C3C8E7192EC4DF9400A7BF32 /* NoahWidgetSignetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoahWidgetSignetExtension.entitlements; sourceTree = "<group>"; };
+		C3C8E71E2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoahWidgetMainnetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C3C8E7352EC4DFF700A7BF32 /* NoahWidgetMainnetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoahWidgetMainnetExtension.entitlements; sourceTree = "<group>"; };
+		C3C8E73A2EC4E26A00A7BF32 /* NoahWidgetRegtestExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoahWidgetRegtestExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C3C8E7502EC4E28300A7BF32 /* NoahWidgetRegtestExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NoahWidgetRegtestExtension.entitlements; sourceTree = "<group>"; };
+		C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoahBalanceWidget.swift; sourceTree = "<group>"; };
 		D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah.release.xcconfig"; sourceTree = "<group>"; };
 		D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-noah-common-Noah-Signet.release.xcconfig"; path = "Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet.release.xcconfig"; sourceTree = "<group>"; };
 		DC16E7980CEC87034661C98D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-noah-common-Noah/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -81,6 +163,57 @@
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = noah/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* noah-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "noah-Bridging-Header.h"; path = "noah/noah-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C3C8E7172EC4DF3C00A7BF32 /* Exceptions for "NoahWidgetSignet" folder in "NoahWidgetSignetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C3C8E7012EC4DF3A00A7BF32 /* NoahWidgetSignetExtension */;
+		};
+		C3C8E7302EC4DFD300A7BF32 /* Exceptions for "NoahWidgetMainnet" folder in "NoahWidgetMainnetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C3C8E71D2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension */;
+		};
+		C3C8E74C2EC4E26C00A7BF32 /* Exceptions for "NoahWidgetRegtest" folder in "NoahWidgetRegtestExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C3C8E7392EC4E26A00A7BF32 /* NoahWidgetRegtestExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C3C8E7052EC4DF3A00A7BF32 /* NoahWidgetSignet */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C3C8E7172EC4DF3C00A7BF32 /* Exceptions for "NoahWidgetSignet" folder in "NoahWidgetSignetExtension" target */,
+			);
+			path = NoahWidgetSignet;
+			sourceTree = "<group>";
+		};
+		C3C8E7212EC4DFD200A7BF32 /* NoahWidgetMainnet */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C3C8E7302EC4DFD300A7BF32 /* Exceptions for "NoahWidgetMainnet" folder in "NoahWidgetMainnetExtension" target */,
+			);
+			path = NoahWidgetMainnet;
+			sourceTree = "<group>";
+		};
+		C3C8E73D2EC4E26A00A7BF32 /* NoahWidgetRegtest */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C3C8E74C2EC4E26C00A7BF32 /* Exceptions for "NoahWidgetRegtest" folder in "NoahWidgetRegtestExtension" target */,
+			);
+			path = NoahWidgetRegtest;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
@@ -104,6 +237,33 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E6FF2EC4DF3A00A7BF32 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C8E7042EC4DF3A00A7BF32 /* SwiftUI.framework in Frameworks */,
+				C3C8E7032EC4DF3A00A7BF32 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E71B2EC4DFD200A7BF32 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C8E7202EC4DFD200A7BF32 /* SwiftUI.framework in Frameworks */,
+				C3C8E71F2EC4DFD200A7BF32 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E7372EC4E26A00A7BF32 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C8E73C2EC4E26A00A7BF32 /* SwiftUI.framework in Frameworks */,
+				C3C8E73B2EC4E26A00A7BF32 /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,6 +299,8 @@
 				F063A0268003AC078FBB106F /* libPods-noah-common-Noah.a */,
 				15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */,
 				B2CF17E77D223D7EC1A61FF9 /* libPods-noah-common-Noah-Signet.a */,
+				C379B55F2EC4D043004DFDC1 /* WidgetKit.framework */,
+				C379B5612EC4D043004DFDC1 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -182,6 +344,11 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				C3C8E7BE2EC4E76200A7BF32 /* SharedWidget */,
+				C3C8E7502EC4E28300A7BF32 /* NoahWidgetRegtestExtension.entitlements */,
+				C3C8E7352EC4DFF700A7BF32 /* NoahWidgetMainnetExtension.entitlements */,
+				C3C8E7192EC4DF9400A7BF32 /* NoahWidgetSignetExtension.entitlements */,
+				C379B5772EC4D0D2004DFDC1 /* NoahWidgetExtension.entitlements */,
 				C39DD7402E0C9DF1000CB6A9 /* Debug.xcconfig */,
 				C39DD7412E0C9DF1000CB6A9 /* mainnet.xcconfig */,
 				C39DD7422E0C9DF1000CB6A9 /* regtest.xcconfig */,
@@ -189,6 +356,9 @@
 				C39DD7442E0C9DF1000CB6A9 /* signet.xcconfig */,
 				13B07FAE1A68108700A75B9A /* noah */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				C3C8E7052EC4DF3A00A7BF32 /* NoahWidgetSignet */,
+				C3C8E7212EC4DFD200A7BF32 /* NoahWidgetMainnet */,
+				C3C8E73D2EC4E26A00A7BF32 /* NoahWidgetRegtest */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				7A5841958A4C7C1392179C75 /* Pods */,
@@ -205,6 +375,9 @@
 				13B07F961A680F5B00A75B9A /* Noah.app */,
 				C39DD7152E0C95AF000CB6A9 /* Noah-Signet.app */,
 				C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */,
+				C3C8E7022EC4DF3A00A7BF32 /* NoahWidgetSignetExtension.appex */,
+				C3C8E71E2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension.appex */,
+				C3C8E73A2EC4E26A00A7BF32 /* NoahWidgetRegtestExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -224,6 +397,14 @@
 			);
 			name = Supporting;
 			path = noah/Supporting;
+			sourceTree = "<group>";
+		};
+		C3C8E7BE2EC4E76200A7BF32 /* SharedWidget */ = {
+			isa = PBXGroup;
+			children = (
+				C3C8E7BD2EC4E76200A7BF32 /* NoahBalanceWidget.swift */,
+			);
+			path = SharedWidget;
 			sourceTree = "<group>";
 		};
 		D904AA8E51C51D3019C8988A /* Noah */ = {
@@ -250,10 +431,12 @@
 				B7177045A6D1684CA40D7A03 /* [CP] Embed Pods Frameworks */,
 				328273F845D3C4E5D17CEB69 /* [CP] Copy Pods Resources */,
 				25302F4CCDBA408C81511F81 /* Upload Debug Symbols to Sentry */,
+				C3C8E7342EC4DFD300A7BF32 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C3C8E72E2EC4DFD300A7BF32 /* PBXTargetDependency */,
 			);
 			name = Noah;
 			productName = noah;
@@ -272,10 +455,12 @@
 				C39DD70F2E0C95AF000CB6A9 /* Bundle React Native code and images */,
 				A0770F88AF30F9691ED52884 /* [CP] Embed Pods Frameworks */,
 				709A54DFD0B4643D10D4D068 /* [CP] Copy Pods Resources */,
+				C3C8E7142EC4DF3C00A7BF32 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C3C8E7122EC4DF3C00A7BF32 /* PBXTargetDependency */,
 			);
 			name = "Noah-Signet";
 			productName = noah;
@@ -294,15 +479,77 @@
 				C39DD7242E0C973E000CB6A9 /* Bundle React Native code and images */,
 				90E9ABE5A803C38981045B5E /* [CP] Embed Pods Frameworks */,
 				78895DDB33EA826439BB242B /* [CP] Copy Pods Resources */,
+				C379B5722EC4D046004DFDC1 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C3C8E74A2EC4E26C00A7BF32 /* PBXTargetDependency */,
 			);
 			name = "Noah-Regtest";
 			productName = noah;
 			productReference = C39DD72A2E0C973E000CB6A9 /* Noah-Regtest.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C3C8E7012EC4DF3A00A7BF32 /* NoahWidgetSignetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3C8E7182EC4DF3C00A7BF32 /* Build configuration list for PBXNativeTarget "NoahWidgetSignetExtension" */;
+			buildPhases = (
+				C3C8E6FE2EC4DF3A00A7BF32 /* Sources */,
+				C3C8E6FF2EC4DF3A00A7BF32 /* Frameworks */,
+				C3C8E7002EC4DF3A00A7BF32 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C3C8E7052EC4DF3A00A7BF32 /* NoahWidgetSignet */,
+			);
+			name = NoahWidgetSignetExtension;
+			productName = NoahWidgetSignetExtension;
+			productReference = C3C8E7022EC4DF3A00A7BF32 /* NoahWidgetSignetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C3C8E71D2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3C8E7312EC4DFD300A7BF32 /* Build configuration list for PBXNativeTarget "NoahWidgetMainnetExtension" */;
+			buildPhases = (
+				C3C8E71A2EC4DFD200A7BF32 /* Sources */,
+				C3C8E71B2EC4DFD200A7BF32 /* Frameworks */,
+				C3C8E71C2EC4DFD200A7BF32 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C3C8E7212EC4DFD200A7BF32 /* NoahWidgetMainnet */,
+			);
+			name = NoahWidgetMainnetExtension;
+			productName = NoahWidgetMainnetExtension;
+			productReference = C3C8E71E2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C3C8E7392EC4E26A00A7BF32 /* NoahWidgetRegtestExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C3C8E74D2EC4E26C00A7BF32 /* Build configuration list for PBXNativeTarget "NoahWidgetRegtestExtension" */;
+			buildPhases = (
+				C3C8E7362EC4E26A00A7BF32 /* Sources */,
+				C3C8E7372EC4E26A00A7BF32 /* Frameworks */,
+				C3C8E7382EC4E26A00A7BF32 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C3C8E73D2EC4E26A00A7BF32 /* NoahWidgetRegtest */,
+			);
+			name = NoahWidgetRegtestExtension;
+			productName = NoahWidgetRegtestExtension;
+			productReference = C3C8E73A2EC4E26A00A7BF32 /* NoahWidgetRegtestExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -310,15 +557,24 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1250;
 					};
+					C3C8E7012EC4DF3A00A7BF32 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					C3C8E71D2EC4DFD200A7BF32 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					C3C8E7392EC4E26A00A7BF32 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "noah" */;
-			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -326,6 +582,7 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -333,6 +590,9 @@
 				13B07F861A680F5B00A75B9A /* Noah */,
 				C39DD7022E0C95AF000CB6A9 /* Noah-Signet */,
 				C39DD7172E0C973E000CB6A9 /* Noah-Regtest */,
+				C3C8E7012EC4DF3A00A7BF32 /* NoahWidgetSignetExtension */,
+				C3C8E71D2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension */,
+				C3C8E7392EC4E26A00A7BF32 /* NoahWidgetRegtestExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -386,6 +646,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C3C8E7002EC4DF3A00A7BF32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E71C2EC4DFD200A7BF32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E7382EC4E26A00A7BF32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -425,47 +706,16 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXTaskManager/ExpoTaskManager_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNFSTurbo/RNFSTurbo_PrivacyInfo.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/Sentry/Sentry.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ZIPFoundation/ZIPFoundation_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-				"${PODS_ROOT}/../../../node_modules/@react-native-vector-icons/ionicons/fonts/Ionicons.ttf",
 			);
 			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoTaskManager_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNFSTurbo_PrivacyInfo.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Sentry.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ZIPFoundation_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Ionicons.ttf",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -499,47 +749,16 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXTaskManager/ExpoTaskManager_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNFSTurbo/RNFSTurbo_PrivacyInfo.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/Sentry/Sentry.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ZIPFoundation/ZIPFoundation_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-				"${PODS_ROOT}/../../../node_modules/@react-native-vector-icons/ionicons/fonts/Ionicons.ttf",
 			);
 			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoTaskManager_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNFSTurbo_PrivacyInfo.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Sentry.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ZIPFoundation_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Ionicons.ttf",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -551,47 +770,16 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXNotifications/ExpoNotifications_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXTaskManager/ExpoTaskManager_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoDevice/ExpoDevice_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNFSTurbo/RNFSTurbo_PrivacyInfo.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/Sentry/Sentry.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ZIPFoundation/ZIPFoundation_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-				"${PODS_ROOT}/../../../node_modules/@react-native-vector-icons/ionicons/fonts/Ionicons.ttf",
 			);
 			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoNotifications_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoTaskManager_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoDevice_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNFSTurbo_PrivacyInfo.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Sentry.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ZIPFoundation_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Ionicons.ttf",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -625,17 +813,16 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Regtest/Pods-noah-common-Noah-Regtest-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -647,17 +834,16 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah-Signet/Pods-noah-common-Noah-Signet-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -691,17 +877,16 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-noah-common-Noah/Pods-noah-common-Noah-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -840,7 +1025,49 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C3C8E6FE2EC4DF3A00A7BF32 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C8E7C02EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E71A2EC4DFD200A7BF32 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C8E7BF2EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C3C8E7362EC4E26A00A7BF32 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3C8E7C12EC4E76200A7BF32 /* NoahBalanceWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C3C8E7122EC4DF3C00A7BF32 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3C8E7012EC4DF3A00A7BF32 /* NoahWidgetSignetExtension */;
+			targetProxy = C3C8E7112EC4DF3C00A7BF32 /* PBXContainerItemProxy */;
+		};
+		C3C8E72E2EC4DFD300A7BF32 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3C8E71D2EC4DFD200A7BF32 /* NoahWidgetMainnetExtension */;
+			targetProxy = C3C8E72D2EC4DFD300A7BF32 /* PBXContainerItemProxy */;
+		};
+		C3C8E74A2EC4E26C00A7BF32 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C3C8E7392EC4E26A00A7BF32 /* NoahWidgetRegtestExtension */;
+			targetProxy = C3C8E7492EC4E26C00A7BF32 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -968,10 +1195,7 @@
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -1027,10 +1251,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
@@ -1180,6 +1401,297 @@
 			};
 			name = Release;
 		};
+		C3C8E7152EC4DF3C00A7BF32 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = NoahWidgetSignetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = AT26Z24V2Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoahWidgetSignet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetSignet;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.signet.NoahWidgetSignet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C3C8E7162EC4DF3C00A7BF32 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = NoahWidgetSignetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = AT26Z24V2Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoahWidgetSignet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetSignet;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.signet.NoahWidgetSignet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C3C8E7322EC4DFD300A7BF32 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = NoahWidgetMainnetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = AT26Z24V2Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoahWidgetMainnet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetMainnet;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.mainnet.NoahWidgetMainnet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C3C8E7332EC4DFD300A7BF32 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = NoahWidgetMainnetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = AT26Z24V2Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoahWidgetMainnet/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetMainnet;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.mainnet.NoahWidgetMainnet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C3C8E74E2EC4E26C00A7BF32 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = NoahWidgetRegtestExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = AT26Z24V2Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoahWidgetRegtest/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetRegtest;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.regtest.NoahWidgetRegtest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C3C8E74F2EC4E26C00A7BF32 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = NoahWidgetRegtestExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = AT26Z24V2Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NoahWidgetRegtest/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetRegtest;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.noahwallet.regtest.NoahWidgetRegtest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1215,6 +1727,33 @@
 			buildConfigurations = (
 				C39DD7282E0C973E000CB6A9 /* Debug */,
 				C39DD7292E0C973E000CB6A9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C3C8E7182EC4DF3C00A7BF32 /* Build configuration list for PBXNativeTarget "NoahWidgetSignetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3C8E7152EC4DF3C00A7BF32 /* Debug */,
+				C3C8E7162EC4DF3C00A7BF32 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C3C8E7312EC4DFD300A7BF32 /* Build configuration list for PBXNativeTarget "NoahWidgetMainnetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3C8E7322EC4DFD300A7BF32 /* Debug */,
+				C3C8E7332EC4DFD300A7BF32 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C3C8E74D2EC4E26C00A7BF32 /* Build configuration list for PBXNativeTarget "NoahWidgetRegtestExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C3C8E74E2EC4E26C00A7BF32 /* Debug */,
+				C3C8E74F2EC4E26C00A7BF32 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

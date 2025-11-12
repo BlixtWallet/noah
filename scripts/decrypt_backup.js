@@ -57,27 +57,6 @@ function decryptBackup(encryptedData, mnemonic) {
 }
 
 /**
- * Unzip the backup file
- */
-async function unzipBackup(zipPath, outputDir) {
-  try {
-    const AdmZip = require("adm-zip");
-    const zip = new AdmZip(zipPath);
-    zip.extractAllTo(outputDir, true);
-    console.log(`✓ Backup extracted to: ${outputDir}`);
-  } catch (err) {
-    if (err.code === "MODULE_NOT_FOUND") {
-      console.log("\n⚠️  adm-zip not installed. Install it with:");
-      console.log("  npm install adm-zip");
-      console.log("\nOr manually unzip the file:");
-      console.log(`  unzip ${zipPath} -d ${outputDir}`);
-    } else {
-      throw err;
-    }
-  }
-}
-
-/**
  * Main function
  */
 async function main() {
@@ -88,22 +67,16 @@ async function main() {
 Noah Backup Decryption Tool
 
 Usage:
-  node decrypt_backup.js <input_file> <output_file> "<mnemonic>" [--unzip]
+  node decrypt_backup.js <input_file> <output_file> "<mnemonic>"
 
 Arguments:
   input_file   Path to encrypted backup file (base64 encoded)
   output_file  Path to output decrypted zip file
   mnemonic     12 or 24 word mnemonic phrase (in quotes)
 
-Options:
-  --unzip      Automatically unzip the backup after decryption
-
 Examples:
   # Decrypt backup
   node scripts/decrypt_backup.js backup.txt backup.zip "word1 word2 ... word12"
-
-  # Decrypt and extract
-  node scripts/decrypt_backup.js backup.txt backup.zip "word1 word2 ... word12" --unzip
 
 Security Warning:
   This script handles sensitive wallet data. Always keep your mnemonic secure
@@ -115,7 +88,6 @@ Security Warning:
   const inputFile = args[0];
   const outputFile = args[1];
   const mnemonic = args[2];
-  const shouldUnzip = args.includes("--unzip");
 
   try {
     console.log(`Reading encrypted backup from: ${inputFile}`);
@@ -158,12 +130,6 @@ Security Warning:
     await writeFile(outputFile, decryptedData);
 
     console.log("✓ Backup decrypted successfully!");
-
-    if (shouldUnzip) {
-      const outputDir = outputFile.replace(/\.[^/.]+$/, "") + "_extracted";
-      console.log(`Unzipping to: ${outputDir}`);
-      await unzipBackup(outputFile, outputDir);
-    }
   } catch (err) {
     console.error(`✗ Error: ${err.message}`);
     if (err.code === "ENOENT") {

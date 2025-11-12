@@ -73,4 +73,14 @@ class NoahTools : HybridNoahToolsSpec() {
     override fun isAudioPlaying(): Boolean {
         return NoahToolsAudio.performIsAudioPlaying()
     }
+
+    override fun saveBalanceForWidget(
+        totalBalance: Double,
+        onchainBalance: Double,
+        offchainBalance: Double,
+        pendingBalance: Double,
+        appGroup: String
+    ) {
+        // No-op on Android - widgets not yet supported
+    }
 }
