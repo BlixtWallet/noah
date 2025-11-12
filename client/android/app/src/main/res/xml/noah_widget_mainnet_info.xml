@@ -2,8 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="180dp"
     android:minHeight="110dp"
-    android:targetCellWidth="2"
-    android:targetCellHeight="2"
+
     android:updatePeriodMillis="900000"
     android:initialLayout="@layout/widget_noah"
     android:resizeMode="horizontal|vertical"
