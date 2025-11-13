@@ -116,15 +116,13 @@ impl<'a> NotificationTrackingRepository<'a> {
         let mut rows = self
             .conn
             .query(
-                "SELECT DISTINCT u.pubkey
+                "SELECT u.pubkey
                  FROM users u
-                 LEFT JOIN notification_tracking nt ON u.pubkey = nt.pubkey
-                 WHERE nt.pubkey IS NULL
-                    OR nt.pubkey NOT IN (
-                        SELECT pubkey
-                        FROM notification_tracking
-                        WHERE last_sent_at > ?
-                    )",
+                 WHERE NOT EXISTS (
+                     SELECT 1
+                     FROM notification_tracking nt
+                     WHERE nt.pubkey = u.pubkey AND nt.last_sent_at > ?
+                 )",
                 libsql::params![min_time],
             )
             .await?;

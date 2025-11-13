@@ -156,6 +156,9 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
     // Find all pending offboarding requests
     let pending_requests = offboarding_repo.find_all_pending().await?;
 
+    // Create coordinator once for all offboarding requests
+    let coordinator = NotificationCoordinator::new(app_state.clone());
+
     for request in pending_requests {
         tracing::info!(
             "Processing offboarding request {} for pubkey: {}",
@@ -168,9 +171,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
             .update_status(&request.request_id, OffboardingStatus::Processing)
             .await?;
 
-        // Send push notification for offboarding using coordinator
-        let coordinator = NotificationCoordinator::new(app_state.clone());
-
+        // Send push notification for offboarding
         let notification_data = NotificationData::Offboarding(OffboardingNotification {
             k1: String::new(), // Will be replaced with unique k1 per device
             offboarding_request_id: request.request_id.clone(),

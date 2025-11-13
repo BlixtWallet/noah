@@ -244,13 +244,11 @@ ORDER BY last_sent_at DESC;
 ```sql
 SELECT u.pubkey
 FROM users u
-LEFT JOIN notification_tracking nt ON u.pubkey = nt.pubkey
-WHERE nt.pubkey IS NULL
-   OR nt.pubkey NOT IN (
-       SELECT pubkey
-       FROM notification_tracking
-       WHERE last_sent_at > datetime('now', '-45 minutes')
-   );
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM notification_tracking nt
+    WHERE nt.pubkey = u.pubkey AND nt.last_sent_at > datetime('now', '-45 minutes')
+);
 ```
 
 ### View Recent Notification Activity
