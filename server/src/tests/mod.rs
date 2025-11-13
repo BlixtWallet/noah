@@ -1,4 +1,5 @@
 pub mod common;
+pub mod coordinator_tests;
 pub mod gated_auth_tests;
 pub mod gated_backup_tests;
 pub mod gated_error_tests;
