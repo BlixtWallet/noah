@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="client/assets/1024_no_background.png" alt="Noah Logo" width="80"/>
+  <img src="client/assets/All_Files/all_sizes/1024.png" alt="Noah Logo" width="80"/>
 </p>
 
 <h1 align="center">Noah's Ark</h1>
