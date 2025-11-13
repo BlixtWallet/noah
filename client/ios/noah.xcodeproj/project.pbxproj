@@ -1425,7 +1425,7 @@
 				INFOPLIST_FILE = NoahWidgetSignet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetSignet;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1475,7 +1475,7 @@
 				INFOPLIST_FILE = NoahWidgetSignet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetSignet;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1522,7 +1522,7 @@
 				INFOPLIST_FILE = NoahWidgetMainnet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetMainnet;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1572,7 +1572,7 @@
 				INFOPLIST_FILE = NoahWidgetMainnet/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetMainnet;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1619,7 +1619,7 @@
 				INFOPLIST_FILE = NoahWidgetRegtest/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetRegtest;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1669,7 +1669,7 @@
 				INFOPLIST_FILE = NoahWidgetRegtest/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NoahWidgetRegtest;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
