@@ -8,7 +8,8 @@ on:
       - "server/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - ".github/workflows/server-push.yml"
+      - "!**/*.md"
+      - "!**/.github/workflows/*"
 
 jobs:
   server-build-and-push:
