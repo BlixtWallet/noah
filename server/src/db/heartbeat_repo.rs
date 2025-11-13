@@ -1,8 +1,9 @@
 use anyhow::Result;
-use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::types::HeartbeatStatus;
+#[cfg(test)]
+use std::str::FromStr;
 
 pub struct HeartbeatRepository<'a> {
     conn: &'a libsql::Connection,
