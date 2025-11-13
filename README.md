@@ -1,6 +1,15 @@
-# Noah's Ark 🚢
-
-Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protocol. It is built with React Native and Expo.
+<div align="center">
+  <h1>
+    <img src="client/assets/1024_no_background.png" alt="Noah Logo" width="60" style="vertical-align: middle;"/>
+    Noah's Ark
+  </h1>
+  
+  <p>Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protocol. It is built with React Native and Expo.</p>
+  
+  <blockquote>
+    ⚠️ <strong>WARNING</strong>: This project is in rapid development phase and is extremely alpha. Use at your own risk. Not recommended for production use.
+  </blockquote>
+</div>
 
 ---
 
