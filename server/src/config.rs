@@ -48,6 +48,8 @@ pub struct Config {
     pub heartbeat_cron: String,
     #[serde(default = "default_deregister_cron")]
     pub deregister_cron: String,
+    #[serde(default = "default_notification_spacing_minutes")]
+    pub notification_spacing_minutes: i64,
     pub s3_bucket_name: String,
     pub aws_access_key_id: Option<String>,
     pub aws_secret_access_key: Option<String>,
@@ -79,6 +81,10 @@ impl Config {
         tracing::debug!("Backup Cron: {}", self.backup_cron);
         tracing::debug!("Heartbeat Cron: {}", self.heartbeat_cron);
         tracing::debug!("Deregister Cron: {}", self.deregister_cron);
+        tracing::debug!(
+            "Notification Spacing Minutes: {}",
+            self.notification_spacing_minutes
+        );
         tracing::debug!(
             "Maintenance Interval Rounds: {}",
             self.maintenance_interval_rounds
@@ -195,6 +201,10 @@ fn default_deregister_cron() -> String {
 
 fn default_maintenance_interval_rounds() -> u16 {
     crate::constants::DEFAULT_MAINTENANCE_INTERVAL_ROUNDS
+}
+
+fn default_notification_spacing_minutes() -> i64 {
+    45
 }
 
 fn default_minimum_app_version() -> String {

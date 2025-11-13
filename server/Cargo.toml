@@ -27,7 +27,7 @@ tokio-cron-scheduler = { version = "0.15.0", features = ["english"] }
 serde_json = "1.0.145"
 random_word = { version = "0.5.0", features = ["en"] }
 futures-util = "0.3.30"
-bark-server-rpc = { git = "https://codeberg.org/ark-bitcoin/bark", tag = "server-0.0.0-alpha.20" }
+bark-server-rpc = { git = "https://gitlab.com/ark-bitcoin/bark", tag = "server-0.1.0-beta.2" }
 
 async-trait = "0.1.80"
 http-body-util = "0.1.1"

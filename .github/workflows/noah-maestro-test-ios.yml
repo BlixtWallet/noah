@@ -5,10 +5,10 @@ on:
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/noah-maestro-test-ios.yml"
-      - ".github/workflows/noah-build-release-ios.yml"
       - "package.json"
       - "bun.lock"
+      - "!**/*.md"
+      - "!**/.github/workflows/*"
 
 jobs:
   build-release-ios:

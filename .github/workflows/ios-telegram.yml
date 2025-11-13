@@ -7,10 +7,10 @@ on:
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/ios-device-build.yml"
-      - ".github/workflows/ios-telegram.yml"
       - "package.json"
       - "bun.lock"
+      - "!**/*.md"
+      - "!**/.github/workflows/*"
 
 jobs:
   build:

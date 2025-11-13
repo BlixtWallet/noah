@@ -38,6 +38,7 @@ mod ark_client;
 mod cron;
 pub mod db;
 mod errors;
+mod notification_coordinator;
 mod push;
 mod rate_limit;
 mod s3_client;

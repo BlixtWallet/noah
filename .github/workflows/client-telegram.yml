@@ -7,10 +7,10 @@ on:
     paths:
       - "client/**"
       - "scripts/**"
-      - ".github/workflows/client.yml"
-      - ".github/workflows/client-telegram.yml"
       - "package.json"
       - "bun.lock"
+      - "!**/*.md"
+      - "!**/.github/workflows/*"
 
 jobs:
   build:

@@ -157,7 +157,7 @@ async fn test_register_offboarding_request() {
 
     assert_eq!(request.request_id, res.request_id);
     assert_eq!(request.pubkey, user.pubkey().to_string());
-    assert_eq!(request.status, "pending");
+    assert_eq!(request.status, crate::types::OffboardingStatus::Pending);
     assert_eq!(
         request.address,
         "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"

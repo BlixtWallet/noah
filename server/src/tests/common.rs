@@ -61,6 +61,7 @@ impl TestUser {
             maintenance_interval_rounds: 10,
             heartbeat_cron: "0 0 * * *".to_string(),
             deregister_cron: "0 0 * * *".to_string(),
+            notification_spacing_minutes: 45,
             minimum_app_version: "0.0.1".to_string(),
         }
     }

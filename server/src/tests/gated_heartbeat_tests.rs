@@ -228,7 +228,7 @@ async fn test_heartbeat_repo_create_notification() {
     let status: String = row.get(1).unwrap();
 
     assert_eq!(pubkey, user.pubkey().to_string());
-    assert_eq!(status, "pending");
+    assert_eq!(status, crate::types::HeartbeatStatus::Pending.to_string());
 }
 
 #[tracing_test::traced_test]

@@ -7,7 +7,9 @@ on:
       - "scripts/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - ".github/workflows/server.yml"
+      - "!**/*.md"
+      - "!**/.github/workflows/*"
+
   push:
     branches:
       - master
@@ -16,7 +18,7 @@ on:
       - "scripts/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - ".github/workflows/server.yml"
+      - "!**/*.md"
 
 jobs:
   server_build_and_test:

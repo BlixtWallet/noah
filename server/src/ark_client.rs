@@ -1,8 +1,12 @@
 use crate::{
     AppState,
     db::offboarding_repo::OffboardingRepository,
-    push::send_push_notification_with_unique_k1,
-    types::{MaintenanceNotification, NotificationData, OffboardingNotification},
+    notification_coordinator::{
+        NotificationCoordinator, NotificationPriority, NotificationRequest,
+    },
+    types::{
+        MaintenanceNotification, NotificationData, OffboardingNotification, OffboardingStatus,
+    },
 };
 
 use bitcoin::hex::DisplayHex;
@@ -126,13 +130,19 @@ async fn establish_connection_and_process(
 }
 
 pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
-    // Send maintenance notification with unique k1 for each device
+    let coordinator = NotificationCoordinator::new(app_state);
+
     let notification_data = NotificationData::Maintenance(MaintenanceNotification {
         k1: String::new(), // Will be replaced with unique k1 per device
     });
 
-    if let Err(e) = send_push_notification_with_unique_k1(app_state, notification_data, None).await
-    {
+    let request = NotificationRequest {
+        priority: NotificationPriority::Critical,
+        data: notification_data,
+        target_pubkey: None, // Broadcast to all users
+    };
+
+    if let Err(e) = coordinator.send_notification(request).await {
         tracing::error!("Failed to send push notification for maintenance: {}", e);
     }
 
@@ -146,6 +156,9 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
     // Find all pending offboarding requests
     let pending_requests = offboarding_repo.find_all_pending().await?;
 
+    // Create coordinator once for all offboarding requests
+    let coordinator = NotificationCoordinator::new(app_state.clone());
+
     for request in pending_requests {
         tracing::info!(
             "Processing offboarding request {} for pubkey: {}",
@@ -155,7 +168,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
 
         // Update status to processing
         offboarding_repo
-            .update_status(&request.request_id, "processing")
+            .update_status(&request.request_id, OffboardingStatus::Processing)
             .await?;
 
         // Send push notification for offboarding
@@ -166,22 +179,22 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
             address_signature: request.address_signature.clone(),
         });
 
-        if let Err(e) = send_push_notification_with_unique_k1(
-            app_state.clone(),
-            notification_data,
-            Some(request.pubkey),
-        )
-        .await
-        {
+        let notification_request = NotificationRequest {
+            priority: NotificationPriority::Critical,
+            data: notification_data,
+            target_pubkey: Some(request.pubkey.clone()),
+        };
+
+        if let Err(e) = coordinator.send_notification(notification_request).await {
             tracing::error!("Failed to send push notification for offboarding: {}", e);
             // Reset status to pending if failed
             offboarding_repo
-                .update_status(&request.request_id, "pending")
+                .update_status(&request.request_id, OffboardingStatus::Pending)
                 .await?;
         } else {
             // Mark as sent
             offboarding_repo
-                .update_status(&request.request_id, "sent")
+                .update_status(&request.request_id, OffboardingStatus::Sent)
                 .await?;
         }
     }
