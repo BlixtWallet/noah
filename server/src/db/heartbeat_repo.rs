@@ -1,6 +1,8 @@
 use anyhow::Result;
 use uuid::Uuid;
 
+use crate::types::HeartbeatStatus;
+
 pub struct HeartbeatRepository<'a> {
     conn: &'a libsql::Connection,
 }
@@ -16,8 +18,8 @@ impl<'a> HeartbeatRepository<'a> {
 
         self.conn
             .execute(
-                "INSERT INTO heartbeat_notifications (pubkey, notification_id, status) VALUES (?, ?, 'pending')",
-                libsql::params![pubkey, notification_id.clone()],
+                "INSERT INTO heartbeat_notifications (pubkey, notification_id, status) VALUES (?, ?, ?)",
+                libsql::params![pubkey, notification_id.clone(), HeartbeatStatus::Pending.to_string()],
             )
             .await?;
 
@@ -28,8 +30,12 @@ impl<'a> HeartbeatRepository<'a> {
     pub async fn mark_as_responded(&self, notification_id: &str) -> Result<bool> {
         let result = self.conn
             .execute(
-                "UPDATE heartbeat_notifications SET responded_at = CURRENT_TIMESTAMP, status = 'responded' WHERE notification_id = ? AND status = 'pending'",
-                libsql::params![notification_id],
+                "UPDATE heartbeat_notifications SET responded_at = CURRENT_TIMESTAMP, status = ? WHERE notification_id = ? AND status = ?",
+                libsql::params![
+                    HeartbeatStatus::Responded.to_string(),
+                    notification_id,
+                    HeartbeatStatus::Pending.to_string()
+                ],
             )
             .await?;
 
@@ -70,8 +76,9 @@ impl<'a> HeartbeatRepository<'a> {
 
         let mut consecutive_missed = 0;
         while let Some(row) = rows.next().await? {
-            let status: String = row.get(0)?;
-            if status == "pending" {
+            let status_str: String = row.get(0)?;
+            let status = HeartbeatStatus::from_str(&status_str)?;
+            if status == HeartbeatStatus::Pending {
                 consecutive_missed += 1;
             } else {
                 break;
@@ -130,12 +137,12 @@ impl<'a> HeartbeatRepository<'a> {
                     SELECT pubkey,
                            COUNT(*) as missed_count
                     FROM recent_heartbeats
-                    WHERE rn <= 10 AND status = 'pending'
+                    WHERE rn <= 10 AND status = ?
                     GROUP BY pubkey
-                    HAVING COUNT(*) = 10
+                    HAVING COUNT(*) >= 10
                 )
                 SELECT pubkey FROM consecutive_missed",
-                (),
+                libsql::params![HeartbeatStatus::Pending.to_string()],
             )
             .await?;
 

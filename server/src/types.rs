@@ -163,6 +163,63 @@ pub enum ReportStatus {
     Failure,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OffboardingStatus {
+    Pending,
+    Processing,
+    Sent,
+}
+
+impl std::fmt::Display for OffboardingStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OffboardingStatus::Pending => write!(f, "pending"),
+            OffboardingStatus::Processing => write!(f, "processing"),
+            OffboardingStatus::Sent => write!(f, "sent"),
+        }
+    }
+}
+
+impl std::str::FromStr for OffboardingStatus {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(OffboardingStatus::Pending),
+            "processing" => Ok(OffboardingStatus::Processing),
+            "sent" => Ok(OffboardingStatus::Sent),
+            _ => Err(anyhow::anyhow!("Invalid offboarding status: {}", s)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HeartbeatStatus {
+    Pending,
+    Responded,
+}
+
+impl std::fmt::Display for HeartbeatStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HeartbeatStatus::Pending => write!(f, "pending"),
+            HeartbeatStatus::Responded => write!(f, "responded"),
+        }
+    }
+}
+
+impl std::str::FromStr for HeartbeatStatus {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(HeartbeatStatus::Pending),
+            "responded" => Ok(HeartbeatStatus::Responded),
+            _ => Err(anyhow::anyhow!("Invalid heartbeat status: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct MaintenanceNotification {
@@ -213,6 +270,30 @@ pub enum NotificationData {
 }
 
 impl NotificationData {
+    /// Returns the canonical notification type identifier as a string.
+    ///
+    /// This is the **single source of truth** for notification type strings.
+    /// The same string is used for:
+    /// - JSON serialization tag (`notification_type` field in client)
+    /// - Database tracking (`notification_tracking` table)
+    /// - Logging and debugging
+    ///
+    /// The strings match the serde `snake_case` variant names exactly.
+    ///
+    /// # Examples
+    /// - `BackupTrigger` → `"backup_trigger"`
+    /// - `LightningInvoiceRequest` → `"lightning_invoice_request"`
+    /// - `Maintenance` → `"maintenance"`
+    pub fn notification_type(&self) -> &'static str {
+        match self {
+            NotificationData::Maintenance(_) => "maintenance",
+            NotificationData::LightningInvoiceRequest(_) => "lightning_invoice_request",
+            NotificationData::BackupTrigger(_) => "backup_trigger",
+            NotificationData::Offboarding(_) => "offboarding",
+            NotificationData::Heartbeat(_) => "heartbeat",
+        }
+    }
+
     /// Check if this notification needs a unique k1 per device
     pub fn needs_unique_k1(&self) -> bool {
         matches!(

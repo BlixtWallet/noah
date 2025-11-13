@@ -4,7 +4,9 @@ use crate::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
         offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
     },
-    push::send_push_notification_with_unique_k1,
+    notification_coordinator::{
+        NotificationCoordinator, NotificationPriority, NotificationRequest,
+    },
     types::{BackupTriggerNotification, HeartbeatNotification, NotificationData},
 };
 use tokio_cron_scheduler::{Job, JobScheduler};
@@ -17,17 +19,20 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
     let pubkeys = backup_repo.find_pubkeys_with_backup_enabled().await?;
     info!("Pubkeys registered for backup {:?}", pubkeys);
 
+    let coordinator = NotificationCoordinator::new(app_state.clone());
+
     for pubkey in pubkeys {
         let notification_data = NotificationData::BackupTrigger(BackupTriggerNotification {
             k1: String::new(), // Will be replaced with unique k1 per device
         });
-        if let Err(e) = send_push_notification_with_unique_k1(
-            app_state.clone(),
-            notification_data,
-            Some(pubkey),
-        )
-        .await
-        {
+
+        let request = NotificationRequest {
+            priority: NotificationPriority::Normal,
+            data: notification_data,
+            target_pubkey: Some(pubkey),
+        };
+
+        if let Err(e) = coordinator.send_notification(request).await {
             tracing::error!("Failed to send backup notification: {}", e);
         }
     }
@@ -45,6 +50,8 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
         active_users.len()
     );
 
+    let coordinator = NotificationCoordinator::new(app_state.clone());
+
     for pubkey in active_users {
         let notification_id = heartbeat_repo.create_notification(&pubkey).await?;
 
@@ -53,13 +60,13 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
             notification_id: notification_id.clone(),
         });
 
-        if let Err(e) = send_push_notification_with_unique_k1(
-            app_state.clone(),
-            notification_data,
-            Some(pubkey.clone()),
-        )
-        .await
-        {
+        let request = NotificationRequest {
+            priority: NotificationPriority::Normal,
+            data: notification_data,
+            target_pubkey: Some(pubkey.clone()),
+        };
+
+        if let Err(e) = coordinator.send_notification(request).await {
             tracing::error!("Failed to send heartbeat notification to {}: {}", pubkey, e);
             // Rollback the created notification record
             if let Err(delete_err) = heartbeat_repo.delete_notification(&notification_id).await {

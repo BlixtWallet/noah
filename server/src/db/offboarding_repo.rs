@@ -1,10 +1,13 @@
 use anyhow::Result;
+use std::str::FromStr;
+
+use crate::types::OffboardingStatus;
 
 #[derive(Debug)]
 pub struct OffboardingRequest {
     pub request_id: String,
     pub pubkey: String,
-    pub status: String,
+    pub status: OffboardingStatus,
     pub address: String,
     pub address_signature: String,
 }
@@ -50,13 +53,16 @@ impl<'a> OffboardingRepository<'a> {
             .await?;
 
         match rows.next().await? {
-            Some(row) => Ok(Some(OffboardingRequest {
-                request_id: row.get(0)?,
-                pubkey: row.get(1)?,
-                status: row.get(2)?,
-                address: row.get(3)?,
-                address_signature: row.get(4)?,
-            })),
+            Some(row) => {
+                let status_str: String = row.get(2)?;
+                Ok(Some(OffboardingRequest {
+                    request_id: row.get(0)?,
+                    pubkey: row.get(1)?,
+                    status: OffboardingStatus::from_str(&status_str)?,
+                    address: row.get(3)?,
+                    address_signature: row.get(4)?,
+                }))
+            }
             None => Ok(None),
         }
     }
@@ -66,17 +72,18 @@ impl<'a> OffboardingRepository<'a> {
         let mut rows = self
             .conn
             .query(
-                "SELECT request_id, pubkey, status, address, address_signature FROM offboarding_requests WHERE status = 'pending'",
-                (),
+                "SELECT request_id, pubkey, status, address, address_signature FROM offboarding_requests WHERE status = ?",
+                libsql::params![OffboardingStatus::Pending.to_string()],
             )
             .await?;
 
         let mut requests = Vec::new();
         while let Some(row) = rows.next().await? {
+            let status_str: String = row.get(2)?;
             requests.push(OffboardingRequest {
                 request_id: row.get(0)?,
                 pubkey: row.get(1)?,
-                status: row.get(2)?,
+                status: OffboardingStatus::from_str(&status_str)?,
                 address: row.get(3)?,
                 address_signature: row.get(4)?,
             });
@@ -85,11 +92,11 @@ impl<'a> OffboardingRepository<'a> {
     }
 
     /// Updates the status of an offboarding request.
-    pub async fn update_status(&self, request_id: &str, status: &str) -> Result<()> {
+    pub async fn update_status(&self, request_id: &str, status: OffboardingStatus) -> Result<()> {
         self.conn
             .execute(
                 "UPDATE offboarding_requests SET status = ? WHERE request_id = ?",
-                libsql::params![status, request_id],
+                libsql::params![status.to_string(), request_id],
             )
             .await?;
         Ok(())

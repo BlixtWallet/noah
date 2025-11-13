@@ -50,6 +50,10 @@ deregistration_cron = "every 24 hours"
 # Default: 1
 maintenance_interval_rounds = 1
 
+# Notification spacing minutes (time between non-critical notifications)
+# Default: 45 minutes
+notification_spacing_minutes = 45
+
 # S3 bucket name for backups
 s3_bucket_name = "your-s3-bucket-name"
 

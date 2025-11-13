@@ -112,6 +112,11 @@ fn get_migrations() -> Vec<Migration> {
             name: "create_heartbeat_notifications_table",
             up: |conn| Box::pin(migration_v7_create_heartbeat_notifications(conn)),
         },
+        Migration {
+            version: 8,
+            name: "create_notification_tracking_table",
+            up: |conn| Box::pin(migration_v8_create_notification_tracking(conn)),
+        },
     ]
 }
 
@@ -299,6 +304,34 @@ async fn migration_v6_create_devices(conn: &Connection) -> Result<()> {
         BEGIN
             UPDATE devices SET updated_at = CURRENT_TIMESTAMP WHERE pubkey = OLD.pubkey;
         END",
+        (),
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn migration_v8_create_notification_tracking(conn: &Connection) -> Result<()> {
+    conn.execute(
+        "CREATE TABLE notification_tracking (
+            pubkey TEXT NOT NULL,
+            notification_type TEXT NOT NULL,
+            last_sent_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (pubkey, notification_type),
+            FOREIGN KEY (pubkey) REFERENCES users(pubkey)
+        )",
+        (),
+    )
+    .await?;
+
+    conn.execute(
+        "CREATE INDEX idx_notification_tracking_pubkey ON notification_tracking(pubkey)",
+        (),
+    )
+    .await?;
+
+    conn.execute(
+        "CREATE INDEX idx_notification_tracking_last_sent_at ON notification_tracking(last_sent_at)",
         (),
     )
     .await?;
