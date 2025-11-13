@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::types::HeartbeatStatus;
