@@ -87,7 +87,7 @@ jobs:
       - name: 🧹 Uninstall iOS app and erase data
         if: always()
         run: |
-          BUNDLE_ID="com.anonymous.noah.regtest"
+          BUNDLE_ID="com.noahwallet.regtest"
 
           echo "Terminating app: $BUNDLE_ID"
           xcrun simctl terminate booted "$BUNDLE_ID" 2>/dev/null || true
