@@ -81,7 +81,7 @@ open class NoahWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
             // Set balance text
-            views.setTextViewText(R.id.balance_text, "${formatSats(totalBalance)} sats")
+            views.setTextViewText(R.id.balance_text, "₿ ${formatSats(totalBalance)}")
 
             // Set onchain/offchain balances with compact formatting
             views.setTextViewText(R.id.onchain_balance, formatSatsCompact(onchainBalance))
@@ -89,7 +89,7 @@ open class NoahWidgetProvider : AppWidgetProvider() {
 
             // Show/hide pending balance
             if (pendingBalance > 0) {
-                views.setTextViewText(R.id.pending_balance, "Pending: ${formatSats(pendingBalance)} sats")
+                views.setTextViewText(R.id.pending_balance, "Pending: ₿ ${formatSats(pendingBalance)}")
                 views.setViewVisibility(R.id.pending_balance, android.view.View.VISIBLE)
             } else {
                 views.setViewVisibility(R.id.pending_balance, android.view.View.GONE)
@@ -120,14 +120,17 @@ open class NoahWidgetProvider : AppWidgetProvider() {
                 val millions = value / 1_000_000.0
                 String.format(Locale.US, "%.1fM", millions)
             }
+
             value >= 100_000 -> {
                 val thousands = value / 1_000.0
                 String.format(Locale.US, "%.0fK", thousands)
             }
+
             value >= 10_000 -> {
                 val thousands = value / 1_000.0
                 String.format(Locale.US, "%.1fK", thousands)
             }
+
             else -> formatSats(value)
         }
     }

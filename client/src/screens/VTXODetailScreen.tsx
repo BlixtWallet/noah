@@ -8,6 +8,7 @@ import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
 import type { BarkVtxo } from "react-native-nitro-ark";
 import { useGetBlockHeight } from "~/hooks/useMarketData";
+import { formatBip177 } from "~/lib/utils";
 
 type VTXOWithStatus = BarkVtxo & {
   isExpiring: boolean;
@@ -72,10 +73,6 @@ const VTXODetailScreen = () => {
   const { data: blockHeight } = useGetBlockHeight();
   const { vtxo } = route.params as { vtxo: VTXOWithStatus };
 
-  const formatAmount = (amount: number) => {
-    return (amount / 100000000).toFixed(8); // Convert sats to BTC
-  };
-
   const getStatusColor = (vtxo: VTXOWithStatus) => {
     if (vtxo.state === "Locked") return "text-gray-500";
     return vtxo.isExpiring ? "text-orange-500" : "text-green-500";
@@ -116,7 +113,7 @@ const VTXODetailScreen = () => {
               <Icon name={getVtxoIcon(vtxo)} size={64} color={getVtxoColor(vtxo)} />
             </View>
             <Text className="text-3xl font-bold text-foreground mb-2">
-              {formatAmount(vtxo.amount)} BTC
+              {formatBip177(vtxo.amount)}
             </Text>
             <View className="flex-row items-center">
               <Icon name={getStatusIcon(vtxo)} size={20} color={getVtxoColor(vtxo)} />
@@ -127,10 +124,7 @@ const VTXODetailScreen = () => {
           </View>
 
           <View className="bg-card p-4 rounded-lg mb-4">
-            <VTXODetailRow
-              label="Amount"
-              value={`${formatAmount(vtxo.amount)} BTC (${vtxo.amount.toLocaleString()} sats)`}
-            />
+            <VTXODetailRow label="Amount" value={formatBip177(vtxo.amount)} />
             <VTXODetailRow label="State" value={vtxo.state} />
             <VTXODetailRow
               label="Status"

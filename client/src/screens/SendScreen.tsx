@@ -14,7 +14,7 @@ import {
 import Icon from "@react-native-vector-icons/ionicons";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
-import { formatNumber, satsToUsd } from "~/lib/utils";
+import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { Button } from "~/components/ui/button";
 import { NoahButton } from "~/components/ui/NoahButton";
@@ -115,7 +115,7 @@ const SendScreen = () => {
                     maxLength={12}
                   />
                   {currency === "SATS" && (
-                    <Text className="text-white text-2xl font-bold ml-1">sats</Text>
+                    <Text className="text-white text-2xl font-bold ml-1">₿</Text>
                   )}
                 </View>
               </View>
@@ -123,7 +123,7 @@ const SendScreen = () => {
               <View className="flex-row items-center justify-center">
                 <Text className="text-muted-foreground text-lg">
                   {parsedAmount
-                    ? `${formatNumber(parsedAmount)} sats ($${
+                    ? `${formatBip177(parsedAmount)} ($${
                         btcPrice ? formatNumber(satsToUsd(parsedAmount, btcPrice)) : "0.00"
                       })`
                     : currency === "SATS"
@@ -132,7 +132,7 @@ const SendScreen = () => {
                             ? formatNumber(satsToUsd(amountSat, btcPrice))
                             : "0.00"
                         }`
-                      : `≈ ${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
+                      : `≈ ${!isNaN(amountSat) && amount ? formatBip177(amountSat) : formatBip177(0)}`}
                 </Text>
               </View>
             </View>

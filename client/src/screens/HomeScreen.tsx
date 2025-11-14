@@ -32,6 +32,7 @@ import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
 import { syncPendingBoards } from "~/lib/paymentsApi";
 import { useWidget } from "~/hooks/useWidget";
+import { formatBip177 } from "~/lib/utils";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -212,9 +213,7 @@ const HomeScreen = () => {
                         </View>
                       )}
                       <View className="flex-row items-center space-x-2">
-                        <Text className="text-4xl font-bold">
-                          {totalBalance.toLocaleString()} sats
-                        </Text>
+                        <Text className="text-4xl font-bold">{formatBip177(totalBalance)}</Text>
                         <Animated.View style={animatedRotation}>
                           <ChevronDown color="white" size={28} />
                         </Animated.View>
@@ -222,7 +221,7 @@ const HomeScreen = () => {
                       {totalPendingBalance > 0 && (
                         <View className="mt-2 px-3 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40">
                           <Text className="text-yellow-500 text-sm">
-                            Pending balance: {totalPendingBalance.toLocaleString()} sats
+                            Pending balance: {formatBip177(totalPendingBalance)}
                           </Text>
                         </View>
                       )}
@@ -237,30 +236,24 @@ const HomeScreen = () => {
                       <View className="mb-4">
                         <View className="flex-row justify-between items-center mb-2">
                           <Text className="text-md font-bold">Onchain</Text>
-                          <Text className="text-md font-bold">
-                            {onchainBalance.toLocaleString()} sats
-                          </Text>
+                          <Text className="text-md font-bold">{formatBip177(onchainBalance)}</Text>
                         </View>
                         <View className="pl-4 space-y-1">
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Confirmed</Text>
-                            <Text>{(balance?.onchain.confirmed ?? 0).toLocaleString()} sats</Text>
+                            <Text>{formatBip177(balance?.onchain.confirmed ?? 0)}</Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Trusted Pending</Text>
-                            <Text>
-                              {(balance?.onchain.trusted_pending ?? 0).toLocaleString()} sats
-                            </Text>
+                            <Text>{formatBip177(balance?.onchain.trusted_pending ?? 0)}</Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Untrusted Pending</Text>
-                            <Text>
-                              {(balance?.onchain.untrusted_pending ?? 0).toLocaleString()} sats
-                            </Text>
+                            <Text>{formatBip177(balance?.onchain.untrusted_pending ?? 0)}</Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Immature</Text>
-                            <Text>{(balance?.onchain.immature ?? 0).toLocaleString()} sats</Text>
+                            <Text>{formatBip177(balance?.onchain.immature ?? 0)}</Text>
                           </View>
                         </View>
                       </View>
@@ -268,49 +261,39 @@ const HomeScreen = () => {
                       <View>
                         <View className="flex-row justify-between items-center mb-2">
                           <Text className="text-md font-bold">Offchain</Text>
-                          <Text className="text-md font-bold">
-                            {offchainBalance.toLocaleString()} sats
-                          </Text>
+                          <Text className="text-md font-bold">{formatBip177(offchainBalance)}</Text>
                         </View>
                         <View className="pl-4 space-y-1">
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Spendable</Text>
-                            <Text>{(balance?.offchain.spendable ?? 0).toLocaleString()} sats</Text>
+                            <Text>{formatBip177(balance?.offchain.spendable ?? 0)}</Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Pending Send</Text>
                             <Text>
-                              {(balance?.offchain.pending_lightning_send ?? 0).toLocaleString()}{" "}
-                              sats
+                              {formatBip177(balance?.offchain.pending_lightning_send ?? 0)}
                             </Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Pending Receive</Text>
                             <Text>
-                              {(
-                                balance?.offchain.pending_lightning_receive.claimable ?? 0
-                              ).toLocaleString()}{" "}
-                              sats
+                              {formatBip177(
+                                balance?.offchain.pending_lightning_receive.claimable ?? 0,
+                              )}
                             </Text>
                           </View>
 
                           <View className="flex-row justify-between mb-2">
                             <Text className="text-muted-foreground">Pending In Round</Text>
-                            <Text>
-                              {(balance?.offchain.pending_in_round ?? 0).toLocaleString()} sats
-                            </Text>
+                            <Text>{formatBip177(balance?.offchain.pending_in_round ?? 0)}</Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Pending Exit</Text>
-                            <Text>
-                              {(balance?.offchain.pending_exit ?? 0).toLocaleString()} sats
-                            </Text>
+                            <Text>{formatBip177(balance?.offchain.pending_exit ?? 0)}</Text>
                           </View>
                           <View className="flex-row justify-between">
                             <Text className="text-muted-foreground">Pending Board</Text>
-                            <Text>
-                              {(balance?.offchain.pending_board ?? 0).toLocaleString()} sats
-                            </Text>
+                            <Text>{formatBip177(balance?.offchain.pending_board ?? 0)}</Text>
                           </View>
                         </View>
                       </View>

@@ -16,6 +16,7 @@ import type { Transaction } from "~/types/transaction";
 import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
+import { formatBip177 } from "./utils";
 
 const log = logger("pushNotifications");
 
@@ -143,7 +144,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
                   await Notifications.scheduleNotificationAsync({
                     content: {
                       title: "Lightning Payment Received! ⚡",
-                      body: `You received ${sats} sats`,
+                      body: `You received ${formatBip177(sats)}`,
                     },
                     trigger: null,
                   });
