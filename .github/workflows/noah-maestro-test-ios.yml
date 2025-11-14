@@ -88,23 +88,21 @@ jobs:
         if: always()
         run: |
           BUNDLE_ID="com.anonymous.noah.regtest"
-          echo "Removing app data for: $BUNDLE_ID"
 
-          # Get and remove the data container
-          DATA_CONTAINER=$(xcrun simctl get_app_container booted "$BUNDLE_ID" data 2>/dev/null || echo "")
-          if [ -n "$DATA_CONTAINER" ] && [ -d "$DATA_CONTAINER" ]; then
-            echo "Removing data container: $DATA_CONTAINER"
-            rm -rf "$DATA_CONTAINER" || true
+          echo "Terminating app: $BUNDLE_ID"
+          xcrun simctl terminate booted "$BUNDLE_ID" 2>/dev/null || true
+
+          echo "Getting app data directory..."
+          APP_DATA_DIR=$(xcrun simctl get_app_container booted "$BUNDLE_ID" data 2>/dev/null || echo "")
+
+          if [ -n "$APP_DATA_DIR" ] && [ -d "$APP_DATA_DIR" ]; then
+            echo "Clearing app data directory: $APP_DATA_DIR"
+            rm -rf "$APP_DATA_DIR" || true
+          else
+            echo "App data directory not found or already cleared"
           fi
 
-          # Get and remove app groups
-          GROUP_CONTAINER=$(xcrun simctl get_app_container booted "$BUNDLE_ID" groups 2>/dev/null || echo "")
-          if [ -n "$GROUP_CONTAINER" ] && [ -d "$GROUP_CONTAINER" ]; then
-            echo "Removing group container: $GROUP_CONTAINER"
-            rm -rf "$GROUP_CONTAINER" || true
-          fi
-
-          echo "Uninstalling app..."
+          echo "Uninstalling app: $BUNDLE_ID"
           xcrun simctl uninstall booted "$BUNDLE_ID" || true
 
       - name: 🧹 Teardown Regtest Environment
