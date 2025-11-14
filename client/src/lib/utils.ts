@@ -36,5 +36,5 @@ export const usdToSats = (usd: number, btcPrice: number): number => {
 };
 
 export const formatBip177 = (sats: number): string => {
-  return `₿ ${sats.toLocaleString()}`;
+  return `₿\u00A0${sats.toLocaleString()}`;
 };

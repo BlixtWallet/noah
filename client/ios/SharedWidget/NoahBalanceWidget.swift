@@ -113,7 +113,7 @@ struct NoahBalanceWidgetView: View {
             Spacer(minLength: 0)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("₿ \(formatSatsCompact(entry.totalBalance))")
+                Text("₿\u{00A0}\(formatSatsCompact(entry.totalBalance))")
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
@@ -121,7 +121,7 @@ struct NoahBalanceWidgetView: View {
                     .lineLimit(1)
 
                 if entry.pendingBalance > 0 {
-                    Text("Pending: ₿ \(formatSatsCompact(entry.pendingBalance))")
+                    Text("Pending: ₿\u{00A0}\(formatSatsCompact(entry.pendingBalance))")
                         .font(.caption2)
                         .foregroundColor(.yellow)
                         .lineLimit(1)
@@ -184,13 +184,13 @@ struct NoahBalanceWidgetView: View {
             Spacer()
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("₿ \(formatSats(entry.totalBalance))")
+                Text("₿\u{00A0}\(formatSats(entry.totalBalance))")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
 
                 if entry.pendingBalance > 0 {
-                    Text("Pending: ₿ \(formatSats(entry.pendingBalance))")
+                    Text("Pending: ₿\u{00A0}\(formatSats(entry.pendingBalance))")
                         .font(.caption2)
                         .foregroundColor(.yellow)
                 }

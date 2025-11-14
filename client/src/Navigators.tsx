@@ -206,7 +206,7 @@ const AppTabs = () => {
         options={{
           tabBarIcon: ({ focused }) => {
             if (isIos) {
-              return { sfSymbol: focused ? "house.fill" : "house" };
+              return { sfSymbol: "house.fill" };
             }
             const iconName = focused ? "home" : "home-outline";
             return Icon.getImageSourceSync(iconName, 24)!;
@@ -243,7 +243,7 @@ const AppTabs = () => {
           lazy: true,
           tabBarIcon: ({ focused }) => {
             if (isIos) {
-              return { sfSymbol: focused ? "arrow.down.left" : "arrow.down.left" };
+              return { sfSymbol: "arrow.down.left" };
             }
             const iconName = focused ? "arrow-down" : "arrow-down-outline";
             return Icon.getImageSourceSync(iconName, 24)!;
@@ -257,7 +257,7 @@ const AppTabs = () => {
           lazy: true,
           tabBarIcon: ({ focused }) => {
             if (isIos) {
-              return { sfSymbol: focused ? "arrow.up.right" : "arrow.up.right" };
+              return { sfSymbol: "arrow.up.right" };
             }
             const iconName = focused ? "arrow-up" : "arrow-up-outline";
             return Icon.getImageSourceSync(iconName, 24)!;
@@ -271,7 +271,7 @@ const AppTabs = () => {
           lazy: true,
           tabBarIcon: ({ focused }) => {
             if (isIos) {
-              return { sfSymbol: focused ? "gearshape.fill" : "gear" };
+              return { sfSymbol: "gear" };
             }
             const iconName = focused ? "settings" : "settings-outline";
             return Icon.getImageSourceSync(iconName, 24)!;

@@ -81,7 +81,7 @@ open class NoahWidgetProvider : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
             // Set balance text
-            views.setTextViewText(R.id.balance_text, "₿ ${formatSats(totalBalance)}")
+            views.setTextViewText(R.id.balance_text, "₿\u00A0${formatSats(totalBalance)}")
 
             // Set onchain/offchain balances with compact formatting
             views.setTextViewText(R.id.onchain_balance, formatSatsCompact(onchainBalance))
@@ -89,7 +89,7 @@ open class NoahWidgetProvider : AppWidgetProvider() {
 
             // Show/hide pending balance
             if (pendingBalance > 0) {
-                views.setTextViewText(R.id.pending_balance, "Pending: ₿ ${formatSats(pendingBalance)}")
+                views.setTextViewText(R.id.pending_balance, "Pending: ₿\u00A0${formatSats(pendingBalance)}")
                 views.setViewVisibility(R.id.pending_balance, android.view.View.VISIBLE)
             } else {
                 views.setViewVisibility(R.id.pending_balance, android.view.View.GONE)

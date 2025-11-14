@@ -9,7 +9,7 @@ appId: com.noahwallet.regtest
 - assertVisible: "Choose your Lightning Address"
 - tapOn: "Skip"
 - assertVisible:
-    text: ".*sats.*"
+    text: ".*₿.*"
 - assertVisible: "📷 Scan QR Code"
 
 # Clean up: Delete the wallet

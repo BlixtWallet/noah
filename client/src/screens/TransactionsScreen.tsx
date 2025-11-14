@@ -205,7 +205,7 @@ const TransactionsScreen = () => {
                             item.direction === "outgoing" ? "text-red-500" : "text-green-500"
                           }`}
                         >
-                          {item.direction === "outgoing" ? "-" : "+"} {formatBip177(item.amount)}
+                          {`${item.direction === "outgoing" ? "-" : "+"}${formatBip177(item.amount)}`}
                         </Text>
                       </View>
                       <Text className="text-muted-foreground text-sm mt-1">
