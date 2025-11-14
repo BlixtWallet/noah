@@ -84,11 +84,28 @@ jobs:
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
 
-      - name: 🧹 Uninstall iOS app from simulator
+      - name: 🧹 Uninstall iOS app and erase data
         if: always()
         run: |
-          echo "Uninstalling Noah-Regtest app with bundle ID: com.anonymous.noah.regtest"
-          xcrun simctl uninstall booted "com.anonymous.noah.regtest" || true
+          BUNDLE_ID="com.anonymous.noah.regtest"
+          echo "Removing app data for: $BUNDLE_ID"
+
+          # Get and remove the data container
+          DATA_CONTAINER=$(xcrun simctl get_app_container booted "$BUNDLE_ID" data 2>/dev/null || echo "")
+          if [ -n "$DATA_CONTAINER" ] && [ -d "$DATA_CONTAINER" ]; then
+            echo "Removing data container: $DATA_CONTAINER"
+            rm -rf "$DATA_CONTAINER" || true
+          fi
+
+          # Get and remove app groups
+          GROUP_CONTAINER=$(xcrun simctl get_app_container booted "$BUNDLE_ID" groups 2>/dev/null || echo "")
+          if [ -n "$GROUP_CONTAINER" ] && [ -d "$GROUP_CONTAINER" ]; then
+            echo "Removing group container: $GROUP_CONTAINER"
+            rm -rf "$GROUP_CONTAINER" || true
+          fi
+
+          echo "Uninstalling app..."
+          xcrun simctl uninstall booted "$BUNDLE_ID" || true
 
       - name: 🧹 Teardown Regtest Environment
         if: always()
