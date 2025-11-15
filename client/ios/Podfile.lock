@@ -11,7 +11,7 @@ PODS:
     - ExpoModulesCore
   - EXNotifications (0.32.12):
     - ExpoModulesCore
-  - Expo (54.0.20):
+  - Expo (54.0.23):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -36,15 +36,15 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-client (6.0.16):
+  - expo-dev-client (6.0.17):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (6.0.16):
+  - expo-dev-launcher (6.0.17):
     - EXManifests
-    - expo-dev-launcher/Main (= 6.0.16)
+    - expo-dev-launcher/Main (= 6.0.17)
     - expo-dev-menu
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -73,7 +73,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Main (6.0.16):
+  - expo-dev-launcher/Main (6.0.17):
     - EXManifests
     - expo-dev-launcher/Unsafe
     - expo-dev-menu
@@ -104,7 +104,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Unsafe (6.0.16):
+  - expo-dev-launcher/Unsafe (6.0.17):
     - EXManifests
     - expo-dev-menu
     - expo-dev-menu-interface
@@ -134,9 +134,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu (7.0.15):
-    - expo-dev-menu/Main (= 7.0.15)
-    - expo-dev-menu/ReactNativeCompatibles (= 7.0.15)
+  - expo-dev-menu (7.0.16):
+    - expo-dev-menu/Main (= 7.0.16)
+    - expo-dev-menu/ReactNativeCompatibles (= 7.0.16)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -159,7 +159,7 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - expo-dev-menu-interface (2.0.0)
-  - expo-dev-menu/Main (7.0.15):
+  - expo-dev-menu/Main (7.0.16):
     - EXManifests
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -185,7 +185,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu/ReactNativeCompatibles (7.0.15):
+  - expo-dev-menu/ReactNativeCompatibles (7.0.16):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -225,7 +225,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalAuthentication (17.0.7):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.22):
+  - ExpoModulesCore (3.0.25):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -248,7 +248,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoSQLite (16.0.8):
+  - ExpoSQLite (16.0.9):
     - ExpoModulesCore
   - ExpoSystemUI (6.0.8):
     - ExpoModulesCore
@@ -262,7 +262,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.81.5)
   - hermes-engine/Pre-built (0.81.5)
   - MMKVCore (2.2.4)
-  - NitroArk (0.0.70):
+  - NitroArk (0.0.71):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -310,7 +310,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.31.5):
+  - NitroModules (0.31.6):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1684,7 +1684,7 @@ PODS:
     - ReactNativeDependencies
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
-  - react-native-safe-area-context (5.6.1):
+  - react-native-safe-area-context (5.6.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1696,8 +1696,8 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-safe-area-context/common (= 5.6.1)
-    - react-native-safe-area-context/fabric (= 5.6.1)
+    - react-native-safe-area-context/common (= 5.6.2)
+    - react-native-safe-area-context/fabric (= 5.6.2)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1708,7 +1708,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/common (5.6.1):
+  - react-native-safe-area-context/common (5.6.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1730,7 +1730,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/fabric (5.6.1):
+  - react-native-safe-area-context/fabric (5.6.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1753,7 +1753,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-slider (5.1.0):
+  - react-native-slider (5.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1765,7 +1765,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-slider/common (= 5.1.0)
+    - react-native-slider/common (= 5.0.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1776,7 +1776,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-slider/common (5.1.0):
+  - react-native-slider/common (5.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1798,7 +1798,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-vector-icons (12.2.0):
+  - react-native-vector-icons (12.3.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2281,7 +2281,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNReanimated (4.1.3):
+  - RNReanimated (4.1.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2303,10 +2303,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/reanimated (= 4.1.3)
+    - RNReanimated/reanimated (= 4.1.5)
     - RNWorklets
     - Yoga
-  - RNReanimated/reanimated (4.1.3):
+  - RNReanimated/reanimated (4.1.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2328,10 +2328,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/reanimated/apple (= 4.1.3)
+    - RNReanimated/reanimated/apple (= 4.1.5)
     - RNWorklets
     - Yoga
-  - RNReanimated/reanimated/apple (4.1.3):
+  - RNReanimated/reanimated/apple (4.1.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2426,7 +2426,7 @@ PODS:
     - ReactNativeDependencies
     - Sentry/HybridSDK (= 8.56.1)
     - Yoga
-  - RNShare (12.2.0):
+  - RNShare (12.2.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2572,16 +2572,16 @@ PODS:
   - Sentry/HybridSDK (8.56.1)
   - SwiftUIIntrospect (1.3.0)
   - UMAppLoader (6.0.7)
-  - VisionCamera (4.7.2):
-    - VisionCamera/Core (= 4.7.2)
-    - VisionCamera/FrameProcessors (= 4.7.2)
-    - VisionCamera/React (= 4.7.2)
-  - VisionCamera/Core (4.7.2)
-  - VisionCamera/FrameProcessors (4.7.2):
+  - VisionCamera (4.7.3):
+    - VisionCamera/Core (= 4.7.3)
+    - VisionCamera/FrameProcessors (= 4.7.3)
+    - VisionCamera/React (= 4.7.3)
+  - VisionCamera/Core (4.7.3)
+  - VisionCamera/FrameProcessors (4.7.3):
     - React
     - React-callinvoker
     - react-native-worklets-core
-  - VisionCamera/React (4.7.2):
+  - VisionCamera/React (4.7.3):
     - React-Core
     - VisionCamera/FrameProcessors
   - Yoga (0.0.0)
@@ -2954,10 +2954,10 @@ SPEC CHECKSUMS:
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 7469efed75d694ce3c43a6da9c6f3886f66d3c26
   EXNotifications: 7aab54f0e5f3023122bc95699eaff7c52bacb559
-  Expo: 5440d26c2a3771434bffa19060b91ebce4d4c94e
-  expo-dev-client: 41b64c03ffee842c8abd3f422389cd3c0d14ad7a
-  expo-dev-launcher: 519527f4f66ae85a8f439a98faf0173884fdd688
-  expo-dev-menu: 432c9ad88e9e2673781831602418117f98e20903
+  Expo: 38470d89b7f4a9c365ea5bd4cdfd6ebf89cd76c7
+  expo-dev-client: 28ade03ca6998c063472d87013fc556aadd71897
+  expo-dev-launcher: bbc50496c7e69efbfe2d1d11103449baf335493c
+  expo-dev-menu: d5cf92111a1ec5541f68e68295a08d1505bd53af
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: 3c3b7dd9b1318846a02ef05ce420e63d542aeb9f
   ExpoClipboard: 99109306a2d9ed2fbd16f6b856e6267b2afa8472
@@ -2968,17 +2968,17 @@ SPEC CHECKSUMS:
   ExpoImagePicker: bd0a5c81d7734548f6908a480609257e85d19ea8
   ExpoKeepAwake: 3f5e3ac53627849174f3603271df8e08f174ed4a
   ExpoLocalAuthentication: 8f11d958b956fa372c0a49975f54ed1dc617ae1d
-  ExpoModulesCore: 08a1e47dfb85e295c67ecc98da58317d66f64818
-  ExpoSQLite: f9d1202877e12bfa78a58309a3977ee4ea0b1314
+  ExpoModulesCore: 4daa3e24768f152a3b3d84259150fedb5013f561
+  ExpoSQLite: 36b8723223f322148606473507da446b1912500c
   ExpoSystemUI: 9441d46a8efbf9224d1b2e6b18042452ffd0ed79
   EXTaskManager: 53f87ed11659341c3f3f02c0041498ef293f5684
   EXUpdatesInterface: 1436757deb0d574b84bba063bd024c315e0ec08b
   FBLazyVector: e95a291ad2dadb88e42b06e0c5fb8262de53ec12
   hermes-engine: 9f4dfe93326146a1c99eb535b1cb0b857a3cd172
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
-  NitroArk: 845376b3ffaf45c1582af6d3e5575f6bbd07e879
+  NitroArk: 0ae4d4ba1b55edfb32b0640be460293661507d54
   NitroMmkv: 6f057a8cedcf97339b60151a75245cd5055cbee7
-  NitroModules: f8997a451a7f9c61edf2935936532b8a8ac65ea9
+  NitroModules: 4bcbd8af780a704c9990798f9aca065c10ca6f7e
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
@@ -3014,9 +3014,9 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 603c18db65844bb81dbe62fee8fcc976eaeb7108
   React-microtasksnativemodule: d77e0c426fce34c23227394c96ca1033b30c813c
   react-native-bottom-tabs: 08ad7b306d6024cffcc37b9ec69f7f98363abb7f
-  react-native-safe-area-context: add9b4ba236fe95ec600604d0fc72f395433dd59
-  react-native-slider: d110f6a0a8dc77071c9b52531f87f3a6e3fb0d96
-  react-native-vector-icons: 2c084b9997443aaf79527ac0454b50cc081c98de
+  react-native-safe-area-context: 53f796cb6c814661bbe99fbdfd0585d07b996cdd
+  react-native-slider: b76fa3dd989d25e8c2751c2a546674dfc0c2b6f8
+  react-native-vector-icons: f068b165e45f94b4e643b01512c363453fbd3b34
   react-native-vector-icons-ionicons: ad07e944a092a5cf71b8b569d8f5ce2bf674c415
   react-native-worklets-core: 5357708fd3915bf1c870a03ff969578c69bd3909
   React-NativeModulesApple: 1664340b8750d64e0ef3907c5e53d9481f74bcbd
@@ -3054,10 +3054,10 @@ SPEC CHECKSUMS:
   RNFSTurbo: a60562495b9cb34c0767601c3e89d6b4835efbf4
   RNGestureHandler: 6a488ce85c88e82d8610db1108daf04e9b2d5162
   RNKeychain: 91be81cd32b30c7d4c2569dcad29b472d9b93982
-  RNReanimated: f97bea0965d6db461ca5f0849422fcfa95e72da5
+  RNReanimated: 7bdb218bd7546c68c376b2ae54d427490833fa1a
   RNScreens: dd61bc3a3e6f6901ad833efa411917d44827cf51
   RNSentry: bf366a415176cb6971a5adac37bbe66dfea272f3
-  RNShare: 9f53a2b72c01e39cf8756554b6982a3eb89d7655
+  RNShare: 64e1957532c18a255341849f940fa684ace767da
   RNSVG: 2825ee146e0f6a16221e852299943e4cceef4528
   RNWorklets: 0138846284eddd6b0bddba8eb9d6cf60de3a8f2f
   SDWebImage: 16309af6d214ba3f77a7c6f6fdda888cb313a50a
@@ -3065,8 +3065,8 @@ SPEC CHECKSUMS:
   Sentry: b3ec44d01708fce73f99b544beb57e890eca4406
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   UMAppLoader: e1234c45d2b7da239e9e90fc4bbeacee12afd5b6
-  VisionCamera: 02578a728d4a479d9c47f869efdf906c5680d50b
-  Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
+  VisionCamera: 47f10351a1b6a8d251b90986ae72ca5f52331954
+  Yoga: 3fd22c2cae22d7a2b0f0b538f55f7c2a17dc94d5
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
 PODFILE CHECKSUM: eb465d6980cc5651168e87617e868fa9e2682313
