@@ -26,7 +26,6 @@ if (!isDebugModeOrRegtest) {
         isEmailRequired: false,
       }),
     ],
-
     // uncomment the line below to enable Spotlight (https://spotlightjs.com)
     // spotlight: __DEV__,
   });
