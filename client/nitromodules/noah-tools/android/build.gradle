@@ -138,4 +138,7 @@ dependencies {
 
   // AndroidX Core for notifications
   implementation 'androidx.core:core-ktx:1.12.0'
+
+  // WorkManager for background task execution
+  implementation 'androidx.work:work-runtime-ktx:2.9.0'
 }

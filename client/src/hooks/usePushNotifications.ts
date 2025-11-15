@@ -9,6 +9,7 @@ import logger from "~/lib/log";
 import { loadWalletIfNeeded } from "~/lib/walletApi";
 import { BackupService } from "~/lib/backupService";
 import { UnifiedPushManager } from "~/lib/unifiedPush";
+import { PLATFORM } from "~/constants";
 
 const log = logger("usePushNotifications");
 
@@ -26,7 +27,7 @@ export const usePushNotifications = (isReady: boolean) => {
       // Check for Google Play Services availability on Android
       const hasPlayServices = checkGooglePlayServices();
       log.i("Google Play Services available", [hasPlayServices]);
-      if (!hasPlayServices) {
+      if (true) {
         log.i("Google Play Services not available - checking for UnifiedPush endpoint");
 
         // Try to get saved UnifiedPush endpoint

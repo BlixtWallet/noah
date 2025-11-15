@@ -9,6 +9,7 @@ import { useBoardAllAmountArk } from "~/hooks/usePayments";
 import { useAlert } from "~/contexts/AlertProvider";
 import { addOnboardingRequest } from "~/lib/transactionsDb";
 import logger from "~/lib/log";
+import { startUnifiedPushListener, stopUnifiedPushListener } from "~/lib/pushNotifications";
 import { MIN_AUTO_BOARD_AMOUNT } from "./constants";
 
 const log = logger("AppServices");
@@ -89,6 +90,14 @@ const AppServices = memo(() => {
     setHasAttemptedAutoBoarding,
     showAlert,
   ]);
+
+  // Start UnifiedPush listener for Android
+  useEffect(() => {
+    startUnifiedPushListener();
+    return () => {
+      stopUnifiedPushListener();
+    };
+  }, []);
 
   return null;
 });

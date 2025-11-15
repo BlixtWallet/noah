@@ -3,23 +3,30 @@ package com.margelo.nitro.noahtools
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import androidx.work.Data
 import org.unifiedpush.android.connector.MessagingReceiver
 import org.unifiedpush.android.connector.data.PushEndpoint
 import org.unifiedpush.android.connector.data.PushMessage
 import org.unifiedpush.android.connector.FailedReason
-import org.json.JSONObject
+import com.facebook.react.ReactApplication
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.modules.core.DeviceEventManagerModule
+import java.util.concurrent.TimeUnit
 
 class NoahUnifiedPushReceiver : MessagingReceiver() {
     companion object {
         private const val TAG = "NoahUnifiedPushReceiver"
-        private const val CHANNEL_ID = "unified_push_channel"
-        private const val CHANNEL_NAME = "UnifiedPush Notifications"
-        private const val NOTIFICATION_ID_BASE = 20000
+        private const val CHANNEL_ID = "noah_background_sync"
+        private const val CHANNEL_NAME = "Background Sync"
+        const val KEY_MESSAGE = "unified_push_message"
     }
 
     override fun onNewEndpoint(context: Context, endpoint: PushEndpoint, instance: String) {
@@ -27,20 +34,9 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
         Log.i(TAG, "New UnifiedPush endpoint received!")
         Log.i(TAG, "  Endpoint URL: ${endpoint.url}")
         Log.i(TAG, "  Instance: $instance")
-        Log.i(TAG, "  Package: ${context.packageName}")
 
-        // Save endpoint to shared preferences
-        Log.d(TAG, "Saving endpoint to SharedPreferences...")
         NoahToolsUnifiedPush.saveEndpoint(context, endpoint.url)
         Log.d(TAG, "Endpoint saved successfully")
-
-        // Send broadcast to the app to trigger server registration
-        val intent = Intent("com.noahwallet.UNIFIED_PUSH_NEW_ENDPOINT")
-        intent.setPackage(context.packageName)
-        intent.putExtra("endpoint", endpoint.url)
-        context.sendBroadcast(intent)
-
-        Log.i(TAG, "Broadcast sent to app")
         Log.i(TAG, "==================== onNewEndpoint COMPLETE ====================")
     }
 
@@ -49,13 +45,6 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
         Log.e(TAG, "UnifiedPush registration FAILED!")
         Log.e(TAG, "  Reason: $reason")
         Log.e(TAG, "  Instance: $instance")
-        Log.e(TAG, "  Package: ${context.packageName}")
-
-        // Send broadcast to the app
-        val intent = Intent("com.noahwallet.UNIFIED_PUSH_REGISTRATION_FAILED")
-        intent.setPackage(context.packageName)
-        intent.putExtra("error", "Registration failed: $reason")
-        context.sendBroadcast(intent)
     }
 
     override fun onUnregistered(context: Context, instance: String) {
@@ -63,13 +52,7 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
         Log.i(TAG, "UnifiedPush unregistered")
         Log.i(TAG, "  Instance: $instance")
 
-        // Clear the saved endpoint
         NoahToolsUnifiedPush.saveEndpoint(context, "")
-
-        // Send broadcast to the app
-        val intent = Intent("com.noahwallet.UNIFIED_PUSH_UNREGISTERED")
-        intent.setPackage(context.packageName)
-        context.sendBroadcast(intent)
     }
 
     override fun onMessage(context: Context, message: PushMessage, instance: String) {
@@ -80,61 +63,60 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
         Log.d(TAG, "  Message: $messageString")
 
         try {
-            // Parse the message as JSON to extract notification data
-            val jsonMessage = JSONObject(messageString)
-
-            // Create notification channel if needed (Android 8.0+)
-            createNotificationChannel(context)
-
-            // Build and show notification that will trigger the expo background task
-            // The notification data structure should match what expo-notifications expects
-            val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("Noah Background Task")
-                .setContentText("Processing notification...")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setExtras(android.os.Bundle().apply {
-                    // Store the message body in the format expo-notifications expects
-                    putString("body", messageString)
-                })
-
-            // Show the notification
-            val notificationManager = NotificationManagerCompat.from(context)
-            val notificationId = NOTIFICATION_ID_BASE + System.currentTimeMillis().toInt()
-
-            try {
-                notificationManager.notify(notificationId, notificationBuilder.build())
-                Log.d(TAG, "Notification created with ID: $notificationId")
-            } catch (e: SecurityException) {
-                Log.e(TAG, "Failed to show notification - missing permission", e)
+            // Strategy 1: If React Native is running, emit directly for immediate execution
+            if (tryEmitToReactNative(context, messageString)) {
+                Log.i(TAG, "✓ Message delivered to active React Native instance - task will execute immediately")
+                return
             }
 
-            // Also send a broadcast for immediate processing if app is in foreground
-            val intent = Intent("com.noahwallet.UNIFIED_PUSH_MESSAGE")
-            intent.setPackage(context.packageName)
-            intent.putExtra("message", messageString)
-            context.sendBroadcast(intent)
+            // Strategy 2: React Native not active - use WorkManager for immediate background execution
+            Log.i(TAG, "React Native not active, scheduling immediate background task via WorkManager")
+            scheduleImmediateBackgroundTask(context, messageString)
 
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to process UnifiedPush message", e)
-
-            // Fallback: show a generic notification
-            createNotificationChannel(context)
-            val fallbackBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("Noah")
-                .setContentText("New activity")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true)
-
-            try {
-                NotificationManagerCompat.from(context)
-                    .notify(NOTIFICATION_ID_BASE, fallbackBuilder.build())
-            } catch (secEx: SecurityException) {
-                Log.e(TAG, "Failed to show fallback notification", secEx)
-            }
+            Log.e(TAG, "Failed to handle UnifiedPush message", e)
         }
+    }
+
+    private fun tryEmitToReactNative(context: Context, messageString: String): Boolean {
+        return try {
+            val app = context.applicationContext as? ReactApplication
+            val reactInstanceManager = app?.reactNativeHost?.reactInstanceManager
+            val reactContext = reactInstanceManager?.currentReactContext
+
+            if (reactContext != null && reactContext.hasActiveReactInstance()) {
+                val params = Arguments.createMap().apply {
+                    putString("message", messageString)
+                }
+                reactContext
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                    .emit("UNIFIED_PUSH_MESSAGE", params)
+                Log.d(TAG, "Emitted to React Native DeviceEventEmitter")
+                true
+            } else {
+                Log.d(TAG, "React Native context not active")
+                false
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not emit to React Native", e)
+            false
+        }
+    }
+
+    private fun scheduleImmediateBackgroundTask(context: Context, messageString: String) {
+        // Use WorkManager to execute the task immediately, even if app is killed
+        val workData = Data.Builder()
+            .putString(KEY_MESSAGE, messageString)
+            .build()
+
+        val workRequest = OneTimeWorkRequestBuilder<UnifiedPushBackgroundWorker>()
+            .setInputData(workData)
+            .setInitialDelay(0, TimeUnit.SECONDS) // Execute immediately
+            .build()
+
+        WorkManager.getInstance(context).enqueue(workRequest)
+        Log.i(TAG, "✓ WorkManager task scheduled for immediate execution (Work ID: ${workRequest.id})")
+        Log.d(TAG, "Task will execute in background even if app is killed")
     }
 
     private fun createNotificationChannel(context: Context) {
@@ -142,16 +124,172 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Notifications for UnifiedPush messages"
-                enableVibration(true)
-                vibrationPattern = longArrayOf(0, 250, 250, 250)
+                description = "Silent notifications for background sync tasks"
+                enableVibration(false)
+                setShowBadge(false)
+                setSound(null, null)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_SECRET
             }
 
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
-            Log.d(TAG, "Notification channel created: $CHANNEL_ID")
+        }
+    }
+}
+
+/**
+ * WorkManager Worker for executing UnifiedPush tasks in the background
+ * This runs even when the app is completely killed, ensuring critical tasks execute immediately
+ */
+class UnifiedPushBackgroundWorker(
+    context: Context,
+    params: WorkerParameters
+) : Worker(context, params) {
+
+    companion object {
+        private const val TAG = "UnifiedPushWorker"
+        private const val CHANNEL_ID = "noah_background_sync"
+        private const val NOTIFICATION_ID = 999
+    }
+
+    override fun doWork(): Result {
+        Log.i(TAG, "==================== Worker STARTED ====================")
+        val messageString = inputData.getString(NoahUnifiedPushReceiver.KEY_MESSAGE)
+
+        if (messageString == null) {
+            Log.e(TAG, "No message data received")
+            return Result.failure()
+        }
+
+        Log.d(TAG, "Processing message: $messageString")
+
+        return try {
+            // Show a temporary notification while processing (required for foreground service constraints)
+            showProcessingNotification()
+
+            // Try to emit to React Native to trigger the background task handler
+            val emitted = tryEmitToReactNative(messageString)
+
+            if (emitted) {
+                Log.i(TAG, "✓ Message delivered to React Native - background task executing")
+                // Give React Native some time to process
+                Thread.sleep(2000)
+                dismissProcessingNotification()
+                Result.success()
+            } else {
+                Log.w(TAG, "Could not deliver to React Native - app may need to be started")
+                // Keep the notification so user can tap to open app and process
+                updateNotificationToRequireUserAction()
+                Result.success() // Don't retry, just wait for user to open app
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Worker failed", e)
+            dismissProcessingNotification()
+            Result.failure()
+        } finally {
+            Log.i(TAG, "==================== Worker COMPLETED ====================")
+        }
+    }
+
+    private fun tryEmitToReactNative(messageString: String): Boolean {
+        return try {
+            val app = applicationContext as? ReactApplication
+            val reactInstanceManager = app?.reactNativeHost?.reactInstanceManager
+            val reactContext = reactInstanceManager?.currentReactContext
+
+            if (reactContext != null && reactContext.hasActiveReactInstance()) {
+                val params = Arguments.createMap().apply {
+                    putString("message", messageString)
+                }
+                reactContext
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                    .emit("UNIFIED_PUSH_MESSAGE", params)
+                Log.d(TAG, "Emitted to React Native from Worker")
+                true
+            } else {
+                Log.d(TAG, "React Native not available in Worker context")
+                false
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not emit to React Native from Worker", e)
+            false
+        }
+    }
+
+    private fun showProcessingNotification() {
+        createNotificationChannel()
+
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_popup_sync)
+            .setContentTitle("Noah")
+            .setContentText("Processing sync...")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setOngoing(true)
+            .setSilent(true)
+            .build()
+
+        NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, notification)
+        Log.d(TAG, "Processing notification shown")
+    }
+
+    private fun dismissProcessingNotification() {
+        try {
+            NotificationManagerCompat.from(applicationContext).cancel(NOTIFICATION_ID)
+            Log.d(TAG, "Processing notification dismissed")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to dismiss notification", e)
+        }
+    }
+
+    private fun updateNotificationToRequireUserAction() {
+        createNotificationChannel()
+
+        val launchIntent =
+            applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)?.apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+
+        val pendingIntent = android.app.PendingIntent.getActivity(
+            applicationContext,
+            0,
+            launchIntent,
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_popup_sync)
+            .setContentTitle("Noah")
+            .setContentText("Tap to sync")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID, notification)
+        Log.d(TAG, "Updated notification to require user action")
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Background Sync",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Background sync notifications"
+                enableVibration(false)
+                setShowBadge(false)
+                setSound(null, null)
+            }
+
+            val notificationManager =
+                applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }

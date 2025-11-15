@@ -1,4 +1,4 @@
-import { Platform } from "react-native";
+import { Platform, DeviceEventEmitter, AppState } from "react-native";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
@@ -260,6 +260,69 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+// Process UnifiedPush message by triggering expo notification which activates background task
+async function handleUnifiedPushMessage(messageString: string): Promise<void> {
+  log.i("Processing UnifiedPush message", [messageString]);
+
+  try {
+    // Schedule a silent notification that will trigger the background task
+    // The data structure must match what TaskManager.defineTask expects: data.data.body
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        data: {
+          data: {
+            body: messageString,
+          },
+        },
+        sound: false,
+      },
+      trigger: null, // Immediate
+    });
+
+    log.d("Triggered expo notification for UnifiedPush message");
+  } catch (error) {
+    log.e("Failed to trigger notification for UnifiedPush message", [error]);
+    captureException(error);
+  }
+}
+
+// Set up listener for UnifiedPush broadcasts (Android only)
+// This allows the app to process messages even when in foreground
+let unifiedPushListener: any = null;
+
+export function startUnifiedPushListener(): void {
+  if (Platform.OS !== "android") {
+    return;
+  }
+
+  if (unifiedPushListener) {
+    log.d("UnifiedPush listener already running");
+    return;
+  }
+
+  log.d("Starting UnifiedPush broadcast listener");
+
+  // Listen for UnifiedPush messages via broadcast
+  // The native receiver sends these when messages arrive
+  unifiedPushListener = DeviceEventEmitter.addListener(
+    "UNIFIED_PUSH_MESSAGE",
+    async (event: { message: string }) => {
+      log.i("Received UnifiedPush message via broadcast listener", [event.message]);
+      await handleUnifiedPushMessage(event.message);
+    },
+  );
+
+  log.d("UnifiedPush listener started");
+}
+
+export function stopUnifiedPushListener(): void {
+  if (unifiedPushListener) {
+    unifiedPushListener.remove();
+    unifiedPushListener = null;
+    log.d("UnifiedPush listener stopped");
+  }
+}
 
 export function checkGooglePlayServices(): boolean {
   if (Platform.OS !== "android") {
