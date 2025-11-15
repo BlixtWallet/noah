@@ -25,7 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import { satsToBtc, formatNumber } from "~/lib/utils";
+import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
@@ -226,7 +226,7 @@ const ReceiveScreen = () => {
                     maxLength={12}
                   />
                   {currency === "SATS" && (
-                    <Text className="text-white text-2xl font-bold ml-1">sats</Text>
+                    <Text className="text-white text-2xl font-bold ml-1">₿</Text>
                   )}
                 </View>
               </View>
@@ -239,14 +239,14 @@ const ReceiveScreen = () => {
                           ? formatNumber(((amountSat * btcPrice) / 100000000).toFixed(2))
                           : "0.00"
                       }`
-                    : `≈ ${!isNaN(amountSat) && amount ? formatNumber(amountSat) : 0} sats`}
+                    : `≈ ${!isNaN(amountSat) && amount ? formatBip177(amountSat) : formatBip177(0)}`}
                 </Text>
               </View>
             </View>
 
             <View className="px-4 py-2 bg-card/50 rounded-lg mx-auto">
               <Text className="text-muted-foreground text-sm text-center">
-                {`Minimum receive amount: ${minAmount} sats`}
+                {`Minimum receive amount: ${formatBip177(minAmount)}`}
               </Text>
             </View>
 

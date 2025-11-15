@@ -84,11 +84,21 @@ jobs:
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
 
-      - name: 🧹 Uninstall iOS app from simulator
+      - name: 🧹 Shutdown and erase simulator
         if: always()
         run: |
-          echo "Uninstalling Noah-Regtest app with bundle ID: com.anonymous.noah.regtest"
-          xcrun simctl uninstall booted "com.anonymous.noah.regtest" || true
+          echo "Getting booted simulator UDID..."
+          DEVICE_UDID=$(xcrun simctl list devices | grep "(Booted)" | awk -F '[()]' '{print $2}' | head -n 1)
+
+          if [ -n "$DEVICE_UDID" ]; then
+            echo "Shutting down simulator: $DEVICE_UDID"
+            xcrun simctl shutdown "$DEVICE_UDID" || true
+
+            echo "Erasing simulator to clear all app data: $DEVICE_UDID"
+            xcrun simctl erase "$DEVICE_UDID" || true
+          else
+            echo "No booted simulator found"
+          fi
 
       - name: 🧹 Teardown Regtest Environment
         if: always()

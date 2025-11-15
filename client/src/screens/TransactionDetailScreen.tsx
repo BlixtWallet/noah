@@ -7,6 +7,7 @@ import { copyToClipboard } from "../lib/clipboardUtils";
 import { type Transaction } from "../types/transaction";
 import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
+import { formatBip177 } from "~/lib/utils";
 
 const TransactionDetailRow = ({
   label,
@@ -82,7 +83,9 @@ const TransactionDetailScreen = () => {
         </View>
 
         <View className="items-center my-8">
-          <Text className="text-4xl font-bold text-foreground">{transaction.amount} sats</Text>
+          <Text className="text-4xl font-bold text-foreground">
+            {formatBip177(transaction.amount)}
+          </Text>
           <Text className="text-xl text-muted-foreground">${fiatAmount}</Text>
         </View>
 
@@ -90,7 +93,7 @@ const TransactionDetailScreen = () => {
           <TransactionDetailRow label="Bitcoin Price" value={`$${bitcoinPrice}`} />
           <TransactionDetailRow
             label="Amount"
-            value={`${transaction.amount} sats ($${fiatAmount})`}
+            value={`${formatBip177(transaction.amount)} ($${fiatAmount})`}
           />
         </View>
 

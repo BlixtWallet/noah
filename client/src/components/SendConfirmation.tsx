@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { Text } from "./ui/text";
 import { NoahButton } from "./ui/NoahButton";
 import { Button } from "./ui/button";
-import { formatNumber, satsToUsd } from "~/lib/utils";
+import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
 import { DestinationTypes, ParsedBip321 } from "~/lib/sendUtils";
 
 interface SendConfirmationProps {
@@ -93,9 +93,7 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
 
       <View className="bg-muted/30 rounded-xl p-6 space-y-8">
         <View className="items-center space-y-3 py-2">
-          <Text className="text-4xl font-bold text-foreground py-2">
-            {formatNumber(amount)} sats
-          </Text>
+          <Text className="text-4xl font-bold text-foreground py-2">{formatBip177(amount)}</Text>
           {btcPrice && (
             <Text className="text-xl text-muted-foreground py-1">${formatNumber(usdAmount)}</Text>
           )}

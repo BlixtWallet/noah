@@ -17,6 +17,7 @@ import { Result, ResultAsync } from "neverthrow";
 import { CACHES_DIRECTORY_PATH } from "~/constants";
 import RNFSTurbo from "react-native-fs-turbo";
 import logger from "~/lib/log";
+import { formatBip177 } from "~/lib/utils";
 
 const log = logger("TransactionsScreen");
 
@@ -42,7 +43,7 @@ const TransactionsScreen = () => {
 
   const exportToCSV = async () => {
     const csvHeader =
-      "Payment ID,Date,Type,Direction,Amount (sats),BTC Price,Transaction ID,Destination\n";
+      "Payment ID,Date,Type,Direction,Amount (₿),BTC Price,Transaction ID,Destination\n";
     const csvRows = filteredTransactions
       .map((transaction) => {
         const date = new Date(transaction.date).toISOString().split("T")[0];
@@ -204,7 +205,7 @@ const TransactionsScreen = () => {
                             item.direction === "outgoing" ? "text-red-500" : "text-green-500"
                           }`}
                         >
-                          {item.direction === "outgoing" ? "-" : "+"} {item.amount} sats
+                          {`${item.direction === "outgoing" ? "-" : "+"}${formatBip177(item.amount)}`}
                         </Text>
                       </View>
                       <Text className="text-muted-foreground text-sm mt-1">

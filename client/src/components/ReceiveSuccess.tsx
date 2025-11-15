@@ -4,7 +4,7 @@ import { Text } from "./ui/text";
 import { NoahButton } from "./ui/NoahButton";
 import ReceiveAnimation from "./ReceiveAnimation";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import { formatNumber, satsToUsd } from "~/lib/utils";
+import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
 import * as Haptics from "expo-haptics";
 
 type ReceiveSuccessProps = {
@@ -43,10 +43,7 @@ export const ReceiveSuccess: React.FC<ReceiveSuccessProps> = ({
 
           <View className="bg-card rounded-2xl p-8 w-full items-center mt-6">
             <View className="flex-row items-baseline mb-4">
-              <Text className="text-5xl font-bold text-foreground mr-2">
-                {formatNumber(amountSat)}
-              </Text>
-              <Text className="text-2xl text-foreground font-semibold">sats</Text>
+              <Text className="text-5xl font-bold text-foreground">{formatBip177(amountSat)}</Text>
             </View>
             {btcPrice && (
               <Text className="text-lg text-muted-foreground">≈ ${formatNumber(usdAmount)}</Text>

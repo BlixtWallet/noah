@@ -24,7 +24,7 @@ import { registerOffboardingRequest } from "../lib/api";
 import { signMessage } from "../lib/crypto";
 import { addOffboardingRequest, addOnboardingRequest } from "../lib/transactionsDb";
 import { copyToClipboard } from "../lib/clipboardUtils";
-import { cn } from "../lib/utils";
+import { cn, formatBip177 } from "../lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
@@ -91,12 +91,10 @@ const BalanceDisplay = ({
       <NoahActivityIndicator className="mt-2" />
     ) : (
       <>
-        <Text className="text-3xl font-bold text-foreground mt-1">
-          {amount.toLocaleString()} sats
-        </Text>
+        <Text className="text-3xl font-bold text-foreground mt-1">{formatBip177(amount)}</Text>
         {pendingAmount !== undefined && pendingAmount > 0 && (
           <Text className="text-xl text-muted-foreground mt-1">
-            {pendingAmount.toLocaleString()} sats pending
+            {formatBip177(pendingAmount)} pending
           </Text>
         )}
       </>
