@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { View, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList } from "../Navigators";
@@ -7,6 +7,7 @@ import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import { useCreateWallet } from "../hooks/useWallet";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
+import * as Device from "expo-device";
 
 const OnboardingScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
@@ -14,7 +15,11 @@ const OnboardingScreen = () => {
 
   useEffect(() => {
     if (isSuccess) {
-      navigation.navigate("Mnemonic", { fromOnboarding: true });
+      if (Platform.OS === "android" && Device.isDevice) {
+        navigation.navigate("UnifiedPushSetup");
+      } else {
+        navigation.navigate("Mnemonic", { fromOnboarding: true });
+      }
     }
   }, [isSuccess, navigation]);
 

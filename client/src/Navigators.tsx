@@ -9,6 +9,7 @@ import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 
 import HomeScreen from "~/screens/HomeScreen";
 import OnboardingScreen from "~/screens/OnboardingScreen";
+import UnifiedPushSetupScreen from "~/screens/UnifiedPushSetupScreen";
 import ReceiveScreen from "~/screens/ReceiveScreen";
 import ReceiveSuccessScreen from "~/screens/ReceiveSuccessScreen";
 import SendScreen from "~/screens/SendScreen";
@@ -59,6 +60,7 @@ export type SettingsStackParamList = {
 
 export type OnboardingStackParamList = {
   Onboarding: undefined;
+  UnifiedPushSetup: undefined;
   Configuration: undefined;
   Mnemonic: { fromOnboarding: boolean };
   RestoreWallet: undefined;
@@ -160,6 +162,11 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen
       name="Onboarding"
       component={OnboardingScreen}
+      options={{ animation: "default" }}
+    />
+    <OnboardingStack.Screen
+      name="UnifiedPushSetup"
+      component={UnifiedPushSetupScreen}
       options={{ animation: "default" }}
     />
     <OnboardingStack.Screen

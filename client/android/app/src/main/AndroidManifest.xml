@@ -79,5 +79,17 @@
           android:resource="@xml/noah_widget_mainnet_info"/>
     </receiver>
 
+    <!-- UnifiedPush Receiver for privacy-focused push notifications -->
+    <receiver
+        android:name="com.margelo.nitro.noahtools.NoahUnifiedPushReceiver"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="org.unifiedpush.android.connector.MESSAGE"/>
+        <action android:name="org.unifiedpush.android.connector.UNREGISTERED"/>
+        <action android:name="org.unifiedpush.android.connector.NEW_ENDPOINT"/>
+        <action android:name="org.unifiedpush.android.connector.REGISTRATION_FAILED"/>
+      </intent-filter>
+    </receiver>
+
   </application>
 </manifest>

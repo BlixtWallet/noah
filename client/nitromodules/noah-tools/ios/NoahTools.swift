@@ -88,6 +88,31 @@ class NoahTools: HybridNoahToolsSpec {
             appGroup: appGroup
         )
     }
+
+    // MARK: - UnifiedPush (Android-only stubs)
+
+    func hasGooglePlayServices() throws -> Bool {
+        // iOS doesn't use Google Play Services, always return true
+        // to indicate that standard push notifications are available
+        return true
+    }
+
+    func registerUnifiedPush(topic: String) throws {
+        // UnifiedPush is Android-only, no-op on iOS
+        OSLog.logger.warning("registerUnifiedPush called on iOS - UnifiedPush is Android-only")
+    }
+
+    func unregisterUnifiedPush() throws {
+        // UnifiedPush is Android-only, no-op on iOS
+        OSLog.logger.warning("unregisterUnifiedPush called on iOS - UnifiedPush is Android-only")
+    }
+
+    func getUnifiedPushEndpoint() throws -> Promise<String> {
+        // UnifiedPush is Android-only, return empty string on iOS
+        return Promise<String>.async { callback in
+            callback.resolve("")
+        }
+    }
 }
 
 // Include the extensions from other files
