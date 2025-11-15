@@ -70,6 +70,10 @@ namespace margelo::nitro::noahtools {
     double getAudioPosition() override;
     bool isAudioPlaying() override;
     void saveBalanceForWidget(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, const std::string& appGroup) override;
+    bool hasGooglePlayServices() override;
+    void registerUnifiedPush(const std::string& topic) override;
+    void unregisterUnifiedPush() override;
+    std::shared_ptr<Promise<std::string>> getUnifiedPushEndpoint() override;
 
   private:
     friend HybridBase;

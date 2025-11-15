@@ -210,5 +210,34 @@ namespace margelo::nitro::noahtools {
     static const auto method = javaClassStatic()->getMethod<void(double /* totalBalance */, double /* onchainBalance */, double /* offchainBalance */, double /* pendingBalance */, jni::alias_ref<jni::JString> /* appGroup */)>("saveBalanceForWidget");
     method(_javaPart, totalBalance, onchainBalance, offchainBalance, pendingBalance, jni::make_jstring(appGroup));
   }
+  bool JHybridNoahToolsSpec::hasGooglePlayServices() {
+    static const auto method = javaClassStatic()->getMethod<jboolean()>("hasGooglePlayServices");
+    auto __result = method(_javaPart);
+    return static_cast<bool>(__result);
+  }
+  void JHybridNoahToolsSpec::registerUnifiedPush(const std::string& topic) {
+    static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* topic */)>("registerUnifiedPush");
+    method(_javaPart, jni::make_jstring(topic));
+  }
+  void JHybridNoahToolsSpec::unregisterUnifiedPush() {
+    static const auto method = javaClassStatic()->getMethod<void()>("unregisterUnifiedPush");
+    method(_javaPart);
+  }
+  std::shared_ptr<Promise<std::string>> JHybridNoahToolsSpec::getUnifiedPushEndpoint() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>()>("getUnifiedPushEndpoint");
+    auto __result = method(_javaPart);
+    return [&]() {
+      auto __promise = Promise<std::string>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& __boxedResult) {
+        auto __result = jni::static_ref_cast<jni::JString>(__boxedResult);
+        __promise->resolve(__result->toStdString());
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
+  }
 
 } // namespace margelo::nitro::noahtools

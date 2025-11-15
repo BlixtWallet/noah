@@ -104,4 +104,20 @@ class NoahTools : HybridNoahToolsSpec() {
         intent.setPackage(context.packageName)
         context.sendBroadcast(intent)
     }
+
+    override fun hasGooglePlayServices(): Boolean {
+        return NoahToolsUnifiedPush.performHasGooglePlayServices()
+    }
+
+    override fun registerUnifiedPush(topic: String) {
+        NoahToolsUnifiedPush.performRegisterUnifiedPush(topic)
+    }
+
+    override fun unregisterUnifiedPush() {
+        NoahToolsUnifiedPush.performUnregisterUnifiedPush()
+    }
+
+    override fun getUnifiedPushEndpoint(): Promise<String> {
+        return NoahToolsUnifiedPush.performGetUnifiedPushEndpoint()
+    }
 }

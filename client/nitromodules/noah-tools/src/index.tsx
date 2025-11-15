@@ -89,4 +89,20 @@ export function saveBalanceForWidget(
   );
 }
 
+export function hasGooglePlayServices(): boolean {
+  return NoahToolsHybridObject.hasGooglePlayServices();
+}
+
+export function registerUnifiedPush(topic: string): void {
+  return NoahToolsHybridObject.registerUnifiedPush(topic);
+}
+
+export function unregisterUnifiedPush(): void {
+  return NoahToolsHybridObject.unregisterUnifiedPush();
+}
+
+export function getUnifiedPushEndpoint(): Promise<string> {
+  return NoahToolsHybridObject.getUnifiedPushEndpoint();
+}
+
 export type { HttpResponse } from "./NoahTools.nitro";

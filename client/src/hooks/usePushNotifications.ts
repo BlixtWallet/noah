@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import {
   registerForPushNotificationsAsync,
   registerPushTokenWithServer,
+  checkGooglePlayServices,
 } from "~/lib/pushNotifications";
 import { useServerStore } from "~/store/serverStore";
 import logger from "~/lib/log";
@@ -21,9 +22,20 @@ export const usePushNotifications = (isReady: boolean) => {
 
       await loadWalletIfNeeded();
 
+      // Check for Google Play Services availability on Android
+      const hasPlayServices = checkGooglePlayServices();
+      if (!hasPlayServices) {
+        log.i("Google Play Services not available - user needs to configure UnifiedPush manually");
+        return;
+      }
+
       const tokenResult = await registerForPushNotificationsAsync();
       if (tokenResult.isErr()) {
-        log.w("Failed to register for push notifications", [tokenResult.error]);
+        if (tokenResult.error.message === "GOOGLE_PLAY_SERVICES_UNAVAILABLE") {
+          log.i("Google Play Services unavailable - user needs UnifiedPush", [tokenResult.error]);
+        } else {
+          log.w("Failed to register for push notifications", [tokenResult.error]);
+        }
         return;
       }
 

@@ -31,6 +31,10 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func getAudioPosition() throws -> Double
   func isAudioPlaying() throws -> Bool
   func saveBalanceForWidget(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, appGroup: String) throws -> Void
+  func hasGooglePlayServices() throws -> Bool
+  func registerUnifiedPush(topic: String) throws -> Void
+  func unregisterUnifiedPush() throws -> Void
+  func getUnifiedPushEndpoint() throws -> Promise<String>
 }
 
 public extension HybridNoahToolsSpec_protocol {

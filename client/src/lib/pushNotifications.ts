@@ -4,6 +4,13 @@ import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import logger from "~/lib/log";
+import {
+  hasGooglePlayServices,
+  registerUnifiedPush,
+  unregisterUnifiedPush,
+  getUnifiedPushEndpoint,
+  getAppVariant,
+} from "noah-tools";
 import { captureException } from "@sentry/react-native";
 import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
@@ -254,7 +261,53 @@ Notifications.setNotificationHandler({
   }),
 });
 
+export async function registerForUnifiedPushAsync(): Promise<Result<string, Error>> {
+  if (Platform.OS !== "android") {
+    return err(new Error("UnifiedPush is only supported on Android"));
+  }
+
+  try {
+    const variant = getAppVariant();
+    const topic = `noah-${variant}`;
+
+    log.i("Registering for UnifiedPush with topic:", [topic]);
+    registerUnifiedPush(topic);
+
+    // Wait a moment for registration to complete and endpoint to be saved
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const endpoint = await getUnifiedPushEndpoint();
+
+    if (!endpoint) {
+      return err(
+        new Error(
+          "Failed to get UnifiedPush endpoint. Please ensure you have registered Noah in your UnifiedPush app (e.g., ntfy).",
+        ),
+      );
+    }
+
+    log.d("UnifiedPush endpoint obtained:", [endpoint]);
+    return ok(endpoint);
+  } catch (error) {
+    log.e("Failed to register for UnifiedPush:", [error]);
+    return err(error as Error);
+  }
+}
+
+export function checkGooglePlayServices(): boolean {
+  if (Platform.OS !== "android") {
+    return true;
+  }
+  return hasGooglePlayServices();
+}
+
 export async function registerForPushNotificationsAsync(): Promise<Result<string, Error>> {
+  // Check for Google Play Services on Android
+  if (Platform.OS === "android" && !checkGooglePlayServices()) {
+    log.i("Google Play Services not available, user needs UnifiedPush");
+    return err(new Error("GOOGLE_PLAY_SERVICES_UNAVAILABLE"));
+  }
+
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",

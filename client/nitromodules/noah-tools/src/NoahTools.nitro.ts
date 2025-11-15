@@ -48,4 +48,10 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
     pendingBalance: number,
     appGroup: string,
   ): void;
+
+  // UnifiedPush support (Android only)
+  hasGooglePlayServices(): boolean;
+  registerUnifiedPush(topic: string): void;
+  unregisterUnifiedPush(): void;
+  getUnifiedPushEndpoint(): Promise<string>;
 }
