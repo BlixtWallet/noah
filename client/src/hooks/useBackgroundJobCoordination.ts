@@ -46,7 +46,8 @@ const log = logger("useBackgroundJobCoordination");
  *                                               before executing the provided callback
  */
 export const useBackgroundJobCoordination = () => {
-  const { isBackgroundJobRunning, clearStaleBackgroundJobFlag } = useWalletStore();
+  const { clearStaleBackgroundJobFlag } = useWalletStore();
+  const isBackgroundJobRunning = useWalletStore((state) => state.isBackgroundJobRunning);
 
   /**
    * Executes a callback function only after ensuring no background jobs are running.
@@ -65,11 +66,14 @@ export const useBackgroundJobCoordination = () => {
       let waited = 0;
 
       // Wait for background job to complete if one is running
-      if (isBackgroundJobRunning) {
+      // Read the initial state from the store
+      const isInitiallyRunning = useWalletStore.getState().isBackgroundJobRunning;
+      if (isInitiallyRunning) {
         log.i("Background job detected, waiting for completion before executing callback");
       }
 
-      while (isBackgroundJobRunning && waited < maxWaitTime) {
+      // Always read fresh value from store in the loop
+      while (useWalletStore.getState().isBackgroundJobRunning && waited < maxWaitTime) {
         await new Promise((resolve) => setTimeout(resolve, checkInterval));
         waited += checkInterval;
       }
@@ -82,7 +86,7 @@ export const useBackgroundJobCoordination = () => {
 
       return callback();
     },
-    [isBackgroundJobRunning, clearStaleBackgroundJobFlag],
+    [clearStaleBackgroundJobFlag],
   );
 
   /**

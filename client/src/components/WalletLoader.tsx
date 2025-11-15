@@ -5,6 +5,7 @@ import { useLoadWallet, useCloseWallet } from "../hooks/useWallet";
 import { isWalletLoaded as isWalletLoadedNitro } from "react-native-nitro-ark";
 import { getMnemonic } from "../lib/crypto";
 import { NoahActivityIndicator } from "./ui/NoahActivityIndicator";
+import { useBackgroundJobCoordination } from "~/hooks/useBackgroundJobCoordination";
 import logger from "../lib/log";
 
 const log = logger("WalletLoader");
@@ -24,28 +25,31 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
   const { isInitialized, isWalletLoaded, walletError } = useWalletStore();
   const { mutate: loadWallet, isPending: isWalletLoading } = useLoadWallet();
   const { mutate: closeWallet } = useCloseWallet();
+  const { safelyExecuteWhenReady } = useBackgroundJobCoordination();
 
   // kick-off the wallet load once onboarding is finished
   useEffect(() => {
     const checkAndLoadWallet = async () => {
       if (!isInitialized) return;
 
-      const actuallyLoaded = await isWalletLoadedNitro();
+      await safelyExecuteWhenReady(async () => {
+        const actuallyLoaded = await isWalletLoadedNitro();
 
-      // If the persisted state says loaded but wallet isn't actually loaded, fix the state
-      if (isWalletLoaded && !actuallyLoaded) {
-        useWalletStore.getState().setWalletUnloaded();
-        return;
-      }
+        // If the persisted state says loaded but wallet isn't actually loaded, fix the state
+        if (isWalletLoaded && !actuallyLoaded) {
+          useWalletStore.getState().setWalletUnloaded();
+          return;
+        }
 
-      // If wallet isn't loaded, load it
-      if (!actuallyLoaded) {
-        loadWallet();
-      }
+        // If wallet isn't loaded, load it
+        if (!actuallyLoaded) {
+          loadWallet();
+        }
+      });
     };
 
     checkAndLoadWallet();
-  }, [isInitialized, isWalletLoaded, loadWallet]);
+  }, [isInitialized, isWalletLoaded, loadWallet, safelyExecuteWhenReady]);
 
   // Additional effect to handle app initialization and wallet existence check
   useEffect(() => {
@@ -67,8 +71,9 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
   // tidy up by closing the wallet when the component unmounts
   useEffect(() => {
     return () => {
-      // Check if wallet is actually loaded before trying to close
-      const cleanup = async () => {
+      // Fire and forget - don't block unmount
+      // The wallet close is best-effort cleanup
+      void (async () => {
         try {
           const actuallyLoaded = await isWalletLoadedNitro();
           if (actuallyLoaded) {
@@ -78,9 +83,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
           // If we can't check, don't try to close to avoid errors
           log.w("Skipping wallet close due to check error:", [error]);
         }
-      };
-
-      cleanup();
+      })();
     };
   }, [closeWallet]);
 
