@@ -261,39 +261,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function registerForUnifiedPushAsync(): Promise<Result<string, Error>> {
-  if (Platform.OS !== "android") {
-    return err(new Error("UnifiedPush is only supported on Android"));
-  }
-
-  try {
-    const variant = getAppVariant();
-    const topic = `noah-${variant}`;
-
-    log.i("Registering for UnifiedPush with topic:", [topic]);
-    registerUnifiedPush(topic);
-
-    // Wait a moment for registration to complete and endpoint to be saved
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const endpoint = await getUnifiedPushEndpoint();
-
-    if (!endpoint) {
-      return err(
-        new Error(
-          "Failed to get UnifiedPush endpoint. Please ensure you have registered Noah in your UnifiedPush app (e.g., ntfy).",
-        ),
-      );
-    }
-
-    log.d("UnifiedPush endpoint obtained:", [endpoint]);
-    return ok(endpoint);
-  } catch (error) {
-    log.e("Failed to register for UnifiedPush:", [error]);
-    return err(error as Error);
-  }
-}
-
 export function checkGooglePlayServices(): boolean {
   if (Platform.OS !== "android") {
     return true;

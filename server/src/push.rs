@@ -7,6 +7,60 @@ use crate::{
     utils::make_k1,
 };
 
+#[derive(Debug, Clone, PartialEq)]
+enum PushTokenType {
+    Expo,
+    UnifiedPush,
+}
+
+fn detect_token_type(token: &str) -> PushTokenType {
+    if token.starts_with("Expo") || token.starts_with("expo") {
+        PushTokenType::Expo
+    } else {
+        PushTokenType::UnifiedPush
+    }
+}
+
+async fn send_to_unified_push_endpoint(
+    endpoint: String,
+    data: String,
+) -> anyhow::Result<(), ApiError> {
+    let client = reqwest::Client::new();
+
+    match client
+        .post(&endpoint)
+        .header("Content-Type", "application/json")
+        .header("Priority", "high")
+        .body(data)
+        .send()
+        .await
+    {
+        Ok(response) => {
+            if response.status().is_success() {
+                tracing::debug!("Successfully sent to UnifiedPush endpoint: {}", endpoint);
+                Ok(())
+            } else {
+                tracing::error!(
+                    "UnifiedPush endpoint returned error status {}: {}",
+                    response.status(),
+                    endpoint
+                );
+                Err(ApiError::ServerErr(format!(
+                    "UnifiedPush endpoint returned status {}",
+                    response.status()
+                )))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to send to UnifiedPush endpoint {}: {}", endpoint, e);
+            Err(ApiError::ServerErr(format!(
+                "Failed to send to UnifiedPush: {}",
+                e
+            )))
+        }
+    }
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct PushNotificationData {
     pub title: Option<String>,
@@ -60,6 +114,8 @@ pub async fn send_push_notification_with_unique_k1(
             let app_state_clone = app_state.clone();
             let base_data_clone = base_notification_data.clone();
             async move {
+                let token_type = detect_token_type(&push_token);
+
                 // Create notification data with unique k1 if needed
                 let mut notification_data = base_data_clone;
                 if notification_data.needs_unique_k1() {
@@ -75,31 +131,41 @@ pub async fn send_push_notification_with_unique_k1(
                     }
                 };
 
-                let push_data = PushNotificationData {
-                    title: None,
-                    body: None,
-                    data: data_string,
-                    priority: "high".to_string(),
-                    content_available: true,
-                };
+                match token_type {
+                    PushTokenType::Expo => {
+                        let push_data = PushNotificationData {
+                            title: None,
+                            body: None,
+                            data: data_string,
+                            priority: "high".to_string(),
+                            content_available: true,
+                        };
 
-                let message = match ExpoPushMessage::builder(vec![push_token])
-                    .data(&push_data.data)
-                    .and_then(|b| {
-                        b.priority(push_data.priority.clone())
-                            .content_available(push_data.content_available)
-                            .mutable_content(false)
-                            .build()
-                    }) {
-                    Ok(msg) => msg,
-                    Err(e) => {
-                        tracing::error!("Failed to build push notification message: {}", e);
-                        return;
+                        let message = match ExpoPushMessage::builder(vec![push_token.clone()])
+                            .data(&push_data.data)
+                            .and_then(|b| {
+                                b.priority(push_data.priority.clone())
+                                    .content_available(push_data.content_available)
+                                    .mutable_content(false)
+                                    .build()
+                            }) {
+                            Ok(msg) => msg,
+                            Err(e) => {
+                                tracing::error!("Failed to build push notification message: {}", e);
+                                return;
+                            }
+                        };
+
+                        if let Err(e) = expo_clone.send_push_notifications(message).await {
+                            tracing::error!("Failed to send push notification: {}", e);
+                        }
                     }
-                };
-
-                if let Err(e) = expo_clone.send_push_notifications(message).await {
-                    tracing::error!("Failed to send push notification: {}", e);
+                    PushTokenType::UnifiedPush => {
+                        if let Err(e) = send_to_unified_push_endpoint(push_token, data_string).await
+                        {
+                            tracing::error!("Failed to send to UnifiedPush endpoint: {}", e);
+                        }
+                    }
                 }
             }
         })
@@ -139,47 +205,87 @@ async fn send_push_notification_internal(
         return Ok(());
     }
 
+    // Separate tokens by type
+    let mut expo_tokens = Vec::new();
+    let mut unified_push_tokens = Vec::new();
+
+    for token in push_tokens {
+        match detect_token_type(&token) {
+            PushTokenType::Expo => expo_tokens.push(token),
+            PushTokenType::UnifiedPush => unified_push_tokens.push(token),
+        }
+    }
+
     tracing::debug!(
-        "send_push_notification: Sending to {} tokens",
-        push_tokens.len()
+        "send_push_notification: Sending to {} Expo tokens and {} UnifiedPush tokens",
+        expo_tokens.len(),
+        unified_push_tokens.len()
     );
 
-    let chunks = push_tokens
-        .chunks(100)
-        .map(|c| c.to_vec())
-        .collect::<Vec<_>>();
+    // Send to Expo tokens in parallel
+    let expo_future = async {
+        if expo_tokens.is_empty() {
+            return;
+        }
 
-    stream::iter(chunks)
-        .for_each_concurrent(None, |chunk| {
-            let expo_clone = expo.clone();
-            let data_clone = data.clone();
-            async move {
-                let mut builder = ExpoPushMessage::builder(chunk);
-                if let Some(title) = &data_clone.title {
-                    builder = builder.title(title.clone());
-                }
-                if let Some(body) = &data_clone.body {
-                    builder = builder.body(body.clone());
-                }
-                let message = match builder.data(&data_clone.data).and_then(|b| {
-                    b.priority(data_clone.priority.clone())
-                        .content_available(data_clone.content_available)
-                        .mutable_content(false)
-                        .build()
-                }) {
-                    Ok(msg) => msg,
-                    Err(e) => {
-                        tracing::error!("Failed to build push notification message: {}", e);
-                        return;
+        let chunks = expo_tokens
+            .chunks(100)
+            .map(|c| c.to_vec())
+            .collect::<Vec<_>>();
+
+        stream::iter(chunks)
+            .for_each_concurrent(None, |chunk| {
+                let expo_clone = expo.clone();
+                let data_clone = data.clone();
+                async move {
+                    let mut builder = ExpoPushMessage::builder(chunk);
+                    if let Some(title) = &data_clone.title {
+                        builder = builder.title(title.clone());
                     }
-                };
+                    if let Some(body) = &data_clone.body {
+                        builder = builder.body(body.clone());
+                    }
+                    let message = match builder.data(&data_clone.data).and_then(|b| {
+                        b.priority(data_clone.priority.clone())
+                            .content_available(data_clone.content_available)
+                            .mutable_content(false)
+                            .build()
+                    }) {
+                        Ok(msg) => msg,
+                        Err(e) => {
+                            tracing::error!("Failed to build push notification message: {}", e);
+                            return;
+                        }
+                    };
 
-                if let Err(e) = expo_clone.send_push_notifications(message).await {
-                    tracing::error!("Failed to send push notification chunk: {}", e);
+                    if let Err(e) = expo_clone.send_push_notifications(message).await {
+                        tracing::error!("Failed to send push notification chunk: {}", e);
+                    }
                 }
-            }
-        })
-        .await;
+            })
+            .await;
+    };
+
+    // Send to UnifiedPush endpoints in parallel
+    let unified_push_future = async {
+        if unified_push_tokens.is_empty() {
+            return;
+        }
+
+        stream::iter(unified_push_tokens)
+            .for_each_concurrent(None, |endpoint| {
+                let data_clone = data.clone();
+                async move {
+                    if let Err(e) = send_to_unified_push_endpoint(endpoint, data_clone.data).await {
+                        tracing::error!("Failed to send to UnifiedPush endpoint: {}", e);
+                    }
+                }
+            })
+            .await;
+    };
+
+    // Run both in parallel
+    tokio::join!(expo_future, unified_push_future);
 
     tracing::debug!(
         "send_push_notification: Sent push notification with data: {:?}",
