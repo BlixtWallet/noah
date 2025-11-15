@@ -53,8 +53,18 @@ jobs:
             exit 1
           fi
 
-          echo "Booting iPhone 15 simulator with DEVICE_ID=$DEVICE_ID..."
-          xcrun simctl boot "$DEVICE_ID" || true
+          echo "Found simulator with DEVICE_ID=$DEVICE_ID"
+
+          # Check if simulator is already booted
+          STATUS=$(xcrun simctl list | grep "$DEVICE_ID" | grep "(Booted)" || echo "")
+          if [[ -n "$STATUS" ]]; then
+            echo "Simulator is already booted. Shutting down first..."
+            xcrun simctl shutdown "$DEVICE_ID" || true
+            sleep 2
+          fi
+
+          echo "Booting iPhone 16 simulator with DEVICE_ID=$DEVICE_ID..."
+          xcrun simctl boot "$DEVICE_ID"
 
           TIMEOUT=120
           START_TIME=$(date +%s)
@@ -92,10 +102,27 @@ jobs:
 
           if [ -n "$DEVICE_UDID" ]; then
             echo "Shutting down simulator: $DEVICE_UDID"
-            xcrun simctl shutdown "$DEVICE_UDID" || true
+            if xcrun simctl shutdown "$DEVICE_UDID" 2>&1; then
+              echo "✓ Shutdown command executed"
+            else
+              echo "⚠ Warning: Shutdown command failed"
+            fi
+
+            # Verify shutdown
+            sleep 2
+            SHUTDOWN_STATUS=$(xcrun simctl list devices | grep "$DEVICE_UDID" | grep "(Shutdown)" || echo "")
+            if [[ -n "$SHUTDOWN_STATUS" ]]; then
+              echo "✓ Simulator is now in Shutdown state"
+            else
+              echo "⚠ Warning: Simulator may not be in Shutdown state"
+            fi
 
             echo "Erasing simulator to clear all app data: $DEVICE_UDID"
-            xcrun simctl erase "$DEVICE_UDID" || true
+            if xcrun simctl erase "$DEVICE_UDID" 2>&1; then
+              echo "✓ Erase command executed successfully"
+            else
+              echo "⚠ Warning: Erase command failed"
+            fi
           else
             echo "No booted simulator found"
           fi
