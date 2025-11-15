@@ -62,18 +62,8 @@ const UnifiedPushSetupScreen = () => {
       }
 
       setEndpoint(result.value);
-
-      const serverResult = await registerPushTokenWithServer(result.value);
-      if (serverResult.isErr()) {
-        setError(
-          `Registered locally but failed to sync with server: ${serverResult.error.message}`,
-        );
-        setIsRegistering(false);
-        return;
-      }
-
       setSuccess(true);
-      log.d("UnifiedPush setup completed successfully");
+      log.d("UnifiedPush endpoint saved locally, will sync with server after user registration");
     } catch (err) {
       setError(`Unexpected error: ${err}`);
       log.e("UnifiedPush setup failed", [err]);
@@ -82,12 +72,8 @@ const UnifiedPushSetupScreen = () => {
     }
   };
 
-  const handleSkip = () => {
-    navigation.navigate("Configuration");
-  };
-
   const handleContinue = () => {
-    navigation.navigate("Configuration");
+    navigation.navigate("Mnemonic", { fromOnboarding: true });
   };
 
   return (
@@ -157,7 +143,8 @@ const UnifiedPushSetupScreen = () => {
                   <Alert icon={CheckCircle} className="mb-4">
                     <AlertTitle>Success!</AlertTitle>
                     <AlertDescription>
-                      Push notifications are configured and ready.
+                      UnifiedPush endpoint saved. It will sync with the server after you complete
+                      setup.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -175,9 +162,6 @@ const UnifiedPushSetupScreen = () => {
           )}
 
           <View className="flex-row justify-between">
-            <NoahButton onPress={handleSkip} variant="outline" size="lg">
-              Skip for Now
-            </NoahButton>
             {success && (
               <NoahButton onPress={handleContinue} size="lg">
                 Continue

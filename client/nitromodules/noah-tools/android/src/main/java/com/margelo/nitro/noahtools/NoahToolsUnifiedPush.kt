@@ -34,9 +34,34 @@ object NoahToolsUnifiedPush {
         }
 
         try {
-            Log.d(TAG, "Attempting to register UnifiedPush with topic: $topic")
-            UnifiedPush.registerApp(context, topic)
-            Log.d(TAG, "UnifiedPush registration initiated successfully for topic: $topic")
+            // Get list of available distributors
+            val distributors = UnifiedPush.getDistributors(context)
+            Log.d(TAG, "Available UnifiedPush distributors: ${distributors.joinToString(", ")}")
+
+            if (distributors.isEmpty()) {
+                Log.e(TAG, "No UnifiedPush distributors installed!")
+                Log.e(TAG, "User needs to install a distributor app like ntfy")
+                throw Exception("No UnifiedPush distributor available. Please install ntfy or another UnifiedPush app.")
+            }
+
+            // Check if a distributor is already saved
+            val savedDistributor = UnifiedPush.getSavedDistributor(context)
+            Log.d(TAG, "Saved distributor: ${savedDistributor ?: "NONE"}")
+
+            // If no distributor is saved, save the first available one (prefer ntfy if available)
+            if (savedDistributor.isNullOrEmpty()) {
+                val distributorToSave = distributors.find { it.contains("ntfy") } ?: distributors.first()
+                Log.d(TAG, "Saving distributor: $distributorToSave")
+                UnifiedPush.saveDistributor(context, distributorToSave)
+            }
+
+            Log.d(TAG, "Registering UnifiedPush...")
+            Log.d(TAG, "User should subscribe to topic: $topic in their UnifiedPush app")
+
+            // Register with the saved distributor
+            UnifiedPush.register(context)
+            Log.d(TAG, "UnifiedPush registerApp() called successfully")
+            Log.d(TAG, "Waiting for distributor to call onNewEndpoint()...")
 
             // Check if already have a saved endpoint
             val existingEndpoint = getStoredEndpoint(context)
@@ -45,7 +70,7 @@ object NoahToolsUnifiedPush {
                 "Existing endpoint after registration: ${if (existingEndpoint.isEmpty()) "none" else existingEndpoint}"
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to register UnifiedPush for topic: $topic", e)
+            Log.e(TAG, "Failed to register UnifiedPush", e)
             throw e
         }
     }

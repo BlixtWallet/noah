@@ -9,6 +9,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import org.unifiedpush.android.connector.MessagingReceiver
+import org.unifiedpush.android.connector.data.PushEndpoint
+import org.unifiedpush.android.connector.data.PushMessage
+import org.unifiedpush.android.connector.FailedReason
 import org.json.JSONObject
 
 class NoahUnifiedPushReceiver : MessagingReceiver() {
@@ -19,38 +22,39 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
         private const val NOTIFICATION_ID_BASE = 20000
     }
 
-    override fun onNewEndpoint(context: Context, endpoint: String, instance: String) {
+    override fun onNewEndpoint(context: Context, endpoint: PushEndpoint, instance: String) {
         Log.i(TAG, "==================== onNewEndpoint CALLED ====================")
         Log.i(TAG, "New UnifiedPush endpoint received!")
-        Log.i(TAG, "  Endpoint: $endpoint")
+        Log.i(TAG, "  Endpoint URL: ${endpoint.url}")
         Log.i(TAG, "  Instance: $instance")
         Log.i(TAG, "  Package: ${context.packageName}")
 
         // Save endpoint to shared preferences
         Log.d(TAG, "Saving endpoint to SharedPreferences...")
-        NoahToolsUnifiedPush.saveEndpoint(context, endpoint)
+        NoahToolsUnifiedPush.saveEndpoint(context, endpoint.url)
         Log.d(TAG, "Endpoint saved successfully")
 
         // Send broadcast to the app to trigger server registration
         val intent = Intent("com.noahwallet.UNIFIED_PUSH_NEW_ENDPOINT")
         intent.setPackage(context.packageName)
-        intent.putExtra("endpoint", endpoint)
+        intent.putExtra("endpoint", endpoint.url)
         context.sendBroadcast(intent)
 
         Log.i(TAG, "Broadcast sent to app")
         Log.i(TAG, "==================== onNewEndpoint COMPLETE ====================")
     }
 
-    override fun onRegistrationFailed(context: Context, instance: String) {
+    override fun onRegistrationFailed(context: Context, reason: FailedReason, instance: String) {
         Log.e(TAG, "==================== onRegistrationFailed CALLED ====================")
         Log.e(TAG, "UnifiedPush registration FAILED!")
+        Log.e(TAG, "  Reason: $reason")
         Log.e(TAG, "  Instance: $instance")
         Log.e(TAG, "  Package: ${context.packageName}")
 
         // Send broadcast to the app
         val intent = Intent("com.noahwallet.UNIFIED_PUSH_REGISTRATION_FAILED")
         intent.setPackage(context.packageName)
-        intent.putExtra("error", "Registration failed for instance: $instance")
+        intent.putExtra("error", "Registration failed: $reason")
         context.sendBroadcast(intent)
     }
 
@@ -68,8 +72,8 @@ class NoahUnifiedPushReceiver : MessagingReceiver() {
         context.sendBroadcast(intent)
     }
 
-    override fun onMessage(context: Context, message: ByteArray, instance: String) {
-        val messageString = message.toString(Charsets.UTF_8)
+    override fun onMessage(context: Context, message: PushMessage, instance: String) {
+        val messageString = message.content.toString(Charsets.UTF_8)
         Log.i(TAG, "==================== onMessage CALLED ====================")
         Log.i(TAG, "UnifiedPush message received")
         Log.i(TAG, "  Instance: $instance")
