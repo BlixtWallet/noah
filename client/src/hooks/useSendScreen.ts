@@ -17,10 +17,8 @@ import {
   type PaymentResult,
 } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
-import { useTransactionStore } from "~/store/transactionStore";
 import { useBtcToUsdRate } from "./useMarketData";
 import { satsToUsd, usdToSats } from "../lib/utils";
-import uuid from "react-native-uuid";
 import logger from "~/lib/log";
 
 const log = logger("useSendScreen");
@@ -39,7 +37,6 @@ type SendScreenRouteProp = RouteProp<{ params: { destination?: string } }, "para
 export const useSendScreen = () => {
   const route = useRoute<SendScreenRouteProp>();
   const { showAlert } = useAlert();
-  const { addTransaction } = useTransactionStore();
   const { data: btcPrice } = useBtcToUsdRate();
   const [destination, setDestination] = useState("");
   const [amount, setAmount] = useState("");
@@ -210,23 +207,11 @@ export const useSendScreen = () => {
 
     if (displayResult) {
       if (displayResult.success) {
-        addTransaction({
-          id: uuid.v4().toString(),
-          type: result.payment_type,
-          amount: displayResult.amount_sat,
-          date: new Date(Date.now()).toISOString(),
-          direction: "outgoing",
-          description: comment,
-          txid: displayResult.txid,
-          preimage: displayResult.preimage,
-          destination: displayResult.destination,
-          btcPrice: btcPrice,
-        });
         setShowSuccess(true);
       }
       setParsedResult(displayResult);
     }
-  }, [result, amountSat, showAlert, addTransaction, destinationType, comment, btcPrice]);
+  }, [result, amountSat, showAlert]);
 
   const handleSend = () => {
     // Validation
@@ -274,7 +259,9 @@ export const useSendScreen = () => {
       send({
         destination: destinationToSend,
         amountSat: newDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
+        resolvedAmountSat: amountSat,
         comment: comment || null,
+        btcPrice,
       });
     } else {
       const cleanedDestination = destination.replace(/^(bitcoin:|lightning:)/i, "");
@@ -283,7 +270,9 @@ export const useSendScreen = () => {
         destination: cleanedDestination,
         amountSat:
           finalDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
+        resolvedAmountSat: amountSat,
         comment: comment || null,
+        btcPrice,
       });
     }
 

@@ -18,11 +18,11 @@ import {
   checkAndClaimLnReceive,
 } from "../lib/paymentsApi";
 import { queryClient } from "~/queryClient";
-import { addTransaction } from "~/lib/transactionsDb";
 import { Transaction, PaymentTypes } from "~/types/transaction";
 import uuid from "react-native-uuid";
 import { DestinationTypes } from "~/lib/sendUtils";
 import logger from "~/lib/log";
+import { useTransactionStore } from "~/store/transactionStore";
 
 const log = logger("usePayments");
 
@@ -140,7 +140,9 @@ export function useOffboardAllArk() {
 type SendVariables = {
   destination: string;
   amountSat: number | undefined;
+  resolvedAmountSat: number;
   comment: string | null;
+  btcPrice?: number;
 };
 
 type SendResult =
@@ -166,6 +168,7 @@ const mapDestinationToPaymentType = (destinationType: DestinationTypes): Payment
 
 export function useSend(destinationType: DestinationTypes) {
   const { showAlert } = useAlert();
+  const addTransaction = useTransactionStore((state) => state.addTransaction);
 
   return useMutation<SendResult, Error, SendVariables>({
     mutationFn: async (variables) => {
@@ -211,18 +214,22 @@ export function useSend(destinationType: DestinationTypes) {
       const paymentType = mapDestinationToPaymentType(destinationType);
 
       if (paymentType) {
-        const { destination, amountSat } = variables;
+        const { destination, amountSat, resolvedAmountSat, comment, btcPrice } = variables;
         const transaction: Transaction = {
           id: uuid.v4().toString(),
           txid: "txid" in data ? (data.txid as string) : undefined,
           type: paymentType,
           direction: "outgoing",
-          amount: amountSat || 0,
+          amount: amountSat ?? resolvedAmountSat,
           date: new Date().toISOString(),
           destination: destination,
           preimage: "preimage" in data ? (data.preimage as string) : undefined,
+          description: comment || undefined,
+          btcPrice,
         };
-        addTransaction(transaction);
+        addTransaction(transaction).catch((error) => {
+          log.w("Failed to persist transaction to store", [error]);
+        });
       }
     },
     onError: (error: Error) => {
