@@ -29,7 +29,7 @@ namespace margelo::nitro::noahtools {
       prototype.registerHybridMethod("getAudioDuration", &HybridNoahToolsSpec::getAudioDuration);
       prototype.registerHybridMethod("getAudioPosition", &HybridNoahToolsSpec::getAudioPosition);
       prototype.registerHybridMethod("isAudioPlaying", &HybridNoahToolsSpec::isAudioPlaying);
-      prototype.registerHybridMethod("saveBalanceForWidget", &HybridNoahToolsSpec::saveBalanceForWidget);
+      prototype.registerHybridMethod("updateWidgetData", &HybridNoahToolsSpec::updateWidgetData);
     });
   }
 

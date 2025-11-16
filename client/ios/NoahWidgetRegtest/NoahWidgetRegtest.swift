@@ -42,8 +42,8 @@ struct NoahWidgetRegtestBundle: WidgetBundle {
 } timeline: {
     BalanceEntry(
         date: .now, totalBalance: 100000, onchainBalance: 50000, offchainBalance: 50000,
-        pendingBalance: 0)
+        pendingBalance: 0, closestExpiryBlocks: 500, expiryThreshold: 288)
     BalanceEntry(
         date: .now, totalBalance: 250000, onchainBalance: 100000, offchainBalance: 150000,
-        pendingBalance: 10000)
+        pendingBalance: 10000, closestExpiryBlocks: 150, expiryThreshold: 288)
 }

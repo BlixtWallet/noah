@@ -9,7 +9,7 @@ import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
-import { maintenanceRefresh, sync } from "./walletApi";
+import { maintenanceRefresh, sync, fetchOnchainBalance, fetchOffchainBalance } from "./walletApi";
 import { checkAndClaimLnReceive } from "./paymentsApi";
 import { addTransaction } from "~/lib/transactionsDb";
 import type { Transaction } from "~/types/transaction";
@@ -17,6 +17,7 @@ import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
 import { formatBip177 } from "./utils";
+import { updateWidget } from "~/hooks/useWidget";
 
 const log = logger("pushNotifications");
 
@@ -120,6 +121,39 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               // Also perform a sync after maintenance
               await sync();
               await handleTaskCompletion("maintenance", result, notificationData.k1);
+
+              // Refresh widget after maintenance
+              const onchainBalanceResult = await fetchOnchainBalance();
+              const offchainBalanceResult = await fetchOffchainBalance();
+              if (onchainBalanceResult.isOk() && offchainBalanceResult.isOk()) {
+                const onchain = onchainBalanceResult.value;
+                const offchain = offchainBalanceResult.value;
+                const onchainTotal =
+                  (onchain.confirmed ?? 0) +
+                  (onchain.trusted_pending ?? 0) +
+                  (onchain.untrusted_pending ?? 0) +
+                  (onchain.immature ?? 0);
+                const offchainTotal =
+                  (offchain.pending_exit ?? 0) +
+                  (offchain.pending_lightning_send ?? 0) +
+                  (offchain.pending_in_round ?? 0) +
+                  (offchain.spendable ?? 0) +
+                  (offchain.pending_board ?? 0);
+                const pendingTotal =
+                  (onchain.trusted_pending ?? 0) +
+                  (onchain.untrusted_pending ?? 0) +
+                  (onchain.immature ?? 0) +
+                  (offchain.pending_exit ?? 0) +
+                  (offchain.pending_lightning_send ?? 0) +
+                  (offchain.pending_in_round ?? 0) +
+                  (offchain.pending_board ?? 0);
+                await updateWidget({
+                  totalBalance: onchainTotal + offchainTotal,
+                  onchainBalance: onchainTotal,
+                  offchainBalance: offchainTotal,
+                  pendingBalance: pendingTotal,
+                });
+              }
               break;
             }
 
@@ -169,6 +203,39 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
                     ]);
                   } else {
                     log.d("Successfully added Lightning receive transaction to database", [sats]);
+                  }
+
+                  // Refresh widget after lightning payment
+                  const onchainBalanceResult = await fetchOnchainBalance();
+                  const offchainBalanceResult = await fetchOffchainBalance();
+                  if (onchainBalanceResult.isOk() && offchainBalanceResult.isOk()) {
+                    const onchain = onchainBalanceResult.value;
+                    const offchain = offchainBalanceResult.value;
+                    const onchainTotal =
+                      (onchain.confirmed ?? 0) +
+                      (onchain.trusted_pending ?? 0) +
+                      (onchain.untrusted_pending ?? 0) +
+                      (onchain.immature ?? 0);
+                    const offchainTotal =
+                      (offchain.pending_exit ?? 0) +
+                      (offchain.pending_lightning_send ?? 0) +
+                      (offchain.pending_in_round ?? 0) +
+                      (offchain.spendable ?? 0) +
+                      (offchain.pending_board ?? 0);
+                    const pendingTotal =
+                      (onchain.trusted_pending ?? 0) +
+                      (onchain.untrusted_pending ?? 0) +
+                      (onchain.immature ?? 0) +
+                      (offchain.pending_exit ?? 0) +
+                      (offchain.pending_lightning_send ?? 0) +
+                      (offchain.pending_in_round ?? 0) +
+                      (offchain.pending_board ?? 0);
+                    await updateWidget({
+                      totalBalance: onchainTotal + offchainTotal,
+                      onchainBalance: onchainTotal,
+                      offchainBalance: offchainTotal,
+                      pendingBalance: pendingTotal,
+                    });
                   }
                 }
               }

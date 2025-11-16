@@ -65,6 +65,8 @@ open class NoahWidgetProvider : AppWidgetProvider() {
         val onchainBalance = prefs.getLong("onchainBalance", 0L)
         val offchainBalance = prefs.getLong("offchainBalance", 0L)
         val pendingBalance = prefs.getLong("pendingBalance", 0L)
+        val closestExpiryBlocks = prefs.getLong("closestExpiryBlocks", 999999L)
+        val expiryThreshold = prefs.getLong("expiryThreshold", 288L)
 
         try {
             val views = RemoteViews(context.packageName, layoutResId)
@@ -104,9 +106,56 @@ open class NoahWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.variant_badge, android.view.View.GONE)
             }
 
+            // Set expiry status - only show if VTXOs exist (not -999 sentinel)
+            if (closestExpiryBlocks != -999L) {
+                val expiryStatus = getExpiryStatus(closestExpiryBlocks, expiryThreshold)
+                views.setTextViewText(R.id.expiry_text, "VTXO expires: $closestExpiryBlocks blocks")
+                views.setTextColor(R.id.expiry_text, expiryStatus.color)
+                views.setInt(R.id.expiry_icon, "setColorFilter", expiryStatus.color)
+                views.setImageViewResource(R.id.expiry_icon, expiryStatus.icon)
+                views.setViewVisibility(R.id.expiry_icon, android.view.View.VISIBLE)
+                views.setViewVisibility(R.id.expiry_text, android.view.View.VISIBLE)
+            } else {
+                // Hide expiry section when no VTXOs
+                views.setViewVisibility(R.id.expiry_icon, android.view.View.GONE)
+                views.setViewVisibility(R.id.expiry_text, android.view.View.GONE)
+            }
+
             appWidgetManager.updateAppWidget(appWidgetId, views)
         } catch (e: Exception) {
             android.util.Log.e("NoahWidget", "Error updating widget: ${e.message}", e)
+        }
+    }
+
+    private data class ExpiryStatus(val icon: Int, val color: Int)
+
+    private fun getExpiryStatus(blocks: Long, threshold: Long): ExpiryStatus {
+        // Expired VTXOs (negative blocks) - critical red alert
+        if (blocks < 0) {
+            return ExpiryStatus(
+                android.R.drawable.ic_dialog_alert,
+                android.graphics.Color.parseColor("#EF4444") // Red
+            )
+        }
+
+        // Critical: within 20% of threshold (e.g., < 58 blocks if threshold is 288)
+        val criticalThreshold = (threshold * 0.2).toLong()
+
+        return when {
+            blocks <= criticalThreshold -> ExpiryStatus(
+                android.R.drawable.ic_dialog_alert,
+                android.graphics.Color.parseColor("#EF4444") // Red
+            )
+
+            blocks <= threshold -> ExpiryStatus(
+                android.R.drawable.ic_lock_idle_alarm,
+                android.graphics.Color.parseColor("#F97316") // Orange
+            )
+
+            else -> ExpiryStatus(
+                android.R.drawable.checkbox_on_background,
+                android.graphics.Color.parseColor("#22C55E") // Green
+            )
         }
     }
 

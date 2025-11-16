@@ -73,18 +73,22 @@ class NoahTools: HybridNoahToolsSpec {
         return try performIsAudioPlaying()
     }
 
-    func saveBalanceForWidget(
+    func updateWidgetData(
         totalBalance: Double,
         onchainBalance: Double,
         offchainBalance: Double,
         pendingBalance: Double,
+        closestExpiryBlocks: Double,
+        expiryThreshold: Double,
         appGroup: String
     ) throws {
-        try performSaveBalanceForWidget(
+        try performUpdateWidgetData(
             totalBalance: totalBalance,
             onchainBalance: onchainBalance,
             offchainBalance: offchainBalance,
             pendingBalance: pendingBalance,
+            closestExpiryBlocks: closestExpiryBlocks,
+            expiryThreshold: expiryThreshold,
             appGroup: appGroup
         )
     }

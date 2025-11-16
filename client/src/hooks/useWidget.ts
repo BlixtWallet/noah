@@ -1,8 +1,12 @@
 import { useEffect } from "react";
 import { Platform } from "react-native";
-import { saveBalanceForWidget } from "noah-tools";
+import { updateWidgetData } from "noah-tools";
 import { APP_VARIANT } from "~/config";
 import logger from "~/lib/log";
+import { getVtxos } from "~/lib/walletApi";
+import { getBlockHeight } from "~/hooks/useMarketData";
+import { ACTIVE_WALLET_CONFIG } from "~/constants";
+
 const log = logger("useWidget");
 
 interface BalanceData {
@@ -38,18 +42,47 @@ export function useWidget(balanceData: BalanceData | null) {
   }, [balanceData]);
 }
 
-export function updateWidget(balanceData: BalanceData): void {
+export async function updateWidget(balanceData: BalanceData): Promise<void> {
   if (Platform.OS !== "ios" && Platform.OS !== "android") {
     return;
   }
 
   try {
     const appGroup = getAppGroup();
-    saveBalanceForWidget(
+
+    // Get closest expiring vtxo
+    const vtxosResult = await getVtxos();
+    const blockHeightResult = await getBlockHeight();
+
+    let closestExpiryBlocks: number | null = null;
+
+    if (vtxosResult.isOk() && blockHeightResult.isOk()) {
+      const vtxos = vtxosResult.value;
+      const currentHeight = blockHeightResult.value;
+
+      // Find the vtxo with the closest expiry (including expired ones with negative blocks)
+      for (const vtxo of vtxos) {
+        const blocksUntilExpiry = vtxo.expiry_height - currentHeight;
+        if (closestExpiryBlocks === null || blocksUntilExpiry < closestExpiryBlocks) {
+          closestExpiryBlocks = blocksUntilExpiry;
+        }
+      }
+    }
+
+    // If no VTXOs found, use sentinel value -999 to signal widget to hide expiry section
+    if (closestExpiryBlocks === null) {
+      closestExpiryBlocks = -999;
+    }
+
+    const expiryThreshold = ACTIVE_WALLET_CONFIG.config?.vtxo_refresh_expiry_threshold || 288;
+
+    updateWidgetData(
       balanceData.totalBalance,
       balanceData.onchainBalance,
       balanceData.offchainBalance,
       balanceData.pendingBalance,
+      closestExpiryBlocks,
+      expiryThreshold,
       appGroup,
     );
   } catch (error) {

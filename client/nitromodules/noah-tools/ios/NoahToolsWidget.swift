@@ -2,11 +2,13 @@ import Foundation
 import WidgetKit
 
 extension NoahTools {
-    func performSaveBalanceForWidget(
+    func performUpdateWidgetData(
         totalBalance: Double,
         onchainBalance: Double,
         offchainBalance: Double,
         pendingBalance: Double,
+        closestExpiryBlocks: Double,
+        expiryThreshold: Double,
         appGroup: String
     ) throws {
         guard let userDefaults = UserDefaults(suiteName: appGroup) else {
@@ -22,6 +24,8 @@ extension NoahTools {
             "onchainBalance": onchainBalance,
             "offchainBalance": offchainBalance,
             "pendingBalance": pendingBalance,
+            "closestExpiryBlocks": closestExpiryBlocks,
+            "expiryThreshold": expiryThreshold,
             "lastUpdated": Date().timeIntervalSince1970,
         ]
 

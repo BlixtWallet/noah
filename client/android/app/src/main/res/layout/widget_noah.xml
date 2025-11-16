@@ -68,6 +68,30 @@
             android:textSize="8sp"
             android:visibility="gone" />
 
+        <!-- Expiry status -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="2dp">
+
+            <ImageView
+                android:id="@+id/expiry_icon"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:src="@android:drawable/checkbox_on_background"
+                android:layout_marginEnd="3dp" />
+
+            <TextView
+                android:id="@+id/expiry_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 blocks"
+                android:textSize="8sp" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- Onchain/Offchain breakdown -->
