@@ -1,6 +1,6 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use libsql::Connection;
+use sqlx::PgPool;
 
 use crate::types::{NotificationData, OffboardingStatus};
 
@@ -15,12 +15,12 @@ use crate::types::{NotificationData, OffboardingStatus};
 /// - Single source of truth (enum → string via `.notification_type()`)
 /// - No typos or invalid notification type strings
 pub struct NotificationTrackingRepository<'a> {
-    conn: &'a Connection,
+    pool: &'a PgPool,
 }
 
 impl<'a> NotificationTrackingRepository<'a> {
-    pub fn new(conn: &'a Connection) -> Self {
-        Self { conn }
+    pub fn new(pool: &'a PgPool) -> Self {
+        Self { pool }
     }
 
     /// Check if enough time has passed since the last notification of any type to this user
@@ -30,50 +30,35 @@ impl<'a> NotificationTrackingRepository<'a> {
         pubkey: &str,
         min_spacing_minutes: i64,
     ) -> Result<bool> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT MAX(last_sent_at) as last_sent
-                 FROM notification_tracking
-                 WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
+        let last_sent = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
+            "SELECT MAX(last_sent_at) as last_sent
+             FROM notification_tracking
+             WHERE pubkey = $1",
+        )
+        .bind(pubkey)
+        .fetch_one(self.pool)
+        .await?;
 
-        if let Some(row) = rows.next().await? {
-            if let Ok(Some(last_sent_str)) = row.get::<Option<String>>(0) {
-                let last_sent = DateTime::parse_from_rfc3339(&last_sent_str)?.with_timezone(&Utc);
-                let min_time = Utc::now() - chrono::Duration::minutes(min_spacing_minutes);
-
-                // If last notification was sent after min_time, we can't send yet
-                return Ok(last_sent < min_time);
-            }
+        if let Some(last_sent) = last_sent {
+            let min_time = Utc::now() - chrono::Duration::minutes(min_spacing_minutes);
+            return Ok(last_sent < min_time);
         }
 
-        // No previous notifications, can send
         Ok(true)
     }
 
     /// Get the last time any notification was sent to this user
     pub async fn get_last_notification_time(&self, pubkey: &str) -> Result<Option<DateTime<Utc>>> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT MAX(last_sent_at) as last_sent
-                 FROM notification_tracking
-                 WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
+        let last_sent = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
+            "SELECT MAX(last_sent_at) as last_sent
+             FROM notification_tracking
+             WHERE pubkey = $1",
+        )
+        .bind(pubkey)
+        .fetch_one(self.pool)
+        .await?;
 
-        if let Some(row) = rows.next().await? {
-            if let Ok(Some(last_sent_str)) = row.get::<Option<String>>(0) {
-                let last_sent = DateTime::parse_from_rfc3339(&last_sent_str)?.with_timezone(&Utc);
-                return Ok(Some(last_sent));
-            }
-        }
-
-        Ok(None)
+        Ok(last_sent)
     }
 
     /// Record that a notification was sent to a user.
@@ -88,22 +73,16 @@ impl<'a> NotificationTrackingRepository<'a> {
         pubkey: &str,
         notification_data: &NotificationData,
     ) -> Result<()> {
-        let now = Utc::now().to_rfc3339();
-
-        self.conn
-            .execute(
-                "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
-                 VALUES (?, ?, ?)
-                 ON CONFLICT(pubkey, notification_type)
-                 DO UPDATE SET last_sent_at = ?",
-                libsql::params![
-                    pubkey,
-                    notification_data.notification_type(),
-                    now.clone(),
-                    now
-                ],
-            )
-            .await?;
+        sqlx::query(
+            "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+             VALUES ($1, $2, now())
+             ON CONFLICT(pubkey, notification_type)
+             DO UPDATE SET last_sent_at = excluded.last_sent_at",
+        )
+        .bind(pubkey)
+        .bind(notification_data.notification_type())
+        .execute(self.pool)
+        .await?;
 
         Ok(())
     }
@@ -111,28 +90,20 @@ impl<'a> NotificationTrackingRepository<'a> {
     /// Get all users who are eligible for a notification type based on spacing requirements
     /// Returns list of pubkeys that can receive the notification
     pub async fn get_eligible_users(&self, min_spacing_minutes: i64) -> Result<Vec<String>> {
-        let min_time = (Utc::now() - chrono::Duration::minutes(min_spacing_minutes)).to_rfc3339();
+        let min_time = Utc::now() - chrono::Duration::minutes(min_spacing_minutes);
 
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT u.pubkey
-                 FROM users u
-                 WHERE NOT EXISTS (
-                     SELECT 1
-                     FROM notification_tracking nt
-                     WHERE nt.pubkey = u.pubkey AND nt.last_sent_at > ?
-                 )",
-                libsql::params![min_time],
-            )
-            .await?;
-
-        let mut pubkeys = Vec::new();
-        while let Some(row) = rows.next().await? {
-            if let Ok(pubkey) = row.get::<String>(0) {
-                pubkeys.push(pubkey);
-            }
-        }
+        let pubkeys = sqlx::query_scalar::<_, String>(
+            "SELECT u.pubkey
+             FROM users u
+             WHERE NOT EXISTS (
+                 SELECT 1
+                 FROM notification_tracking nt
+                 WHERE nt.pubkey = u.pubkey AND nt.last_sent_at > $1
+             )",
+        )
+        .bind(min_time)
+        .fetch_all(self.pool)
+        .await?;
 
         Ok(pubkeys)
     }
@@ -147,48 +118,32 @@ impl<'a> NotificationTrackingRepository<'a> {
         pubkey: &str,
         notification_data: &NotificationData,
     ) -> Result<Option<DateTime<Utc>>> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT last_sent_at
-                 FROM notification_tracking
-                 WHERE pubkey = ? AND notification_type = ?",
-                libsql::params![pubkey, notification_data.notification_type()],
-            )
-            .await?;
+        let last_sent = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
+            "SELECT last_sent_at
+             FROM notification_tracking
+             WHERE pubkey = $1 AND notification_type = $2",
+        )
+        .bind(pubkey)
+        .bind(notification_data.notification_type())
+        .fetch_one(self.pool)
+        .await?;
 
-        if let Some(row) = rows.next().await? {
-            if let Ok(last_sent_str) = row.get::<String>(0) {
-                let last_sent = DateTime::parse_from_rfc3339(&last_sent_str)?.with_timezone(&Utc);
-                return Ok(Some(last_sent));
-            }
-        }
-
-        Ok(None)
+        Ok(last_sent)
     }
 
     /// Check if a user is currently in offboarding status (has pending or processing offboarding)
     pub async fn is_user_offboarding(&self, pubkey: &str) -> Result<bool> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT COUNT(*) as count
-                 FROM offboarding_requests
-                 WHERE pubkey = ? AND status IN (?, ?)",
-                libsql::params![
-                    pubkey,
-                    OffboardingStatus::Pending.to_string(),
-                    OffboardingStatus::Processing.to_string()
-                ],
-            )
-            .await?;
+        let count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) as count
+             FROM offboarding_requests
+             WHERE pubkey = $1 AND status IN ($2, $3)",
+        )
+        .bind(pubkey)
+        .bind(OffboardingStatus::Pending.to_string())
+        .bind(OffboardingStatus::Processing.to_string())
+        .fetch_one(self.pool)
+        .await?;
 
-        if let Some(row) = rows.next().await? {
-            if let Ok(count) = row.get::<i64>(0) {
-                return Ok(count > 0);
-            }
-        }
-
-        Ok(false)
+        Ok(count > 0)
     }
 }

@@ -38,8 +38,7 @@ pub async fn register_push_token(
         auth_payload.key
     );
 
-    let conn = app_state.db.connect()?;
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
     push_token_repo
         .upsert(&auth_payload.key, &payload.push_token)
         .await?;
@@ -103,8 +102,7 @@ pub async fn get_user_info(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
 ) -> anyhow::Result<Json<UserInfoResponse>, ApiError> {
-    let conn = state.db.connect()?;
-    let user_repo = UserRepository::new(&conn);
+    let user_repo = UserRepository::new(&state.db_pool);
 
     let user = user_repo
         .find_by_pubkey(&auth_payload.key)
@@ -130,8 +128,7 @@ pub async fn update_ln_address(
         return Err(ApiError::InvalidArgument(e.to_string()));
     }
 
-    let conn = state.db.connect()?;
-    let user_repo = UserRepository::new(&conn);
+    let user_repo = UserRepository::new(&state.db_pool);
 
     let result = user_repo
         .update_lightning_address(&auth_payload.key, &payload.ln_address)
@@ -170,8 +167,7 @@ pub async fn complete_upload(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<CompleteUploadPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    let conn = state.db.connect()?;
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&state.db_pool);
     backup_repo
         .upsert_metadata(
             &auth_payload.key,
@@ -188,8 +184,7 @@ pub async fn list_backups(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
 ) -> Result<Json<Vec<BackupInfo>>, ApiError> {
-    let conn = state.db.connect()?;
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&state.db_pool);
     let backups = backup_repo.list(&auth_payload.key).await?;
     Ok(Json(backups))
 }
@@ -199,8 +194,7 @@ pub async fn get_download_url(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<GetDownloadUrlPayload>,
 ) -> Result<Json<DownloadUrlResponse>, ApiError> {
-    let conn = state.db.connect()?;
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&state.db_pool);
 
     let (s3_key, backup_size) = if let Some(version) = payload.backup_version {
         backup_repo
@@ -228,8 +222,7 @@ pub async fn delete_backup(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<DeleteBackupPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    let conn = state.db.connect()?;
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&state.db_pool);
 
     let s3_key = backup_repo
         .find_s3_key_by_version(&auth_payload.key, payload.backup_version)
@@ -259,11 +252,10 @@ pub async fn report_job_status(
         payload.error_message
     );
 
-    let conn = app_state.db.connect()?;
-    let tx = conn.transaction().await?;
+    let mut tx = app_state.db_pool.begin().await?;
 
     JobStatusRepository::create_and_prune(
-        &tx,
+        &mut tx,
         &auth_payload.key,
         &payload.report_type,
         &payload.status,
@@ -281,8 +273,7 @@ pub async fn update_backup_settings(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<BackupSettingsPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    let conn = state.db.connect()?;
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&state.db_pool);
     backup_repo
         .upsert_settings(&auth_payload.key, payload.backup_enabled)
         .await?;
@@ -313,8 +304,7 @@ pub async fn register_offboarding_request(
 
     let request_id = Uuid::new_v4().to_string();
 
-    let conn = state.db.connect()?;
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&state.db_pool);
     offboarding_repo
         .create_request(
             &request_id,
@@ -334,19 +324,16 @@ pub async fn deregister(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    let conn = state.db.connect()?;
     let pubkey = auth_payload.key;
 
     tracing::info!("Deregistering user with pubkey: {}", pubkey);
 
     // Use a transaction to ensure all or nothing is deleted
-    let tx = conn.transaction().await?;
+    let mut tx = state.db_pool.begin().await?;
 
-    PushTokenRepository::delete_by_pubkey(&tx, &pubkey).await?;
-    OffboardingRepository::delete_by_pubkey(&tx, &pubkey).await?;
-
-    let heartbeat_repo = HeartbeatRepository::new(&tx);
-    heartbeat_repo.delete_by_pubkey(&pubkey).await?;
+    PushTokenRepository::delete_by_pubkey(&mut tx, &pubkey).await?;
+    OffboardingRepository::delete_by_pubkey(&mut tx, &pubkey).await?;
+    HeartbeatRepository::delete_by_pubkey_tx(&mut tx, &pubkey).await?;
 
     tx.commit().await?;
 
@@ -364,8 +351,7 @@ pub async fn heartbeat_response(
         payload.notification_id
     );
 
-    let conn = state.db.connect()?;
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&state.db_pool);
 
     let updated = heartbeat_repo
         .mark_as_responded(&payload.notification_id)

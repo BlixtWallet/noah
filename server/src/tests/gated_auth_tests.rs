@@ -58,13 +58,12 @@ async fn test_register_existing_user() {
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
 
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "existing@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user.pubkey().to_string())
+        .bind("existing@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let response = app
         .oneshot(
@@ -217,13 +216,12 @@ async fn test_register_push_token() {
 
     let user = TestUser::new();
 
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "existing@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user.pubkey().to_string())
+        .bind("existing@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -252,7 +250,7 @@ async fn test_register_push_token() {
 
     // Verification: Check for token with the repository
     use crate::db::push_token_repo::PushTokenRepository;
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
     let token = push_token_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await

@@ -3,6 +3,7 @@ use axum::http::{self, Request, StatusCode};
 use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
+use chrono::Utc;
 
 use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
@@ -18,8 +19,7 @@ async fn test_heartbeat_response_success() {
     create_test_user(&app_state, &user).await;
 
     // Create a heartbeat notification first
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
     let notification_id = heartbeat_repo
         .create_notification(&user.pubkey().to_string())
         .await
@@ -55,17 +55,13 @@ async fn test_heartbeat_response_success() {
     assert_eq!(res.success, true);
 
     // Verify the heartbeat was marked as responded in the database
-    let mut rows = conn
-        .query(
-            "SELECT status, responded_at FROM heartbeat_notifications WHERE notification_id = ?",
-            libsql::params![notification_id],
-        )
-        .await
-        .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let status: String = row.get(0).unwrap();
-    let responded_at: Option<String> = row.get(1).unwrap();
+    let (status, responded_at): (String, Option<chrono::DateTime<Utc>>) = sqlx::query_as(
+        "SELECT status, responded_at FROM heartbeat_notifications WHERE notification_id = $1",
+    )
+    .bind(&notification_id)
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
 
     assert_eq!(status, "responded");
     assert!(responded_at.is_some());

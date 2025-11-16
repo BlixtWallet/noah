@@ -1,4 +1,5 @@
 use anyhow::Result;
+use sqlx::{PgPool, Postgres, Row, Transaction};
 use std::str::FromStr;
 
 use crate::types::OffboardingStatus;
@@ -14,13 +15,13 @@ pub struct OffboardingRequest {
 
 /// A struct to encapsulate offboarding-related database operations.
 pub struct OffboardingRepository<'a> {
-    conn: &'a libsql::Connection,
+    pool: &'a PgPool,
 }
 
 impl<'a> OffboardingRepository<'a> {
     /// Creates a new repository instance.
-    pub fn new(conn: &'a libsql::Connection) -> Self {
-        Self { conn }
+    pub fn new(pool: &'a PgPool) -> Self {
+        Self { pool }
     }
 
     /// Creates a new offboarding request.
@@ -31,12 +32,16 @@ impl<'a> OffboardingRepository<'a> {
         address: &str,
         address_signature: &str,
     ) -> Result<()> {
-        self.conn
-            .execute(
-                "INSERT INTO offboarding_requests (request_id, pubkey, address, address_signature) VALUES (?, ?, ?, ?)",
-                libsql::params![request_id, pubkey, address, address_signature],
-            )
-            .await?;
+        sqlx::query(
+            "INSERT INTO offboarding_requests (request_id, pubkey, address, address_signature)
+             VALUES ($1, $2, $3, $4)",
+        )
+        .bind(request_id)
+        .bind(pubkey)
+        .bind(address)
+        .bind(address_signature)
+        .execute(self.pool)
+        .await?;
         Ok(())
     }
 
@@ -44,48 +49,50 @@ impl<'a> OffboardingRepository<'a> {
     /// Note: A user could theoretically have multiple, so this just finds the first one.
     #[cfg(test)]
     pub async fn find_by_pubkey(&self, pubkey: &str) -> Result<Option<OffboardingRequest>> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT request_id, pubkey, status, address, address_signature FROM offboarding_requests WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
+        let row = sqlx::query(
+            "SELECT request_id, pubkey, status, address, address_signature
+             FROM offboarding_requests
+             WHERE pubkey = $1
+             LIMIT 1",
+        )
+        .bind(pubkey)
+        .fetch_optional(self.pool)
+        .await?;
 
-        match rows.next().await? {
-            Some(row) => {
-                let status_str: String = row.get(2)?;
-                Ok(Some(OffboardingRequest {
-                    request_id: row.get(0)?,
-                    pubkey: row.get(1)?,
-                    status: OffboardingStatus::from_str(&status_str)?,
-                    address: row.get(3)?,
-                    address_signature: row.get(4)?,
-                }))
-            }
-            None => Ok(None),
+        if let Some(row) = row {
+            let status_str: String = row.try_get("status")?;
+            Ok(Some(OffboardingRequest {
+                request_id: row.try_get("request_id")?,
+                pubkey: row.try_get("pubkey")?,
+                status: OffboardingStatus::from_str(&status_str)?,
+                address: row.try_get("address")?,
+                address_signature: row.try_get("address_signature")?,
+            }))
+        } else {
+            Ok(None)
         }
     }
 
     /// Finds all offboarding requests with a 'pending' status.
     pub async fn find_all_pending(&self) -> Result<Vec<OffboardingRequest>> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT request_id, pubkey, status, address, address_signature FROM offboarding_requests WHERE status = ?",
-                libsql::params![OffboardingStatus::Pending.to_string()],
-            )
-            .await?;
+        let rows = sqlx::query(
+            "SELECT request_id, pubkey, status, address, address_signature
+             FROM offboarding_requests
+             WHERE status = $1",
+        )
+        .bind(OffboardingStatus::Pending.to_string())
+        .fetch_all(self.pool)
+        .await?;
 
         let mut requests = Vec::new();
-        while let Some(row) = rows.next().await? {
-            let status_str: String = row.get(2)?;
+        for row in rows {
+            let status_str: String = row.try_get("status")?;
             requests.push(OffboardingRequest {
-                request_id: row.get(0)?,
-                pubkey: row.get(1)?,
+                request_id: row.try_get("request_id")?,
+                pubkey: row.try_get("pubkey")?,
                 status: OffboardingStatus::from_str(&status_str)?,
-                address: row.get(3)?,
-                address_signature: row.get(4)?,
+                address: row.try_get("address")?,
+                address_signature: row.try_get("address_signature")?,
             });
         }
         Ok(requests)
@@ -93,24 +100,29 @@ impl<'a> OffboardingRepository<'a> {
 
     /// Updates the status of an offboarding request.
     pub async fn update_status(&self, request_id: &str, status: OffboardingStatus) -> Result<()> {
-        self.conn
-            .execute(
-                "UPDATE offboarding_requests SET status = ? WHERE request_id = ?",
-                libsql::params![status.to_string(), request_id],
-            )
-            .await?;
+        sqlx::query(
+            "UPDATE offboarding_requests
+             SET status = $1, updated_at = now()
+             WHERE request_id = $2",
+        )
+        .bind(status.to_string())
+        .bind(request_id)
+        .execute(self.pool)
+        .await?;
         Ok(())
     }
 
     /// Deletes all offboarding requests for a given user within a transaction.
     /// This is a static method because it operates on a transaction, not a connection
     /// owned by the repository instance.
-    pub async fn delete_by_pubkey(tx: &libsql::Transaction, pubkey: &str) -> Result<()> {
-        tx.execute(
-            "DELETE FROM offboarding_requests WHERE pubkey = ?",
-            libsql::params![pubkey],
-        )
-        .await?;
+    pub async fn delete_by_pubkey(
+        tx: &mut Transaction<'_, Postgres>,
+        pubkey: &str,
+    ) -> Result<()> {
+        sqlx::query("DELETE FROM offboarding_requests WHERE pubkey = $1")
+            .bind(pubkey)
+            .execute(&mut *tx)
+            .await?;
         Ok(())
     }
 }

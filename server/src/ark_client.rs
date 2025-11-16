@@ -150,8 +150,7 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
 }
 
 pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<()> {
-    let conn = app_state.db.connect()?;
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
 
     // Find all pending offboarding requests
     let pending_requests = offboarding_repo.find_all_pending().await?;

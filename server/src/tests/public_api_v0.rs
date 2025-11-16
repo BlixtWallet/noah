@@ -12,13 +12,12 @@ use crate::types::{AppVersionCheckPayload, AppVersionInfo};
 async fn test_lnurlp_request_default() {
     let (app, app_state) = setup_public_test_app().await;
 
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params!["test_pubkey", "test@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind("test_pubkey")
+        .bind("test@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let response = app
         .oneshot(

@@ -19,20 +19,23 @@ async fn test_normal_priority_respects_spacing() {
     let pubkey = user.pubkey().to_string();
 
     // Register user
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey, &format!("user1@test.com"))
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey, &format!("user1@test.com"))
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // Record a recent notification (20 minutes ago)
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let recent_time = (Utc::now() - Duration::minutes(20)).to_rfc3339();
-    conn.execute(
-        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at) VALUES (?, ?, ?)",
-        libsql::params![pubkey.clone(), "backup_trigger", recent_time],
+    sqlx::query(
+        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+         VALUES ($1, $2, $3)",
     )
+    .bind(pubkey.clone())
+    .bind("backup_trigger")
+    .bind(recent_time)
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
@@ -71,20 +74,23 @@ async fn test_critical_priority_bypasses_spacing() {
     let pubkey = user.pubkey().to_string();
 
     // Register user
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey, &format!("user2@test.com"))
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey, &format!("user2@test.com"))
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // Record a very recent notification (5 minutes ago)
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let recent_time = (Utc::now() - Duration::minutes(5)).to_rfc3339();
-    conn.execute(
-        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at) VALUES (?, ?, ?)",
-        libsql::params![pubkey.clone(), "backup_trigger", recent_time],
+    sqlx::query(
+        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+         VALUES ($1, $2, $3)",
     )
+    .bind(pubkey.clone())
+    .bind("backup_trigger")
+    .bind(recent_time)
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
@@ -122,15 +128,14 @@ async fn test_offboarding_skips_maintenance() {
     let pubkey = user.pubkey().to_string();
 
     // Register user
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey, &format!("user3@test.com"))
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey, &format!("user3@test.com"))
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // Create pending offboarding request
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
     offboarding_repo
         .create_request("test-request-id", &pubkey, "bc1qtest", "test-signature")
         .await
@@ -152,7 +157,7 @@ async fn test_offboarding_skips_maintenance() {
     assert!(result.is_ok());
 
     // Verify maintenance was NOT tracked for offboarding user
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let last_time = tracking_repo
         .get_last_notification_time_by_type(&pubkey, &notification_data)
         .await
@@ -171,15 +176,14 @@ async fn test_notification_tracking_records_sent() {
     let pubkey = user.pubkey().to_string();
 
     // Register user
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey, &format!("user4@test.com"))
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey, &format!("user4@test.com"))
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // Verify no notifications tracked initially
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let last_time = tracking_repo
         .get_last_notification_time(&pubkey)
         .await
@@ -228,22 +232,25 @@ async fn test_broadcast_filters_ineligible_users() {
     let pubkey1 = user1.pubkey().to_string();
     let pubkey2 = user2.pubkey().to_string();
 
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey1, "user5@test.com")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey1, "user5@test.com")
         .await
         .unwrap();
-    UserRepository::create(&tx, &pubkey2, "user6@test.com")
+    UserRepository::create(&mut tx, &pubkey2, "user6@test.com")
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // User1 received notification 10 minutes ago (too recent)
     let recent_time = (Utc::now() - Duration::minutes(10)).to_rfc3339();
-    conn.execute(
-        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at) VALUES (?, ?, ?)",
-        libsql::params![pubkey1.clone(), "backup_trigger", recent_time.clone()],
+    sqlx::query(
+        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+         VALUES ($1, $2, $3)",
     )
+    .bind(pubkey1.clone())
+    .bind("backup_trigger")
+    .bind(recent_time.clone())
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
@@ -263,18 +270,18 @@ async fn test_broadcast_filters_ineligible_users() {
     coordinator.send_notification(request).await.unwrap();
 
     // Verify user1 still only has the old notification
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
-    let mut rows = conn
-        .query(
-            "SELECT last_sent_at FROM notification_tracking WHERE pubkey = ? AND notification_type = ?",
-            libsql::params![pubkey1.clone(), "backup_trigger"],
-        )
-        .await
-        .unwrap();
-    let row = rows.next().await.unwrap().unwrap();
-    let last_sent: String = row.get(0).unwrap();
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
+    let last_sent: chrono::DateTime<Utc> = sqlx::query_scalar(
+        "SELECT last_sent_at FROM notification_tracking WHERE pubkey = $1 AND notification_type = $2",
+    )
+    .bind(pubkey1.clone())
+    .bind("backup_trigger")
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
     assert_eq!(
-        last_sent, recent_time,
+        last_sent.to_rfc3339(),
+        recent_time,
         "User1 should not receive new notification"
     );
 
@@ -302,41 +309,48 @@ async fn test_eligible_users_query() {
     let pubkey2 = user2.pubkey().to_string();
     let pubkey3 = user3.pubkey().to_string();
 
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey1, "user7@test.com")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey1, "user7@test.com")
         .await
         .unwrap();
-    UserRepository::create(&tx, &pubkey2, "user8@test.com")
+    UserRepository::create(&mut tx, &pubkey2, "user8@test.com")
         .await
         .unwrap();
-    UserRepository::create(&tx, &pubkey3, "user9@test.com")
+    UserRepository::create(&mut tx, &pubkey3, "user9@test.com")
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // User1: notification 10 minutes ago (too recent for 45 min spacing)
     let recent_time = (Utc::now() - Duration::minutes(10)).to_rfc3339();
-    conn.execute(
-        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at) VALUES (?, ?, ?)",
-        libsql::params![pubkey1.clone(), "maintenance", recent_time],
+    sqlx::query(
+        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+         VALUES ($1, $2, $3)",
     )
+    .bind(pubkey1.clone())
+    .bind("maintenance")
+    .bind(recent_time)
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
     // User2: notification 50 minutes ago (eligible)
     let old_time = (Utc::now() - Duration::minutes(50)).to_rfc3339();
-    conn.execute(
-        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at) VALUES (?, ?, ?)",
-        libsql::params![pubkey2.clone(), "backup_trigger", old_time],
+    sqlx::query(
+        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+         VALUES ($1, $2, $3)",
     )
+    .bind(pubkey2.clone())
+    .bind("backup_trigger")
+    .bind(old_time)
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
     // User3: no notifications (eligible)
 
     // Query eligible users
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let eligible = tracking_repo.get_eligible_users(45).await.unwrap();
 
     // Should return user2 and user3, but not user1
@@ -369,24 +383,27 @@ async fn test_spacing_configuration_from_config() {
     let user = TestUser::new();
     let pubkey = user.pubkey().to_string();
 
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey, "user10@test.com")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey, "user10@test.com")
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // Record notification exactly 45 minutes ago
     let boundary_time = (Utc::now() - Duration::minutes(45)).to_rfc3339();
-    conn.execute(
-        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at) VALUES (?, ?, ?)",
-        libsql::params![pubkey.clone(), "maintenance", boundary_time],
+    sqlx::query(
+        "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
+         VALUES ($1, $2, $3)",
     )
+    .bind(pubkey.clone())
+    .bind("maintenance")
+    .bind(boundary_time)
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
     // At exactly 45 minutes, should be able to send
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let can_send = tracking_repo
         .can_send_notification(&pubkey, 45)
         .await
@@ -402,15 +419,14 @@ async fn test_offboarding_with_processing_status_skips_maintenance() {
     let pubkey = user.pubkey().to_string();
 
     // Register user
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &pubkey, "user11@test.com")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &pubkey, "user11@test.com")
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
     // Create offboarding request in "processing" state
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
     offboarding_repo
         .create_request(
             "processing-request-id",
@@ -426,7 +442,7 @@ async fn test_offboarding_with_processing_status_skips_maintenance() {
         .unwrap();
 
     // Verify user is considered offboarding
-    let tracking_repo = NotificationTrackingRepository::new(&conn);
+    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
     let is_offboarding = tracking_repo.is_user_offboarding(&pubkey).await.unwrap();
     assert!(
         is_offboarding,
