@@ -121,7 +121,7 @@ impl<'a> OffboardingRepository<'a> {
     ) -> Result<()> {
         sqlx::query("DELETE FROM offboarding_requests WHERE pubkey = $1")
             .bind(pubkey)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
         Ok(())
     }

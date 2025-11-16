@@ -45,7 +45,7 @@ impl<'a> PushTokenRepository<'a> {
     ) -> Result<()> {
         sqlx::query("DELETE FROM push_tokens WHERE pubkey = $1")
             .bind(pubkey)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
         Ok(())
     }

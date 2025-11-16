@@ -12,7 +12,7 @@ use std::str::FromStr;
 ///
 /// ## Non-Reloadable (requires restart):
 /// - `host`, `port`, `private_port`: Network binding configuration
-/// - `postgres_url`, `regtest_postgres_url`: Database connection settings
+/// - `postgres_url`: Database connection settings
 /// - `server_network`: Bitcoin network selection
 ///
 /// ## Hot-Reloadable (applies automatically):
@@ -34,7 +34,6 @@ pub struct Config {
     #[serde(default = "default_lnurl_domain")]
     pub lnurl_domain: String,
     pub postgres_url: String,
-    pub regtest_postgres_url: Option<String>,
     #[serde(default = "default_postgres_max_connections")]
     pub postgres_max_connections: u32,
     #[serde(default)]
@@ -70,12 +69,6 @@ impl Config {
         tracing::debug!("Private Port: {}", self.private_port);
         tracing::debug!("LNURL Domain: {}", self.lnurl_domain);
         tracing::debug!("Postgres URL: {}", self.postgres_url);
-        tracing::debug!(
-            "Regtest Postgres URL override: {}",
-            self.regtest_postgres_url
-                .as_deref()
-                .unwrap_or("[NOT SET - defaulting to postgres_url]")
-        );
         tracing::debug!(
             "Postgres connection pool: max={}, min={}",
             self.postgres_max_connections,

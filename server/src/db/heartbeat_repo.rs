@@ -64,7 +64,7 @@ impl<'a> HeartbeatRepository<'a> {
     ) -> Result<()> {
         sqlx::query("DELETE FROM heartbeat_notifications WHERE pubkey = $1")
             .bind(pubkey)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
         Ok(())
     }

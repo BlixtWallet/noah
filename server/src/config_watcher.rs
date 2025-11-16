@@ -100,10 +100,6 @@ fn log_config_changes(old: &Config, new: &Config) -> bool {
         warn!("postgres_url changed (requires restart)");
         has_non_reloadable = true;
     }
-    if old.regtest_postgres_url != new.regtest_postgres_url {
-        warn!("regtest_postgres_url changed (requires restart)");
-        has_non_reloadable = true;
-    }
     if old.postgres_max_connections != new.postgres_max_connections
         || old.postgres_min_connections != new.postgres_min_connections
     {

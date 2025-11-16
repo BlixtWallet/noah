@@ -14,11 +14,13 @@ private_port = 3099
 # Default: "localhost"
 lnurl_domain = "localhost"
 
-# Turso database connection URL
-turso_url = "libsql://your-database.turso.io"
+# Postgres connection URL used for Bitcoin/Signet networks
+postgres_url = "postgres://postgres:postgres@localhost:5432/noah"
 
-# Turso database API key
-turso_api_key = "your-turso-api-key"
+# Connection pool configuration
+# Default max: 10, min: 1
+# postgres_max_connections = 10
+# postgres_min_connections = 1
 
 # Expo push notification access token
 expo_access_token = "your-expo-access-token"

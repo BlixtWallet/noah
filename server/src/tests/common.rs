@@ -53,7 +53,6 @@ impl TestUser {
             private_port: 3001,
             lnurl_domain: "localhost".to_string(),
             postgres_url: "postgres://postgres:postgres@localhost:5432/noah_test".to_string(),
-            regtest_postgres_url: None,
             postgres_max_connections: 5,
             postgres_min_connections: Some(1),
             expo_access_token: "test-token".to_string(),

@@ -28,7 +28,7 @@ impl JobStatusRepository {
         .bind(format!("{:?}", report_type))
         .bind(format!("{:?}", status))
         .bind(error_message)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await?;
 
         // Keep only the last 20 reports by deleting the oldest ones if the count exceeds 20.
@@ -44,7 +44,7 @@ impl JobStatusRepository {
              )",
         )
         .bind(pubkey)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await?;
 
         Ok(())

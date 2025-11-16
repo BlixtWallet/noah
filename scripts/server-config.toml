@@ -3,8 +3,11 @@ host = "0.0.0.0"
 port = 3000
 private_port = 3099
 lnurl_domain = "localhost.com"
-turso_url = "file:local.db"
-turso_api_key = "test-api-key"
+# Postgres connection URL for production networks
+postgres_url = "postgres://postgres:postgres@postgres:5432/noah"
+
+postgres_max_connections = 10
+postgres_min_connections = 1
 expo_access_token = "test-expo-token"
 ark_server_url = "http://captaind:3535"
 server_network = "regtest"

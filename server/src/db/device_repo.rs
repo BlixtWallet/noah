@@ -33,7 +33,7 @@ impl DeviceRepository {
         .bind(device_info.os_name.clone())
         .bind(device_info.os_version.clone())
         .bind(device_info.app_version.clone())
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await?;
         Ok(())
     }

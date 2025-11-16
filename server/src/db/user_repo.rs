@@ -71,7 +71,7 @@ impl<'a> UserRepository<'a> {
         )
         .bind(pubkey)
         .bind(ln_address)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         {
             Ok(_) => Ok(()),

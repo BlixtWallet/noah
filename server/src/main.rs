@@ -1,4 +1,3 @@
-use anyhow::bail;
 use arc_swap::ArcSwap;
 use axum::{
     Router, middleware,
@@ -126,23 +125,12 @@ fn main() -> anyhow::Result<()> {
 
 async fn start_server(config: Config, config_path: String) -> anyhow::Result<()> {
     let host = config.host()?;
-    let server_network = config.network()?;
-
-    let database_url = match server_network {
-        Network::Regtest => config
-            .regtest_postgres_url
-            .clone()
-            .unwrap_or_else(|| config.postgres_url.clone()),
-        Network::Bitcoin | Network::Signet => config.postgres_url.clone(),
-        _ => {
-            bail!("Unsupported network: {}", server_network);
-        }
-    };
+    let _server_network = config.network()?;
 
     let db_pool = PgPoolOptions::new()
         .max_connections(config.postgres_max_connections)
         .min_connections(config.postgres_min_connections.unwrap_or(1))
-        .connect(&database_url)
+        .connect(&config.postgres_url)
         .await?;
 
     db::migrations::run_migrations(&db_pool).await?;

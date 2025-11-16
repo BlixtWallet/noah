@@ -1,13 +1,13 @@
 use axum::body::Body;
 use axum::http::{self, Request, StatusCode};
+use chrono::{Duration, Utc};
 use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
-use chrono::Utc;
 
 use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
-use crate::types::DefaultSuccessPayload;
+use crate::types::{DefaultSuccessPayload, HeartbeatStatus};
 use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
@@ -110,8 +110,7 @@ async fn test_heartbeat_response_already_responded() {
     create_test_user(&app_state, &user).await;
 
     // Create a heartbeat notification and mark it as already responded
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
     let notification_id = heartbeat_repo
         .create_notification(&user.pubkey().to_string())
         .await
@@ -158,8 +157,7 @@ async fn test_heartbeat_response_unauthenticated() {
     create_test_user(&app_state, &user).await;
 
     // Create a heartbeat notification
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
     let notification_id = heartbeat_repo
         .create_notification(&user.pubkey().to_string())
         .await
@@ -200,8 +198,7 @@ async fn test_heartbeat_repo_create_notification() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     let notification_id = heartbeat_repo
         .create_notification(&user.pubkey().to_string())
@@ -210,21 +207,16 @@ async fn test_heartbeat_repo_create_notification() {
 
     assert!(!notification_id.is_empty());
 
-    // Verify the notification was created in the database
-    let mut rows = conn
-        .query(
-            "SELECT pubkey, status FROM heartbeat_notifications WHERE notification_id = ?",
-            libsql::params![notification_id],
-        )
-        .await
-        .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let pubkey: String = row.get(0).unwrap();
-    let status: String = row.get(1).unwrap();
+    let (pubkey, status): (String, String) = sqlx::query_as(
+        "SELECT pubkey, status FROM heartbeat_notifications WHERE notification_id = $1",
+    )
+    .bind(&notification_id)
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
 
     assert_eq!(pubkey, user.pubkey().to_string());
-    assert_eq!(status, crate::types::HeartbeatStatus::Pending.to_string());
+    assert_eq!(status, HeartbeatStatus::Pending.to_string());
 }
 
 #[tracing_test::traced_test]
@@ -235,33 +227,48 @@ async fn test_heartbeat_repo_count_consecutive_missed() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
-    // Create 5 old missed notifications (pending status)
     for i in 0..5 {
-        conn.execute(
-            "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at) VALUES (?, ?, 'pending', datetime('now', '-' || ? || ' seconds'))",
-            libsql::params![user.pubkey().to_string(), format!("old-{}", i), 100 + i],
+        let sent_at = Utc::now() - Duration::seconds((100 + i) as i64);
+        sqlx::query(
+            "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at)
+             VALUES ($1, $2, $3, $4)",
         )
+        .bind(user.pubkey().to_string())
+        .bind(format!("old-{}", i))
+        .bind(HeartbeatStatus::Pending.to_string())
+        .bind(sent_at)
+        .execute(&app_state.db_pool)
         .await
         .unwrap();
     }
 
-    // Create 1 responded notification (more recent than the old ones)
-    conn.execute(
-        "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at, responded_at) VALUES (?, 'responded', 'responded', datetime('now', '-50 seconds'), datetime('now', '-49 seconds'))",
-        libsql::params![user.pubkey().to_string()],
+    let responded_sent_at = Utc::now() - Duration::seconds(50);
+    sqlx::query(
+        "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at, responded_at)
+         VALUES ($1, $2, $3, $4, $5)",
     )
+    .bind(user.pubkey().to_string())
+    .bind("responded")
+    .bind(HeartbeatStatus::Responded.to_string())
+    .bind(responded_sent_at)
+    .bind(responded_sent_at + Duration::seconds(1))
+    .execute(&app_state.db_pool)
     .await
     .unwrap();
 
-    // Create 3 most recent missed notifications
     for i in 0..3 {
-        conn.execute(
-            "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at) VALUES (?, ?, 'pending', datetime('now', '-' || ? || ' seconds'))",
-            libsql::params![user.pubkey().to_string(), format!("recent-{}", i), 10 + i],
+        let sent_at = Utc::now() - Duration::seconds((10 + i) as i64);
+        sqlx::query(
+            "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at)
+             VALUES ($1, $2, $3, $4)",
         )
+        .bind(user.pubkey().to_string())
+        .bind(format!("recent-{}", i))
+        .bind(HeartbeatStatus::Pending.to_string())
+        .bind(sent_at)
+        .execute(&app_state.db_pool)
         .await
         .unwrap();
     }
@@ -285,22 +292,21 @@ async fn test_heartbeat_repo_get_users_to_deregister() {
     let user2 = TestUser::new_with_key(&[0xab; 32]);
 
     // Create users with unique lightning addresses
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user1.pubkey().to_string(), "user1@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user1.pubkey().to_string())
+        .bind("user1@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user2.pubkey().to_string(), "user2@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user2.pubkey().to_string())
+        .bind("user2@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     // User1: Create 10 missed notifications (should be deregistered)
     for _ in 0..10 {
@@ -334,8 +340,7 @@ async fn test_heartbeat_repo_cleanup_old_notifications() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     // Create 20 notifications (more than the 15 limit)
     for _ in 0..20 {
@@ -350,16 +355,13 @@ async fn test_heartbeat_repo_cleanup_old_notifications() {
     heartbeat_repo.cleanup_old_notifications().await.unwrap();
 
     // Verify only 15 notifications remain
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let count: i32 = row.get(0).unwrap();
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
+    )
+    .bind(user.pubkey().to_string())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
 
     assert_eq!(count, 15);
 }
@@ -372,8 +374,7 @@ async fn test_heartbeat_repo_delete_notification() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     // Create a heartbeat notification
     let notification_id = heartbeat_repo
@@ -382,16 +383,13 @@ async fn test_heartbeat_repo_delete_notification() {
         .unwrap();
 
     // Verify it exists
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE notification_id = ?",
-            libsql::params![notification_id.clone()],
-        )
-        .await
-        .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let count: i32 = row.get(0).unwrap();
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE notification_id = $1",
+    )
+    .bind(notification_id.clone())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
     assert_eq!(count, 1);
 
     // Delete the notification
@@ -401,17 +399,14 @@ async fn test_heartbeat_repo_delete_notification() {
         .unwrap();
 
     // Verify it no longer exists
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE notification_id = ?",
-            libsql::params![notification_id.clone()],
-        )
-        .await
-        .unwrap();
-
-    let row = rows.next().await.unwrap().unwrap();
-    let count: i32 = row.get(0).unwrap();
-    assert_eq!(count, 0);
+    let count_after: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE notification_id = $1",
+    )
+    .bind(notification_id.clone())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(count_after, 0);
 }
 
 #[tracing_test::traced_test]
@@ -419,8 +414,7 @@ async fn test_heartbeat_repo_delete_notification() {
 async fn test_heartbeat_repo_delete_nonexistent_notification() {
     let (_, app_state) = setup_test_app().await;
 
-    let conn = app_state.db.connect().unwrap();
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     // Attempt to delete a non-existent notification - should not error
     let result = heartbeat_repo
@@ -440,15 +434,14 @@ async fn test_heartbeat_repo_delete_by_pubkey() {
     create_test_user(&app_state, &user1).await;
 
     // Create user2 with unique lightning address
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user2.pubkey().to_string(), "user2@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user2.pubkey().to_string())
+        .bind("user2@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     // Create multiple heartbeat notifications for user1
     let _notification_id1 = heartbeat_repo
@@ -467,55 +460,48 @@ async fn test_heartbeat_repo_delete_by_pubkey() {
         .unwrap();
 
     // Verify all notifications exist
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
-            libsql::params![user1.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-    let row = rows.next().await.unwrap().unwrap();
-    let count1: i32 = row.get(0).unwrap();
+    let count1: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
+    )
+    .bind(user1.pubkey().to_string())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
     assert_eq!(count1, 2);
 
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
-            libsql::params![user2.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-    let row = rows.next().await.unwrap().unwrap();
-    let count2: i32 = row.get(0).unwrap();
+    let count2: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
+    )
+    .bind(user2.pubkey().to_string())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
     assert_eq!(count2, 1);
 
     // Delete all heartbeat notifications for user1
-    heartbeat_repo
-        .delete_by_pubkey(&user1.pubkey().to_string())
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    HeartbeatRepository::delete_by_pubkey_tx(&mut tx, &user1.pubkey().to_string())
         .await
         .unwrap();
+    tx.commit().await.unwrap();
 
     // Verify user1's notifications are deleted
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
-            libsql::params![user1.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-    let row = rows.next().await.unwrap().unwrap();
-    let count1_after: i32 = row.get(0).unwrap();
+    let count1_after: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
+    )
+    .bind(user1.pubkey().to_string())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
     assert_eq!(count1_after, 0);
 
     // Verify user2's notifications are still there
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
-            libsql::params![user2.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-    let row = rows.next().await.unwrap().unwrap();
-    let count2_after: i32 = row.get(0).unwrap();
+    let count2_after: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
+    )
+    .bind(user2.pubkey().to_string())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
     assert_eq!(count2_after, 1);
 }
