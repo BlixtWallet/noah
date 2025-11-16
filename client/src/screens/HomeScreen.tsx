@@ -10,7 +10,7 @@ import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
-import { useBalance, useBalanceSync, useLoadWallet } from "../hooks/useWallet";
+import { useBalance, useLoadWallet, useWalletSync } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { QRCodeScanner } from "~/components/QRCodeScanner";
@@ -30,17 +30,18 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
-import { syncPendingBoards } from "~/lib/paymentsApi";
-import { useWidget } from "~/hooks/useWidget";
+import { updateWidget } from "~/hooks/useWidget";
 import { formatBip177 } from "~/lib/utils";
+import { calculateBalances } from "~/lib/balanceUtils";
+import { sync } from "~/lib/walletApi";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const isFocused = useIsFocused();
   const { walletError } = useWalletStore();
   const { safelyExecuteWhenReady, isBackgroundJobRunning } = useBackgroundJobCoordination();
-  const { data: balance, isFetching, refetch, error } = useBalance();
-  const { mutateAsync: balanceSync, isPending: isSyncing } = useBalanceSync();
+  const { data: balance, refetch, error } = useBalance();
+  const { isPending } = useWalletSync();
   const { mutateAsync: loadWallet } = useLoadWallet();
   const { data: btcToUsdRate } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
@@ -61,50 +62,19 @@ const HomeScreen = () => {
   const onRefresh = useCallback(async () => {
     await safelyExecuteWhenReady(() => loadWallet());
 
-    await balanceSync();
+    await sync();
     await refetch();
-    await syncPendingBoards();
+    await updateWidget();
     getRandomFact();
-  }, [balanceSync, refetch, getRandomFact, safelyExecuteWhenReady, loadWallet]);
+  }, [refetch, getRandomFact, safelyExecuteWhenReady, loadWallet]);
 
-  const onchainBalance = balance
-    ? (balance.onchain.confirmed ?? 0) +
-      (balance.onchain.immature ?? 0) +
-      (balance.onchain.trusted_pending ?? 0) +
-      (balance.onchain.untrusted_pending ?? 0)
-    : 0;
-  const offchainBalance = balance
-    ? (balance.offchain.pending_exit ?? 0) +
-      (balance.offchain.pending_lightning_send ?? 0) +
-      (balance.offchain.pending_lightning_receive.claimable ?? 0) +
-      (balance.offchain.pending_in_round ?? 0) +
-      (balance.offchain.spendable ?? 0) +
-      (balance.offchain.pending_board ?? 0)
-    : 0;
-
-  const totalPendingBalance = balance
-    ? (balance.onchain.trusted_pending ?? 0) +
-      (balance.onchain.untrusted_pending ?? 0) +
-      (balance.onchain.immature ?? 0) +
-      (balance.offchain.pending_exit ?? 0) +
-      (balance.offchain.pending_lightning_send ?? 0) +
-      (balance.offchain.pending_in_round ?? 0) +
-      (balance.offchain.pending_board ?? 0)
-    : 0;
-  const totalBalance = onchainBalance + offchainBalance;
+  const balances = balance ? calculateBalances(balance) : null;
+  const totalBalance = balances?.totalBalance ?? 0;
+  const onchainBalance = balances?.onchainBalance ?? 0;
+  const offchainBalance = balances?.offchainBalance ?? 0;
+  const totalPendingBalance = balances?.pendingBalance ?? 0;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
   const errorMessage = error instanceof Error ? error.message : String(error);
-
-  useWidget(
-    balance
-      ? {
-          totalBalance,
-          onchainBalance,
-          offchainBalance,
-          pendingBalance: totalPendingBalance,
-        }
-      : null,
-  );
 
   const animatedRotation = useAnimatedStyle(() => {
     return {
@@ -157,7 +127,7 @@ const HomeScreen = () => {
         }}
         refreshControl={
           <RefreshControl
-            refreshing={isFetching || isSyncing}
+            refreshing={isPending}
             onRefresh={onRefresh}
             tintColor={COLORS.BITCOIN_ORANGE}
             colors={[COLORS.BITCOIN_ORANGE]}
@@ -182,7 +152,7 @@ const HomeScreen = () => {
           </View>
         )}
         <View className="items-center justify-center flex-1">
-          {isFetching && !balance ? (
+          {isPending && !balance ? (
             <NoahActivityIndicator size="large" />
           ) : error || walletError ? (
             <Alert variant="destructive" icon={AlertCircle}>

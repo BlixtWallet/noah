@@ -7,6 +7,8 @@ struct BalanceEntry: TimelineEntry {
     let onchainBalance: Double
     let offchainBalance: Double
     let pendingBalance: Double
+    let closestExpiryBlocks: Double
+    let expiryThreshold: Double
 }
 
 class BalanceProvider: TimelineProvider {
@@ -22,7 +24,9 @@ class BalanceProvider: TimelineProvider {
             totalBalance: 0,
             onchainBalance: 0,
             offchainBalance: 0,
-            pendingBalance: 0
+            pendingBalance: 0,
+            closestExpiryBlocks: -999,
+            expiryThreshold: 288
         )
     }
 
@@ -54,7 +58,9 @@ class BalanceProvider: TimelineProvider {
                 totalBalance: 0,
                 onchainBalance: 0,
                 offchainBalance: 0,
-                pendingBalance: 0
+                pendingBalance: 0,
+                closestExpiryBlocks: -999,
+                expiryThreshold: 288
             )
         }
 
@@ -63,7 +69,9 @@ class BalanceProvider: TimelineProvider {
             totalBalance: balanceData["totalBalance"] as? Double ?? 0,
             onchainBalance: balanceData["onchainBalance"] as? Double ?? 0,
             offchainBalance: balanceData["offchainBalance"] as? Double ?? 0,
-            pendingBalance: balanceData["pendingBalance"] as? Double ?? 0
+            pendingBalance: balanceData["pendingBalance"] as? Double ?? 0,
+            closestExpiryBlocks: balanceData["closestExpiryBlocks"] as? Double ?? -999,
+            expiryThreshold: balanceData["expiryThreshold"] as? Double ?? 288
         )
     }
 }
@@ -88,6 +96,28 @@ struct NoahBalanceWidgetView: View {
         } else {
             mediumWidgetLayout
         }
+    }
+
+    private func getExpiryStatus() -> (icon: String, color: Color) {
+        let blocks = entry.closestExpiryBlocks
+        let threshold = entry.expiryThreshold
+
+        // Critical: within 20% of threshold (e.g., < 58 blocks if threshold is 288)
+        // Also includes expired VTXOs (negative blocks).
+        let criticalThreshold = threshold * 0.2
+
+        if blocks <= criticalThreshold {
+            return ("exclamationmark.triangle.fill", .red)
+        } else if blocks <= threshold {
+            return ("bell.fill", .orange)
+        } else {
+            return ("checkmark.circle.fill", .green)
+        }
+    }
+
+    private var shouldShowExpiry: Bool {
+        // Hide expiry section if no VTXOs (-999 sentinel value)
+        return entry.closestExpiryBlocks != -999
     }
 
     private var smallWidgetLayout: some View {
@@ -125,6 +155,19 @@ struct NoahBalanceWidgetView: View {
                         .font(.caption2)
                         .foregroundColor(.yellow)
                         .lineLimit(1)
+                }
+
+                // Expiry status - only show if VTXOs exist
+                if shouldShowExpiry {
+                    HStack(spacing: 3) {
+                        let expiryStatus = getExpiryStatus()
+                        Image(systemName: expiryStatus.icon)
+                            .font(.system(size: 10))
+                            .foregroundColor(expiryStatus.color)
+                        Text("Expires: \(Int(entry.closestExpiryBlocks))b")
+                            .font(.caption2)
+                            .foregroundColor(expiryStatus.color)
+                    }
                 }
             }
 
@@ -193,6 +236,19 @@ struct NoahBalanceWidgetView: View {
                     Text("Pending: ₿\u{00A0}\(formatSats(entry.pendingBalance))")
                         .font(.caption2)
                         .foregroundColor(.yellow)
+                }
+
+                // Expiry status - only show if VTXOs exist
+                if shouldShowExpiry {
+                    HStack(spacing: 4) {
+                        let expiryStatus = getExpiryStatus()
+                        Image(systemName: expiryStatus.icon)
+                            .font(.system(size: 12))
+                            .foregroundColor(expiryStatus.color)
+                        Text("VTXO expires: \(Int(entry.closestExpiryBlocks)) blocks")
+                            .font(.caption)
+                            .foregroundColor(expiryStatus.color)
+                    }
                 }
             }
 

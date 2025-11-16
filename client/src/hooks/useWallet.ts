@@ -13,6 +13,7 @@ import {
   getVtxos,
   getExpiringVtxos,
   closeWalletIfLoaded,
+  sync,
 } from "../lib/walletApi";
 import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
@@ -60,6 +61,21 @@ export function useLoadWallet() {
       log.e("Error syncing wallet", [error]);
       setWalletError(true);
     },
+  });
+}
+
+export function useWalletSync() {
+  return useMutation({
+    mutationFn: async () => {
+      const result = await Promise.allSettled([sync(), onchainSyncAction()]);
+      const isRejected = result.some((result) => result.status === "rejected");
+      if (isRejected) {
+        throw result.find((result) => result.status === "rejected")?.reason;
+      }
+
+      return;
+    },
+    retry: false,
   });
 }
 

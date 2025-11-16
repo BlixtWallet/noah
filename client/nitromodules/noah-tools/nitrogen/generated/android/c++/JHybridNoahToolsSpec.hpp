@@ -69,7 +69,7 @@ namespace margelo::nitro::noahtools {
     double getAudioDuration() override;
     double getAudioPosition() override;
     bool isAudioPlaying() override;
-    void saveBalanceForWidget(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, const std::string& appGroup) override;
+    void updateWidgetData(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, double closestExpiryBlocks, double expiryThreshold, const std::string& appGroup) override;
 
   private:
     friend HybridBase;

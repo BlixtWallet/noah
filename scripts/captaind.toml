@@ -1,6 +1,6 @@
 data_dir = "/data/captaind"
 network = "regtest"
-vtxo_lifetime = 4320
+vtxo_lifetime = 48
 min_board_amount = "20000 sat"
 vtxo_exit_delta = 12
 max_arkoor_depth = 5

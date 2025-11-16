@@ -79,11 +79,13 @@ class NoahTools : HybridNoahToolsSpec() {
         return NoahToolsAudio.performIsAudioPlaying()
     }
 
-    override fun saveBalanceForWidget(
+    override fun updateWidgetData(
         totalBalance: Double,
         onchainBalance: Double,
         offchainBalance: Double,
         pendingBalance: Double,
+        closestExpiryBlocks: Double,
+        expiryThreshold: Double,
         appGroup: String
     ) {
         val context = NitroModules.applicationContext ?: return
@@ -94,6 +96,8 @@ class NoahTools : HybridNoahToolsSpec() {
             putLong("onchainBalance", onchainBalance.toLong())
             putLong("offchainBalance", offchainBalance.toLong())
             putLong("pendingBalance", pendingBalance.toLong())
+            putLong("closestExpiryBlocks", closestExpiryBlocks.toLong())
+            putLong("expiryThreshold", expiryThreshold.toLong())
             putLong("lastUpdated", System.currentTimeMillis())
             apply()
         }

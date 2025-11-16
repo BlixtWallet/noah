@@ -41,11 +41,13 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
   isAudioPlaying(): boolean;
 
   // Widget data sharing
-  saveBalanceForWidget(
+  updateWidgetData(
     totalBalance: number,
     onchainBalance: number,
     offchainBalance: number,
     pendingBalance: number,
+    closestExpiryBlocks: number,
+    expiryThreshold: number,
     appGroup: string,
   ): void;
 }

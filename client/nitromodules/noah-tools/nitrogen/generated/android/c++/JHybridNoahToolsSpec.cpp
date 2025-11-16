@@ -206,9 +206,9 @@ namespace margelo::nitro::noahtools {
     auto __result = method(_javaPart);
     return static_cast<bool>(__result);
   }
-  void JHybridNoahToolsSpec::saveBalanceForWidget(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, const std::string& appGroup) {
-    static const auto method = javaClassStatic()->getMethod<void(double /* totalBalance */, double /* onchainBalance */, double /* offchainBalance */, double /* pendingBalance */, jni::alias_ref<jni::JString> /* appGroup */)>("saveBalanceForWidget");
-    method(_javaPart, totalBalance, onchainBalance, offchainBalance, pendingBalance, jni::make_jstring(appGroup));
+  void JHybridNoahToolsSpec::updateWidgetData(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, double closestExpiryBlocks, double expiryThreshold, const std::string& appGroup) {
+    static const auto method = javaClassStatic()->getMethod<void(double /* totalBalance */, double /* onchainBalance */, double /* offchainBalance */, double /* pendingBalance */, double /* closestExpiryBlocks */, double /* expiryThreshold */, jni::alias_ref<jni::JString> /* appGroup */)>("updateWidgetData");
+    method(_javaPart, totalBalance, onchainBalance, offchainBalance, pendingBalance, closestExpiryBlocks, expiryThreshold, jni::make_jstring(appGroup));
   }
 
 } // namespace margelo::nitro::noahtools

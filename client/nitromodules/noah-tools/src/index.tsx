@@ -73,18 +73,22 @@ export function isAudioPlaying(): boolean {
   return NoahToolsHybridObject.isAudioPlaying();
 }
 
-export function saveBalanceForWidget(
+export function updateWidgetData(
   totalBalance: number,
   onchainBalance: number,
   offchainBalance: number,
   pendingBalance: number,
+  closestExpiryBlocks: number,
+  expiryThreshold: number,
   appGroup: string,
 ): void {
-  return NoahToolsHybridObject.saveBalanceForWidget(
+  return NoahToolsHybridObject.updateWidgetData(
     totalBalance,
     onchainBalance,
     offchainBalance,
     pendingBalance,
+    closestExpiryBlocks,
+    expiryThreshold,
     appGroup,
   );
 }

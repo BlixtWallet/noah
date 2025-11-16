@@ -17,6 +17,7 @@ import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
 import { formatBip177 } from "./utils";
+import { updateWidget } from "~/hooks/useWidget";
 
 const log = logger("pushNotifications");
 
@@ -120,6 +121,9 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               // Also perform a sync after maintenance
               await sync();
               await handleTaskCompletion("maintenance", result, notificationData.k1);
+
+              // Refresh widget after maintenance
+              await updateWidget();
               break;
             }
 
@@ -170,6 +174,9 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
                   } else {
                     log.d("Successfully added Lightning receive transaction to database", [sats]);
                   }
+
+                  // Refresh widget after lightning payment
+                  await updateWidget();
                 }
               }
               break;
