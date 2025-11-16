@@ -62,11 +62,9 @@ export async function updateWidget(balanceData?: BalanceData): Promise<void> {
       const currentHeight = blockHeightResult.value.value;
 
       // Find the vtxo with the closest expiry (including expired ones with negative blocks)
-      for (const vtxo of vtxos) {
-        const blocksUntilExpiry = vtxo.expiry_height - currentHeight;
-        if (closestExpiryBlocks === null || blocksUntilExpiry < closestExpiryBlocks) {
-          closestExpiryBlocks = blocksUntilExpiry;
-        }
+      // Find the vtxo with the closest expiry (including expired ones with negative blocks)
+      if (vtxos.length > 0) {
+        closestExpiryBlocks = Math.min(...vtxos.map((vtxo) => vtxo.expiry_height - currentHeight));
       }
     }
 
