@@ -130,31 +130,28 @@ open class NoahWidgetProvider : AppWidgetProvider() {
     private data class ExpiryStatus(val icon: Int, val color: Int)
 
     private fun getExpiryStatus(blocks: Long, threshold: Long): ExpiryStatus {
-        // Expired VTXOs (negative blocks) - critical red alert
-        if (blocks < 0) {
-            return ExpiryStatus(
-                android.R.drawable.ic_dialog_alert,
-                android.graphics.Color.parseColor("#EF4444") // Red
-            )
-        }
+        val colorRed = android.graphics.Color.parseColor("#EF4444")
+        val colorOrange = android.graphics.Color.parseColor("#F97316")
+        val colorGreen = android.graphics.Color.parseColor("#22C55E")
 
         // Critical: within 20% of threshold (e.g., < 58 blocks if threshold is 288)
+        // Also includes expired VTXOs (negative blocks).
         val criticalThreshold = (threshold * 0.2).toLong()
 
         return when {
             blocks <= criticalThreshold -> ExpiryStatus(
                 android.R.drawable.ic_dialog_alert,
-                android.graphics.Color.parseColor("#EF4444") // Red
+                colorRed // Red
             )
 
             blocks <= threshold -> ExpiryStatus(
                 android.R.drawable.ic_lock_idle_alarm,
-                android.graphics.Color.parseColor("#F97316") // Orange
+                colorOrange // Orange
             )
 
             else -> ExpiryStatus(
                 android.R.drawable.checkbox_on_background,
-                android.graphics.Color.parseColor("#22C55E") // Green
+                colorGreen // Green
             )
         }
     }

@@ -102,12 +102,8 @@ struct NoahBalanceWidgetView: View {
         let blocks = entry.closestExpiryBlocks
         let threshold = entry.expiryThreshold
 
-        // Expired VTXOs (negative blocks) - critical red alert
-        if blocks < 0 {
-            return ("exclamationmark.triangle.fill", .red)
-        }
-
         // Critical: within 20% of threshold (e.g., < 58 blocks if threshold is 288)
+        // Also includes expired VTXOs (negative blocks).
         let criticalThreshold = threshold * 0.2
 
         if blocks <= criticalThreshold {
