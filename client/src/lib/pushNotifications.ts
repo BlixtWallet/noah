@@ -9,7 +9,7 @@ import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
-import { maintenanceRefresh, sync, fetchOnchainBalance, fetchOffchainBalance } from "./walletApi";
+import { maintenanceRefresh, sync } from "./walletApi";
 import { checkAndClaimLnReceive } from "./paymentsApi";
 import { addTransaction } from "~/lib/transactionsDb";
 import type { Transaction } from "~/types/transaction";
@@ -123,37 +123,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               await handleTaskCompletion("maintenance", result, notificationData.k1);
 
               // Refresh widget after maintenance
-              const onchainBalanceResult = await fetchOnchainBalance();
-              const offchainBalanceResult = await fetchOffchainBalance();
-              if (onchainBalanceResult.isOk() && offchainBalanceResult.isOk()) {
-                const onchain = onchainBalanceResult.value;
-                const offchain = offchainBalanceResult.value;
-                const onchainTotal =
-                  (onchain.confirmed ?? 0) +
-                  (onchain.trusted_pending ?? 0) +
-                  (onchain.untrusted_pending ?? 0) +
-                  (onchain.immature ?? 0);
-                const offchainTotal =
-                  (offchain.pending_exit ?? 0) +
-                  (offchain.pending_lightning_send ?? 0) +
-                  (offchain.pending_in_round ?? 0) +
-                  (offchain.spendable ?? 0) +
-                  (offchain.pending_board ?? 0);
-                const pendingTotal =
-                  (onchain.trusted_pending ?? 0) +
-                  (onchain.untrusted_pending ?? 0) +
-                  (onchain.immature ?? 0) +
-                  (offchain.pending_exit ?? 0) +
-                  (offchain.pending_lightning_send ?? 0) +
-                  (offchain.pending_in_round ?? 0) +
-                  (offchain.pending_board ?? 0);
-                await updateWidget({
-                  totalBalance: onchainTotal + offchainTotal,
-                  onchainBalance: onchainTotal,
-                  offchainBalance: offchainTotal,
-                  pendingBalance: pendingTotal,
-                });
-              }
+              await updateWidget();
               break;
             }
 
@@ -206,37 +176,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
                   }
 
                   // Refresh widget after lightning payment
-                  const onchainBalanceResult = await fetchOnchainBalance();
-                  const offchainBalanceResult = await fetchOffchainBalance();
-                  if (onchainBalanceResult.isOk() && offchainBalanceResult.isOk()) {
-                    const onchain = onchainBalanceResult.value;
-                    const offchain = offchainBalanceResult.value;
-                    const onchainTotal =
-                      (onchain.confirmed ?? 0) +
-                      (onchain.trusted_pending ?? 0) +
-                      (onchain.untrusted_pending ?? 0) +
-                      (onchain.immature ?? 0);
-                    const offchainTotal =
-                      (offchain.pending_exit ?? 0) +
-                      (offchain.pending_lightning_send ?? 0) +
-                      (offchain.pending_in_round ?? 0) +
-                      (offchain.spendable ?? 0) +
-                      (offchain.pending_board ?? 0);
-                    const pendingTotal =
-                      (onchain.trusted_pending ?? 0) +
-                      (onchain.untrusted_pending ?? 0) +
-                      (onchain.immature ?? 0) +
-                      (offchain.pending_exit ?? 0) +
-                      (offchain.pending_lightning_send ?? 0) +
-                      (offchain.pending_in_round ?? 0) +
-                      (offchain.pending_board ?? 0);
-                    await updateWidget({
-                      totalBalance: onchainTotal + offchainTotal,
-                      onchainBalance: onchainTotal,
-                      offchainBalance: offchainTotal,
-                      pendingBalance: pendingTotal,
-                    });
-                  }
+                  await updateWidget();
                 }
               }
               break;

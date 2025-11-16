@@ -33,6 +33,7 @@ import { useWalletStore } from "~/store/walletStore";
 import { syncPendingBoards } from "~/lib/paymentsApi";
 import { useWidget } from "~/hooks/useWidget";
 import { formatBip177 } from "~/lib/utils";
+import { calculateBalances } from "~/lib/balanceUtils";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -67,44 +68,15 @@ const HomeScreen = () => {
     getRandomFact();
   }, [balanceSync, refetch, getRandomFact, safelyExecuteWhenReady, loadWallet]);
 
-  const onchainBalance = balance
-    ? (balance.onchain.confirmed ?? 0) +
-      (balance.onchain.immature ?? 0) +
-      (balance.onchain.trusted_pending ?? 0) +
-      (balance.onchain.untrusted_pending ?? 0)
-    : 0;
-  const offchainBalance = balance
-    ? (balance.offchain.pending_exit ?? 0) +
-      (balance.offchain.pending_lightning_send ?? 0) +
-      (balance.offchain.pending_lightning_receive.claimable ?? 0) +
-      (balance.offchain.pending_in_round ?? 0) +
-      (balance.offchain.spendable ?? 0) +
-      (balance.offchain.pending_board ?? 0)
-    : 0;
-
-  const totalPendingBalance = balance
-    ? (balance.onchain.trusted_pending ?? 0) +
-      (balance.onchain.untrusted_pending ?? 0) +
-      (balance.onchain.immature ?? 0) +
-      (balance.offchain.pending_exit ?? 0) +
-      (balance.offchain.pending_lightning_send ?? 0) +
-      (balance.offchain.pending_in_round ?? 0) +
-      (balance.offchain.pending_board ?? 0)
-    : 0;
-  const totalBalance = onchainBalance + offchainBalance;
+  const balances = balance ? calculateBalances(balance) : null;
+  const totalBalance = balances?.totalBalance ?? 0;
+  const onchainBalance = balances?.onchainBalance ?? 0;
+  const offchainBalance = balances?.offchainBalance ?? 0;
+  const totalPendingBalance = balances?.pendingBalance ?? 0;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
   const errorMessage = error instanceof Error ? error.message : String(error);
 
-  useWidget(
-    balance
-      ? {
-          totalBalance,
-          onchainBalance,
-          offchainBalance,
-          pendingBalance: totalPendingBalance,
-        }
-      : null,
-  );
+  useWidget(balances);
 
   const animatedRotation = useAnimatedStyle(() => {
     return {
