@@ -30,7 +30,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
-import { updateWidget } from "~/hooks/useWidget";
+import { updateWidget, useWidget } from "~/hooks/useWidget";
 import { formatBip177 } from "~/lib/utils";
 import { calculateBalances } from "~/lib/balanceUtils";
 import { sync } from "~/lib/walletApi";
@@ -75,6 +75,8 @@ const HomeScreen = () => {
   const totalPendingBalance = balances?.pendingBalance ?? 0;
   const totalBalanceInUsd = btcToUsdRate ? (totalBalance / 100_000_000) * btcToUsdRate : 0;
   const errorMessage = error instanceof Error ? error.message : String(error);
+
+  useWidget(balances);
 
   const animatedRotation = useAnimatedStyle(() => {
     return {
