@@ -23,11 +23,27 @@ on:
 jobs:
   server_build_and_test:
     runs-on: self-hosted
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: noah_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: ✨ Check formatting
         run: nix develop .#server --command bash -c "cargo fmt --check"
       - name: 🧪 Run tests
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/noah_test
         run: nix develop .#server --command bash -c "cargo test"
 
   server_gate:
