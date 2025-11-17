@@ -46,8 +46,8 @@ mod tests;
 mod trace_layer;
 mod utils;
 
-use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::time::SystemTime;
 
 type AppState = Arc<AppStruct>;

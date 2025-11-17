@@ -13,7 +13,7 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_response_success() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -70,7 +70,7 @@ async fn test_heartbeat_response_success() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_response_invalid_notification_id() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -104,7 +104,7 @@ async fn test_heartbeat_response_invalid_notification_id() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_response_already_responded() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -151,7 +151,7 @@ async fn test_heartbeat_response_already_responded() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_response_unauthenticated() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -193,7 +193,7 @@ async fn test_heartbeat_response_unauthenticated() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_create_notification() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -222,7 +222,7 @@ async fn test_heartbeat_repo_create_notification() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_count_consecutive_missed() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -285,7 +285,7 @@ async fn test_heartbeat_repo_count_consecutive_missed() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_get_users_to_deregister() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     // Create users with different secret keys
     let user1 = TestUser::new_with_key(&[0xcd; 32]);
@@ -335,7 +335,7 @@ async fn test_heartbeat_repo_get_users_to_deregister() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_cleanup_old_notifications() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -355,13 +355,12 @@ async fn test_heartbeat_repo_cleanup_old_notifications() {
     heartbeat_repo.cleanup_old_notifications().await.unwrap();
 
     // Verify only 15 notifications remain
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
-    )
-    .bind(user.pubkey().to_string())
-    .fetch_one(&app_state.db_pool)
-    .await
-    .unwrap();
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
 
     assert_eq!(count, 15);
 }
@@ -369,7 +368,7 @@ async fn test_heartbeat_repo_cleanup_old_notifications() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_delete_notification() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
@@ -412,7 +411,7 @@ async fn test_heartbeat_repo_delete_notification() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_delete_nonexistent_notification() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
@@ -427,7 +426,7 @@ async fn test_heartbeat_repo_delete_nonexistent_notification() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_heartbeat_repo_delete_by_pubkey() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     let user1 = TestUser::new();
     let user2 = TestUser::new_with_key(&[0xab; 32]);
@@ -460,22 +459,20 @@ async fn test_heartbeat_repo_delete_by_pubkey() {
         .unwrap();
 
     // Verify all notifications exist
-    let count1: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
-    )
-    .bind(user1.pubkey().to_string())
-    .fetch_one(&app_state.db_pool)
-    .await
-    .unwrap();
+    let count1: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user1.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
     assert_eq!(count1, 2);
 
-    let count2: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
-    )
-    .bind(user2.pubkey().to_string())
-    .fetch_one(&app_state.db_pool)
-    .await
-    .unwrap();
+    let count2: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user2.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
     assert_eq!(count2, 1);
 
     // Delete all heartbeat notifications for user1
@@ -486,22 +483,20 @@ async fn test_heartbeat_repo_delete_by_pubkey() {
     tx.commit().await.unwrap();
 
     // Verify user1's notifications are deleted
-    let count1_after: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
-    )
-    .bind(user1.pubkey().to_string())
-    .fetch_one(&app_state.db_pool)
-    .await
-    .unwrap();
+    let count1_after: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user1.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
     assert_eq!(count1_after, 0);
 
     // Verify user2's notifications are still there
-    let count2_after: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
-    )
-    .bind(user2.pubkey().to_string())
-    .fetch_one(&app_state.db_pool)
-    .await
-    .unwrap();
+    let count2_after: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user2.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
     assert_eq!(count2_after, 1);
 }

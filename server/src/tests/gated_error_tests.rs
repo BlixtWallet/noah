@@ -9,7 +9,7 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_backup_endpoints_invalid_auth() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -62,7 +62,7 @@ async fn test_backup_endpoints_invalid_auth() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_backup_endpoints_missing_k1() {
-    let (app, _) = setup_test_app().await;
+    let (app, _, _guard) = setup_test_app().await;
     let user = TestUser::new();
 
     let k1 = "k1_not_in_state".to_string();
@@ -113,7 +113,7 @@ async fn test_backup_endpoints_missing_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_backup_endpoints_malformed_json() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
     let k1 = make_k1(app_state.k1_values.clone());
@@ -156,7 +156,7 @@ async fn test_backup_endpoints_malformed_json() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_complete_upload_missing_fields() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -200,7 +200,7 @@ async fn test_complete_upload_missing_fields() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_upload_url_missing_fields() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -241,7 +241,7 @@ async fn test_get_upload_url_missing_fields() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_delete_backup_missing_version() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -279,7 +279,7 @@ async fn test_delete_backup_missing_version() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_update_backup_settings_missing_enabled() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 

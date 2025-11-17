@@ -44,3 +44,4 @@ sqlx = { version = "0.8.2", default-features = false, features = ["runtime-tokio
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["full"] }
 tracing-test = "0.2.5"
+once_cell = "1.19.0"

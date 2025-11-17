@@ -5,7 +5,9 @@ use axum::Router;
 use axum::{middleware, routing::post};
 use bitcoin::key::Keypair;
 use dashmap::DashMap;
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use once_cell::sync::Lazy;
+use sqlx::{PgPool, postgres::PgPoolOptions};
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
 use crate::config::Config;
@@ -17,6 +19,21 @@ use crate::routes::gated_api_v0::{
 use crate::routes::public_api_v0::{check_app_version, get_k1, lnurlp_request, register};
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
+
+static TEST_DB_SEMAPHORE: Lazy<Arc<Semaphore>> = Lazy::new(|| Arc::new(Semaphore::new(1)));
+
+pub struct TestDbGuard {
+    _permit: OwnedSemaphorePermit,
+}
+
+async fn acquire_test_db_guard() -> TestDbGuard {
+    let permit = TEST_DB_SEMAPHORE
+        .clone()
+        .acquire_owned()
+        .await
+        .expect("failed to acquire test DB semaphore");
+    TestDbGuard { _permit: permit }
+}
 
 pub struct TestUser {
     keypair: Keypair,
@@ -80,7 +97,10 @@ impl TestUser {
     }
 }
 
-pub async fn setup_test_app() -> (Router, AppState) {
+pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
+    // Ensure tests run sequentially against the shared Postgres instance
+    let guard = acquire_test_db_guard().await;
+
     // Set up environment variables for S3 testing
     unsafe {
         std::env::set_var("S3_BUCKET_NAME", "test-bucket");
@@ -132,10 +152,12 @@ pub async fn setup_test_app() -> (Router, AppState) {
 
     let app = auth_router.with_state(app_state.clone());
 
-    (app, app_state)
+    (app, app_state, guard)
 }
 
-pub async fn setup_public_test_app() -> (Router, AppState) {
+pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
+    let guard = acquire_test_db_guard().await;
+
     let db_pool = setup_test_database().await;
 
     let app_state = Arc::new(AppStruct {
@@ -155,7 +177,7 @@ pub async fn setup_public_test_app() -> (Router, AppState) {
         )
         .with_state(app_state.clone());
 
-    (app, app_state)
+    (app, app_state, guard)
 }
 
 // Helper function to create a test user in the database
@@ -181,7 +203,9 @@ async fn setup_test_database() -> PgPool {
     crate::db::migrations::run_migrations(&pool)
         .await
         .expect("Failed to run migrations");
-    reset_database(&pool).await.expect("Failed to reset database");
+    reset_database(&pool)
+        .await
+        .expect("Failed to reset database");
 
     pool
 }

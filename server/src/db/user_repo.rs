@@ -66,13 +66,11 @@ impl<'a> UserRepository<'a> {
         pubkey: &str,
         ln_address: &str,
     ) -> Result<()> {
-        match sqlx::query(
-            "INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)",
-        )
-        .bind(pubkey)
-        .bind(ln_address)
-        .execute(&mut **tx)
-        .await
+        match sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+            .bind(pubkey)
+            .bind(ln_address)
+            .execute(&mut **tx)
+            .await
         {
             Ok(_) => Ok(()),
             Err(e) => {
@@ -106,12 +104,11 @@ impl<'a> UserRepository<'a> {
 
     /// Checks if a user exists by their public key.
     pub async fn exists_by_pubkey(&self, pubkey: &str) -> Result<bool, sqlx::Error> {
-        let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM users WHERE pubkey = $1)",
-        )
-        .bind(pubkey)
-        .fetch_one(self.pool)
-        .await?;
+        let exists =
+            sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM users WHERE pubkey = $1)")
+                .bind(pubkey)
+                .fetch_one(self.pool)
+                .await?;
 
         Ok(exists)
     }

@@ -14,7 +14,7 @@ use chrono::{Duration, Utc};
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_normal_priority_respects_spacing() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     let pubkey = user.pubkey().to_string();
 
@@ -27,14 +27,14 @@ async fn test_normal_priority_respects_spacing() {
 
     // Record a recent notification (20 minutes ago)
     let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
-    let recent_time = (Utc::now() - Duration::minutes(20)).to_rfc3339();
+    let recent_time = Utc::now() - Duration::minutes(20);
     sqlx::query(
         "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
          VALUES ($1, $2, $3)",
     )
     .bind(pubkey.clone())
     .bind("backup_trigger")
-    .bind(recent_time)
+    .bind(recent_time.clone())
     .execute(&app_state.db_pool)
     .await
     .unwrap();
@@ -69,7 +69,7 @@ async fn test_normal_priority_respects_spacing() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_critical_priority_bypasses_spacing() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     let pubkey = user.pubkey().to_string();
 
@@ -82,7 +82,7 @@ async fn test_critical_priority_bypasses_spacing() {
 
     // Record a very recent notification (5 minutes ago)
     let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
-    let recent_time = (Utc::now() - Duration::minutes(5)).to_rfc3339();
+    let recent_time = Utc::now() - Duration::minutes(5);
     sqlx::query(
         "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
          VALUES ($1, $2, $3)",
@@ -123,7 +123,7 @@ async fn test_critical_priority_bypasses_spacing() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_offboarding_skips_maintenance() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     let pubkey = user.pubkey().to_string();
 
@@ -171,7 +171,7 @@ async fn test_offboarding_skips_maintenance() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_notification_tracking_records_sent() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     let pubkey = user.pubkey().to_string();
 
@@ -224,7 +224,7 @@ async fn test_notification_tracking_records_sent() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_broadcast_filters_ineligible_users() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     // Create two users
     let user1 = TestUser::new();
@@ -242,14 +242,14 @@ async fn test_broadcast_filters_ineligible_users() {
     tx.commit().await.unwrap();
 
     // User1 received notification 10 minutes ago (too recent)
-    let recent_time = (Utc::now() - Duration::minutes(10)).to_rfc3339();
+    let recent_time = Utc::now() - Duration::minutes(10);
     sqlx::query(
         "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
          VALUES ($1, $2, $3)",
     )
     .bind(pubkey1.clone())
     .bind("backup_trigger")
-    .bind(recent_time.clone())
+    .bind(recent_time)
     .execute(&app_state.db_pool)
     .await
     .unwrap();
@@ -279,9 +279,8 @@ async fn test_broadcast_filters_ineligible_users() {
     .fetch_one(&app_state.db_pool)
     .await
     .unwrap();
-    assert_eq!(
-        last_sent.to_rfc3339(),
-        recent_time,
+    assert!(
+        (last_sent - recent_time).num_seconds().abs() < 1,
         "User1 should not receive new notification"
     );
 
@@ -299,7 +298,7 @@ async fn test_broadcast_filters_ineligible_users() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_eligible_users_query() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     // Create three users
     let user1 = TestUser::new();
@@ -322,7 +321,7 @@ async fn test_eligible_users_query() {
     tx.commit().await.unwrap();
 
     // User1: notification 10 minutes ago (too recent for 45 min spacing)
-    let recent_time = (Utc::now() - Duration::minutes(10)).to_rfc3339();
+    let recent_time = Utc::now() - Duration::minutes(10);
     sqlx::query(
         "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
          VALUES ($1, $2, $3)",
@@ -335,7 +334,7 @@ async fn test_eligible_users_query() {
     .unwrap();
 
     // User2: notification 50 minutes ago (eligible)
-    let old_time = (Utc::now() - Duration::minutes(50)).to_rfc3339();
+    let old_time = Utc::now() - Duration::minutes(50);
     sqlx::query(
         "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
          VALUES ($1, $2, $3)",
@@ -372,7 +371,7 @@ async fn test_eligible_users_query() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_spacing_configuration_from_config() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
 
     // Create coordinator and verify it reads spacing from config
     let _coordinator = NotificationCoordinator::new(app_state.clone());
@@ -390,7 +389,7 @@ async fn test_spacing_configuration_from_config() {
     tx.commit().await.unwrap();
 
     // Record notification exactly 45 minutes ago
-    let boundary_time = (Utc::now() - Duration::minutes(45)).to_rfc3339();
+    let boundary_time = Utc::now() - Duration::minutes(45);
     sqlx::query(
         "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
          VALUES ($1, $2, $3)",
@@ -414,7 +413,7 @@ async fn test_spacing_configuration_from_config() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_offboarding_with_processing_status_skips_maintenance() {
-    let (_, app_state) = setup_test_app().await;
+    let (_, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     let pubkey = user.pubkey().to_string();
 

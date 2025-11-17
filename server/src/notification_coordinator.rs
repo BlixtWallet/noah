@@ -37,8 +37,7 @@ impl NotificationCoordinator {
 
     /// Send a notification with coordination and spacing rules
     pub async fn send_notification(&self, request: NotificationRequest) -> Result<()> {
-        let tracking_repo =
-            NotificationTrackingRepository::new(&self.app_state.db_pool);
+        let tracking_repo = NotificationTrackingRepository::new(&self.app_state.db_pool);
 
         match request.target_pubkey {
             Some(ref pubkey) => {
@@ -210,10 +209,9 @@ impl NotificationCoordinator {
 
     /// Get all users from the database
     async fn get_all_users(&self) -> Result<Vec<String>> {
-        let pubkeys =
-            sqlx::query_scalar::<_, String>("SELECT pubkey FROM users")
-                .fetch_all(&self.app_state.db_pool)
-                .await?;
+        let pubkeys = sqlx::query_scalar::<_, String>("SELECT pubkey FROM users")
+            .fetch_all(&self.app_state.db_pool)
+            .await?;
 
         Ok(pubkeys)
     }

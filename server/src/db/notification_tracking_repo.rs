@@ -36,8 +36,9 @@ impl<'a> NotificationTrackingRepository<'a> {
              WHERE pubkey = $1",
         )
         .bind(pubkey)
-        .fetch_one(self.pool)
-        .await?;
+        .fetch_optional(self.pool)
+        .await?
+        .flatten();
 
         if let Some(last_sent) = last_sent {
             let min_time = Utc::now() - chrono::Duration::minutes(min_spacing_minutes);
@@ -55,8 +56,9 @@ impl<'a> NotificationTrackingRepository<'a> {
              WHERE pubkey = $1",
         )
         .bind(pubkey)
-        .fetch_one(self.pool)
-        .await?;
+        .fetch_optional(self.pool)
+        .await?
+        .flatten();
 
         Ok(last_sent)
     }
@@ -125,8 +127,9 @@ impl<'a> NotificationTrackingRepository<'a> {
         )
         .bind(pubkey)
         .bind(notification_data.notification_type())
-        .fetch_one(self.pool)
-        .await?;
+        .fetch_optional(self.pool)
+        .await?
+        .flatten();
 
         Ok(last_sent)
     }

@@ -115,10 +115,7 @@ impl<'a> OffboardingRepository<'a> {
     /// Deletes all offboarding requests for a given user within a transaction.
     /// This is a static method because it operates on a transaction, not a connection
     /// owned by the repository instance.
-    pub async fn delete_by_pubkey(
-        tx: &mut Transaction<'_, Postgres>,
-        pubkey: &str,
-    ) -> Result<()> {
+    pub async fn delete_by_pubkey(tx: &mut Transaction<'_, Postgres>, pubkey: &str) -> Result<()> {
         sqlx::query("DELETE FROM offboarding_requests WHERE pubkey = $1")
             .bind(pubkey)
             .execute(&mut **tx)

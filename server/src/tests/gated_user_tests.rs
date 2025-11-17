@@ -16,7 +16,7 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_user_info() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
 
@@ -56,7 +56,7 @@ async fn test_get_user_info() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_update_ln_address() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
 
@@ -108,7 +108,7 @@ async fn test_update_ln_address() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_offboarding_request() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -164,7 +164,7 @@ async fn test_register_offboarding_request() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_offboarding_request_invalid_auth() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -193,7 +193,7 @@ async fn test_register_offboarding_request_invalid_auth() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_deregister_user() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     // 1. Create user and associated data using repositories
     let mut tx = app_state.db_pool.begin().await.unwrap();
@@ -293,13 +293,12 @@ async fn test_deregister_user() {
     assert!(settings.is_some(), "Backup settings should not be deleted");
 
     // 5. Verify heartbeat notifications are deleted
-    let heartbeat_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1",
-    )
-    .bind(user.pubkey().to_string())
-    .fetch_one(&app_state.db_pool)
-    .await
-    .unwrap();
+    let heartbeat_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
     assert_eq!(
         heartbeat_count, 0,
         "Heartbeat notifications should be deleted"
@@ -309,7 +308,7 @@ async fn test_deregister_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_report_job_status_pruning() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -350,12 +349,10 @@ async fn test_report_job_status_pruning() {
     }
 
     // Verify that only 20 reports are stored in the database
-    let count = JobStatusRepository::count_by_pubkey(
-        &app_state.db_pool,
-        &user.pubkey().to_string(),
-    )
-        .await
-        .unwrap();
+    let count =
+        JobStatusRepository::count_by_pubkey(&app_state.db_pool, &user.pubkey().to_string())
+            .await
+            .unwrap();
     assert_eq!(count, 20);
 
     // Verify that the remaining reports are the last 20

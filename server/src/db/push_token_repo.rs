@@ -29,20 +29,16 @@ impl<'a> PushTokenRepository<'a> {
 
     /// Finds a push token by its associated public key.
     pub async fn find_by_pubkey(&self, pubkey: &str) -> Result<Option<String>> {
-        let token = sqlx::query_scalar::<_, String>(
-            "SELECT push_token FROM push_tokens WHERE pubkey = $1",
-        )
-        .bind(pubkey)
-        .fetch_optional(self.pool)
-        .await?;
+        let token =
+            sqlx::query_scalar::<_, String>("SELECT push_token FROM push_tokens WHERE pubkey = $1")
+                .bind(pubkey)
+                .fetch_optional(self.pool)
+                .await?;
 
         Ok(token)
     }
     /// Deletes all push tokens for a given user within a transaction.
-    pub async fn delete_by_pubkey(
-        tx: &mut Transaction<'_, Postgres>,
-        pubkey: &str,
-    ) -> Result<()> {
+    pub async fn delete_by_pubkey(tx: &mut Transaction<'_, Postgres>, pubkey: &str) -> Result<()> {
         sqlx::query("DELETE FROM push_tokens WHERE pubkey = $1")
             .bind(pubkey)
             .execute(&mut **tx)
@@ -52,10 +48,9 @@ impl<'a> PushTokenRepository<'a> {
 
     /// Finds all push tokens in the database.
     pub async fn find_all(&self) -> Result<Vec<String>> {
-        let tokens =
-            sqlx::query_scalar::<_, String>("SELECT push_token FROM push_tokens")
-                .fetch_all(self.pool)
-                .await?;
+        let tokens = sqlx::query_scalar::<_, String>("SELECT push_token FROM push_tokens")
+            .fetch_all(self.pool)
+            .await?;
 
         Ok(tokens)
     }

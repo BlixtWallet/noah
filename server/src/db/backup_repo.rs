@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use sqlx::{PgPool, Row, postgres::PgRow};
 use std::convert::TryFrom;
-use sqlx::{postgres::PgRow, PgPool, Row};
 
 use crate::types::BackupInfo;
 
@@ -229,12 +229,11 @@ impl<'a> BackupRepository<'a> {
 
     /// Finds all pubkeys that have backups enabled.
     pub async fn find_pubkeys_with_backup_enabled(&self) -> Result<Vec<String>> {
-        let pubkeys =
-            sqlx::query_scalar::<_, String>(
-                "SELECT pubkey FROM backup_settings WHERE backup_enabled = TRUE",
-            )
-            .fetch_all(self.pool)
-            .await?;
+        let pubkeys = sqlx::query_scalar::<_, String>(
+            "SELECT pubkey FROM backup_settings WHERE backup_enabled = TRUE",
+        )
+        .fetch_all(self.pool)
+        .await?;
 
         Ok(pubkeys)
     }

@@ -11,7 +11,7 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_new_user() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -51,7 +51,7 @@ async fn test_register_new_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_existing_user() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -101,7 +101,7 @@ async fn test_register_existing_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_signature() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -135,7 +135,7 @@ async fn test_register_invalid_signature() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_k1() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -169,7 +169,7 @@ async fn test_register_invalid_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_expired_k1() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1_hex = "5a9b8f7c6d5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e";
     let old_timestamp = std::time::SystemTime::now()
@@ -212,7 +212,7 @@ async fn test_register_expired_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_push_token() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
 
