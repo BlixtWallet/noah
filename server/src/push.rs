@@ -62,8 +62,16 @@ pub async fn send_push_notification_with_unique_k1(
                 // Create notification data with unique k1 if needed
                 let mut notification_data = base_data_clone;
                 if notification_data.needs_unique_k1() {
-                    let unique_k1 = make_k1(app_state_clone.k1_values.clone());
-                    notification_data.set_k1(unique_k1);
+                    match make_k1(&app_state_clone.k1_cache).await {
+                        Ok(unique_k1) => notification_data.set_k1(unique_k1),
+                        Err(e) => {
+                            tracing::error!(
+                                "Failed to create unique k1 for push notification: {}",
+                                e
+                            );
+                            return;
+                        }
+                    }
                 }
 
                 let data_string = match serde_json::to_string(&notification_data) {

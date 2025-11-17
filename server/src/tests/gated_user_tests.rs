@@ -27,7 +27,9 @@ async fn test_get_user_info() {
         .unwrap();
     tx.commit().await.unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -67,7 +69,9 @@ async fn test_update_ln_address() {
         .unwrap();
     tx.commit().await.unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -112,7 +116,9 @@ async fn test_register_offboarding_request() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -168,7 +174,9 @@ async fn test_register_offboarding_request_invalid_auth() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let mut auth_payload = user.auth_payload(&k1);
     auth_payload.sig = "invalid_signature".to_string();
 
@@ -236,7 +244,9 @@ async fn test_deregister_user() {
         .unwrap();
 
     // 2. Call deregister endpoint
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -317,7 +327,9 @@ async fn test_report_job_status_pruning() {
 
     // Report job status 23 times
     for i in 0..23 {
-        let k1 = make_k1(app_state.k1_values.clone());
+        let k1 = make_k1(&app_state.k1_cache)
+            .await
+            .expect("failed to create k1");
         let auth_payload = user.auth_payload(&k1);
         let response = app
             .clone()

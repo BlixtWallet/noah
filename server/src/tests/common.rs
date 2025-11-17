@@ -10,6 +10,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
+use crate::cache::{k1_store::K1Store, redis_client::RedisClient};
 use crate::config::Config;
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
@@ -82,6 +83,8 @@ impl TestUser {
             deregister_cron: "0 0 * * *".to_string(),
             notification_spacing_minutes: 45,
             minimum_app_version: "0.0.1".to_string(),
+            redis_url: std::env::var("TEST_REDIS_URL")
+                .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
         }
     }
 
@@ -111,10 +114,12 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
 
     let db_pool = setup_test_database().await;
 
+    let k1_cache = setup_test_k1_store().await;
+
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
-        k1_values: Arc::new(DashMap::new()),
+        k1_cache: k1_cache.clone(),
         invoice_data_transmitters: Arc::new(DashMap::new()),
         config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
     });
@@ -160,10 +165,12 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let db_pool = setup_test_database().await;
 
+    let k1_cache = setup_test_k1_store().await;
+
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
-        k1_values: Arc::new(DashMap::new()),
+        k1_cache: k1_cache.clone(),
         invoice_data_transmitters: Arc::new(DashMap::new()),
         config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
     });
@@ -208,6 +215,18 @@ async fn setup_test_database() -> PgPool {
         .expect("Failed to reset database");
 
     pool
+}
+
+async fn setup_test_k1_store() -> K1Store {
+    let redis_url =
+        std::env::var("TEST_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+    let redis_client = RedisClient::new(&redis_url).expect("Failed to create Redis client");
+    let k1_store = K1Store::new(redis_client, 600);
+    k1_store
+        .clear_all()
+        .await
+        .expect("Failed to clear Redis cache");
+    k1_store
 }
 
 async fn reset_database(pool: &PgPool) -> sqlx::Result<()> {

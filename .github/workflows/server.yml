@@ -37,6 +37,10 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
+      dragonfly:
+        image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
       - name: ✨ Check formatting
@@ -44,6 +48,7 @@ jobs:
       - name: 🧪 Run tests
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/noah_test
+          TEST_REDIS_URL: redis://127.0.0.1:6379
         run: nix develop .#server --command bash -c "cargo test"
 
   server_gate:

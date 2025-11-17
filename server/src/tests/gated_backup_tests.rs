@@ -16,7 +16,9 @@ async fn test_get_upload_url() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -61,7 +63,9 @@ async fn test_complete_upload() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
@@ -110,7 +114,9 @@ async fn test_complete_upload_upsert() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
@@ -142,7 +148,9 @@ async fn test_complete_upload_upsert() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Second upload with same version (should update)
-    let k1_2 = make_k1(app_state.k1_values.clone());
+    let k1_2 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload_2 = user.auth_payload(&k1_2);
 
     let response = app
@@ -187,7 +195,9 @@ async fn test_list_backups_empty() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -230,7 +240,9 @@ async fn test_list_backups_with_data() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -279,7 +291,9 @@ async fn test_get_download_url_specific_version() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -347,7 +361,9 @@ async fn test_get_download_url_latest() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -384,7 +400,9 @@ async fn test_get_download_url_not_found() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -425,7 +443,9 @@ async fn test_delete_backup() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -471,7 +491,9 @@ async fn test_delete_backup_not_found() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -504,7 +526,9 @@ async fn test_update_backup_settings_enable() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -553,7 +577,9 @@ async fn test_update_backup_settings_disable() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app

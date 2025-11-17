@@ -5,6 +5,7 @@ private_port = 3099
 lnurl_domain = "localhost.com"
 # Postgres connection URL for production networks
 postgres_url = "postgres://postgres:postgres@postgres:5432/noah"
+redis_url = "redis://dragonfly:6379"
 
 postgres_max_connections = 10
 postgres_min_connections = 1

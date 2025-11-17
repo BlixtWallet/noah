@@ -33,38 +33,19 @@ pub struct GetK1 {
     pub tag: String,
 }
 
-const MAX_K1_VALUES: usize = 110;
-const K1_VALUES_TO_REMOVE: usize = 10;
 const LNURLP_MIN_SENDABLE: u64 = 330000;
 const LNURLP_MAX_SENDABLE: u64 = 100000000;
 const COMMENT_ALLOWED_SIZE: u16 = 280;
 
 /// Generates and returns a new `k1` value for an LNURL-auth flow.
 ///
-/// The `k1` value is a random 32-byte hex-encoded string that is stored in memory
-/// to be used once for a login or registration attempt. This endpoint also manages
-/// the size of the `k1` cache to prevent it from growing indefinitely.
+/// The `k1` value is a random 32-byte hex-encoded string that is stored in Redis with
+/// a strict TTL so it can be used once for a login or registration attempt.
 pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>, StatusCode> {
-    let k1 = make_k1(state.k1_values.clone());
-
-    // Keep the map size around 100
-    if state.k1_values.len() > MAX_K1_VALUES {
-        let mut entries: Vec<_> = state
-            .k1_values
-            .iter()
-            .map(|e| (e.key().clone(), *e.value()))
-            .collect();
-        entries.sort_by_key(|&(_, time)| time);
-        let keys_to_remove: Vec<String> = entries
-            .iter()
-            .take(K1_VALUES_TO_REMOVE)
-            .map(|(key, _)| key.clone())
-            .collect();
-
-        for key in keys_to_remove {
-            state.k1_values.remove(&key);
-        }
-    }
+    let k1 = make_k1(&state.k1_cache).await.map_err(|e| {
+        tracing::error!("Failed to create k1: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     Ok(Json(GetK1 {
         k1,
@@ -180,7 +161,16 @@ pub async fn lnurlp_request(
         .insert(transaction_id.clone(), tx);
 
     // Generate a k1 for authentication optimization (avoids extra network call)
-    let k1 = make_k1(state.k1_values.clone());
+    let k1 = match make_k1(&state.k1_cache).await {
+        Ok(value) => value,
+        Err(e) => {
+            state.invoice_data_transmitters.remove(&transaction_id);
+            tracing::error!("Failed to create k1 for LNURL request: {}", e);
+            return Err(ApiError::ServerErr(
+                "Failed to create authentication challenge".to_string(),
+            ));
+        }
+    };
 
     let state_clone = state.clone();
     let transaction_id_clone = transaction_id.clone();
