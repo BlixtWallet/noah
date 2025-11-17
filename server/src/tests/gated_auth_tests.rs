@@ -13,7 +13,9 @@ use crate::utils::make_k1;
 async fn test_register_new_user() {
     let (app, app_state, _guard) = setup_test_app().await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
 
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
@@ -53,7 +55,9 @@ async fn test_register_new_user() {
 async fn test_register_existing_user() {
     let (app, app_state, _guard) = setup_test_app().await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
 
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
@@ -103,7 +107,9 @@ async fn test_register_existing_user() {
 async fn test_register_invalid_signature() {
     let (app, app_state, _guard) = setup_test_app().await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
 
     let user = TestUser::new();
     let mut auth_payload = user.auth_payload(&k1);
@@ -137,7 +143,9 @@ async fn test_register_invalid_signature() {
 async fn test_register_invalid_k1() {
     let (app, app_state, _guard) = setup_test_app().await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
 
     let user = TestUser::new();
     let mut auth_payload = user.auth_payload(&k1);
@@ -180,8 +188,10 @@ async fn test_register_expired_k1() {
     let k1 = format!("{}_{}", k1_hex, old_timestamp);
 
     app_state
-        .k1_values
-        .insert(k1.clone(), std::time::SystemTime::now());
+        .k1_cache
+        .insert_with_timestamp(&k1, old_timestamp)
+        .await
+        .expect("failed to insert expired k1");
 
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
@@ -223,7 +233,9 @@ async fn test_register_push_token() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app

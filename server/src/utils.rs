@@ -1,8 +1,6 @@
-use std::{str::FromStr, sync::Arc, time::SystemTime};
+use std::str::FromStr;
 
-use dashmap::DashMap;
-use rand::RngCore;
-
+use crate::cache::k1_store::K1Store;
 use crate::db::user_repo::UserRepository;
 use crate::errors::ApiError;
 use sqlx::PgPool;
@@ -31,17 +29,8 @@ pub async fn verify_auth(
     Ok(is_valid)
 }
 
-pub fn make_k1(k1_values: Arc<DashMap<String, SystemTime>>) -> String {
-    let mut k1_bytes = [0u8; 32];
-    rand::rng().fill_bytes(&mut k1_bytes);
-    let k1 = hex::encode(k1_bytes);
-    let timestamp = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-    let k1_with_timestamp = format!("{}_{}", k1, timestamp);
-    k1_values.insert(k1_with_timestamp.clone(), SystemTime::now());
-    k1_with_timestamp
+pub async fn make_k1(k1_store: &K1Store) -> anyhow::Result<String> {
+    k1_store.issue_k1().await
 }
 
 pub async fn verify_user_exists(pool: &PgPool, pubkey: &str) -> Result<bool, ApiError> {

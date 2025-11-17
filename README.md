@@ -37,7 +37,7 @@
 - **Local Storage**: MMKV
 - **Native Modules**: Nitro (Ark)
 - **Development Environment**: Nix
-- **Server**: Rust
+- **Server**: Rust (Axum + Postgres + Redis/Dragonfly cache)
 
 ---
 
@@ -125,6 +125,7 @@ For development and testing, you can run a complete local Ark stack using Docker
 - **captaind** (aspd) - Ark Server Protocol Daemon
 - **bark** - Ark CLI client
 - **postgres** - Database for captaind
+- **dragonfly** - Redis-compatible cache backing LNURL auth (k1) storage
 - **cln** - Core Lightning node
 - **lnd** - Lightning Network Daemon
 - **noah-server** - Noah backend server
@@ -145,7 +146,7 @@ just setup-everything
 ```
 
 This single command will:
-- Start all Docker services (bitcoind, captaind, postgres, cln, lnd, bark, noah-server)
+- Start all Docker services (bitcoind, captaind, postgres, dragonfly db, cln, lnd, bark, noah-server)
 - Create and fund a Bitcoin Core wallet
 - Generate 150 blocks
 - Fund the Ark server with 1 BTC

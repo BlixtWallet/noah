@@ -59,6 +59,8 @@ pub struct Config {
     pub aws_region: Option<String>,
     #[serde(default = "default_minimum_app_version")]
     pub minimum_app_version: String,
+    #[serde(default = "default_redis_url")]
+    pub redis_url: String,
 }
 
 impl Config {
@@ -118,6 +120,7 @@ impl Config {
             self.aws_region.as_deref().unwrap_or("[NOT SET]")
         );
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
+        tracing::debug!("Redis URL: {}", self.redis_url);
         tracing::debug!("============================");
     }
 
@@ -220,4 +223,8 @@ fn default_notification_spacing_minutes() -> i64 {
 
 fn default_minimum_app_version() -> String {
     "0.0.1".to_string()
+}
+
+fn default_redis_url() -> String {
+    crate::constants::DEFAULT_REDIS_URL.to_string()
 }

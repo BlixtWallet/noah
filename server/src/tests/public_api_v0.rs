@@ -61,7 +61,13 @@ async fn test_get_k1() {
     let res: GetK1 = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(res.tag, "login");
-    assert!(app_state.k1_values.contains_key(&res.k1));
+    assert!(
+        app_state
+            .k1_cache
+            .contains(&res.k1)
+            .await
+            .expect("failed to verify k1 in Redis")
+    );
 }
 
 #[tracing_test::traced_test]

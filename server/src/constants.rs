@@ -7,3 +7,4 @@ pub const DEFAULT_BACKUP_CRON: &str = "every 2 hours";
 pub const DEFAULT_HEARTBEAT_CRON: &str = "every 48 hours";
 pub const DEFAULT_DEREGISTER_CRON: &str = "every 12 hours";
 pub const DEFAULT_MAINTENANCE_INTERVAL_ROUNDS: u16 = 1;
+pub const DEFAULT_REDIS_URL: &str = "redis://127.0.0.1:6379";

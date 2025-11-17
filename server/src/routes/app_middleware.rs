@@ -52,7 +52,17 @@ pub async fn auth_middleware(
         key: key.clone(),
     };
 
-    if !state.k1_values.contains_key(&payload.k1) {
+    let k1_exists = state.k1_cache.contains(&payload.k1).await.map_err(|e| {
+        tracing::error!(
+            uri = %uri_path,
+            k1 = %payload.k1,
+            error = %e,
+            "Auth failed: Unable to check k1 cache"
+        );
+        ApiError::ServerErr("Failed to validate k1".to_string()).into_response()
+    })?;
+
+    if !k1_exists {
         tracing::warn!(
             uri = %uri_path,
             k1 = %payload.k1,
@@ -136,7 +146,14 @@ pub async fn auth_middleware(
     );
 
     // Remove the k1 value to prevent reuse
-    state.k1_values.remove(&payload.k1);
+    if let Err(e) = state.k1_cache.remove(&payload.k1).await {
+        tracing::error!(
+            uri = %uri_path,
+            k1 = %payload.k1,
+            error = %e,
+            "Failed to evict k1 from Redis cache after successful auth"
+        );
+    }
 
     request.extensions_mut().insert(payload);
     Ok(next.run(request).await)

@@ -80,10 +80,12 @@ pub async fn submit_invoice(
         payload.transaction_id
     );
 
-    if let Some((_, tx)) = state
+    let sender = state
         .invoice_data_transmitters
         .remove(&payload.transaction_id)
-    {
+        .map(|(_, tx)| tx);
+
+    if let Some(tx) = sender {
         tx.send(payload.invoice)
             .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
 

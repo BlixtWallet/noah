@@ -52,6 +52,11 @@ services:
       timeout: 3s
       retries: 10
 
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    ports:
+      - "6379:6379"
+
   cln:
     image: niteshbalusu/bark-cln:latest
     restart: on-failure
@@ -122,6 +127,8 @@ services:
       - "3099:3099"
     depends_on:
       captaind:
+        condition: service_started
+      dragonfly:
         condition: service_started
 
 volumes:

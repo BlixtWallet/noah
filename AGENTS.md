@@ -32,6 +32,7 @@
 - Http server: Axum
 - Logging: Tracing
 - Database: Postgres
+- Cache: Redis-compatible (Dragonfly in dev) for LNURL-auth state with 10 minute TTL
 - Runtime: Tokio
 - Background jobs: Tokio cron scheduler
 
@@ -71,3 +72,4 @@
 - The `public_` endpoints are accessible by anyone.
 - The `private_` endpoints are accessible only by the server.
 - We use cryptography for authentication and authorization. The middleware checks for signature if it a message is signed by a known public key of the client.
+- LNURL k1 challenges are issued via Redis and expire automatically after 10 minutes to prevent replay across restarts.

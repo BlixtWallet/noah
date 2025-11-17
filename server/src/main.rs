@@ -3,6 +3,7 @@ use axum::{
     Router, middleware,
     routing::{get, post},
 };
+mod cache;
 mod config;
 mod config_watcher;
 mod constants;
@@ -18,6 +19,7 @@ use tracing::error;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
+    cache::{k1_store::K1Store, redis_client::RedisClient},
     config::Config,
     cron::cron_scheduler,
     routes::{
@@ -48,16 +50,16 @@ mod utils;
 
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
-use std::time::SystemTime;
 
 type AppState = Arc<AppStruct>;
+const K1_TTL_SECONDS: usize = 600;
 
 #[derive(Clone)]
 pub struct AppStruct {
     pub config: Arc<ArcSwap<Config>>,
     pub lnurl_domain: String,
     pub db_pool: PgPool,
-    pub k1_values: Arc<DashMap<String, SystemTime>>,
+    pub k1_cache: K1Store,
     pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
 }
 
@@ -135,13 +137,16 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
 
     db::migrations::run_migrations(&db_pool).await?;
 
+    let redis_client = RedisClient::new(&config.redis_url)?;
+    let k1_cache = K1Store::new(redis_client, K1_TTL_SECONDS);
+
     let config_swap = Arc::new(ArcSwap::from_pointee(config.clone()));
 
     let app_state = Arc::new(AppStruct {
         config: config_swap.clone(),
         lnurl_domain: config.lnurl_domain.clone(),
         db_pool: db_pool.clone(),
-        k1_values: Arc::new(DashMap::new()),
+        k1_cache: k1_cache.clone(),
         invoice_data_transmitters: Arc::new(DashMap::new()),
     });
 

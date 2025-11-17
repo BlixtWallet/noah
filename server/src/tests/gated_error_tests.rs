@@ -13,7 +13,9 @@ async fn test_backup_endpoints_invalid_auth() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let mut auth_payload = user.auth_payload(&k1);
     auth_payload.sig = "invalid_signature".to_string();
 
@@ -116,7 +118,9 @@ async fn test_backup_endpoints_malformed_json() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let endpoints = vec![
@@ -160,7 +164,9 @@ async fn test_complete_upload_missing_fields() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     // Test missing s3_key
@@ -204,7 +210,9 @@ async fn test_get_upload_url_missing_fields() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     // Test missing backup_version
@@ -245,7 +253,9 @@ async fn test_delete_backup_missing_version() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -283,7 +293,9 @@ async fn test_update_backup_settings_missing_enabled() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app

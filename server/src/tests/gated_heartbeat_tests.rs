@@ -25,7 +25,9 @@ async fn test_heartbeat_response_success() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -75,7 +77,9 @@ async fn test_heartbeat_response_invalid_notification_id() {
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -122,7 +126,9 @@ async fn test_heartbeat_response_already_responded() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
     let response = app
@@ -163,7 +169,9 @@ async fn test_heartbeat_response_unauthenticated() {
         .await
         .unwrap();
 
-    let k1 = make_k1(app_state.k1_values.clone());
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
     let mut auth_payload = user.auth_payload(&k1);
     auth_payload.sig = "invalid_signature".to_string();
 
