@@ -10,9 +10,9 @@ mod constants;
 mod routes;
 mod types;
 use bitcoin::Network;
-use dashmap::DashMap;
 use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
-use std::{net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use tokio::sync::Mutex;
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing::error;
@@ -60,7 +60,8 @@ pub struct AppStruct {
     pub lnurl_domain: String,
     pub db_pool: PgPool,
     pub k1_cache: K1Store,
-    pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
+    pub invoice_data_transmitters:
+        Arc<Mutex<HashMap<String, tokio::sync::oneshot::Sender<String>>>>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -147,7 +148,7 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
         lnurl_domain: config.lnurl_domain.clone(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
-        invoice_data_transmitters: Arc::new(DashMap::new()),
+        invoice_data_transmitters: Arc::new(Mutex::new(HashMap::new())),
     });
 
     config_watcher::start_config_watcher(config_path.clone(), config_swap).await?;
