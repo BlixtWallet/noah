@@ -43,7 +43,7 @@ jobs:
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
       - name: 🔧 Setup Regtest Environment
-        run: cd scripts && docker-compose pull && just setup-everything
+        run: cd scripts && docker-compose pull && ./ark-dev.sh setup-everything
 
       - name: 📱 Boot iOS Simulator (iPhone 16)
         run: |
