@@ -194,8 +194,8 @@ pub async fn lnurlp_request(
         }
     });
 
-    tracing::debug!("Waiting for invoice with a 180s timeout...");
-    let invoice_result = timeout(Duration::from_secs(180), rx).await;
+    tracing::debug!("Waiting for invoice with a 30s timeout...");
+    let invoice_result = timeout(Duration::from_secs(30), rx).await;
 
     let invoice = match invoice_result {
         Ok(Ok(invoice)) => Ok(invoice),
@@ -207,7 +207,7 @@ pub async fn lnurlp_request(
             // Timeout occurred
             state.invoice_data_transmitters.remove(&transaction_id);
             tracing::error!(
-                "Invoice request timed out after 180s for transaction_id: {}",
+                "Invoice request timed out after 30s for transaction_id: {}",
                 transaction_id
             );
             Err(ApiError::ServerErr("Request timed out".to_string()))
