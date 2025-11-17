@@ -17,6 +17,9 @@ lnurl_domain = "localhost"
 # Postgres connection URL used for Bitcoin/Signet/Regtest networks
 postgres_url = "postgres://postgres:postgres@localhost:5432/noah"
 
+# Redis cache
+redis_url = "redis://127.0.0.1:6379"
+
 # Connection pool configuration
 # Default max: 10, min: 1
 # postgres_max_connections = 10
