@@ -14,7 +14,7 @@ private_port = 3099
 # Default: "localhost"
 lnurl_domain = "localhost"
 
-# Postgres connection URL used for Bitcoin/Signet networks
+# Postgres connection URL used for Bitcoin/Signet/Regtest networks
 postgres_url = "postgres://postgres:postgres@localhost:5432/noah"
 
 # Connection pool configuration
