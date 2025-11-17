@@ -31,7 +31,7 @@
 - Rust
 - Http server: Axum
 - Logging: Tracing
-- Database: Libsql
+- Database: Postgres
 - Runtime: Tokio
 - Background jobs: Tokio cron scheduler
 
