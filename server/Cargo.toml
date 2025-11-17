@@ -21,6 +21,7 @@ rand = "0.9.2"
 bitcoin = "0.32.7"
 expo_push_notification_client = "1.0.6"
 thiserror = "2.0.17"
+dashmap = "6.1.0"
 tokio-cron-scheduler = { version = "0.15.0", features = ["english"] }
 serde_json = "1.0.145"
 random_word = { version = "0.5.0", features = ["en"] }

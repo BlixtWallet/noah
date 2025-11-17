@@ -1,12 +1,13 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use arc_swap::ArcSwap;
 use axum::Router;
 use axum::{middleware, routing::post};
 use bitcoin::key::Keypair;
+use dashmap::DashMap;
 use once_cell::sync::Lazy;
 use sqlx::{PgPool, postgres::PgPoolOptions};
-use tokio::sync::{Mutex, OwnedSemaphorePermit, Semaphore};
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
 use crate::cache::{k1_store::K1Store, redis_client::RedisClient};
@@ -119,7 +120,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
-        invoice_data_transmitters: Arc::new(Mutex::new(HashMap::new())),
+        invoice_data_transmitters: Arc::new(DashMap::new()),
         config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
     });
 
@@ -170,7 +171,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
-        invoice_data_transmitters: Arc::new(Mutex::new(HashMap::new())),
+        invoice_data_transmitters: Arc::new(DashMap::new()),
         config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
     });
 

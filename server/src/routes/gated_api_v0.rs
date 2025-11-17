@@ -80,10 +80,10 @@ pub async fn submit_invoice(
         payload.transaction_id
     );
 
-    let sender = {
-        let mut transmitters = state.invoice_data_transmitters.lock().await;
-        transmitters.remove(&payload.transaction_id)
-    };
+    let sender = state
+        .invoice_data_transmitters
+        .remove(&payload.transaction_id)
+        .map(|(_, tx)| tx);
 
     if let Some(tx) = sender {
         tx.send(payload.invoice)

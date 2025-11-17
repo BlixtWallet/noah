@@ -156,20 +156,15 @@ pub async fn lnurlp_request(
 
     // Generate a unique transaction ID for this payment request
     let transaction_id = Uuid::new_v4().to_string();
-    {
-        let mut transmitters = state.invoice_data_transmitters.lock().await;
-        transmitters.insert(transaction_id.clone(), tx);
-    }
+    state
+        .invoice_data_transmitters
+        .insert(transaction_id.clone(), tx);
 
     // Generate a k1 for authentication optimization (avoids extra network call)
     let k1 = match make_k1(&state.k1_cache).await {
         Ok(value) => value,
         Err(e) => {
-            state
-                .invoice_data_transmitters
-                .lock()
-                .await
-                .remove(&transaction_id);
+            state.invoice_data_transmitters.remove(&transaction_id);
             tracing::error!("Failed to create k1 for LNURL request: {}", e);
             return Err(ApiError::ServerErr(
                 "Failed to create authentication challenge".to_string(),
@@ -205,20 +200,12 @@ pub async fn lnurlp_request(
     let invoice = match invoice_result {
         Ok(Ok(invoice)) => Ok(invoice),
         Ok(Err(_)) => {
-            state
-                .invoice_data_transmitters
-                .lock()
-                .await
-                .remove(&transaction_id);
+            state.invoice_data_transmitters.remove(&transaction_id);
             Err(ApiError::ServerErr("Failed to receive invoice".to_string()))
         }
         Err(_) => {
             // Timeout occurred
-            state
-                .invoice_data_transmitters
-                .lock()
-                .await
-                .remove(&transaction_id);
+            state.invoice_data_transmitters.remove(&transaction_id);
             tracing::error!(
                 "Invoice request timed out after 180s for transaction_id: {}",
                 transaction_id

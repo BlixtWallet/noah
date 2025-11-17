@@ -4288,6 +4288,7 @@ dependencies = [
  "bark-server-rpc",
  "bitcoin",
  "chrono",
+ "dashmap",
  "deadpool-redis",
  "expo_push_notification_client",
  "futures-util",
