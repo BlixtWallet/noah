@@ -1,4 +1,3 @@
-use anyhow::bail;
 use arc_swap::ArcSwap;
 use axum::{
     Router, middleware,
@@ -47,6 +46,8 @@ mod tests;
 mod trace_layer;
 mod utils;
 
+use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::time::SystemTime;
 
 type AppState = Arc<AppStruct>;
@@ -55,7 +56,7 @@ type AppState = Arc<AppStruct>;
 pub struct AppStruct {
     pub config: Arc<ArcSwap<Config>>,
     pub lnurl_domain: String,
-    pub db: Arc<libsql::Database>,
+    pub db_pool: PgPool,
     pub k1_values: Arc<DashMap<String, SystemTime>>,
     pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
 }
@@ -124,32 +125,22 @@ fn main() -> anyhow::Result<()> {
 
 async fn start_server(config: Config, config_path: String) -> anyhow::Result<()> {
     let host = config.host()?;
-    let server_network = config.network()?;
+    let _server_network = config.network()?;
 
-    let db = match server_network {
-        Network::Bitcoin | Network::Signet => {
-            libsql::Builder::new_remote(config.turso_url.clone(), config.turso_api_key.clone())
-                .build()
-                .await?
-        }
-        Network::Regtest => {
-            libsql::Builder::new_local("noah-regtest.db")
-                .build()
-                .await?
-        }
-        _ => {
-            bail!("Unsupported network: {}", server_network);
-        }
-    };
+    let db_pool = PgPoolOptions::new()
+        .max_connections(config.postgres_max_connections)
+        .min_connections(config.postgres_min_connections.unwrap_or(1))
+        .connect(&config.postgres_url)
+        .await?;
 
-    db::migrations::run_migrations(&db).await?;
+    db::migrations::run_migrations(&db_pool).await?;
 
     let config_swap = Arc::new(ArcSwap::from_pointee(config.clone()));
 
     let app_state = Arc::new(AppStruct {
         config: config_swap.clone(),
         lnurl_domain: config.lnurl_domain.clone(),
-        db: Arc::new(db),
+        db_pool: db_pool.clone(),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
     });

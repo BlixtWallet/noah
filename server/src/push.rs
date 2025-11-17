@@ -36,8 +36,7 @@ pub async fn send_push_notification_with_unique_k1(
         access_token: Some(app_state.config.load().expo_access_token.clone()),
     });
 
-    let conn = app_state.db.connect()?;
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
 
     let push_tokens = if let Some(pubkey) = pubkey {
         // A single token might not be found, which is not an error, so we handle the Option.
@@ -122,8 +121,7 @@ async fn send_push_notification_internal(
         access_token: Some(app_state.config.load().expo_access_token.clone()),
     });
 
-    let conn = app_state.db.connect()?;
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
 
     let push_tokens = if let Some(pubkey) = pubkey {
         // A single token might not be found, which is not an error, so we handle the Option.

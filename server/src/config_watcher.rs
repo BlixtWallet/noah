@@ -49,7 +49,7 @@ pub async fn start_config_watcher(
                     if non_reloadable {
                         warn!(
                             "Config changes detected that require server restart: \
-                            host, port, private_port, turso_url, turso_api_key, or server_network"
+                            host, port, private_port, postgres urls, pool settings, or server_network"
                         );
                     }
 
@@ -96,12 +96,14 @@ fn log_config_changes(old: &Config, new: &Config) -> bool {
         );
         has_non_reloadable = true;
     }
-    if old.turso_url != new.turso_url {
-        warn!("turso_url changed (requires restart)");
+    if old.postgres_url != new.postgres_url {
+        warn!("postgres_url changed (requires restart)");
         has_non_reloadable = true;
     }
-    if old.turso_api_key != new.turso_api_key {
-        warn!("turso_api_key changed (requires restart)");
+    if old.postgres_max_connections != new.postgres_max_connections
+        || old.postgres_min_connections != new.postgres_min_connections
+    {
+        warn!("postgres connection pool settings changed (requires restart)");
         has_non_reloadable = true;
     }
 

@@ -14,7 +14,7 @@ pub enum ApiError {
     #[error("Server error: {0}")]
     ServerErr(String),
     #[error("Database error: {0}")]
-    Database(#[from] libsql::Error),
+    Database(#[from] sqlx::Error),
     #[error("Expo push notification error: {0}")]
     Expo(#[from] expo_push_notification_client::CustomError),
     #[error("Anyhow error: {0}")]

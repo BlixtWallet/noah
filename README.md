@@ -254,7 +254,7 @@ just test               # Run server tests
 
 ## 📡 Running the server
 
-**Important note:** Server uses local sqlite database for `regtest` and `Turso cloud` database for `mainnet` and `signet`.
+**Important note:** The server now uses PostgreSQL for all environments. Point `postgres_url` at the database for the current network (run separate DB instances per network).
 
 ### Configuration Setup
 
@@ -272,8 +272,9 @@ The server uses a TOML configuration file instead of environment variables.
    port = 3000
    private_port = 3099
    lnurl_domain = "localhost"
-   turso_url = "file:noah-regtest.db"  # For regtest
-   turso_api_key = "dummy"              # For regtest
+   postgres_url = "postgres://postgres:postgres@localhost:5432/noah"
+   postgres_max_connections = 10
+   postgres_min_connections = 1
    expo_access_token = "your-expo-access-token"
    ark_server_url = "http://localhost:8080"
    server_network = "regtest"

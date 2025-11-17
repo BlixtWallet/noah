@@ -159,16 +159,7 @@ pub async fn user_exists_middleware(
 
     let uri_path = request.uri().path().to_string();
 
-    let conn = state.db.connect().map_err(|e| {
-        tracing::error!(
-            uri = %uri_path,
-            error = %e,
-            "User existence check failed: Database connection error"
-        );
-        ApiError::ServerErr("Failed to connect to database".to_string()).into_response()
-    })?;
-
-    if !verify_user_exists(&conn, &auth_payload.key)
+    if !verify_user_exists(&state.db_pool, &auth_payload.key)
         .await
         .map_err(|e| {
             tracing::error!(

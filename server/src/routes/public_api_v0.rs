@@ -126,8 +126,7 @@ pub async fn lnurlp_request(
 
     tracing::debug!("Lightning address is {}", lightning_address);
 
-    let conn = state.db.connect()?;
-    let user_repo = UserRepository::new(&conn);
+    let user_repo = UserRepository::new(&state.db_pool);
     let pubkey = user_repo
         .find_pubkey_by_lightning_address(&lightning_address)
         .await?
@@ -250,8 +249,7 @@ pub async fn register(
         }
     }
 
-    let conn = state.db.connect()?;
-    let user_repo = UserRepository::new(&conn);
+    let user_repo = UserRepository::new(&state.db_pool);
 
     tracing::debug!(
         "Registering user with pubkey: {} and k1: {}",
@@ -264,8 +262,8 @@ pub async fn register(
 
         if let Some(device_info) = payload.device_info {
             // For existing users, we'll just register the device in its own transaction
-            let tx = conn.transaction().await?;
-            DeviceRepository::upsert(&tx, &auth_payload.key, &device_info).await?;
+            let mut tx = state.db_pool.begin().await?;
+            DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
             tx.commit().await?;
         }
 
@@ -290,8 +288,8 @@ pub async fn register(
     }
 
     // Create a new user in a transaction
-    let tx = conn.transaction().await?;
-    let result = UserRepository::create(&tx, &auth_payload.key, &ln_address).await;
+    let mut tx = state.db_pool.begin().await?;
+    let result = UserRepository::create(&mut tx, &auth_payload.key, &ln_address).await;
 
     if let Err(e) = result {
         if e.is::<crate::db::user_repo::LightningAddressTakenError>() {
@@ -303,7 +301,7 @@ pub async fn register(
     }
 
     if let Some(device_info) = payload.device_info {
-        DeviceRepository::upsert(&tx, &auth_payload.key, &device_info).await?;
+        DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
     }
 
     tx.commit().await?;

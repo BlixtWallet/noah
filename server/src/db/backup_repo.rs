@@ -1,4 +1,7 @@
 use anyhow::Result;
+use chrono::{DateTime, Utc};
+use sqlx::{PgPool, Row, postgres::PgRow};
+use std::convert::TryFrom;
 
 use crate::types::BackupInfo;
 
@@ -11,15 +14,26 @@ pub struct BackupMetadata {
     pub backup_version: i32,
 }
 
+impl<'r> sqlx::FromRow<'r, PgRow> for BackupMetadata {
+    fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
+        Ok(Self {
+            pubkey: row.try_get("pubkey")?,
+            s3_key: row.try_get("s3_key")?,
+            backup_size: row.try_get::<i64, _>("backup_size")? as u64,
+            backup_version: row.try_get("backup_version")?,
+        })
+    }
+}
+
 /// A struct to encapsulate backup-related database operations.
 pub struct BackupRepository<'a> {
-    conn: &'a libsql::Connection,
+    pool: &'a PgPool,
 }
 
 impl<'a> BackupRepository<'a> {
     /// Creates a new repository instance.
-    pub fn new(conn: &'a libsql::Connection) -> Self {
-        Self { conn }
+    pub fn new(pool: &'a PgPool) -> Self {
+        Self { pool }
     }
 
     /// Inserts or updates backup metadata.
@@ -30,11 +44,21 @@ impl<'a> BackupRepository<'a> {
         backup_size: u64,
         backup_version: i32,
     ) -> Result<()> {
-        self.conn.execute(
-            "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version) VALUES (?, ?, ?, ?)
-             ON CONFLICT(pubkey, backup_version) DO UPDATE SET s3_key = excluded.s3_key, backup_size = excluded.backup_size, created_at = CURRENT_TIMESTAMP",
-            libsql::params![pubkey, s3_key, backup_size, backup_version],
+        let size = i64::try_from(backup_size)?;
+        sqlx::query(
+            "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT(pubkey, backup_version)
+             DO UPDATE SET
+                s3_key = excluded.s3_key,
+                backup_size = excluded.backup_size,
+                created_at = now()",
         )
+        .bind(pubkey)
+        .bind(s3_key)
+        .bind(size)
+        .bind(backup_version)
+        .execute(self.pool)
         .await?;
         Ok(())
     }
@@ -49,29 +73,46 @@ impl<'a> BackupRepository<'a> {
         backup_version: i32,
         created_at_iso: &str,
     ) -> Result<()> {
-        self.conn.execute(
-            "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version, created_at) VALUES (?, ?, ?, ?, ?)",
-            libsql::params![pubkey, s3_key, backup_size, backup_version, created_at_iso],
+        let size = i64::try_from(backup_size)?;
+        sqlx::query(
+            "INSERT INTO backup_metadata (pubkey, s3_key, backup_size, backup_version, created_at)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (pubkey, backup_version)
+             DO UPDATE SET s3_key = excluded.s3_key,
+                            backup_size = excluded.backup_size,
+                            created_at = excluded.created_at",
         )
+        .bind(pubkey)
+        .bind(s3_key)
+        .bind(size)
+        .bind(backup_version)
+        .bind(chrono::DateTime::parse_from_rfc3339(created_at_iso)?.with_timezone(&Utc))
+        .execute(self.pool)
         .await?;
         Ok(())
     }
 
     /// Lists all backups for a given user.
     pub async fn list(&self, pubkey: &str) -> Result<Vec<BackupInfo>> {
-        let mut rows = self.conn
-            .query(
-                "SELECT backup_version, created_at, backup_size FROM backup_metadata WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
+        let records = sqlx::query(
+            "SELECT backup_version, created_at, backup_size
+             FROM backup_metadata
+             WHERE pubkey = $1
+             ORDER BY created_at DESC",
+        )
+        .bind(pubkey)
+        .fetch_all(self.pool)
+        .await?;
 
-        let mut backups = Vec::new();
-        while let Some(row) = rows.next().await? {
+        let mut backups = Vec::with_capacity(records.len());
+        for row in records {
+            let created_at: DateTime<Utc> = row.try_get("created_at")?;
+            let version: i32 = row.try_get("backup_version")?;
+            let size: i64 = row.try_get("backup_size")?;
             backups.push(BackupInfo {
-                backup_version: row.get(0)?,
-                created_at: row.get(1)?,
-                backup_size: row.get(2)?,
+                backup_version: version,
+                created_at: created_at.to_rfc3339(),
+                backup_size: size as u64,
             });
         }
         Ok(backups)
@@ -84,21 +125,31 @@ impl<'a> BackupRepository<'a> {
         pubkey: &str,
         version: i32,
     ) -> Result<Option<(String, u64)>> {
-        let mut row = self.conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? AND backup_version = ?", libsql::params![pubkey, version]).await?;
-        match row.next().await? {
-            Some(row) => Ok(Some((row.get(0)?, row.get(1)?))),
-            None => Ok(None),
-        }
+        let record = sqlx::query_as::<_, (String, i64)>(
+            "SELECT s3_key, backup_size
+             FROM backup_metadata
+             WHERE pubkey = $1 AND backup_version = $2",
+        )
+        .bind(pubkey)
+        .bind(version)
+        .fetch_optional(self.pool)
+        .await?;
+
+        Ok(record.map(|(key, size)| (key, size as u64)))
     }
 
     /// Finds the latest backup for a user.
     /// Returns a tuple of (s3_key, backup_size).
     pub async fn find_latest(&self, pubkey: &str) -> Result<Option<(String, u64)>> {
-        let mut row = self.conn.query("SELECT s3_key, backup_size FROM backup_metadata WHERE pubkey = ? ORDER BY created_at DESC LIMIT 1", libsql::params![pubkey]).await?;
-        match row.next().await? {
-            Some(row) => Ok(Some((row.get(0)?, row.get(1)?))),
-            None => Ok(None),
-        }
+        let record = sqlx::query_as::<_, (String, i64)>(
+            "SELECT s3_key, backup_size
+             FROM backup_metadata WHERE pubkey = $1
+             ORDER BY created_at DESC LIMIT 1",
+        )
+        .bind(pubkey)
+        .fetch_optional(self.pool)
+        .await?;
+        Ok(record.map(|(key, size)| (key, size as u64)))
     }
 
     /// Finds the S3 key for a specific backup version.
@@ -107,17 +158,15 @@ impl<'a> BackupRepository<'a> {
         pubkey: &str,
         version: i32,
     ) -> Result<Option<String>> {
-        let mut row = self
-            .conn
-            .query(
-                "SELECT s3_key FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-                libsql::params![pubkey, version],
-            )
-            .await?;
-        match row.next().await? {
-            Some(row) => Ok(Some(row.get(0)?)),
-            None => Ok(None),
-        }
+        let key = sqlx::query_scalar::<_, String>(
+            "SELECT s3_key FROM backup_metadata WHERE pubkey = $1 AND backup_version = $2",
+        )
+        .bind(pubkey)
+        .bind(version)
+        .fetch_optional(self.pool)
+        .await?;
+
+        Ok(key)
     }
 
     /// Finds the full metadata for a specific backup version.
@@ -127,75 +176,64 @@ impl<'a> BackupRepository<'a> {
         pubkey: &str,
         version: i32,
     ) -> Result<Option<BackupMetadata>> {
-        let mut rows = self.conn.query(
-            "SELECT pubkey, s3_key, backup_size, backup_version FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-            libsql::params![pubkey, version],
-        ).await?;
+        let metadata = sqlx::query_as::<_, BackupMetadata>(
+            "SELECT pubkey, s3_key, backup_size::bigint as backup_size, backup_version
+             FROM backup_metadata
+             WHERE pubkey = $1 AND backup_version = $2",
+        )
+        .bind(pubkey)
+        .bind(version)
+        .fetch_optional(self.pool)
+        .await?;
 
-        match rows.next().await? {
-            Some(row) => Ok(Some(BackupMetadata {
-                pubkey: row.get(0)?,
-                s3_key: row.get(1)?,
-                backup_size: row.get(2)?,
-                backup_version: row.get(3)?,
-            })),
-            None => Ok(None),
-        }
+        Ok(metadata)
     }
 
     /// Deletes a backup record by its version.
     pub async fn delete_by_version(&self, pubkey: &str, version: i32) -> Result<()> {
-        self.conn
-            .execute(
-                "DELETE FROM backup_metadata WHERE pubkey = ? AND backup_version = ?",
-                libsql::params![pubkey, version],
-            )
+        sqlx::query("DELETE FROM backup_metadata WHERE pubkey = $1 AND backup_version = $2")
+            .bind(pubkey)
+            .bind(version)
+            .execute(self.pool)
             .await?;
         Ok(())
     }
 
     /// Inserts or updates backup settings for a user.
     pub async fn upsert_settings(&self, pubkey: &str, enabled: bool) -> Result<()> {
-        self.conn
-            .execute(
-                "INSERT INTO backup_settings (pubkey, backup_enabled) VALUES (?, ?)
-                 ON CONFLICT(pubkey) DO UPDATE SET backup_enabled = excluded.backup_enabled",
-                libsql::params![pubkey, enabled],
-            )
-            .await?;
+        sqlx::query(
+            "INSERT INTO backup_settings (pubkey, backup_enabled)
+             VALUES ($1, $2)
+             ON CONFLICT(pubkey)
+             DO UPDATE SET backup_enabled = excluded.backup_enabled",
+        )
+        .bind(pubkey)
+        .bind(enabled)
+        .execute(self.pool)
+        .await?;
         Ok(())
     }
 
     /// Gets the backup settings for a user.
     pub async fn get_settings(&self, pubkey: &str) -> Result<Option<bool>> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT backup_enabled FROM backup_settings WHERE pubkey = ?",
-                libsql::params![pubkey],
-            )
-            .await?;
+        let enabled = sqlx::query_scalar::<_, bool>(
+            "SELECT backup_enabled FROM backup_settings WHERE pubkey = $1",
+        )
+        .bind(pubkey)
+        .fetch_optional(self.pool)
+        .await?;
 
-        match rows.next().await? {
-            Some(row) => Ok(Some(row.get(0)?)),
-            None => Ok(None),
-        }
+        Ok(enabled)
     }
 
     /// Finds all pubkeys that have backups enabled.
     pub async fn find_pubkeys_with_backup_enabled(&self) -> Result<Vec<String>> {
-        let mut rows = self
-            .conn
-            .query(
-                "SELECT pubkey FROM backup_settings WHERE backup_enabled = TRUE",
-                (),
-            )
-            .await?;
+        let pubkeys = sqlx::query_scalar::<_, String>(
+            "SELECT pubkey FROM backup_settings WHERE backup_enabled = TRUE",
+        )
+        .fetch_all(self.pool)
+        .await?;
 
-        let mut pubkeys = Vec::new();
-        while let Some(row) = rows.next().await? {
-            pubkeys.push(row.get(0)?);
-        }
         Ok(pubkeys)
     }
 }

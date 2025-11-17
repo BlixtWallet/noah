@@ -5,6 +5,7 @@ use rand::RngCore;
 
 use crate::db::user_repo::UserRepository;
 use crate::errors::ApiError;
+use sqlx::PgPool;
 
 pub async fn verify_message(
     message: &str,
@@ -43,8 +44,8 @@ pub fn make_k1(k1_values: Arc<DashMap<String, SystemTime>>) -> String {
     k1_with_timestamp
 }
 
-pub async fn verify_user_exists(conn: &libsql::Connection, pubkey: &str) -> Result<bool, ApiError> {
-    let user_repo = UserRepository::new(conn);
+pub async fn verify_user_exists(pool: &PgPool, pubkey: &str) -> Result<bool, ApiError> {
+    let user_repo = UserRepository::new(pool);
     user_repo.exists_by_pubkey(pubkey).await.map_err(|e| {
         tracing::error!("Failed to query user: {}", e);
         ApiError::Database(e)

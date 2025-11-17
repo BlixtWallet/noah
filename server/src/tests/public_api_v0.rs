@@ -10,15 +10,14 @@ use crate::types::{AppVersionCheckPayload, AppVersionInfo};
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_lnurlp_request_default() {
-    let (app, app_state) = setup_public_test_app().await;
+    let (app, app_state, _guard) = setup_public_test_app().await;
 
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params!["test_pubkey", "test@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind("test_pubkey")
+        .bind("test@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let response = app
         .oneshot(
@@ -43,7 +42,7 @@ async fn test_lnurlp_request_default() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_k1() {
-    let (app, app_state) = setup_public_test_app().await;
+    let (app, app_state, _guard) = setup_public_test_app().await;
 
     let response = app
         .oneshot(
@@ -68,7 +67,7 @@ async fn test_get_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_app_version_check_update_required() {
-    let (app, _app_state) = setup_public_test_app().await;
+    let (app, _app_state, _guard) = setup_public_test_app().await;
 
     let payload = AppVersionCheckPayload {
         client_version: "0.0.0".to_string(),
@@ -98,7 +97,7 @@ async fn test_app_version_check_update_required() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_app_version_check_no_update_required() {
-    let (app, _app_state) = setup_public_test_app().await;
+    let (app, _app_state, _guard) = setup_public_test_app().await;
 
     let payload = AppVersionCheckPayload {
         client_version: "0.0.1".to_string(),
@@ -128,7 +127,7 @@ async fn test_app_version_check_no_update_required() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_app_version_check_newer_version() {
-    let (app, _app_state) = setup_public_test_app().await;
+    let (app, _app_state, _guard) = setup_public_test_app().await;
 
     let payload = AppVersionCheckPayload {
         client_version: "1.0.0".to_string(),
@@ -158,7 +157,7 @@ async fn test_app_version_check_newer_version() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_app_version_check_invalid_version() {
-    let (app, _app_state) = setup_public_test_app().await;
+    let (app, _app_state, _guard) = setup_public_test_app().await;
 
     let payload = AppVersionCheckPayload {
         client_version: "invalid".to_string(),

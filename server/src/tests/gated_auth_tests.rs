@@ -11,7 +11,7 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_new_user() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -51,20 +51,19 @@ async fn test_register_new_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_existing_user() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
     let user = TestUser::new();
     let auth_payload = user.auth_payload(&k1);
 
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "existing@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user.pubkey().to_string())
+        .bind("existing@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let response = app
         .oneshot(
@@ -102,7 +101,7 @@ async fn test_register_existing_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_signature() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -136,7 +135,7 @@ async fn test_register_invalid_signature() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_invalid_k1() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1 = make_k1(app_state.k1_values.clone());
 
@@ -170,7 +169,7 @@ async fn test_register_invalid_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_expired_k1() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let k1_hex = "5a9b8f7c6d5e4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e8d7c6b5a4d3c2b1a0f9e";
     let old_timestamp = std::time::SystemTime::now()
@@ -213,17 +212,16 @@ async fn test_register_expired_k1() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_push_token() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
 
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "existing@localhost"],
-    )
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user.pubkey().to_string())
+        .bind("existing@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let k1 = make_k1(app_state.k1_values.clone());
     let auth_payload = user.auth_payload(&k1);
@@ -252,7 +250,7 @@ async fn test_register_push_token() {
 
     // Verification: Check for token with the repository
     use crate::db::push_token_repo::PushTokenRepository;
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
     let token = push_token_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await

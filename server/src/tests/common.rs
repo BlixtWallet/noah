@@ -5,6 +5,9 @@ use axum::Router;
 use axum::{middleware, routing::post};
 use bitcoin::key::Keypair;
 use dashmap::DashMap;
+use once_cell::sync::Lazy;
+use sqlx::{PgPool, postgres::PgPoolOptions};
+use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
 use crate::config::Config;
@@ -16,6 +19,21 @@ use crate::routes::gated_api_v0::{
 use crate::routes::public_api_v0::{check_app_version, get_k1, lnurlp_request, register};
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
+
+static TEST_DB_SEMAPHORE: Lazy<Arc<Semaphore>> = Lazy::new(|| Arc::new(Semaphore::new(1)));
+
+pub struct TestDbGuard {
+    _permit: OwnedSemaphorePermit,
+}
+
+async fn acquire_test_db_guard() -> TestDbGuard {
+    let permit = TEST_DB_SEMAPHORE
+        .clone()
+        .acquire_owned()
+        .await
+        .expect("failed to acquire test DB semaphore");
+    TestDbGuard { _permit: permit }
+}
 
 pub struct TestUser {
     keypair: Keypair,
@@ -51,8 +69,9 @@ impl TestUser {
             port: 3000,
             private_port: 3001,
             lnurl_domain: "localhost".to_string(),
-            turso_url: "http://localhost:8080".to_string(),
-            turso_api_key: "test-key".to_string(),
+            postgres_url: "postgres://postgres:postgres@localhost:5432/noah_test".to_string(),
+            postgres_max_connections: 5,
+            postgres_min_connections: Some(1),
             expo_access_token: "test-token".to_string(),
             ark_server_url: "http://localhost:8081".to_string(),
             server_network: "test-network".to_string(),
@@ -78,7 +97,10 @@ impl TestUser {
     }
 }
 
-pub async fn setup_test_app() -> (Router, AppState) {
+pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
+    // Ensure tests run sequentially against the shared Postgres instance
+    let guard = acquire_test_db_guard().await;
+
     // Set up environment variables for S3 testing
     unsafe {
         std::env::set_var("S3_BUCKET_NAME", "test-bucket");
@@ -87,13 +109,11 @@ pub async fn setup_test_app() -> (Router, AppState) {
         std::env::set_var("AWS_REGION", "us-east-1");
     }
 
-    let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
-    let db = libsql::Builder::new_local(db_path).build().await.unwrap();
-    crate::db::migrations::run_migrations(&db).await.unwrap();
+    let db_pool = setup_test_database().await;
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
-        db: Arc::new(db),
+        db_pool: db_pool.clone(),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
         config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
@@ -132,17 +152,17 @@ pub async fn setup_test_app() -> (Router, AppState) {
 
     let app = auth_router.with_state(app_state.clone());
 
-    (app, app_state)
+    (app, app_state, guard)
 }
 
-pub async fn setup_public_test_app() -> (Router, AppState) {
-    let db_path = format!("/tmp/test-{}.db", rand::random::<u64>());
-    let db = libsql::Builder::new_local(db_path).build().await.unwrap();
-    crate::db::migrations::run_migrations(&db).await.unwrap();
+pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
+    let guard = acquire_test_db_guard().await;
+
+    let db_pool = setup_test_database().await;
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
-        db: Arc::new(db),
+        db_pool: db_pool.clone(),
         k1_values: Arc::new(DashMap::new()),
         invoice_data_transmitters: Arc::new(DashMap::new()),
         config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
@@ -157,16 +177,56 @@ pub async fn setup_public_test_app() -> (Router, AppState) {
         )
         .with_state(app_state.clone());
 
-    (app, app_state)
+    (app, app_state, guard)
 }
 
 // Helper function to create a test user in the database
 pub async fn create_test_user(app_state: &AppState, user: &TestUser) {
-    let conn = app_state.db.connect().unwrap();
-    conn.execute(
-        "INSERT INTO users (pubkey, lightning_address) VALUES (?, ?)",
-        libsql::params![user.pubkey().to_string(), "test@localhost"],
+    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+        .bind(user.pubkey().to_string())
+        .bind("test@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
+}
+
+async fn setup_test_database() -> PgPool {
+    let database_url = std::env::var("TEST_DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/noah_test".to_string());
+
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&database_url)
+        .await
+        .expect("Failed to connect to TEST_DATABASE_URL");
+
+    crate::db::migrations::run_migrations(&pool)
+        .await
+        .expect("Failed to run migrations");
+    reset_database(&pool)
+        .await
+        .expect("Failed to reset database");
+
+    pool
+}
+
+async fn reset_database(pool: &PgPool) -> sqlx::Result<()> {
+    sqlx::query(
+        r#"
+        TRUNCATE TABLE
+            heartbeat_notifications,
+            notification_tracking,
+            job_status_reports,
+            devices,
+            offboarding_requests,
+            backup_metadata,
+            backup_settings,
+            push_tokens,
+            users
+        RESTART IDENTITY CASCADE
+        "#,
     )
+    .execute(pool)
     .await
-    .unwrap();
+    .map(|_| ())
 }

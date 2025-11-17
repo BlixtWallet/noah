@@ -12,7 +12,7 @@ use std::str::FromStr;
 ///
 /// ## Non-Reloadable (requires restart):
 /// - `host`, `port`, `private_port`: Network binding configuration
-/// - `turso_url`, `turso_api_key`: Database connection settings
+/// - `postgres_url`: Database connection settings
 /// - `server_network`: Bitcoin network selection
 ///
 /// ## Hot-Reloadable (applies automatically):
@@ -33,8 +33,11 @@ pub struct Config {
     pub private_port: u16,
     #[serde(default = "default_lnurl_domain")]
     pub lnurl_domain: String,
-    pub turso_url: String,
-    pub turso_api_key: String,
+    pub postgres_url: String,
+    #[serde(default = "default_postgres_max_connections")]
+    pub postgres_max_connections: u32,
+    #[serde(default)]
+    pub postgres_min_connections: Option<u32>,
     pub expo_access_token: String,
     pub ark_server_url: String,
     #[serde(default = "default_server_network")]
@@ -65,8 +68,12 @@ impl Config {
         tracing::debug!("Port: {}", self.port);
         tracing::debug!("Private Port: {}", self.private_port);
         tracing::debug!("LNURL Domain: {}", self.lnurl_domain);
-        tracing::debug!("Turso URL: {}", self.turso_url);
-        tracing::debug!("Turso API Key: [REDACTED]");
+        tracing::debug!("Postgres URL: {}", self.postgres_url);
+        tracing::debug!(
+            "Postgres connection pool: max={}, min={}",
+            self.postgres_max_connections,
+            self.postgres_min_connections.unwrap_or(1)
+        );
         tracing::debug!("Expo Access Token: [REDACTED]");
         tracing::debug!("Ark Server URL: {}", self.ark_server_url);
         tracing::debug!("Server Network: {}", self.server_network);
@@ -197,6 +204,10 @@ fn default_heartbeat_cron() -> String {
 
 fn default_deregister_cron() -> String {
     crate::constants::DEFAULT_DEREGISTER_CRON.to_string()
+}
+
+fn default_postgres_max_connections() -> u32 {
+    10
 }
 
 fn default_maintenance_interval_rounds() -> u16 {

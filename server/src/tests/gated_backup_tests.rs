@@ -12,7 +12,7 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_upload_url() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -57,7 +57,7 @@ async fn test_get_upload_url() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_complete_upload() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -91,8 +91,7 @@ async fn test_complete_upload() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verify the backup metadata was stored
-    let conn = app_state.db.connect().unwrap();
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     let metadata = backup_repo
         .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
         .await
@@ -107,7 +106,7 @@ async fn test_complete_upload() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_complete_upload_upsert() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -171,8 +170,7 @@ async fn test_complete_upload_upsert() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verify the record was updated
-    let conn = app_state.db.connect().unwrap();
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     let metadata = backup_repo
         .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
         .await
@@ -185,7 +183,7 @@ async fn test_complete_upload_upsert() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_list_backups_empty() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -217,13 +215,12 @@ async fn test_list_backups_empty() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_list_backups_with_data() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
     // Insert test backup metadata
-    let conn = app_state.db.connect().unwrap();
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_metadata(&user.pubkey().to_string(), "test/backup_v1.db", 1024, 1)
         .await
@@ -270,14 +267,13 @@ async fn test_list_backups_with_data() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_download_url_specific_version() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
     // Insert test backup metadata
-    let conn = app_state.db.connect().unwrap();
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_metadata(&user.pubkey().to_string(), &s3_key, 1024, 1)
         .await
@@ -321,18 +317,15 @@ async fn test_get_download_url_specific_version() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_download_url_latest() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
     // Insert test backup metadata with different timestamps
-    let conn = app_state.db.connect().unwrap();
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     use chrono::{Duration, Utc};
-    let now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-    let one_hour_ago = (Utc::now() - Duration::hours(1))
-        .format("%Y-%m-%d %H:%M:%S")
-        .to_string();
+    let now = Utc::now().to_rfc3339();
+    let one_hour_ago = (Utc::now() - Duration::hours(1)).to_rfc3339();
     backup_repo
         .upsert_metadata_with_timestamp(
             &user.pubkey().to_string(),
@@ -387,7 +380,7 @@ async fn test_get_download_url_latest() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_download_url_not_found() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -420,14 +413,13 @@ async fn test_get_download_url_not_found() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_delete_backup() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
     // Insert test backup metadata
-    let conn = app_state.db.connect().unwrap();
     let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_metadata(&user.pubkey().to_string(), &s3_key, 1024, 1)
         .await
@@ -460,7 +452,7 @@ async fn test_delete_backup() {
     // The S3 delete operation might fail, but the database deletion should succeed
     if response.status() == StatusCode::OK {
         // Verify the backup metadata was deleted from database
-        let backup_repo = BackupRepository::new(&conn);
+        let backup_repo = BackupRepository::new(&app_state.db_pool);
         let metadata = backup_repo
             .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
             .await
@@ -475,7 +467,7 @@ async fn test_delete_backup() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_delete_backup_not_found() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -508,7 +500,7 @@ async fn test_delete_backup_not_found() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_update_backup_settings_enable() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -538,8 +530,7 @@ async fn test_update_backup_settings_enable() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verify the backup settings were stored
-    let conn = app_state.db.connect().unwrap();
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     let backup_enabled = backup_repo
         .get_settings(&user.pubkey().to_string())
         .await
@@ -551,13 +542,12 @@ async fn test_update_backup_settings_enable() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_update_backup_settings_disable() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
     // First enable backup
-    let conn = app_state.db.connect().unwrap();
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_settings(&user.pubkey().to_string(), true)
         .await
@@ -589,7 +579,7 @@ async fn test_update_backup_settings_disable() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verify the backup settings were updated
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     let backup_enabled = backup_repo
         .get_settings(&user.pubkey().to_string())
         .await

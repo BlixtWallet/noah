@@ -13,8 +13,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::info;
 
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
-    let conn = app_state.db.connect()?;
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
 
     let pubkeys = backup_repo.find_pubkeys_with_backup_enabled().await?;
     info!("Pubkeys registered for backup {:?}", pubkeys);
@@ -41,8 +40,7 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
 }
 
 pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result<()> {
-    let conn = app_state.db.connect()?;
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     let active_users = heartbeat_repo.get_active_users().await?;
     tracing::info!(
@@ -86,8 +84,7 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
 }
 
 pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow::Result<()> {
-    let conn = app_state.db.connect()?;
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
     let users_to_deregister = heartbeat_repo.get_users_to_deregister().await?;
 
@@ -101,14 +98,14 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
         tracing::info!("Deregistering inactive user: {}", pubkey);
 
         // Use a transaction to ensure all or nothing is deleted
-        let tx = conn.transaction().await?;
+        let mut tx = app_state.db_pool.begin().await?;
 
-        if let Err(e) = PushTokenRepository::delete_by_pubkey(&tx, &pubkey).await {
+        if let Err(e) = PushTokenRepository::delete_by_pubkey(&mut tx, &pubkey).await {
             tracing::error!("Failed to delete push token for {}: {}", pubkey, e);
             continue;
         }
 
-        if let Err(e) = OffboardingRepository::delete_by_pubkey(&tx, &pubkey).await {
+        if let Err(e) = OffboardingRepository::delete_by_pubkey(&mut tx, &pubkey).await {
             tracing::error!(
                 "Failed to delete offboarding requests for {}: {}",
                 pubkey,
@@ -117,8 +114,7 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
             continue;
         }
 
-        let heartbeat_repo = HeartbeatRepository::new(&tx);
-        if let Err(e) = heartbeat_repo.delete_by_pubkey(&pubkey).await {
+        if let Err(e) = HeartbeatRepository::delete_by_pubkey_tx(&mut tx, &pubkey).await {
             tracing::error!(
                 "Failed to delete heartbeat notifications for {}: {}",
                 pubkey,

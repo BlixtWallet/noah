@@ -16,14 +16,13 @@ use crate::utils::make_k1;
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_get_user_info() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
 
     // Setup: Create user with the repository
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &user.pubkey().to_string(), "existing@localhost")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &user.pubkey().to_string(), "existing@localhost")
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -57,14 +56,13 @@ async fn test_get_user_info() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_update_ln_address() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
 
     // Setup: Create user with the repository
-    let conn = app_state.db.connect().unwrap();
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &user.pubkey().to_string(), "existing@localhost")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &user.pubkey().to_string(), "existing@localhost")
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -95,7 +93,7 @@ async fn test_update_ln_address() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verification: Check for updated address with the repository
-    let user_repo = UserRepository::new(&conn);
+    let user_repo = UserRepository::new(&app_state.db_pool);
     let updated_user = user_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await
@@ -110,7 +108,7 @@ async fn test_update_ln_address() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_offboarding_request() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -147,8 +145,7 @@ async fn test_register_offboarding_request() {
     assert!(!res.request_id.is_empty());
 
     // Verify the offboarding request was stored in the database
-    let conn = app_state.db.connect().unwrap();
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
     let request = offboarding_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await
@@ -167,7 +164,7 @@ async fn test_register_offboarding_request() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_register_offboarding_request_invalid_auth() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -196,24 +193,22 @@ async fn test_register_offboarding_request_invalid_auth() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_deregister_user() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    let conn = app_state.db.connect().unwrap();
-
     // 1. Create user and associated data using repositories
-    let tx = conn.transaction().await.unwrap();
-    UserRepository::create(&tx, &user.pubkey().to_string(), "test@localhost")
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(&mut tx, &user.pubkey().to_string(), "test@localhost")
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
     push_token_repo
         .upsert(&user.pubkey().to_string(), "test_push_token")
         .await
         .unwrap();
 
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_metadata(&user.pubkey().to_string(), "test_s3_key", 1024, 1)
         .await
@@ -223,7 +218,7 @@ async fn test_deregister_user() {
         .await
         .unwrap();
 
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
     offboarding_repo
         .create_request(
             "test_request_id",
@@ -234,7 +229,7 @@ async fn test_deregister_user() {
         .await
         .unwrap();
 
-    let heartbeat_repo = HeartbeatRepository::new(&conn);
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
     let _heartbeat_notification_id = heartbeat_repo
         .create_notification(&user.pubkey().to_string())
         .await
@@ -262,14 +257,14 @@ async fn test_deregister_user() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // 3. Verify data is deleted from the correct places
-    let push_token_repo = PushTokenRepository::new(&conn);
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
     let token = push_token_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await
         .unwrap();
     assert!(token.is_none(), "Push token should be deleted");
 
-    let offboarding_repo = OffboardingRepository::new(&conn);
+    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
     let request = offboarding_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await
@@ -277,14 +272,14 @@ async fn test_deregister_user() {
     assert!(request.is_none(), "Offboarding request should be deleted");
 
     // 4. Verify data is NOT deleted from other tables
-    let user_repo = UserRepository::new(&conn);
+    let user_repo = UserRepository::new(&app_state.db_pool);
     let user_record = user_repo
         .find_by_pubkey(&user.pubkey().to_string())
         .await
         .unwrap();
     assert!(user_record.is_some(), "User should not be deleted");
 
-    let backup_repo = BackupRepository::new(&conn);
+    let backup_repo = BackupRepository::new(&app_state.db_pool);
     let metadata = backup_repo
         .find_by_pubkey_and_version(&user.pubkey().to_string(), 1)
         .await
@@ -298,15 +293,12 @@ async fn test_deregister_user() {
     assert!(settings.is_some(), "Backup settings should not be deleted");
 
     // 5. Verify heartbeat notifications are deleted
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = ?",
-            libsql::params![user.pubkey().to_string()],
-        )
-        .await
-        .unwrap();
-    let row = rows.next().await.unwrap().unwrap();
-    let heartbeat_count: i32 = row.get(0).unwrap();
+    let heartbeat_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
     assert_eq!(
         heartbeat_count, 0,
         "Heartbeat notifications should be deleted"
@@ -316,7 +308,7 @@ async fn test_deregister_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_report_job_status_pruning() {
-    let (app, app_state) = setup_test_app().await;
+    let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user).await;
 
@@ -357,15 +349,15 @@ async fn test_report_job_status_pruning() {
     }
 
     // Verify that only 20 reports are stored in the database
-    let conn = app_state.db.connect().unwrap();
-    let count = JobStatusRepository::count_by_pubkey(&conn, &user.pubkey().to_string())
-        .await
-        .unwrap();
+    let count =
+        JobStatusRepository::count_by_pubkey(&app_state.db_pool, &user.pubkey().to_string())
+            .await
+            .unwrap();
     assert_eq!(count, 20);
 
     // Verify that the remaining reports are the last 20
     let messages = JobStatusRepository::find_error_messages_by_pubkey_ordered(
-        &conn,
+        &app_state.db_pool,
         &user.pubkey().to_string(),
     )
     .await
