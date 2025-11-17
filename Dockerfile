@@ -9,6 +9,7 @@ COPY ./Cargo.toml ./Cargo.toml
 COPY ./server/Cargo.toml ./server/Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./server/src/ ./server/src
+COPY ./server/migrations ./server/migrations
 RUN cargo chef prepare --recipe-path recipe.json
 
 # Stage 3: Build dependencies (cached layer)
@@ -23,6 +24,7 @@ COPY ./Cargo.toml ./Cargo.toml
 COPY ./server/Cargo.toml ./server/Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./server/src/ ./server/src
+COPY ./server/migrations ./server/migrations
 RUN cargo build --release --manifest-path ./server/Cargo.toml
 
 # Stage 5: Runtime image
