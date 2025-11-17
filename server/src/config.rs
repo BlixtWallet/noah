@@ -70,7 +70,7 @@ impl Config {
         tracing::debug!("Port: {}", self.port);
         tracing::debug!("Private Port: {}", self.private_port);
         tracing::debug!("LNURL Domain: {}", self.lnurl_domain);
-        tracing::debug!("Postgres URL: {}", self.postgres_url);
+        tracing::debug!("Postgres URL: [REDACTED]");
         tracing::debug!(
             "Postgres connection pool: max={}, min={}",
             self.postgres_max_connections,

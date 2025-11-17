@@ -15,7 +15,6 @@ use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
 use std::{net::SocketAddr, sync::Arc};
 use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
-use tracing::error;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -113,14 +112,11 @@ fn main() -> anyhow::Result<()> {
         subscriber.init();
     }
 
-    tokio::runtime::Builder::new_multi_thread()
+    let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
-        .build()?
-        .block_on(async {
-            if let Err(e) = start_server(config, config_path).await {
-                error!("Failed to start server: {}", e);
-            }
-        });
+        .build()?;
+
+    runtime.block_on(async { start_server(config, config_path).await })?;
 
     Ok(())
 }
@@ -138,6 +134,7 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
     db::migrations::run_migrations(&db_pool).await?;
 
     let redis_client = RedisClient::new(&config.redis_url)?;
+    redis_client.check_connection().await?;
     let k1_cache = K1Store::new(redis_client, K1_TTL_SECONDS);
 
     let config_swap = Arc::new(ArcSwap::from_pointee(config.clone()));

@@ -1,5 +1,5 @@
 use anyhow::Context;
-use deadpool_redis::{Connection, Pool, Runtime};
+use deadpool_redis::{Connection, Pool, Runtime, redis::cmd};
 
 /// Simple wrapper around a Redis connection pool.
 #[derive(Clone)]
@@ -24,5 +24,15 @@ impl RedisClient {
             .get()
             .await
             .context("Failed to acquire Redis connection")
+    }
+
+    /// Check connectivity by issuing a PING.
+    pub async fn check_connection(&self) -> anyhow::Result<()> {
+        let mut connection = self.get_connection().await?;
+        let _: String = cmd("PING")
+            .query_async(&mut connection)
+            .await
+            .context("Failed to connect to Redis")?;
+        Ok(())
     }
 }
