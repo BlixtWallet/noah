@@ -104,19 +104,18 @@ impl<'a> BackupRepository<'a> {
         .fetch_all(self.pool)
         .await?;
 
-        Ok(records
-            .into_iter()
-            .filter_map(|row| {
-                let created_at: DateTime<Utc> = row.try_get("created_at").ok()?;
-                let version: i32 = row.try_get("backup_version").ok()?;
-                let size: i64 = row.try_get("backup_size").ok()?;
-                Some(BackupInfo {
-                    backup_version: version,
-                    created_at: created_at.to_rfc3339(),
-                    backup_size: size as u64,
-                })
-            })
-            .collect())
+        let mut backups = Vec::with_capacity(records.len());
+        for row in records {
+            let created_at: DateTime<Utc> = row.try_get("created_at")?;
+            let version: i32 = row.try_get("backup_version")?;
+            let size: i64 = row.try_get("backup_size")?;
+            backups.push(BackupInfo {
+                backup_version: version,
+                created_at: created_at.to_rfc3339(),
+                backup_size: size as u64,
+            });
+        }
+        Ok(backups)
     }
 
     /// Finds a specific backup by version.
