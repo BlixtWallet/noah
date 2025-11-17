@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 
 use crate::types::{ReportStatus, ReportType};
 
@@ -52,7 +52,7 @@ impl JobStatusRepository {
 
     /// [TEST ONLY] Counts the number of job status reports for a given user.
     #[cfg(test)]
-    pub async fn count_by_pubkey(pool: &PgPool, pubkey: &str) -> Result<i64> {
+    pub async fn count_by_pubkey(pool: &sqlx::PgPool, pubkey: &str) -> Result<i64> {
         let count = sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM job_status_reports WHERE pubkey = $1",
         )
@@ -65,7 +65,7 @@ impl JobStatusRepository {
     /// [TEST ONLY] Finds all error messages for a given user, ordered by creation date.
     #[cfg(test)]
     pub async fn find_error_messages_by_pubkey_ordered(
-        pool: &PgPool,
+        pool: &sqlx::PgPool,
         pubkey: &str,
     ) -> Result<Vec<String>> {
         let messages = sqlx::query_scalar::<_, Option<String>>(
