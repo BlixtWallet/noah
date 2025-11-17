@@ -4,7 +4,7 @@ const config: { expo: ExpoConfig } = {
   expo: {
     name: "Noah",
     slug: "noahs-ark-wallet",
-    version: "0.0.1",
+    version: "0.0.3",
     orientation: "portrait",
     userInterfaceStyle: "dark",
     newArchEnabled: true,
@@ -72,6 +72,7 @@ const config: { expo: ExpoConfig } = {
       "expo-notifications",
     ],
     ios: {
+      buildNumber: "6",
       supportsTablet: true,
       bundleIdentifier: "com.noahwallet.mainnet",
       scheme: "Noah-Signet",
@@ -90,6 +91,7 @@ const config: { expo: ExpoConfig } = {
       },
     },
     android: {
+      versionCode: 5,
       adaptiveIcon: {
         foregroundImage:
           "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",
