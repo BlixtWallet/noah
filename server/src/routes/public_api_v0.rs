@@ -276,7 +276,7 @@ pub async fn register(
                 .update_ark_address(&auth_payload.key, ark_address)
                 .await
             {
-                if e.is::<crate::db::user_repo::ArkAddressTakenError>() {
+                if e.is::<crate::db::user_repo::DuplicateArkAddressError>() {
                     // If address is taken, we can either return error or just ignore and keep old one.
                     // Returning error is safer to let client know.
                     return Err(ApiError::InvalidArgument(
@@ -330,7 +330,7 @@ pub async fn register(
                 "Lightning address already taken".to_string(),
             ));
         }
-        if e.is::<crate::db::user_repo::ArkAddressTakenError>() {
+        if e.is::<crate::db::user_repo::DuplicateArkAddressError>() {
             return Err(ApiError::InvalidArgument(
                 "Ark address already taken".to_string(),
             ));

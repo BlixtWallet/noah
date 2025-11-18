@@ -13,15 +13,15 @@ impl std::fmt::Display for LightningAddressTakenError {
 impl std::error::Error for LightningAddressTakenError {}
 
 #[derive(Debug, Clone)]
-pub struct ArkAddressTakenError;
+pub struct DuplicateArkAddressError;
 
-impl std::fmt::Display for ArkAddressTakenError {
+impl std::fmt::Display for DuplicateArkAddressError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "Invalid Ark address, duplicate exists in our database")
     }
 }
 
-impl std::error::Error for ArkAddressTakenError {}
+impl std::error::Error for DuplicateArkAddressError {}
 
 // This struct represents a user record from the database.
 // It's a good practice to have a model struct for each of your database tables.
@@ -106,7 +106,7 @@ impl<'a> UserRepository<'a> {
                     return Err(LightningAddressTakenError.into());
                 }
                 if is_ark_address_conflict(&e) {
-                    return Err(ArkAddressTakenError.into());
+                    return Err(DuplicateArkAddressError.into());
                 }
                 Err(e.into())
             }
@@ -144,7 +144,7 @@ impl<'a> UserRepository<'a> {
             Ok(_) => Ok(()),
             Err(e) => {
                 if is_ark_address_conflict(&e) {
-                    return Err(ArkAddressTakenError.into());
+                    return Err(DuplicateArkAddressError.into());
                 }
                 Err(e.into())
             }
