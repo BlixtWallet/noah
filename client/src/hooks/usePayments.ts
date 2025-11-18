@@ -25,6 +25,7 @@ import logger from "~/lib/log";
 import { useTransactionStore } from "~/store/transactionStore";
 import ky from "ky";
 import { Result } from "neverthrow";
+import { getLnurlDomain } from "~/constants";
 
 const log = logger("usePayments");
 
@@ -216,7 +217,7 @@ export function useSend(destinationType: DestinationTypes) {
             throw new Error("Amount is required for LNURL payments");
           }
 
-          if (destination.toLowerCase().endsWith("noahwallet.io")) {
+          if (destination.toLowerCase().endsWith(getLnurlDomain())) {
             const noahResult = await handleNoahWalletPayment(destination, amountSat, comment);
             if (noahResult) {
               result = noahResult;
