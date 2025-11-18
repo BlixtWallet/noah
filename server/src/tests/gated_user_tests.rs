@@ -22,9 +22,14 @@ async fn test_get_user_info() {
 
     // Setup: Create user with the repository
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &user.pubkey().to_string(), "existing@localhost")
-        .await
-        .unwrap();
+    UserRepository::create(
+        &mut tx,
+        &user.pubkey().to_string(),
+        "existing@localhost",
+        None,
+    )
+    .await
+    .unwrap();
     tx.commit().await.unwrap();
 
     let k1 = make_k1(&app_state.k1_cache)
@@ -64,9 +69,14 @@ async fn test_update_ln_address() {
 
     // Setup: Create user with the repository
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &user.pubkey().to_string(), "existing@localhost")
-        .await
-        .unwrap();
+    UserRepository::create(
+        &mut tx,
+        &user.pubkey().to_string(),
+        "existing@localhost",
+        None,
+    )
+    .await
+    .unwrap();
     tx.commit().await.unwrap();
 
     let k1 = make_k1(&app_state.k1_cache)
@@ -114,7 +124,7 @@ async fn test_update_ln_address() {
 async fn test_register_offboarding_request() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -172,7 +182,7 @@ async fn test_register_offboarding_request() {
 async fn test_register_offboarding_request_invalid_auth() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -205,7 +215,7 @@ async fn test_deregister_user() {
     let user = TestUser::new();
     // 1. Create user and associated data using repositories
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &user.pubkey().to_string(), "test@localhost")
+    UserRepository::create(&mut tx, &user.pubkey().to_string(), "test@localhost", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -320,7 +330,7 @@ async fn test_deregister_user() {
 async fn test_report_job_status_pruning() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     use crate::db::job_status_repo::JobStatusRepository;
     use crate::types::{ReportJobStatusPayload, ReportStatus, ReportType};
@@ -400,4 +410,271 @@ async fn test_report_job_status_pruning() {
             "Report 22"
         ]
     );
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_register_new_user_with_ark_address() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    let ark_address = Some(
+        "tark1p0qtgclpzqqppvmzrkt3kyyqd4lv3jxex32zagcu0fwfm4dkr8ud58h5ej53u4wcpqqtzhwd8"
+            .to_string(),
+    );
+
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "newuserark@localhost",
+                        "ark_address": ark_address,
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Verify ark_address in DB
+    let user_repo = UserRepository::new(&app_state.db_pool);
+    let registered_user = user_repo
+        .find_by_pubkey(&user.pubkey().to_string())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(registered_user.ark_address, ark_address);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_register_existing_user_update_ark_address() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await; // Register without ark_address
+
+    let new_ark_address =
+        Some("tark1newarkaddress1234567890abcdefghijklmnopqrstuvwxyza".to_string());
+
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "existinguserark@localhost", // Can be same or different
+                        "ark_address": new_ark_address,
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Verify ark_address is updated in DB
+    let user_repo = UserRepository::new(&app_state.db_pool);
+    let updated_user = user_repo
+        .find_by_pubkey(&user.pubkey().to_string())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(updated_user.ark_address, new_ark_address);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_register_ark_address_taken() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user1 = TestUser::new();
+    let user2 = TestUser::new_with_key(&[0x01; 32]);
+    let taken_ark_address = Some(
+        "tark1p0qtgclpzqqppvmzrkt3kyyqd4lv3jxex32zagcu0fwfm4dkr8ud58h5ej53u4wcpqqtzhwd8"
+            .to_string(),
+    );
+
+    // Register user1 with the ark_address
+    let k1_1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload_1 = user1.auth_payload(&k1_1);
+    let response1 = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_1.key.clone())
+                .header("x-auth-sig", auth_payload_1.sig.clone())
+                .header("x-auth-k1", auth_payload_1.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "user1ark@localhost",
+                        "ark_address": taken_ark_address,
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response1.status(), StatusCode::OK);
+
+    // Try to register user2 with the same ark_address
+    let k1_2 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload_2 = user2.auth_payload(&k1_2);
+    let response2 = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_2.key.clone())
+                .header("x-auth-sig", auth_payload_2.sig.clone())
+                .header("x-auth-k1", auth_payload_2.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "user2ark@localhost",
+                        "ark_address": taken_ark_address,
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response2.status(), StatusCode::BAD_REQUEST);
+    let body = response2.into_body().collect().await.unwrap().to_bytes();
+    assert!(String::from_utf8_lossy(&body).contains("Ark address already taken"));
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_update_ark_address_taken() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user1 = TestUser::new();
+    let user2 = TestUser::new_with_key(&[0x01; 32]);
+    let ark_address1 = Some("tark1user1unique1234567890abcdefghijklmnopqrstuvwxyza".to_string());
+    let ark_address2 = Some("tark1user2unique1234567890abcdefghijklmnopqrstuvwxyza".to_string());
+
+    // Register user1 with ark_address1
+    let k1_1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload_1 = user1.auth_payload(&k1_1);
+    app.clone()
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_1.key.clone())
+                .header("x-auth-sig", auth_payload_1.sig.clone())
+                .header("x-auth-k1", auth_payload_1.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "user1@localhost",
+                        "ark_address": ark_address1,
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    // Register user2 with ark_address2
+    let k1_2 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload_2 = user2.auth_payload(&k1_2);
+    app.clone()
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_2.key.clone())
+                .header("x-auth-sig", auth_payload_2.sig.clone())
+                .header("x-auth-k1", auth_payload_2.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "user2@localhost",
+                        "ark_address": ark_address2,
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    // Try to update user1's ark_address to ark_address2 (which is taken)
+    let k1_3 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload_3 = user1.auth_payload(&k1_3); // Use user1's auth
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/register") // Still using /register for update
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_3.key.clone())
+                .header("x-auth-sig", auth_payload_3.sig.clone())
+                .header("x-auth-k1", auth_payload_3.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&json!({
+                        "ln_address": "user1@localhost", // Can be same or different
+                        "ark_address": ark_address2, // This is the taken address
+                    }))
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    assert!(String::from_utf8_lossy(&body).contains("Ark address already taken"));
+
+    // Verify user1's ark_address is still ark_address1
+    let user_repo = UserRepository::new(&app_state.db_pool);
+    let current_user1 = user_repo
+        .find_by_pubkey(&user1.pubkey().to_string())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(current_user1.ark_address, ark_address1);
 }

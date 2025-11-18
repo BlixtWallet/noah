@@ -198,7 +198,45 @@ export function useSend(destinationType: DestinationTypes) {
           if (amountSat === undefined) {
             throw new Error("Amount is required for LNURL payments");
           }
-          result = await sendLnaddr(destination, amountSat, comment || "");
+
+          if (destination.toLowerCase().endsWith("noahwallet.io")) {
+            try {
+              const [user, domain] = destination.split("@");
+              const lnurlEndpoint = `https://${domain}/.well-known/lnurlp/${user}`;
+              const lnurlResp = await fetch(lnurlEndpoint);
+              const lnurlJson = await lnurlResp.json();
+
+              if (lnurlJson.tag === "payRequest" && lnurlJson.callback) {
+                const callbackUrl = new URL(lnurlJson.callback);
+                callbackUrl.searchParams.append("amount", (amountSat * 1000).toString());
+                callbackUrl.searchParams.append("wallet", "noahwallet");
+                // If comment is supported/provided, it should be added too, but ignoring for now for simplicity or adding if needed.
+                if (comment) {
+                   callbackUrl.searchParams.append("comment", comment);
+                }
+
+                const callbackResp = await fetch(callbackUrl.toString());
+                const callbackJson = await callbackResp.json();
+
+                if (callbackJson.ark) {
+                  log.d("Paying via Ark direct payment");
+                  result = await sendArkoorPayment(callbackJson.ark, amountSat);
+                } else if (callbackJson.pr) {
+                  log.d("Paying via Lightning Invoice from LNURL");
+                  result = await sendLightningPayment(callbackJson.pr, amountSat);
+                } else {
+                  throw new Error("Invalid LNURL callback response");
+                }
+              } else {
+                 result = await sendLnaddr(destination, amountSat, comment || "");
+              }
+            } catch (e) {
+              log.w("Failed optimized Noah payment, falling back to standard LNURL", [e]);
+              result = await sendLnaddr(destination, amountSat, comment || "");
+            }
+          } else {
+            result = await sendLnaddr(destination, amountSat, comment || "");
+          }
           break;
         default:
           throw new Error("Invalid destination type");

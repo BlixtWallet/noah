@@ -16,7 +16,7 @@ async fn test_heartbeat_response_success() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     // Create a heartbeat notification first
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
@@ -75,7 +75,7 @@ async fn test_heartbeat_response_invalid_notification_id() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -111,7 +111,7 @@ async fn test_heartbeat_response_already_responded() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     // Create a heartbeat notification and mark it as already responded
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
@@ -160,7 +160,7 @@ async fn test_heartbeat_response_unauthenticated() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     // Create a heartbeat notification
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
@@ -204,7 +204,7 @@ async fn test_heartbeat_repo_create_notification() {
     let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
@@ -233,7 +233,7 @@ async fn test_heartbeat_repo_count_consecutive_missed() {
     let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
@@ -300,14 +300,13 @@ async fn test_heartbeat_repo_get_users_to_deregister() {
     let user2 = TestUser::new_with_key(&[0xab; 32]);
 
     // Create users with unique lightning addresses
-    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
         .bind(user1.pubkey().to_string())
         .bind("user1@localhost")
         .execute(&app_state.db_pool)
         .await
         .unwrap();
-
-    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
         .bind(user2.pubkey().to_string())
         .bind("user2@localhost")
         .execute(&app_state.db_pool)
@@ -346,7 +345,7 @@ async fn test_heartbeat_repo_cleanup_old_notifications() {
     let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
@@ -379,7 +378,7 @@ async fn test_heartbeat_repo_delete_notification() {
     let (_, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
 
@@ -438,10 +437,10 @@ async fn test_heartbeat_repo_delete_by_pubkey() {
 
     let user1 = TestUser::new();
     let user2 = TestUser::new_with_key(&[0xab; 32]);
-    create_test_user(&app_state, &user1).await;
+    create_test_user(&app_state, &user1, None).await;
 
     // Create user2 with unique lightning address
-    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
         .bind(user2.pubkey().to_string())
         .bind("user2@localhost")
         .execute(&app_state.db_pool)

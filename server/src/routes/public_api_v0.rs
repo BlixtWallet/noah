@@ -77,12 +77,14 @@ pub struct LnurlpDefaultResponse {
 /// Represents the second response in the LNURL-pay protocol.
 ///
 /// This response contains the BOLT11 invoice that the wallet will use to pay.
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LnurlpInvoiceResponse {
     /// The BOLT11 payment request (invoice).
-    pr: String,
+    pub pr: String,
     /// A list of routes for the payment, typically empty.
-    routes: Vec<String>,
+    pub routes: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<String>,
 }
 
 /// Defines the query parameters for an LNURL-pay request.
@@ -90,6 +92,7 @@ pub struct LnurlpInvoiceResponse {
 pub struct LnurlpRequestQuery {
     /// The amount of the payment in millisatoshis.
     amount: Option<u64>,
+    wallet: Option<String>,
 }
 
 /// Handles LNURL-pay requests.
@@ -108,10 +111,11 @@ pub async fn lnurlp_request(
     tracing::debug!("Lightning address is {}", lightning_address);
 
     let user_repo = UserRepository::new(&state.db_pool);
-    let pubkey = user_repo
-        .find_pubkey_by_lightning_address(&lightning_address)
+    let user = user_repo
+        .find_by_lightning_address(&lightning_address)
         .await?
         .ok_or_else(|| ApiError::InvalidArgument("User not found".to_string()))?;
+    let pubkey = user.pubkey.clone();
 
     if query.amount.is_none() {
         let metadata = serde_json::json!([
@@ -150,6 +154,22 @@ pub async fn lnurlp_request(
             "Maximum invoice request is {} mSats",
             LNURLP_MAX_SENDABLE
         )));
+    }
+
+    if let Some(wallet) = &query.wallet {
+        if wallet == "noahwallet" {
+            if let Some(ark_address) = &user.ark_address {
+                let response = LnurlpInvoiceResponse {
+                    pr: "".to_string(),
+                    routes: vec![],
+                    ark: Some(ark_address.clone()),
+                };
+                return Ok(Json(
+                    serde_json::to_value(response)
+                        .map_err(|e| ApiError::SerializeErr(e.to_string()))?,
+                ));
+            }
+        }
     }
 
     let (tx, rx) = oneshot::channel();
@@ -217,6 +237,7 @@ pub async fn lnurlp_request(
     let response = LnurlpInvoiceResponse {
         pr: invoice,
         routes: vec![],
+        ark: user.ark_address,
     };
     Ok(Json(
         serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
@@ -250,6 +271,22 @@ pub async fn register(
     if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
         tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
 
+        if let Some(ark_address) = &payload.ark_address {
+            if let Err(e) = user_repo
+                .update_ark_address(&auth_payload.key, ark_address)
+                .await
+            {
+                if e.is::<crate::db::user_repo::ArkAddressTakenError>() {
+                    // If address is taken, we can either return error or just ignore and keep old one.
+                    // Returning error is safer to let client know.
+                    return Err(ApiError::InvalidArgument(
+                        "Ark address already taken".to_string(),
+                    ));
+                }
+                return Err(e.into());
+            }
+        }
+
         if let Some(device_info) = payload.device_info {
             // For existing users, we'll just register the device in its own transaction
             let mut tx = state.db_pool.begin().await?;
@@ -279,12 +316,23 @@ pub async fn register(
 
     // Create a new user in a transaction
     let mut tx = state.db_pool.begin().await?;
-    let result = UserRepository::create(&mut tx, &auth_payload.key, &ln_address).await;
+    let result = UserRepository::create(
+        &mut tx,
+        &auth_payload.key,
+        &ln_address,
+        payload.ark_address.as_deref(),
+    )
+    .await;
 
     if let Err(e) = result {
         if e.is::<crate::db::user_repo::LightningAddressTakenError>() {
             return Err(ApiError::InvalidArgument(
                 "Lightning address already taken".to_string(),
+            ));
+        }
+        if e.is::<crate::db::user_repo::ArkAddressTakenError>() {
+            return Err(ApiError::InvalidArgument(
+                "Ark address already taken".to_string(),
             ));
         }
         return Err(e.into());
