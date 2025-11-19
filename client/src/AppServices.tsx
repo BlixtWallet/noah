@@ -23,7 +23,7 @@ const AppServices = memo(() => {
   const { showAlert } = useAlert();
 
   // Initialize all app-level services here
-  useSyncManager(60_000);
+  useSyncManager(30_000);
   useServerRegistration(isReady);
   usePushNotifications(isReady);
 

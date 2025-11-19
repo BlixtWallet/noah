@@ -85,14 +85,18 @@ create_wallet() {
 # Creates a new bark wallet with default dev settings
 create_bark_wallet() {
     echo "Creating a new bark wallet with dev settings..."
+
+    # Remove existing bark directory to allow fresh creation with new flags
+    echo "🧹 Cleaning existing bark data if present..."
+    docker run --rm -v scripts_bark:/data alpine sh -c "rm -rf /data/.bark" 2>/dev/null || true
+
     dcr run --rm "$BARK_SERVICE" bark create \
         --regtest \
         --ark http://captaind:3535 \
         --bitcoind http://bitcoind:18443 \
         --bitcoind-user second \
         --bitcoind-pass ark \
-        --force \
-        --fallback-fee-rate 10000
+        --force
     echo "✅ Bark wallet created. You can now use './ark-dev.sh bark <command>'."
 }
 
@@ -134,7 +138,7 @@ fund_aspd() {
 
     echo "🔍 Getting ASPD wallet address..."
     local aspd_address
-    aspd_address=$(dcr exec "$ASPD_SERVICE" "$ASPD_SERVICE" rpc wallet | jq -r '.rounds.address')
+    aspd_address=$(dcr exec "$ASPD_SERVICE" "$ASPD_SERVICE" rpc wallet 2>/dev/null | grep -A 100 '^{' | jq -r '.rounds.address')
 
     if [[ -z "$aspd_address" || "$aspd_address" == "null" ]]; then
         echo "Error: Could not retrieve ASPD wallet address. Is the aspd container running?" >&2

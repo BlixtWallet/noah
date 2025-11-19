@@ -1,15 +1,16 @@
 data_dir = "/data/captaind"
 network = "regtest"
-vtxo_lifetime = 48
+vtxo_lifetime = 480
 min_board_amount = "20000 sat"
 vtxo_exit_delta = 12
 max_arkoor_depth = 5
-required_board_confirmations = 3
+required_board_confirmations = 1
 round_tx_untrusted_input_confirmations = 2
 rpc_rich_errors = true
 txindex_check_interval = "30s"
 forfeit_watcher_min_balance = "1 btc"
 transaction_rebroadcast_interval = "1m"
+otel_deployment_name = "my_regtest"
 
 ##########
 # ROUNDS #
@@ -65,6 +66,8 @@ invoice_poll_interval = "30s"
 
 # Timeout on the HTLC subscription RPC call
 htlc_subscription_timeout = "10m"
+
+ln_receive_anti_dos_required = false
 
 ################
 # VTXO SWEEPER #

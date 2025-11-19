@@ -10,7 +10,7 @@ import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
 import { maintenanceRefresh, sync } from "./walletApi";
-import { checkAndClaimLnReceive } from "./paymentsApi";
+import { tryClaimLightningReceive } from "./paymentsApi";
 import { addTransaction } from "~/lib/transactionsDb";
 import type { Transaction } from "~/types/transaction";
 import uuid from "react-native-uuid";
@@ -138,7 +138,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               // Wait for the invoice to be paid
               // This is a terrible solution, but it is what it is for now
               if (invoiceResult.isOk()) {
-                const claimResult = await checkAndClaimLnReceive(
+                const claimResult = await tryClaimLightningReceive(
                   invoiceResult.value.payment_hash,
                   true,
                 );

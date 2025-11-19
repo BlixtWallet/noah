@@ -7,15 +7,15 @@ import {
   bolt11Invoice,
   onchainSend,
   sendArkoorPayment,
-  sendLightningPayment,
-  sendLnaddr,
+  payLightningInvoice,
+  payLightningAddress,
   type ArkoorPaymentResult,
   type Bolt11PaymentResult,
   type LnurlPaymentResult,
   type OnchainPaymentResult,
   boardAllArk,
   offboardAllArk,
-  checkAndClaimLnReceive,
+  tryClaimLightningReceive,
 } from "../lib/paymentsApi";
 import { queryClient } from "~/queryClient";
 import { Transaction, PaymentTypes } from "~/types/transaction";
@@ -210,7 +210,7 @@ export function useSend(destinationType: DestinationTypes) {
           result = await sendArkoorPayment(destination, amountSat);
           break;
         case "lightning":
-          result = await sendLightningPayment(destination, amountSat);
+          result = await payLightningInvoice(destination, amountSat);
           break;
         case "lnurl":
           if (amountSat === undefined) {
@@ -225,7 +225,7 @@ export function useSend(destinationType: DestinationTypes) {
             }
           }
 
-          result = await sendLnaddr(destination, amountSat, comment || "");
+          result = await payLightningAddress(destination, amountSat, comment || "");
           break;
         default:
           throw new Error("Invalid destination type");
@@ -272,7 +272,7 @@ export function useCheckAndClaimLnReceive() {
       const intervalMs = 1000;
 
       for (let i = 0; i < maxAttempts; i++) {
-        const result = await checkAndClaimLnReceive(paymentHash, false);
+        const result = await tryClaimLightningReceive(paymentHash, false);
 
         log.d("Claim result", [result]);
 
@@ -323,7 +323,7 @@ async function handleNoahWalletPayment(
         return await sendArkoorPayment(callbackJson.ark, amountSat);
       } else if (callbackJson.pr) {
         log.d("Paying via Lightning Invoice from LNURL");
-        return await sendLightningPayment(callbackJson.pr, amountSat);
+        return await payLightningInvoice(callbackJson.pr, amountSat);
       } else {
         log.w(
           "Invalid LNURL callback response for optimized Noah payment, falling back to standard LNURL.",

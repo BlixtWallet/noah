@@ -35,6 +35,11 @@ const migrations: Migration[] = [
     name: "add_preimage_to_transactions",
     up: migration_v5_add_preimage_to_transactions,
   },
+  {
+    version: 6,
+    name: "augment_transactions_with_movement_metadata",
+    up: migration_v6_add_movement_columns_to_transactions,
+  },
 ];
 
 export const runMigrations = async (db: SQLite.SQLiteDatabase): Promise<void> => {
@@ -106,4 +111,29 @@ async function migration_v5_add_preimage_to_transactions(db: SQLite.SQLiteDataba
   await db.execAsync(`
     ALTER TABLE transactions ADD COLUMN preimage TEXT;
   `);
+}
+
+async function migration_v6_add_movement_columns_to_transactions(
+  db: SQLite.SQLiteDatabase,
+): Promise<void> {
+  const columnDefinitions = [
+    "movementId INTEGER",
+    "movementStatus TEXT",
+    "movementKind TEXT",
+    "subsystemName TEXT",
+    "subsystemKind TEXT",
+    "metadataJson TEXT",
+    "intendedBalanceSat INTEGER",
+    "effectiveBalanceSat INTEGER",
+    "offchainFeeSat INTEGER",
+    "sentTo TEXT",
+    "receivedOn TEXT",
+    "inputVtxos TEXT",
+    "outputVtxos TEXT",
+    "exitedVtxos TEXT",
+  ];
+
+  for (const definition of columnDefinitions) {
+    await db.execAsync(`ALTER TABLE transactions ADD COLUMN ${definition};`);
+  }
 }

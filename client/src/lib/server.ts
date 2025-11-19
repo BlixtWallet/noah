@@ -5,7 +5,7 @@ import { useServerStore } from "~/store/serverStore";
 import { type Result, err } from "neverthrow";
 import { RegisterResponse } from "~/types/serverTypes";
 import Constants from "expo-constants";
-import { newAddress } from "~/lib/paymentsApi";
+import { peakAddress } from "~/lib/paymentsApi";
 
 const log = logger("server");
 
@@ -14,7 +14,7 @@ export const performServerRegistration = async (
 ): Promise<Result<RegisterResponse, Error>> => {
   const { setRegisteredWithServer } = useServerStore.getState();
 
-  const addressResult = await newAddress();
+  const addressResult = await peakAddress(0);
   if (addressResult.isErr()) {
     log.e("Failed to generate Ark address for registration", [addressResult.error]);
     return err(addressResult.error);

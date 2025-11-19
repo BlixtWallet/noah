@@ -1,4 +1,4 @@
-import { View, Pressable } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
@@ -8,6 +8,7 @@ import { type Transaction } from "../types/transaction";
 import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
 import { formatBip177 } from "~/lib/utils";
+import { formatMovementKindLabel, formatMovementStatusLabel } from "~/types/movement";
 
 const TransactionDetailRow = ({
   label,
@@ -62,6 +63,31 @@ const TransactionDetailRow = ({
   );
 };
 
+const MovementDestinationList = ({
+  title,
+  destinations,
+}: {
+  title: string;
+  destinations: NonNullable<Transaction["sentTo"]>;
+}) => {
+  return (
+    <View className="bg-card p-4 rounded-lg mb-4">
+      <Text className="text-sm font-semibold text-foreground mb-3">{title}</Text>
+      {destinations.map((dest, index) => (
+        <View
+          key={`${dest.destination}-${index}`}
+          className="py-2 border-b border-border/10 last:border-b-0"
+        >
+          <Text className="text-foreground text-sm mb-1" numberOfLines={2}>
+            {dest.destination}
+          </Text>
+          <Text className="text-muted-foreground text-xs">{formatBip177(dest.amount_sat)}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
 const TransactionDetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -71,10 +97,26 @@ const TransactionDetailScreen = () => {
     ? (transaction.amount * 0.00000001 * transaction.btcPrice).toFixed(2)
     : "N/A";
   const bitcoinPrice = transaction.btcPrice ? transaction.btcPrice.toLocaleString() : "N/A";
+  const movementStatusLabel = formatMovementStatusLabel(transaction.movementStatus);
+  const movementKindLabel = formatMovementKindLabel(transaction.movementKind);
+  const hasMovementDetails = Boolean(
+    movementStatusLabel ||
+      movementKindLabel ||
+      transaction.subsystemName ||
+      transaction.subsystemKind ||
+      typeof transaction.intendedBalanceSat === "number" ||
+      typeof transaction.effectiveBalanceSat === "number" ||
+      typeof transaction.offchainFeeSat === "number" ||
+      typeof transaction.movementId === "number",
+  );
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
-      <View className="p-4 flex-1">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View className="flex-row items-center mb-8">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
             <Icon name="arrow-back-outline" size={24} color="white" />
@@ -97,6 +139,53 @@ const TransactionDetailScreen = () => {
           />
         </View>
 
+        {hasMovementDetails ? (
+          <View className="bg-card p-4 rounded-lg mb-4">
+            <Text className="text-lg font-semibold text-foreground mb-3">Ark Movement</Text>
+            {movementKindLabel ? (
+              <TransactionDetailRow label="Type" value={movementKindLabel} />
+            ) : null}
+            {movementStatusLabel ? (
+              <TransactionDetailRow label="Status" value={movementStatusLabel} />
+            ) : null}
+            {transaction.movementId !== undefined ? (
+              <TransactionDetailRow
+                label="Movement ID"
+                value={transaction.movementId.toString()}
+                copyable
+              />
+            ) : null}
+            {transaction.subsystemName ? (
+              <TransactionDetailRow
+                label="Subsystem"
+                value={
+                  transaction.subsystemKind
+                    ? `${transaction.subsystemName} (${transaction.subsystemKind})`
+                    : transaction.subsystemName
+                }
+              />
+            ) : null}
+            {typeof transaction.intendedBalanceSat === "number" ? (
+              <TransactionDetailRow
+                label="Intended Δ"
+                value={formatBip177(transaction.intendedBalanceSat)}
+              />
+            ) : null}
+            {typeof transaction.effectiveBalanceSat === "number" ? (
+              <TransactionDetailRow
+                label="Effective Δ"
+                value={formatBip177(transaction.effectiveBalanceSat)}
+              />
+            ) : null}
+            {typeof transaction.offchainFeeSat === "number" ? (
+              <TransactionDetailRow
+                label="Offchain Fee"
+                value={formatBip177(transaction.offchainFeeSat)}
+              />
+            ) : null}
+          </View>
+        ) : null}
+
         <View className="bg-card p-4 rounded-lg">
           {transaction.description ? (
             <TransactionDetailRow label="Note" value={transaction.description} />
@@ -116,7 +205,15 @@ const TransactionDetailScreen = () => {
             <TransactionDetailRow label="Destination" value={transaction.destination} copyable />
           ) : null}
         </View>
-      </View>
+
+        {transaction.sentTo && transaction.sentTo.length > 0 ? (
+          <MovementDestinationList title="Sent To" destinations={transaction.sentTo} />
+        ) : null}
+
+        {transaction.receivedOn && transaction.receivedOn.length > 0 ? (
+          <MovementDestinationList title="Received On" destinations={transaction.receivedOn} />
+        ) : null}
+      </ScrollView>
     </NoahSafeAreaView>
   );
 };

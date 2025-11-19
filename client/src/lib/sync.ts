@@ -3,7 +3,7 @@ import { useWalletStore } from "~/store/walletStore";
 import { onchainSync, sync } from "~/lib/walletApi";
 import { syncArkReceives } from "~/lib/syncTransactions";
 import logger from "~/lib/log";
-import { checkAndClaimAllOpenLnReceives } from "./paymentsApi";
+import { tryClaimAllLightningReceives } from "./paymentsApi";
 
 const log = logger("sync");
 
@@ -19,7 +19,7 @@ export const syncWallet = async () => {
   const results = await Promise.allSettled([
     sync(),
     onchainSync(),
-    checkAndClaimAllOpenLnReceives(false),
+    tryClaimAllLightningReceives(false),
   ]);
   results.forEach((result) => {
     if (result.status === "rejected") {

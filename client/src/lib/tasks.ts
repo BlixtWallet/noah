@@ -142,11 +142,10 @@ export async function offboardTask(
 
   log.d("[Offboard Job] offboarding result is ", [offboardResult.value]);
 
-  const updateResult = await updateOffboardingRequestStatus(
-    requestId,
-    "completed",
-    offboardResult.value,
-  );
+  const onchainTxid =
+    offboardResult.value.funding_txid ?? offboardResult.value.unsigned_funding_txids?.[0];
+
+  const updateResult = await updateOffboardingRequestStatus(requestId, "completed", onchainTxid);
   if (updateResult.isErr()) {
     log.e("Failed to update offboarding request status", [updateResult.error]);
     return err(updateResult.error);
