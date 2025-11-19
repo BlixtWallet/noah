@@ -1,6 +1,12 @@
 import type { MovementStatus } from "react-native-nitro-ark";
 
-export const MOVEMENT_KIND_VALUES = ["arkoor-receive", "onboard", "offboard", "exit"] as const;
+export const MOVEMENT_KIND_VALUES = [
+  "arkoor-receive",
+  "onboard",
+  "offboard",
+  "exit",
+  "lightning-receive",
+] as const;
 export type MovementKind = (typeof MOVEMENT_KIND_VALUES)[number];
 
 export const MOVEMENT_KIND_LABELS: Record<MovementKind, string> = {
@@ -8,9 +14,14 @@ export const MOVEMENT_KIND_LABELS: Record<MovementKind, string> = {
   onboard: "Board",
   offboard: "Offboard",
   exit: "Ark Exit",
+  "lightning-receive": "Lightning Receive",
 };
 
-export const INCOMING_MOVEMENT_KINDS: MovementKind[] = ["arkoor-receive", "onboard"];
+export const INCOMING_MOVEMENT_KINDS: MovementKind[] = [
+  "arkoor-receive",
+  "onboard",
+  "lightning-receive",
+];
 
 export const MOVEMENT_STATUS_LABELS: Record<MovementStatus, string> = {
   pending: "Pending",

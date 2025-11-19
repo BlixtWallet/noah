@@ -1,5 +1,5 @@
 import { useTransactionStore } from "~/store/transactionStore";
-import { addTransaction, getTransactions } from "./transactionsDb";
+import { getTransactions } from "./transactionsDb";
 import type { Transaction } from "../types/transaction";
 import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
@@ -20,6 +20,7 @@ const SUBSYSTEM_KIND_TO_MOVEMENT_KIND: Record<string, MovementKind> = {
   "bark.arkoor:receive": "arkoor-receive",
   "bark.round:offboard": "offboard",
   "bark.round:send-onchain": "exit",
+  "bark.lightning_receive:receive": "lightning-receive",
 };
 
 const INCOMING_MOVEMENT_KIND_SET = new Set<MovementKind>(INCOMING_MOVEMENT_KINDS);
@@ -73,9 +74,12 @@ export const syncArkReceives = async () => {
 
     if (!knownTxIds.has(uniqueId)) {
       const isArkoor = movementKind === "arkoor-receive";
+      const isLightningReceive = movementKind === "lightning-receive";
 
       let transactionType: Transaction["type"];
-      if (isArkoor) {
+      if (isLightningReceive) {
+        transactionType = "Bolt11";
+      } else if (isArkoor) {
         transactionType = "Arkoor";
       } else {
         transactionType = "Onchain";
@@ -118,13 +122,13 @@ export const syncArkReceives = async () => {
         exitedVtxos: movement.exited_vtxos,
       };
 
-      const addResult = await addTransaction(newTransaction);
-      if (addResult.isErr()) {
-        log.e("Failed to persist movement transaction", [addResult.error]);
+      try {
+        await useTransactionStore.getState().addTransaction(newTransaction);
+        knownTxIds.add(uniqueId);
+      } catch (error) {
+        log.e("Failed to persist movement transaction", [error]);
         continue;
       }
-
-      knownTxIds.add(uniqueId);
     }
   }
 

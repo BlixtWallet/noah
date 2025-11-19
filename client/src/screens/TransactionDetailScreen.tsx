@@ -204,6 +204,15 @@ const TransactionDetailScreen = () => {
           {transaction.destination ? (
             <TransactionDetailRow label="Destination" value={transaction.destination} copyable />
           ) : null}
+          {transaction.receivedOn &&
+          transaction.receivedOn.length === 1 &&
+          transaction.receivedOn[0]?.destination ? (
+            <TransactionDetailRow
+              label="Invoice"
+              value={transaction.receivedOn[0].destination}
+              copyable
+            />
+          ) : null}
         </View>
 
         {transaction.sentTo && transaction.sentTo.length > 0 ? (
