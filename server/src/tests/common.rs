@@ -188,10 +188,11 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 }
 
 // Helper function to create a test user in the database
-pub async fn create_test_user(app_state: &AppState, user: &TestUser) {
-    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+pub async fn create_test_user(app_state: &AppState, user: &TestUser, ark_address: Option<&str>) {
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, $3)")
         .bind(user.pubkey().to_string())
         .bind("test@localhost")
+        .bind(ark_address)
         .execute(&app_state.db_pool)
         .await
         .unwrap();

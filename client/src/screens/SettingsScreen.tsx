@@ -26,6 +26,7 @@ import { usePeakKeyPair } from "~/hooks/useCrypto";
 import logoImage from "../../assets/1024_no_background.png";
 import { COLORS } from "~/lib/styleConstants";
 import { FeedbackModal } from "~/components/FeedbackModal";
+import { performServerRegistration } from "../lib/server";
 
 type Setting = {
   id:
@@ -79,6 +80,7 @@ const SettingsScreen = () => {
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
   const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
@@ -239,12 +241,22 @@ const SettingsScreen = () => {
           }
           title="Reset Server Registration"
           description="Are you sure you want to reset your server registration? This will not delete your wallet, but you will need to register with the server again."
-          onConfirm={() => {
+          onConfirm={async () => {
             resetRegistration();
-            setShowResetSuccess(true);
-            setTimeout(() => {
-              setShowResetSuccess(false);
-            }, 3000);
+            setResetError(null);
+            setShowResetSuccess(false);
+            const result = await performServerRegistration(null);
+            if (result.isOk()) {
+              setShowResetSuccess(true);
+              setTimeout(() => {
+                setShowResetSuccess(false);
+              }, 3000);
+            } else {
+              setResetError(result.error.message || "Failed to reset registration");
+              setTimeout(() => {
+                setResetError(null);
+              }, 3000);
+            }
           }}
         />
       );
@@ -282,6 +294,12 @@ const SettingsScreen = () => {
           <Alert icon={CheckCircle} className="mb-4">
             <AlertTitle>Success!</AlertTitle>
             <AlertDescription>Server registration has been reset.</AlertDescription>
+          </Alert>
+        )}
+        {resetError && (
+          <Alert icon={AlertTriangle} variant="destructive" className="mb-4">
+            <AlertTitle>Reset Failed!</AlertTitle>
+            <AlertDescription>{resetError}</AlertDescription>
           </Alert>
         )}
         {showExportSuccess && (

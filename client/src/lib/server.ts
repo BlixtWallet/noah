@@ -2,9 +2,10 @@ import { registerWithServer } from "~/lib/api";
 import * as Device from "expo-device";
 import logger from "~/lib/log";
 import { useServerStore } from "~/store/serverStore";
-import type { Result } from "neverthrow";
+import { type Result, err } from "neverthrow";
 import { RegisterResponse } from "~/types/serverTypes";
 import Constants from "expo-constants";
+import { newAddress } from "~/lib/paymentsApi";
 
 const log = logger("server");
 
@@ -12,6 +13,13 @@ export const performServerRegistration = async (
   ln_address: string | null,
 ): Promise<Result<RegisterResponse, Error>> => {
   const { setRegisteredWithServer } = useServerStore.getState();
+
+  const addressResult = await newAddress();
+  if (addressResult.isErr()) {
+    log.e("Failed to generate Ark address for registration", [addressResult.error]);
+    return err(addressResult.error);
+  }
+  const ark_address = addressResult.value.address;
 
   // Register with server and pass user device information.
   const result = await registerWithServer({
@@ -23,6 +31,7 @@ export const performServerRegistration = async (
       device_manufacturer: Device.manufacturer,
     },
     ln_address,
+    ark_address,
   });
 
   if (result.isErr()) {

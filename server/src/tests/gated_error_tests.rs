@@ -11,7 +11,7 @@ use crate::utils::make_k1;
 async fn test_backup_endpoints_invalid_auth() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -117,7 +117,7 @@ async fn test_backup_endpoints_missing_k1() {
 async fn test_backup_endpoints_malformed_json() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
     let k1 = make_k1(&app_state.k1_cache)
         .await
         .expect("failed to create k1");
@@ -162,7 +162,7 @@ async fn test_backup_endpoints_malformed_json() {
 async fn test_complete_upload_missing_fields() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -208,7 +208,7 @@ async fn test_complete_upload_missing_fields() {
 async fn test_get_upload_url_missing_fields() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -251,7 +251,7 @@ async fn test_get_upload_url_missing_fields() {
 async fn test_delete_backup_missing_version() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await
@@ -291,7 +291,7 @@ async fn test_delete_backup_missing_version() {
 async fn test_update_backup_settings_missing_enabled() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
-    create_test_user(&app_state, &user).await;
+    create_test_user(&app_state, &user, None).await;
 
     let k1 = make_k1(&app_state.k1_cache)
         .await

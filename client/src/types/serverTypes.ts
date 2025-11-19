@@ -63,7 +63,11 @@ ln_address: string | null,
 /**
  * Optional device information.
  */
-device_info: DeviceInfo | null, };
+device_info: DeviceInfo | null, 
+/**
+ * Optional Ark address
+ */
+ark_address: string | null, };
 
 /**
  * Defines the payload for registering a push notification token.

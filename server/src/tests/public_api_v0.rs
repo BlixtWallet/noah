@@ -1,18 +1,17 @@
+use crate::routes::public_api_v0::{GetK1, LnurlpDefaultResponse};
+use crate::tests::common::setup_public_test_app;
+use crate::types::{AppVersionCheckPayload, AppVersionInfo};
 use axum::body::Body;
 use axum::http::{self, Request, StatusCode};
 use http_body_util::BodyExt;
 use tower::ServiceExt;
-
-use crate::routes::public_api_v0::{GetK1, LnurlpDefaultResponse};
-use crate::tests::common::setup_public_test_app;
-use crate::types::{AppVersionCheckPayload, AppVersionInfo};
 
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_lnurlp_request_default() {
     let (app, app_state, _guard) = setup_public_test_app().await;
 
-    sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
         .bind("test_pubkey")
         .bind("test@localhost")
         .execute(&app_state.db_pool)

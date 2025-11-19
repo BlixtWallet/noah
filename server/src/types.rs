@@ -53,6 +53,8 @@ pub struct RegisterPayload {
     pub ln_address: Option<String>,
     /// Optional device information.
     pub device_info: Option<DeviceInfo>,
+    /// Optional Ark address
+    pub ark_address: Option<String>,
 }
 
 /// Defines the payload for registering a push notification token.

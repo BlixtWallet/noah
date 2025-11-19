@@ -134,9 +134,15 @@ const BoardingTransactionDetailScreen = () => {
             <Icon
               name={getStatusIcon(transaction.status)}
               size={20}
-              color={getStatusColor(transaction.status).includes("green") ? "#22c55e" :
-                     getStatusColor(transaction.status).includes("yellow") ? "#eab308" :
-                     getStatusColor(transaction.status).includes("red") ? "#ef4444" : "#6b7280"}
+              color={
+                getStatusColor(transaction.status).includes("green")
+                  ? "#22c55e"
+                  : getStatusColor(transaction.status).includes("yellow")
+                    ? "#eab308"
+                    : getStatusColor(transaction.status).includes("red")
+                      ? "#ef4444"
+                      : "#6b7280"
+              }
             />
             <Text className={`text-xl font-medium ml-2 ${getStatusColor(transaction.status)}`}>
               {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}

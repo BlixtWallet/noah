@@ -62,7 +62,7 @@ export const getServerEndpoint = (): string => {
 export const getLnurlDomain = (): string => {
   switch (APP_VARIANT) {
     case "regtest":
-      return "localhost.com";
+      return process.env.EXPO_PUBLIC_REGTEST_LNURL_DOMAIN ?? "localhost.com";
     case "signet":
       return "signet.noahwallet.io";
     case "mainnet":

@@ -20,7 +20,7 @@ async fn test_normal_priority_respects_spacing() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user1@test.com"))
+    UserRepository::create(&mut tx, &pubkey, &format!("user1@test.com"), None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -75,7 +75,7 @@ async fn test_critical_priority_bypasses_spacing() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user2@test.com"))
+    UserRepository::create(&mut tx, &pubkey, &format!("user2@test.com"), None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -129,7 +129,7 @@ async fn test_offboarding_skips_maintenance() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user3@test.com"))
+    UserRepository::create(&mut tx, &pubkey, &format!("user3@test.com"), None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -177,7 +177,7 @@ async fn test_notification_tracking_records_sent() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user4@test.com"))
+    UserRepository::create(&mut tx, &pubkey, &format!("user4@test.com"), None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -233,10 +233,10 @@ async fn test_broadcast_filters_ineligible_users() {
     let pubkey2 = user2.pubkey().to_string();
 
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey1, "user5@test.com")
+    UserRepository::create(&mut tx, &pubkey1, "user5@test.com", None)
         .await
         .unwrap();
-    UserRepository::create(&mut tx, &pubkey2, "user6@test.com")
+    UserRepository::create(&mut tx, &pubkey2, "user6@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -309,13 +309,13 @@ async fn test_eligible_users_query() {
     let pubkey3 = user3.pubkey().to_string();
 
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey1, "user7@test.com")
+    UserRepository::create(&mut tx, &pubkey1, "user7@test.com", None)
         .await
         .unwrap();
-    UserRepository::create(&mut tx, &pubkey2, "user8@test.com")
+    UserRepository::create(&mut tx, &pubkey2, "user8@test.com", None)
         .await
         .unwrap();
-    UserRepository::create(&mut tx, &pubkey3, "user9@test.com")
+    UserRepository::create(&mut tx, &pubkey3, "user9@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -383,7 +383,7 @@ async fn test_spacing_configuration_from_config() {
     let pubkey = user.pubkey().to_string();
 
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, "user10@test.com")
+    UserRepository::create(&mut tx, &pubkey, "user10@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -419,7 +419,7 @@ async fn test_offboarding_with_processing_status_skips_maintenance() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, "user11@test.com")
+    UserRepository::create(&mut tx, &pubkey, "user11@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
