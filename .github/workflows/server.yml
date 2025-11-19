@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 📦 Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev protobuf-compiler
       - name: 🦀 Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
