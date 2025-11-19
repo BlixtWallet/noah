@@ -4,7 +4,7 @@ import {
   syncPendingBoards as syncPendingBoardsNitro,
   offboardAll as offboardAllNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
-  sendLnaddr as sendLnaddrNitro,
+  payLightningAddress as payLightningAddressNitro,
   bolt11Invoice as bolt11InvoiceNitro,
   type ArkoorPaymentResult,
   type OnchainPaymentResult,
@@ -12,15 +12,17 @@ import {
   type LnurlPaymentResult,
   newAddress as newAddressNitro,
   onchainAddress as onchainAddressNitro,
-  sendLightningPayment as sendLightningPaymentNitro,
+  payLightningInvoice as payLightningInvoiceNitro,
   onchainSend as onchainSendNitro,
   movements as movementsNitro,
-  checkAndClaimLnReceive as checkAndClaimLnReceiveNitro,
-  checkAndClaimAllOpenLnReceives as checkAndClaimAllOpenLnReceivesNitro,
+  tryClaimAllLightningReceives as tryClaimAllLightningReceivesNitro,
+  tryClaimLightningReceive as tryClaimLightningReceiveNitro,
+  peakAddress as peakAddressNitro,
   NewAddressResult,
   BarkMovement,
   Bolt11Invoice,
   BoardResult,
+  RoundStatus,
 } from "react-native-nitro-ark";
 import { Result, ResultAsync } from "neverthrow";
 
@@ -38,6 +40,16 @@ export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => 
     (error) =>
       new Error(
         `Failed to generate VTXO pubkey: ${error instanceof Error ? error.message : String(error)}`,
+      ),
+  );
+};
+
+export const peakAddress = async (index: number): Promise<Result<NewAddressResult, Error>> => {
+  return ResultAsync.fromPromise(
+    peakAddressNitro(index),
+    (error) =>
+      new Error(
+        `Failed to generate peak address: ${error instanceof Error ? error.message : String(error)}`,
       ),
   );
 };
@@ -80,7 +92,7 @@ export const boardAllArk = async (): Promise<Result<BoardResult, Error>> => {
   });
 };
 
-export const offboardAllArk = async (address: string): Promise<Result<string, Error>> => {
+export const offboardAllArk = async (address: string): Promise<Result<RoundStatus, Error>> => {
   return ResultAsync.fromPromise(offboardAllNitro(address), (error) => {
     const e = new Error(
       `Failed to offboard funds: ${error instanceof Error ? error.message : String(error)}`,
@@ -101,11 +113,11 @@ export const sendArkoorPayment = async (
   });
 };
 
-export const sendLightningPayment = async (
+export const payLightningInvoice = async (
   destination: string,
   amountSat: number | undefined,
 ): Promise<Result<Bolt11PaymentResult, Error>> => {
-  return ResultAsync.fromPromise(sendLightningPaymentNitro(destination, amountSat), (error) => {
+  return ResultAsync.fromPromise(payLightningInvoiceNitro(destination, amountSat), (error) => {
     const e = new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -129,12 +141,12 @@ export const onchainSend = async ({
   });
 };
 
-export const sendLnaddr = async (
+export const payLightningAddress = async (
   addr: string,
   amountSat: number,
   comment: string,
 ): Promise<Result<LnurlPaymentResult, Error>> => {
-  return ResultAsync.fromPromise(sendLnaddrNitro(addr, amountSat, comment), (error) => {
+  return ResultAsync.fromPromise(payLightningAddressNitro(addr, amountSat, comment), (error) => {
     const e = new Error(
       `Failed to send to lightning address: ${
         error instanceof Error ? error.message : String(error)
@@ -165,11 +177,11 @@ export const movements = async (): Promise<Result<BarkMovement[], Error>> => {
   });
 };
 
-export const checkAndClaimLnReceive = async (
+export const tryClaimLightningReceive = async (
   paymentHash: string,
   wait: boolean = false,
 ): Promise<Result<void, Error>> => {
-  return ResultAsync.fromPromise(checkAndClaimLnReceiveNitro(paymentHash, wait), (error) => {
+  return ResultAsync.fromPromise(tryClaimLightningReceiveNitro(paymentHash, wait), (error) => {
     const e = new Error(
       `Failed to check and claim lightning receive: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -178,10 +190,10 @@ export const checkAndClaimLnReceive = async (
   });
 };
 
-export const checkAndClaimAllOpenLnReceives = async (
+export const tryClaimAllLightningReceives = async (
   wait: boolean = false,
 ): Promise<Result<void, Error>> => {
-  return ResultAsync.fromPromise(checkAndClaimAllOpenLnReceivesNitro(wait), (error) => {
+  return ResultAsync.fromPromise(tryClaimAllLightningReceivesNitro(wait), (error) => {
     const e = new Error(
       `Failed to check and claim all open lightning receives: ${error instanceof Error ? error.message : String(error)}`,
     );

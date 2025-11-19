@@ -179,43 +179,49 @@ const TransactionsScreen = () => {
           </View>
           <FlashList
             data={filteredTransactions}
-            renderItem={({ item }: { item: Transaction }) => (
-              <View style={{ marginBottom: 8 }}>
-                <Pressable
-                  onPress={() => navigation.navigate("TransactionDetail", { transaction: item })}
-                  onLongPress={() => handleDeleteRequest(item.id)}
-                >
-                  <View className="flex-row items-center p-4 bg-card rounded-lg">
-                    <View className="mr-4">
-                      <Icon
-                        name={getIconForType(item.type)}
-                        size={24}
-                        color={item.direction === "outgoing" ? "red" : "green"}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <View className="flex-row justify-between">
-                        <Label className="text-foreground text-base">
-                          {item.type === "Bolt11" || item.type === "Lnurl"
-                            ? "Lightning"
-                            : item.type}
-                        </Label>
-                        <Text
-                          className={`text-base font-bold ${
-                            item.direction === "outgoing" ? "text-red-500" : "text-green-500"
-                          }`}
-                        >
-                          {`${item.direction === "outgoing" ? "-" : "+"}${formatBip177(item.amount)}`}
+            renderItem={({ item }: { item: Transaction }) => {
+              return (
+                <View style={{ marginBottom: 8 }}>
+                  <Pressable
+                    onPress={() => navigation.navigate("TransactionDetail", { transaction: item })}
+                    onLongPress={() => handleDeleteRequest(item.id)}
+                  >
+                    <View className="flex-row items-center p-4 bg-card rounded-lg">
+                      <View className="mr-4">
+                        <Icon
+                          name={getIconForType(item.type)}
+                          size={24}
+                          color={item.direction === "outgoing" ? "red" : "green"}
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <View className="flex-row justify-between gap-4">
+                          <View className="flex-1">
+                            <Label className="text-foreground text-base">
+                              {item.type === "Bolt11" || item.type === "Lnurl"
+                                ? "Lightning"
+                                : item.type}
+                            </Label>
+                          </View>
+                          <View className="items-end">
+                            <Text
+                              className={`text-base font-bold ${
+                                item.direction === "outgoing" ? "text-red-500" : "text-green-500"
+                              }`}
+                            >
+                              {`${item.direction === "outgoing" ? "-" : "+"}${formatBip177(item.amount)}`}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text className="text-muted-foreground text-sm mt-1">
+                          {new Date(item.date).toLocaleString()}
                         </Text>
                       </View>
-                      <Text className="text-muted-foreground text-sm mt-1">
-                        {new Date(item.date).toLocaleString()}
-                      </Text>
                     </View>
-                  </View>
-                </Pressable>
-              </View>
-            )}
+                  </Pressable>
+                </View>
+              );
+            }}
             keyExtractor={(item: Transaction) => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 50 }}

@@ -53,7 +53,7 @@ const LightningAddressScreen = () => {
 
   const handleSave = async () => {
     if (username) {
-      const newAddress = `${username}@${domain}`;
+      const newAddress = `${username.toLowerCase()}@${domain}`;
       if (fromOnboarding) {
         setIsSaving(true);
         const result = await performServerRegistration(newAddress);
@@ -110,20 +110,32 @@ const LightningAddressScreen = () => {
             <AlertDescription>Lightning address has been updated.</AlertDescription>
           </Alert>
         )}
-        <View className="mb-4 mt-9">
-          <View className="flex-row items-center border-border bg-card rounded-lg">
-            <Input
-              value={username}
-              onChangeText={setUsername}
-              className="flex-1 p-4 text-foreground"
-              placeholder="Enter your desired username"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <Text className="text-muted-foreground p-4">@{domain}</Text>
+        <View className="mt-10">
+          <Text className="text-muted-foreground mb-3">
+            Pick a username or let us assign one for you.
+          </Text>
+          <View className="bg-card rounded-2xl border border-border p-5 space-y-5">
+            <View>
+              <Text className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+                Username
+              </Text>
+              <Input
+                value={username}
+                onChangeText={setUsername}
+                className="rounded-2xl border border-border bg-background/90 px-4 py-4 text-lg text-foreground"
+                placeholder="lukedashjr"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View className="bg-background/70 rounded-xl p-3 border border-border/60">
+              <Text className="text-xs text-muted-foreground">Your lightning address will be</Text>
+              <Text className="text-md font-semibold text-foreground mt-1">
+                {username}@{domain}
+              </Text>
+            </View>
           </View>
         </View>
-        <Text className="text-muted-foreground mt-2">Pick your own lightning address.</Text>
         {fromOnboarding ? (
           <View className="flex-row items-center mt-8 gap-4">
             <View className="flex-1">
