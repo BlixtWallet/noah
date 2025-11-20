@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1630"
+   LastUpgradeVersion = "1640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,10 +15,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C39DD7172E0C973E000CB6A9"
-               BuildableName = "Noah-Regtest.app"
-               BlueprintName = "Noah-Regtest"
-               ReferencedContainer = "container:noah.xcodeproj">
+               BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+               BuildableName = "Noah.app"
+               BlueprintName = "Noah"
+               ReferencedContainer = "container:Noah.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,10 +44,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C39DD7172E0C973E000CB6A9"
-            BuildableName = "Noah-Regtest.app"
-            BlueprintName = "Noah-Regtest"
-            ReferencedContainer = "container:noah.xcodeproj">
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "Noah.app"
+            BlueprintName = "Noah"
+            ReferencedContainer = "container:Noah.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,10 +61,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C39DD7172E0C973E000CB6A9"
-            BuildableName = "Noah-Regtest.app"
-            BlueprintName = "Noah-Regtest"
-            ReferencedContainer = "container:noah.xcodeproj">
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "Noah.app"
+            BlueprintName = "Noah"
+            ReferencedContainer = "container:Noah.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -18,7 +18,7 @@
                BlueprintIdentifier = "C39DD7022E0C95AF000CB6A9"
                BuildableName = "Noah-Signet.app"
                BlueprintName = "Noah-Signet"
-               ReferencedContainer = "container:noah.xcodeproj">
+               ReferencedContainer = "container:Noah.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "C39DD7022E0C95AF000CB6A9"
             BuildableName = "Noah-Signet.app"
             BlueprintName = "Noah-Signet"
-            ReferencedContainer = "container:noah.xcodeproj">
+            ReferencedContainer = "container:Noah.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -64,7 +64,7 @@
             BlueprintIdentifier = "C39DD7022E0C95AF000CB6A9"
             BuildableName = "Noah-Signet.app"
             BlueprintName = "Noah-Signet"
-            ReferencedContainer = "container:noah.xcodeproj">
+            ReferencedContainer = "container:Noah.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
