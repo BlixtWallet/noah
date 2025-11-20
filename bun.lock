@@ -30,7 +30,7 @@
         "@shopify/flash-list": "2.0.2",
         "@tanstack/react-query": "^5.90.9",
         "babel-plugin-react-compiler": "^19.0.0-beta-af1b7da-20250417",
-        "bip-321": "^0.0.7",
+        "bip-321": "^0.0.8",
         "bitcoin-address-validation": "^3.0.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -849,7 +849,7 @@
 
     "binary-extensions": ["binary-extensions@2.3.0", "", {}, "sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw=="],
 
-    "bip-321": ["bip-321@0.0.7", "", { "dependencies": { "@noble/hashes": "^2.0.1", "@scure/base": "^2.0.0", "bitcoinjs-lib": "^7.0.0", "light-bolt11-decoder": "^3.2.0", "light-bolt12-decoder": "^1.0.3" }, "peerDependencies": { "typescript": "^5" } }, "sha512-eNKgVvY/v1kcGz9rh/fcdoLAHVGdFelp8bjUwcISQQBqJhlFBNhLN1T3+0J1EtBxHvGA/64R2Tmb5m2WwO/QjQ=="],
+    "bip-321": ["bip-321@0.0.8", "", { "dependencies": { "@noble/hashes": "^2.0.1", "@scure/base": "^2.0.0", "bitcoinjs-lib": "^7.0.0", "light-bolt11-decoder": "^3.2.0", "light-bolt12-decoder": "^1.0.3" }, "peerDependencies": { "typescript": "^5" } }, "sha512-Nl5rnPCGHoJyhpALLnnmphUQPUQLG1CSs5Ne85nz+HBs3vtQdO3P97v9t31+RsyE8kz0K0Cv1vC2JaR6TtXgJg=="],
 
     "bip174": ["bip174@3.0.0", "", { "dependencies": { "uint8array-tools": "^0.0.9", "varuint-bitcoin": "^2.0.0" } }, "sha512-N3vz3rqikLEu0d6yQL8GTrSkpYb35NQKWMR7Hlza0lOj6ZOlvQ3Xr7N9Y+JPebaCVoEUHdBeBSuLxcHr71r+Lw=="],
 
