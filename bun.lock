@@ -6,7 +6,7 @@
     },
     "client": {
       "name": "noah",
-      "version": "0.0.1",
+      "version": "0.0.4",
       "dependencies": {
         "@bottom-tabs/react-navigation": "^1.0.2",
         "@react-native-clipboard/clipboard": "^1.16.3",

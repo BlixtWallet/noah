@@ -24,7 +24,7 @@ import { registerOffboardingRequest } from "../lib/api";
 import { signMessage } from "../lib/crypto";
 import { addOffboardingRequest, addOnboardingRequest } from "../lib/transactionsDb";
 import { copyToClipboard } from "../lib/clipboardUtils";
-import { cn, formatBip177 } from "../lib/utils";
+import { cn, formatBip177, isNetworkMatch } from "../lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useAlert } from "~/contexts/AlertProvider";
@@ -344,7 +344,7 @@ const BoardArkScreen = () => {
       return;
     }
 
-    if (btcValidation.network !== APP_VARIANT) {
+    if (!isNetworkMatch(btcValidation.network, "onchain")) {
       showAlert({
         title: "Network Mismatch",
         description: `Please enter a ${APP_VARIANT} address. Detected ${btcValidation.network} address.`,

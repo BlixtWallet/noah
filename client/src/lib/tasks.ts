@@ -9,6 +9,7 @@ import { verifyMessage } from "./crypto";
 import { validateBitcoinAddress } from "bip-321";
 import { Bolt11Invoice } from "react-native-nitro-ark";
 import { APP_VARIANT } from "~/config";
+import { isNetworkMatch } from "./utils";
 
 const log = logger("tasks");
 
@@ -128,7 +129,7 @@ export async function offboardTask(
     return err(e);
   }
 
-  if (btcValidation.network !== APP_VARIANT) {
+  if (!isNetworkMatch(btcValidation.network, "onchain")) {
     const e = new Error(`Network mismatch: expected ${APP_VARIANT}, got ${btcValidation.network}`);
     log.e(e.message, [address]);
     return err(e);

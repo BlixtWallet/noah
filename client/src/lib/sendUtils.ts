@@ -8,6 +8,7 @@ import {
 } from "bip-321";
 import { APP_VARIANT } from "../config";
 import logger from "./log";
+import { isNetworkMatch } from "./utils";
 
 const log = logger("sendUtils");
 
@@ -27,24 +28,6 @@ export type ParsedDestination = {
   bip321?: ParsedBip321;
 };
 
-const isNetworkMatch = (network: string | undefined, paymentType: "ark" | "other"): boolean => {
-  if (!network) return false;
-
-  if (paymentType === "ark") {
-    // For Ark, testnet covers testnet, signet, and regtest
-    if (APP_VARIANT === "mainnet") {
-      return network === "mainnet";
-    } else {
-      // APP_VARIANT is testnet, signet, or regtest
-      // Ark network should be "testnet"
-      return network === "testnet";
-    }
-  } else {
-    // For Bitcoin addresses and Lightning invoices, exact network match required
-    return network === APP_VARIANT;
-  }
-};
-
 export const isValidDestination = (dest: string): boolean => {
   if (dest.toLowerCase().startsWith("bitcoin:")) {
     const expectedNetwork = APP_VARIANT;
@@ -56,13 +39,13 @@ export const isValidDestination = (dest: string): boolean => {
 
   // Check Bitcoin address
   const btcResult = validateBitcoinAddress(cleanedDest);
-  if (btcResult.valid && isNetworkMatch(btcResult.network, "other")) {
+  if (btcResult.valid && isNetworkMatch(btcResult.network, "onchain")) {
     return true;
   }
 
   // Check Lightning invoice (BOLT11)
   const lnResult = validateLightningInvoice(cleanedDest);
-  if (lnResult.valid && isNetworkMatch(lnResult.network, "other")) {
+  if (lnResult.valid && isNetworkMatch(lnResult.network, "lightning")) {
     return true;
   }
 
@@ -163,7 +146,7 @@ export const parseDestination = (destination: string): ParsedDestination => {
 
   const lnResult = validateLightningInvoice(cleanedDestination);
   if (lnResult.valid) {
-    if (!isNetworkMatch(lnResult.network, "other")) {
+    if (!isNetworkMatch(lnResult.network, "lightning")) {
       return {
         destinationType: null,
         isAmountEditable: true,
@@ -214,7 +197,7 @@ export const parseDestination = (destination: string): ParsedDestination => {
 
   const btcResult = validateBitcoinAddress(cleanedDestination);
   if (btcResult.valid) {
-    if (!isNetworkMatch(btcResult.network, "other")) {
+    if (!isNetworkMatch(btcResult.network, "onchain")) {
       return {
         destinationType: null,
         isAmountEditable: true,
