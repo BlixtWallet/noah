@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Pressable, TextInput, ScrollView } from "react-native";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { View, Pressable, FlatList } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
@@ -14,6 +14,7 @@ import Share from "react-native-share";
 import { CACHES_DIRECTORY_PATH, PLATFORM } from "~/constants";
 import { Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
+import { FlashList } from "@shopify/flash-list";
 
 const log = logger("LogScreen");
 
@@ -22,29 +23,36 @@ const LogScreen = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const bottomTabBarHeight = useBottomTabBarHeight();
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchLogs = async () => {
-      const result = await ResultAsync.fromPromise(getAppLogs(), (e) => e as Error);
-
-      if (isMounted) {
-        if (result.isOk()) {
-          setLogs(result.value);
-        } else {
-          setError(result.error.message || "Failed to fetch logs.");
-        }
-        setIsLoading(false);
-      }
-    };
-
-    fetchLogs();
-
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
     };
   }, []);
+
+  const fetchLogs = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    const result = await ResultAsync.fromPromise(getAppLogs(), (e) => e as Error);
+
+    if (isMountedRef.current) {
+      if (result.isOk()) {
+        setLogs(result.value);
+        setLastUpdatedAt(new Date());
+      } else {
+        setError(result.error.message || "Failed to fetch logs.");
+      }
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const handleShare = async () => {
     const path = `${CACHES_DIRECTORY_PATH}/noah_logs.txt`;
@@ -86,6 +94,19 @@ const LogScreen = () => {
     )();
   };
 
+  const renderLogLine = useCallback(
+    ({ item }: { item: string }) => (
+      <Text
+        selectable
+        selectionColor={COLORS.BITCOIN_ORANGE}
+        className="text-sm text-white font-mono p-2"
+      >
+        {item}
+      </Text>
+    ),
+    [],
+  );
+
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
       <View className="p-4 flex-1">
@@ -96,9 +117,14 @@ const LogScreen = () => {
             </Pressable>
             <Text className="text-2xl font-bold text-foreground">App Logs</Text>
           </View>
-          <Button onPress={handleShare} variant="outline" disabled={logs.length === 0}>
-            <Icon name="share-outline" size={20} color="white" />
-          </Button>
+          <View className="flex-row space-x-2">
+            <Button onPress={fetchLogs} variant="outline" disabled={isLoading}>
+              <Icon name="refresh-outline" size={20} color="white" />
+            </Button>
+            <Button onPress={handleShare} variant="outline" disabled={logs.length === 0}>
+              <Icon name="share-outline" size={20} color="white" />
+            </Button>
+          </View>
         </View>
         {isLoading ? (
           <View className="flex-1 justify-center items-center">
@@ -111,28 +137,20 @@ const LogScreen = () => {
         ) : (
           <View className="flex-1 bg-card rounded-lg p-2">
             {logs.length > 0 ? (
-              <ScrollView
-                contentContainerStyle={{ paddingBottom: bottomTabBarHeight }}
-                showsVerticalScrollIndicator={true}
-              >
-                {PLATFORM === "ios" ? (
-                  <TextInput
-                    editable={false}
-                    multiline
-                    value={logs.join("\n\n")}
-                    className="text-sm text-white font-mono p-2"
-                    selectionColor={COLORS.BITCOIN_ORANGE}
-                  />
-                ) : (
-                  <Text
-                    selectable
-                    selectionColor={COLORS.BITCOIN_ORANGE}
-                    className="text-sm text-white font-mono p-2"
-                  >
-                    {logs.join("\n\n")}
+              <>
+                {lastUpdatedAt ? (
+                  <Text className="text-muted-foreground text-xs ml-2 mb-1">
+                    Updated at {lastUpdatedAt.toLocaleTimeString()}
                   </Text>
-                )}
-              </ScrollView>
+                ) : null}
+                <FlashList
+                  data={logs}
+                  renderItem={renderLogLine}
+                  keyExtractor={(_, index) => `log-${index}`}
+                  showsVerticalScrollIndicator
+                  contentContainerStyle={{ paddingBottom: bottomTabBarHeight }}
+                />
+              </>
             ) : (
               <View className="flex-1 justify-center items-center">
                 <Text className="text-center text-muted-foreground">No logs found.</Text>

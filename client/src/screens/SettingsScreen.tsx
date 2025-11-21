@@ -2,7 +2,7 @@ import { Pressable, ScrollView, View, Switch, Image } from "react-native";
 import Constants from "expo-constants";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useWalletStore } from "../store/walletStore";
-import { ACTIVE_WALLET_CONFIG } from "../constants";
+import { ACTIVE_WALLET_CONFIG, PLATFORM } from "../constants";
 import { useServerStore } from "../store/serverStore";
 import { useTransactionStore } from "../store/transactionStore";
 import { APP_VARIANT } from "../config";
@@ -27,6 +27,8 @@ import logoImage from "../../assets/1024_no_background.png";
 import { COLORS } from "~/lib/styleConstants";
 import { FeedbackModal } from "~/components/FeedbackModal";
 import { performServerRegistration } from "../lib/server";
+import { useBottomTabBarHeight } from "react-native-bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Setting = {
   id:
@@ -86,6 +88,8 @@ const SettingsScreen = () => {
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
     useExportDatabase();
   const { data: peakKeyPair } = usePeakKeyPair();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { bottom: safeBottomInset } = useSafeAreaInsets();
 
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
@@ -318,7 +322,9 @@ const SettingsScreen = () => {
       <ScrollView
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{
+          paddingBottom: safeBottomInset + (PLATFORM === "android" ? 0 : tabBarHeight),
+        }}
       >
         <View className="items-center mb-6">
           <Pressable onPress={() => navigation.navigate("NoahStory")}>

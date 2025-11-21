@@ -1,84 +1,95 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
-import { nativeLog } from "noah-tools";
+/* eslint no-console: "off" */
+import { nativeLog, type LogLevel } from "noah-tools";
+import { Result } from "neverthrow";
 
 const isDevMode = __DEV__;
 
-const log = (tag?: string) => {
-  tag = tag ?? "";
+type LogFn = (message: string, data?: unknown[]) => void;
+type LogMethods = {
+  v: LogFn;
+  verbose: LogFn;
+  d: LogFn;
+  debug: LogFn;
+  i: LogFn;
+  info: LogFn;
+  w: LogFn;
+  warn: LogFn;
+  e: LogFn;
+  error: LogFn;
+};
+
+const log = (tag = ""): LogMethods => {
+  const performLog =
+    (level: LogLevel): LogFn =>
+    (message, data = []) => {
+      const normalizedData = Array.isArray(data) ? data : [data];
+      const formattedMessage = buildMessage(message, normalizedData);
+
+      if (isDevMode) {
+        pipeToConsole(level, `[${tag}] ${formattedMessage}`);
+      }
+
+      Result.fromThrowable(() => nativeLog(level, tag, formattedMessage))().mapErr((error) => {
+        if (isDevMode) {
+          console.warn(`Failed to write native log (${level}):`, error);
+        }
+      });
+    };
 
   return {
-    v: (message: string, data: any[] = []) => {
-      const msg = fixMessage(message, data);
-      if (isDevMode) {
-        console.debug(tag, msg);
-      } else {
-        nativeLog("verbose", tag, msg);
-      }
-    },
-
-    d: (message: string, data: any[] = []) => {
-      const msg = fixMessage(message, data);
-      if (isDevMode) {
-        console.debug(tag, msg);
-      } else {
-        nativeLog("debug", tag, msg);
-      }
-    },
-
-    i: (message: string, data: any[] = []) => {
-      const msg = fixMessage(message, data);
-      if (isDevMode) {
-        console.info(tag, msg);
-      } else {
-        nativeLog("info", tag, msg);
-      }
-    },
-
-    w: (message: string, data: any[] = []) => {
-      const msg = fixMessage(message, data);
-      if (isDevMode) {
-        console.warn(tag, msg);
-      } else {
-        nativeLog("warn", tag, msg);
-      }
-    },
-
-    e: (message: string, data: any[] = []) => {
-      const msg = fixMessage(message, data);
-      if (isDevMode) {
-        console.error(tag, msg);
-      } else {
-        nativeLog("error", tag, msg);
-      }
-    },
+    v: performLog("verbose"),
+    verbose: performLog("verbose"),
+    d: performLog("debug"),
+    debug: performLog("debug"),
+    i: performLog("info"),
+    info: performLog("info"),
+    w: performLog("warn"),
+    warn: performLog("warn"),
+    e: performLog("error"),
+    error: performLog("error"),
   };
 };
 
 export default log;
 
-const processDataArg = (data: any[]) =>
-  data
-    .map((d) => {
-      if (d instanceof Error) {
-        return JSON.stringify({
-          name: d.name,
-          message: d.message,
-          // stack: d.stack,
-        });
-      }
-      return JSON.stringify(d);
-    })
-    .join("\n  ");
+const buildMessage = (message: string, data: unknown[]): string => {
+  if (!data || data.length === 0) {
+    return message;
+  }
 
-const fixMessage = (message: string, data: any[]) => {
-  if (!Array.isArray(data)) {
-    log("log.ts").e(
-      `Invalid data arg passed to logging function: ${JSON.stringify(data)}. Must be an array`,
-    );
+  const formattedData = data.map(safeStringify).join("\n  ");
+  return `${message}\n  ${formattedData}`;
+};
+
+const safeStringify = (value: unknown): string => {
+  if (value instanceof Error) {
+    return JSON.stringify({
+      name: value.name,
+      message: value.message,
+      stack: value.stack,
+    });
   }
-  if (data.length > 0) {
-    message += `\n  ${processDataArg(data)}`;
+
+  const stringified = Result.fromThrowable(() => JSON.stringify(value))();
+  return stringified.isOk() ? String(stringified.value) : String(value);
+};
+
+const pipeToConsole = (level: LogLevel, message: string) => {
+  switch (level) {
+    case "verbose":
+    case "debug":
+      console.debug(message);
+      break;
+    case "info":
+      console.info(message);
+      break;
+    case "warn":
+      console.warn(message);
+      break;
+    case "error":
+      console.error(message);
+      break;
+    default:
+      console.log(message);
   }
-  return message;
 };
