@@ -9,7 +9,7 @@ import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
-import { maintenanceRefresh, sync } from "./walletApi";
+import { maintanance, sync } from "./walletApi";
 import { tryClaimLightningReceive } from "./paymentsApi";
 import { useWalletStore } from "~/store/walletStore";
 import { formatBip177 } from "./utils";
@@ -113,7 +113,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         (async () => {
           switch (notificationData.notification_type) {
             case "maintenance": {
-              const result = await maintenanceRefresh();
+              const result = await maintanance();
               // Also perform a sync after maintenance
               await sync();
               await handleTaskCompletion("maintenance", result, notificationData.k1);
