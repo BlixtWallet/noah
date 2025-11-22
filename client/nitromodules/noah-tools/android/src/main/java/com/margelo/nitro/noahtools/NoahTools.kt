@@ -10,6 +10,23 @@ import com.margelo.nitro.NitroModules
 
 class NoahTools : HybridNoahToolsSpec() {
 
+    private fun resolveWidgetComponent(context: Context, appGroup: String): ComponentName? {
+        val providerClassName = when (appGroup) {
+            "com.noahwallet.regtest" -> "com.noahwallet.widgets.NoahWidgetRegtestProvider"
+            "com.noahwallet.signet" -> "com.noahwallet.widgets.NoahWidgetSignetProvider"
+            "com.noahwallet.mainnet" -> "com.noahwallet.widgets.NoahWidgetMainnetProvider"
+            else -> null
+        }
+
+        if (providerClassName == null) {
+            return null
+        }
+
+        // Build an explicit component to ensure the broadcast reaches the widget provider even
+        // when the app process is not running.
+        return ComponentName(context, providerClassName)
+    }
+
     override fun nativePost(
         url: String,
         body: String,
@@ -90,6 +107,7 @@ class NoahTools : HybridNoahToolsSpec() {
     ) {
         val context = NitroModules.applicationContext ?: return
         val prefs = context.getSharedPreferences(appGroup, Context.MODE_PRIVATE)
+        val widgetComponent = resolveWidgetComponent(context, appGroup) ?: return
 
         prefs.edit().apply {
             putLong("totalBalance", totalBalance.toLong())
@@ -102,10 +120,18 @@ class NoahTools : HybridNoahToolsSpec() {
             apply()
         }
 
-        // Trigger widget update by sending a custom broadcast
-        // Using custom action to prevent other apps from triggering updates
-        val intent = Intent("com.noahwallet.action.WIDGET_DATA_CHANGED")
-        intent.setPackage(context.packageName)
-        context.sendBroadcast(intent)
+        // Trigger widget update with an explicit broadcast so Android delivers it even when the
+        // app is in the background.
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent)
+
+        if (appWidgetIds.isNotEmpty()) {
+            val intent = Intent("com.noahwallet.action.WIDGET_DATA_CHANGED").apply {
+                component = widgetComponent
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+                addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+            }
+            context.sendBroadcast(intent)
+        }
     }
 }

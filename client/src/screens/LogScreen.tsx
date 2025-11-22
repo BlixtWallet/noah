@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Pressable, FlatList } from "react-native";
+import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
 import { Text } from "../components/ui/text";
