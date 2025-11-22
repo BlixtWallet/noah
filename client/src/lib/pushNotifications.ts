@@ -17,6 +17,16 @@ import { updateWidget } from "~/hooks/useWidget";
 
 const log = logger("pushNotifications");
 
+export type PushPermissionStatus = {
+  status: Notifications.PermissionStatus;
+  isPhysicalDevice: boolean;
+};
+
+export type RegisterForPushResult =
+  | { kind: "success"; pushToken: string }
+  | { kind: "permission_denied"; permissionStatus: Notifications.PermissionStatus }
+  | { kind: "device_not_supported" };
+
 const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 
 /**
@@ -236,7 +246,25 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export async function registerForPushNotificationsAsync(): Promise<Result<string, Error>> {
+export async function getPushPermissionStatus(): Promise<Result<PushPermissionStatus, Error>> {
+  if (!Device.isDevice) {
+    // Simulators and emulators cannot receive push notifications; skip gating in that scenario.
+    return ok({ status: Notifications.PermissionStatus.DENIED, isPhysicalDevice: false });
+  }
+
+  const permissionResult = await ResultAsync.fromPromise(
+    Notifications.getPermissionsAsync(),
+    (e) => e as Error,
+  );
+
+  if (permissionResult.isErr()) {
+    return err(permissionResult.error);
+  }
+
+  return ok({ status: permissionResult.value.status, isPhysicalDevice: true });
+}
+
+export async function registerForPushNotificationsAsync(): Promise<Result<RegisterForPushResult, Error>> {
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -246,10 +274,9 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     });
   }
 
-  // If the device is not a physical device, return an error
-  // Push notifications are not supported on simulators or emulators
+  // If the device is not a physical device, return a non-supported status
   if (!Device.isDevice) {
-    return err(new Error("Must use physical device for push notifications"));
+    return ok({ kind: "device_not_supported" });
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -259,7 +286,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
     finalStatus = status;
   }
   if (finalStatus !== "granted") {
-    return err(new Error("Permission not granted to get push token for push notification!"));
+    return ok({ kind: "permission_denied", permissionStatus: finalStatus });
   }
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
   if (!projectId) {
@@ -287,7 +314,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<string
   }
 
   const pushTokenString = pushTokenResult.value.data;
-  return ok(pushTokenString);
+  return ok({ kind: "success", pushToken: pushTokenString });
 }
 
 export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {

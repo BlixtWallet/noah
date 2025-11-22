@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { NavigationContainer, DarkTheme, NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform, View, Text } from "react-native";
+import { Platform, View, Text, AppState } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 
@@ -34,6 +34,13 @@ import { OnboardingRequest, OffboardingRequest } from "~/lib/transactionsDb";
 import { getMnemonic } from "~/lib/crypto";
 import VTXOsScreen, { type VTXOWithStatus } from "~/screens/VTXOsScreen";
 import VTXODetailScreen from "~/screens/VTXODetailScreen";
+import PushNotificationsRequiredScreen from "~/screens/PushNotificationsRequiredScreen";
+import {
+  getPushPermissionStatus,
+  registerForPushNotificationsAsync,
+} from "~/lib/pushNotifications";
+import { PermissionStatus } from "expo-notifications";
+import logger from "~/lib/log";
 
 // Param list types
 type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
@@ -308,6 +315,12 @@ const AppTabs = () => {
 const AppNavigation = () => {
   const { isInitialized } = useWalletStore();
   const [isCheckingWallet, setIsCheckingWallet] = useState(true);
+  const [pushPermissionStatus, setPushPermissionStatus] = useState<PermissionStatus | "checking">(
+    "checking",
+  );
+  const [isPhysicalDevice, setIsPhysicalDevice] = useState(true);
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const log = logger("AppNavigation");
 
   // Check for existing wallet on app start
   useEffect(() => {
@@ -333,6 +346,85 @@ const AppNavigation = () => {
     checkExistingWallet();
   }, [isInitialized]);
 
+  const refreshPushPermissionStatus = useCallback(async () => {
+    const permissionResult = await getPushPermissionStatus();
+    if (permissionResult.isErr()) {
+      log.w("Failed to fetch push permission status", [permissionResult.error]);
+      return null;
+    }
+
+    setPushPermissionStatus(permissionResult.value.status);
+    setIsPhysicalDevice(permissionResult.value.isPhysicalDevice);
+    return permissionResult.value.status;
+  }, [log]);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+    refreshPushPermissionStatus();
+  }, [isInitialized, refreshPushPermissionStatus]);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        refreshPushPermissionStatus();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isInitialized, refreshPushPermissionStatus]);
+
+  const handleRequestPermission = useCallback(async () => {
+    setIsRequestingPermission(true);
+    const permissionResult = await registerForPushNotificationsAsync();
+    if (permissionResult.isOk()) {
+      const payload = permissionResult.value;
+      switch (payload.kind) {
+        case "success":
+          setPushPermissionStatus(PermissionStatus.GRANTED);
+          setIsPhysicalDevice(true);
+          break;
+        case "permission_denied":
+          setPushPermissionStatus(payload.permissionStatus);
+          setIsPhysicalDevice(true);
+          break;
+        case "device_not_supported":
+          setIsPhysicalDevice(false);
+          setPushPermissionStatus("checking");
+          break;
+        default: {
+          const _exhaustive: never = payload;
+          log.w("Unknown permission payload", [_exhaustive]);
+        }
+      }
+    } else {
+      log.w("Failed to request push permission", [permissionResult.error]);
+    }
+    setIsRequestingPermission(false);
+  }, [log]);
+
+  const handleRetryPermissionStatus = useCallback(async () => {
+    setIsRequestingPermission(true);
+    await refreshPushPermissionStatus().finally(() => {
+      setIsRequestingPermission(false);
+    });
+  }, [refreshPushPermissionStatus]);
+
+  const hasResolvedPushPermission = pushPermissionStatus !== "checking";
+
+  const shouldShowPushPermissionScreen =
+    isInitialized &&
+    isPhysicalDevice &&
+    hasResolvedPushPermission &&
+    pushPermissionStatus === PermissionStatus.DENIED;
+
   // Show loading screen while checking for existing wallet
   if (isCheckingWallet) {
     return (
@@ -342,6 +434,21 @@ const AppNavigation = () => {
           <NoahActivityIndicator size="large" />
           <Text style={{ marginTop: 10, color: "white" }}>Loading...</Text>
         </View>
+        <PortalHost />
+      </NavigationContainer>
+    );
+  }
+
+  if (shouldShowPushPermissionScreen) {
+    return (
+      <NavigationContainer theme={DarkTheme}>
+        <StatusBar style="light" />
+        <PushNotificationsRequiredScreen
+          status={pushPermissionStatus}
+          isRequesting={isRequestingPermission}
+          onRequestPermission={handleRequestPermission}
+          onRetryStatus={handleRetryPermissionStatus}
+        />
         <PortalHost />
       </NavigationContainer>
     );

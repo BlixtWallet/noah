@@ -27,7 +27,13 @@ export const usePushNotifications = (isReady: boolean) => {
         return;
       }
 
-      const registerResult = await registerPushTokenWithServer(tokenResult.value);
+      const tokenPayload = tokenResult.value;
+      if (tokenPayload.kind !== "success") {
+        log.w("Push permission not granted or device unsupported", [tokenPayload.kind]);
+        return;
+      }
+
+      const registerResult = await registerPushTokenWithServer(tokenPayload.pushToken);
       if (registerResult.isErr()) {
         log.w("Failed to register push token with server", [registerResult.error]);
         return;
