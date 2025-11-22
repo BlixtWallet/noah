@@ -109,6 +109,18 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun updateWidgetData(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, closestExpiryBlocks: Double, expiryThreshold: Double, appGroup: String): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun isGooglePlayServicesAvailable(): Boolean
+  
+  @DoNotStrip
+  @Keep
+  abstract fun registerUnifiedPush(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getUnifiedPushEndpoint(): String
 
   private external fun initHybrid(): HybridData
 

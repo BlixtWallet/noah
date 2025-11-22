@@ -7,6 +7,8 @@ import android.content.Intent
 import com.margelo.nitro.core.Promise
 import com.margelo.nitro.noahtools.audio.NoahToolsAudio
 import com.margelo.nitro.NitroModules
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 
 class NoahTools : HybridNoahToolsSpec() {
 
@@ -133,5 +135,23 @@ class NoahTools : HybridNoahToolsSpec() {
             }
             context.sendBroadcast(intent)
         }
+    }
+
+    override fun isGooglePlayServicesAvailable(): Boolean {
+        val context = NitroModules.applicationContext ?: return false
+        val googleApiAvailability = GoogleApiAvailability.getInstance()
+        val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
+        return resultCode == ConnectionResult.SUCCESS
+    }
+
+    override fun registerUnifiedPush() {
+        val context = NitroModules.applicationContext ?: return
+        org.unifiedpush.android.connector.UnifiedPush.registerApp(context)
+    }
+
+    override fun getUnifiedPushEndpoint(): String {
+        val context = NitroModules.applicationContext ?: return ""
+        val prefs = context.getSharedPreferences("noah_unified_push", Context.MODE_PRIVATE)
+        return prefs.getString("endpoint", "") ?: ""
     }
 }

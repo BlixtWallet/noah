@@ -181,6 +181,28 @@ namespace margelo::nitro::noahtools {
         std::rethrow_exception(__result.error());
       }
     }
+    inline bool isGooglePlayServicesAvailable() override {
+      auto __result = _swiftPart.isGooglePlayServicesAvailable();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void registerUnifiedPush() override {
+      auto __result = _swiftPart.registerUnifiedPush();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::string getUnifiedPushEndpoint() override {
+      auto __result = _swiftPart.getUnifiedPushEndpoint();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
 
   private:
     NoahTools::HybridNoahToolsSpec_cxx _swiftPart;

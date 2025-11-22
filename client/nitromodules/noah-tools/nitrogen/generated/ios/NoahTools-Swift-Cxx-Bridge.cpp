@@ -10,6 +10,7 @@
 // Include C++ implementation defined types
 #include "HybridNoahToolsSpecSwift.hpp"
 #include "NoahTools-Swift-Cxx-Umbrella.hpp"
+#include <NitroModules/NitroDefines.hpp>
 
 namespace margelo::nitro::noahtools::bridge::swift {
 

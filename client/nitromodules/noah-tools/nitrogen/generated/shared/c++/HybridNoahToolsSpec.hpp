@@ -69,6 +69,9 @@ namespace margelo::nitro::noahtools {
       virtual double getAudioPosition() = 0;
       virtual bool isAudioPlaying() = 0;
       virtual void updateWidgetData(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, double closestExpiryBlocks, double expiryThreshold, const std::string& appGroup) = 0;
+      virtual bool isGooglePlayServicesAvailable() = 0;
+      virtual void registerUnifiedPush() = 0;
+      virtual std::string getUnifiedPushEndpoint() = 0;
 
     protected:
       // Hybrid Setup

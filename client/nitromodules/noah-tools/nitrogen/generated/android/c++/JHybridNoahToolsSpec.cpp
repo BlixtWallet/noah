@@ -210,5 +210,19 @@ namespace margelo::nitro::noahtools {
     static const auto method = javaClassStatic()->getMethod<void(double /* totalBalance */, double /* onchainBalance */, double /* offchainBalance */, double /* pendingBalance */, double /* closestExpiryBlocks */, double /* expiryThreshold */, jni::alias_ref<jni::JString> /* appGroup */)>("updateWidgetData");
     method(_javaPart, totalBalance, onchainBalance, offchainBalance, pendingBalance, closestExpiryBlocks, expiryThreshold, jni::make_jstring(appGroup));
   }
+  bool JHybridNoahToolsSpec::isGooglePlayServicesAvailable() {
+    static const auto method = javaClassStatic()->getMethod<jboolean()>("isGooglePlayServicesAvailable");
+    auto __result = method(_javaPart);
+    return static_cast<bool>(__result);
+  }
+  void JHybridNoahToolsSpec::registerUnifiedPush() {
+    static const auto method = javaClassStatic()->getMethod<void()>("registerUnifiedPush");
+    method(_javaPart);
+  }
+  std::string JHybridNoahToolsSpec::getUnifiedPushEndpoint() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<jni::JString>()>("getUnifiedPushEndpoint");
+    auto __result = method(_javaPart);
+    return __result->toStdString();
+  }
 
 } // namespace margelo::nitro::noahtools

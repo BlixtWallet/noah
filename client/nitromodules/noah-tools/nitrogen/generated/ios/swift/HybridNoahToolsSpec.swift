@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /// See ``HybridNoahToolsSpec``
 public protocol HybridNoahToolsSpec_protocol: HybridObject {
@@ -31,6 +30,9 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func getAudioPosition() throws -> Double
   func isAudioPlaying() throws -> Bool
   func updateWidgetData(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, closestExpiryBlocks: Double, expiryThreshold: Double, appGroup: String) throws -> Void
+  func isGooglePlayServicesAvailable() throws -> Bool
+  func registerUnifiedPush() throws -> Void
+  func getUnifiedPushEndpoint() throws -> String
 }
 
 public extension HybridNoahToolsSpec_protocol {

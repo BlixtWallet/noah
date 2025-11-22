@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /**
  * A class implementation that bridges HybridNoahToolsSpec over to C++.
@@ -365,6 +364,41 @@ open class HybridNoahToolsSpec_cxx {
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
       return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func isGooglePlayServicesAvailable() -> bridge.Result_bool_ {
+    do {
+      let __result = try self.__implementation.isGooglePlayServicesAvailable()
+      let __resultCpp = __result
+      return bridge.create_Result_bool_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_bool_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func registerUnifiedPush() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.registerUnifiedPush()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getUnifiedPushEndpoint() -> bridge.Result_std__string_ {
+    do {
+      let __result = try self.__implementation.getUnifiedPushEndpoint()
+      let __resultCpp = std.string(__result)
+      return bridge.create_Result_std__string_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__string_(__exceptionPtr)
     }
   }
 }

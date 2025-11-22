@@ -56,17 +56,7 @@
 - Always use `neverthrow` for error handling.
 - Avoid use of `try` and `catch` blocks and use `neverthrow` instead.
 - Whenever a component needs to call a method of `react-native-nitro-ark` library, use our hooks in the hooks directory that wrap the API methods.
-- Using `console.log, info, warn, error` are now allowed in the repo.
-- Logging should be done like this:
-```typeScript`
-import logger from "~/lib/log";
 
-const log = logger("fileName");
-log.d("The debug log message", [any params]);
-log.i("The info log message", [any params]);
-log.w("The warning log message", [any params]);
-log.e("The error log message", [any params]);
-```
 ## Code style Server
 
 - Always use `anyhow` for error handling.

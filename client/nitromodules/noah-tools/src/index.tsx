@@ -93,4 +93,16 @@ export function updateWidgetData(
   );
 }
 
+export function isGooglePlayServicesAvailable(): boolean {
+  return NoahToolsHybridObject.isGooglePlayServicesAvailable();
+}
+
+export function registerUnifiedPush(): void {
+  NoahToolsHybridObject.registerUnifiedPush();
+}
+
+export function getUnifiedPushEndpoint(): string {
+  return NoahToolsHybridObject.getUnifiedPushEndpoint();
+}
+
 export type { HttpResponse } from "./NoahTools.nitro";
