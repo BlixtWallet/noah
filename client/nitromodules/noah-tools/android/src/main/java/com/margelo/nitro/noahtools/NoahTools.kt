@@ -250,8 +250,8 @@ class NoahTools : HybridNoahToolsSpec() {
                 prefs.edit()
                     .putString("mnemonic_$variant", mnemonic)
                     .apply()
-            } catch (_: Exception) {
-                // Ignore write failures silently; push service will fallback to missing mnemonic
+            } catch (e: Exception) {
+                throw Exception("Failed to store native mnemonic: ${e.message}", e)
             }
         }
     }

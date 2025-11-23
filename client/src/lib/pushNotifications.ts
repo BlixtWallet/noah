@@ -14,6 +14,7 @@ import { tryClaimLightningReceive } from "./paymentsApi";
 import { useWalletStore } from "~/store/walletStore";
 import { formatBip177 } from "./utils";
 import { updateWidget } from "~/hooks/useWidget";
+import { hasGooglePlayServices } from "~/constants";
 
 const log = logger("pushNotifications");
 
@@ -264,7 +265,9 @@ export async function getPushPermissionStatus(): Promise<Result<PushPermissionSt
   return ok({ status: permissionResult.value.status, isPhysicalDevice: true });
 }
 
-export async function registerForPushNotificationsAsync(): Promise<Result<RegisterForPushResult, Error>> {
+export async function registerForPushNotificationsAsync(): Promise<
+  Result<RegisterForPushResult, Error>
+> {
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -275,14 +278,12 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
   }
 
   // Prefer UnifiedPush endpoint on Android real device without Play Services.
-  if (Platform.OS === "android" && Device.isDevice) {
+  if (!hasGooglePlayServices()) {
     try {
-      const { isGooglePlayServicesAvailable, getUnifiedPushEndpoint } = await import("noah-tools");
-      if (!isGooglePlayServicesAvailable()) {
-        const unifiedEndpoint = getUnifiedPushEndpoint();
-        if (unifiedEndpoint) {
-          return ok({ kind: "success", pushToken: unifiedEndpoint, pushType: "unified" });
-        }
+      const { getUnifiedPushEndpoint } = await import("noah-tools");
+      const unifiedEndpoint = getUnifiedPushEndpoint();
+      if (unifiedEndpoint) {
+        return ok({ kind: "success", pushToken: unifiedEndpoint, pushType: "unified" });
       }
     } catch (e) {
       log.w("UnifiedPush endpoint lookup failed", [e]);
@@ -292,15 +293,6 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
   // If the device is not a physical device, return a non-supported status
   if (!Device.isDevice) {
     return ok({ kind: "device_not_supported" });
-  }
-
-  if (Platform.OS === "android") {
-    Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#FF231F7C",
-    });
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -351,7 +343,9 @@ export async function registerPushTokenWithServer(pushToken: string): Promise<Re
   return ok(undefined);
 }
 
-export async function registerUnifiedPushTokenWithServer(pushEndpoint: string): Promise<Result<void, Error>> {
+export async function registerUnifiedPushTokenWithServer(
+  pushEndpoint: string,
+): Promise<Result<void, Error>> {
   // Reuse same API payload; server should treat endpoint as token for UnifiedPush
   return registerPushTokenWithServer(pushEndpoint);
 }

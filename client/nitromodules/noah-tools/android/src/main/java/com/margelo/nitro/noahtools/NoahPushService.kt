@@ -9,6 +9,7 @@ import org.unifiedpush.android.connector.data.PushEndpoint
 import org.unifiedpush.android.connector.data.PushMessage
 import org.unifiedpush.android.connector.FailedReason
 import org.json.JSONObject
+import java.lang.reflect.Constructor
 
 class NoahPushService : PushService() {
 
@@ -116,34 +117,9 @@ class NoahPushService : PushService() {
             return
         }
 
-        val config = when (appVariant) {
-            "regtest" -> configConstructor.newInstance(
-                "http://192.168.4.72:3535",
-                null,
-                "http://192.168.4.72:18443",
-                null,
-                "second",
-                "ark",
-                24,
-                10000L,
-                18,
-                12,
-                1
-            )
-
-            "signet" -> configConstructor.newInstance(
-                "ark.signet.2nd.dev",
-                "esplora.signet.2nd.dev",
-                null, null, null, null,
-                48, 10000L, 18, 12, 1
-            )
-
-            else -> configConstructor.newInstance(
-                "http://192.168.4.252:3535",
-                "https://mempool.space/api",
-                null, null, null, null,
-                288, 10000L, 18, 12, 2
-            )
+        val config = loadBarkConfig(context, appVariant, configConstructor) ?: run {
+            Log.e("NoahPushService", "Cannot load wallet: Bark config missing for $appVariant")
+            return
         }
 
         val regtest = appVariant == "regtest"
@@ -152,10 +128,6 @@ class NoahPushService : PushService() {
 
         loadWalletMethod.invoke(instance, datadir, mnemonic, regtest, signet, bitcoin, null, config)
         Log.i("NoahPushService", "Wallet loaded successfully via JNI")
-
-        val maintenanceMethod = clazz.getMethod("maintenance")
-        maintenanceMethod.invoke(instance)
-        Log.i("NoahPushService", "maintenance() called after load")
     }
 
     private fun readMnemonicFromStorage(context: Context, appVariant: String): String? {
@@ -175,5 +147,61 @@ class NoahPushService : PushService() {
             Log.e("NoahPushService", "Error retrieving mnemonic from native storage", e)
             null
         }
+    }
+
+    private fun loadBarkConfig(context: Context, appVariant: String, configConstructor: Constructor<*>): Any? {
+        val configJson = readConfigJson(context) ?: return null
+        val variantJson = configJson.optJSONObject(appVariant)
+
+        if (variantJson == null) {
+            Log.e("NoahPushService", "Config for variant $appVariant not found")
+            return null
+        }
+
+        return try {
+            configConstructor.newInstance(
+                variantJson.optNullableString("ark"),
+                variantJson.optNullableString("esplora"),
+                variantJson.optNullableString("bitcoind"),
+                variantJson.optNullableString("bitcoindCookie"),
+                variantJson.optNullableString("bitcoindUser"),
+                variantJson.optNullableString("bitcoindPass"),
+                variantJson.optNullableInt("vtxoRefreshExpiryThreshold"),
+                variantJson.optNullableLong("fallbackFeeRate"),
+                variantJson.optNullableInt("htlcRecvClaimDelta"),
+                variantJson.optNullableInt("vtxoExitMargin"),
+                variantJson.optNullableInt("roundTxRequiredConfirmations")
+            )
+        } catch (e: Exception) {
+            Log.e("NoahPushService", "Failed to construct bark config for $appVariant", e)
+            null
+        }
+    }
+
+    private fun readConfigJson(context: Context): JSONObject? {
+        return try {
+            context.assets.open("noah_bark_config.json").use { input ->
+                val jsonString = input.bufferedReader().use { it.readText() }
+                JSONObject(jsonString)
+            }
+        } catch (e: Exception) {
+            Log.e("NoahPushService", "Failed to read bark config file", e)
+            null
+        }
+    }
+
+    private fun JSONObject.optNullableString(key: String): String? {
+        if (!has(key) || isNull(key)) return null
+        return optString(key).takeIf { it.isNotEmpty() }
+    }
+
+    private fun JSONObject.optNullableInt(key: String): Int? {
+        if (!has(key) || isNull(key)) return null
+        return optInt(key)
+    }
+
+    private fun JSONObject.optNullableLong(key: String): Long? {
+        if (!has(key) || isNull(key)) return null
+        return optLong(key)
     }
 }
