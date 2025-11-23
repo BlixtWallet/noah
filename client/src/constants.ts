@@ -20,7 +20,10 @@ export const PLATFORM = Platform.OS;
 export const DOCUMENT_DIRECTORY_PATH = RNFSTurbo.DocumentDirectoryPath;
 export const CACHES_DIRECTORY_PATH = RNFSTurbo.CachesDirectoryPath;
 
-export const isGooglePhone = () => {
+export const hasGooglePlayServices = () => {
+  if (PLATFORM === "ios") {
+    return true;
+  }
   return PLATFORM === "android" && Device.isDevice && isGooglePlayServicesAvailable();
 };
 

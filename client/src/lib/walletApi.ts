@@ -28,7 +28,7 @@ import {
   DOCUMENT_DIRECTORY_PATH,
   MNEMONIC_KEYCHAIN_SERVICE,
   ACTIVE_WALLET_CONFIG,
-  isGooglePhone,
+  hasGooglePlayServices,
 } from "../constants";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
@@ -61,7 +61,7 @@ const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, 
     return err(setMnemonicResult.error);
   }
 
-  if (!isGooglePhone()) {
+  if (!hasGooglePlayServices()) {
     const storeNativeResult = await ResultAsync.fromPromise(
       storeNativeMnemonic(mnemonic),
       (e) => e as Error,
@@ -103,7 +103,7 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<boolean, E
     return err(setResult.error);
   }
 
-  if (!isGooglePhone()) {
+  if (!hasGooglePlayServices()) {
     const storeNativeResult = await ResultAsync.fromPromise(
       storeNativeMnemonic(mnemonic),
       (e) => e as Error,

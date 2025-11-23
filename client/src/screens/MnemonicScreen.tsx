@@ -17,7 +17,7 @@ import { useWalletStore } from "../store/walletStore";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
 import { getMnemonic } from "~/lib/crypto";
-import { isGooglePhone } from "~/constants";
+import { hasGooglePlayServices } from "~/constants";
 
 type MnemonicScreenRouteProp = RouteProp<
   OnboardingStackParamList & SettingsStackParamList,
@@ -86,7 +86,7 @@ const MnemonicScreen = () => {
 
   const handleContinue = () => {
     if (fromOnboarding) {
-      if (!isGooglePhone()) {
+      if (!hasGooglePlayServices()) {
         navigation.navigate("UnifiedPush", { fromOnboarding: true });
         return;
       }
