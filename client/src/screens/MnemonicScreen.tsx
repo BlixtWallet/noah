@@ -13,12 +13,11 @@ import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useWalletStore } from "../store/walletStore";
-import * as Device from "expo-device";
-import { isGooglePlayServicesAvailable } from "noah-tools";
 
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
 import { getMnemonic } from "~/lib/crypto";
+import { isGooglePhone } from "~/constants";
 
 type MnemonicScreenRouteProp = RouteProp<
   OnboardingStackParamList & SettingsStackParamList,
@@ -87,10 +86,7 @@ const MnemonicScreen = () => {
 
   const handleContinue = () => {
     if (fromOnboarding) {
-      const shouldShowUnifiedPush =
-        Platform.OS === "android" && Device.isDevice && !isGooglePlayServicesAvailable();
-
-      if (shouldShowUnifiedPush) {
+      if (!isGooglePhone()) {
         navigation.navigate("UnifiedPush", { fromOnboarding: true });
         return;
       }

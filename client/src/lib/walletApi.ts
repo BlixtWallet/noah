@@ -23,13 +23,13 @@ import {
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
 import { Platform } from "react-native";
-import * as Device from "expo-device";
 import {
   ARK_DATA_PATH,
   CACHES_DIRECTORY_PATH,
   DOCUMENT_DIRECTORY_PATH,
   MNEMONIC_KEYCHAIN_SERVICE,
   ACTIVE_WALLET_CONFIG,
+  isGooglePhone,
 } from "../constants";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
@@ -62,7 +62,7 @@ const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, 
     return err(setMnemonicResult.error);
   }
 
-  if (shouldStoreNativeMnemonic()) {
+  if (!isGooglePhone()) {
     const storeNativeResult = await ResultAsync.fromPromise(
       storeNativeMnemonic(mnemonic),
       (e) => e as Error,
@@ -104,7 +104,7 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<boolean, E
     return err(setResult.error);
   }
 
-  if (shouldStoreNativeMnemonic()) {
+  if (!isGooglePhone()) {
     const storeNativeResult = await ResultAsync.fromPromise(
       storeNativeMnemonic(mnemonic),
       (e) => e as Error,
@@ -145,10 +145,6 @@ const loadWalletFromStorage = async (): Promise<Result<boolean, Error>> => {
   }
 
   return loadWallet(mnemonic);
-};
-
-const shouldStoreNativeMnemonic = () => {
-  return Platform.OS === "android" && Device.isDevice && !isGooglePlayServicesAvailable();
 };
 
 export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {

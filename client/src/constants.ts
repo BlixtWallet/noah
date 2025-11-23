@@ -4,6 +4,8 @@ import { APP_VARIANT } from "./config";
 import { decode } from "light-bolt11-decoder";
 import { Result } from "neverthrow";
 import { Platform } from "react-native";
+import { isGooglePlayServicesAvailable } from "noah-tools";
+import * as Device from "expo-device";
 
 const isEmail = (n: string): boolean => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(n);
 const isOnion = (n: string): boolean => /.onion$/.test(n);
@@ -17,6 +19,10 @@ export const KEYCHAIN_USERNAME = "noah";
 export const PLATFORM = Platform.OS;
 export const DOCUMENT_DIRECTORY_PATH = RNFSTurbo.DocumentDirectoryPath;
 export const CACHES_DIRECTORY_PATH = RNFSTurbo.CachesDirectoryPath;
+
+export const isGooglePhone = () => {
+  return PLATFORM === "android" && Device.isDevice && isGooglePlayServicesAvailable();
+};
 
 const REGTEST_URL = process.env.EXPO_PUBLIC_REGTEST_URL
   ? process.env.EXPO_PUBLIC_REGTEST_URL

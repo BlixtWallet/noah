@@ -97,13 +97,30 @@ class NoahPushService : PushService() {
         )
 
         val configClass = Class.forName("com.margelo.nitro.nitroark.NitroArkNative\$AndroidBarkConfig")
-        val configConstructor = configClass.constructors[0]
+        val configConstructor = try {
+            configClass.getConstructor(
+                String::class.java,
+                String::class.java,
+                String::class.java,
+                String::class.java,
+                String::class.java,
+                String::class.java,
+                Integer::class.javaObjectType,
+                java.lang.Long::class.java,
+                Integer::class.javaObjectType,
+                Integer::class.javaObjectType,
+                Integer::class.javaObjectType
+            )
+        } catch (e: Exception) {
+            Log.e("NoahPushService", "Unable to find AndroidBarkConfig constructor", e)
+            return
+        }
 
         val config = when (appVariant) {
             "regtest" -> configConstructor.newInstance(
-                "http://10.0.2.2:3535",
+                "http://192.168.4.72:3535",
                 null,
-                "http://10.0.2.2:18443",
+                "http://192.168.4.72:18443",
                 null,
                 "second",
                 "ark",
