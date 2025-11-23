@@ -19,7 +19,7 @@ class NoahPushService : PushService() {
         try {
             val json = JSONObject(messageString)
             val type = json.optString("notification_type")
-            
+
             if (type == "maintenance") {
                 Log.i("NoahPushService", "Handling maintenance notification via JNI")
                 handleMaintenance(this)
@@ -44,25 +44,25 @@ class NoahPushService : PushService() {
     }
 
     override fun onUnregistered(instance: String) {
-         Log.i("NoahPushService", "Unregistered")
+        Log.i("NoahPushService", "Unregistered")
     }
 
     private fun handleMaintenance(context: Context) {
         try {
             val clazz = Class.forName("com.margelo.nitro.nitroark.NitroArkNative")
             val instance = clazz.getField("INSTANCE").get(null) ?: return
-            
+
             val isLoadedMethod = clazz.getMethod("isWalletLoaded")
             val isLoaded = isLoadedMethod.invoke(instance) as Boolean
-            
-            if (isLoaded) {
-                val maintenanceMethod = clazz.getMethod("maintenance")
-                maintenanceMethod.invoke(instance)
-                Log.i("NoahPushService", "maintenance() called successfully")
-            } else {
+
+            if (!isLoaded) {
                 Log.i("NoahPushService", "Wallet not loaded, attempting to load...")
                 loadWallet(clazz, instance, context)
             }
+
+            val maintenanceMethod = clazz.getMethod("maintenance")
+            maintenanceMethod.invoke(instance)
+            Log.i("NoahPushService", "maintenance() called successfully")
         } catch (e: Exception) {
             Log.e("NoahPushService", "Failed to call NitroArkNative via reflection", e)
         }
@@ -84,7 +84,7 @@ class NoahPushService : PushService() {
         }
 
         val datadir = "${context.filesDir.path}/noah-data-$appVariant"
-        
+
         val loadWalletMethod = clazz.getMethod(
             "loadWallet",
             String::class.java,
@@ -98,7 +98,7 @@ class NoahPushService : PushService() {
 
         val configClass = Class.forName("com.margelo.nitro.nitroark.NitroArkNative\$AndroidBarkConfig")
         val configConstructor = configClass.constructors[0]
-        
+
         val config = when (appVariant) {
             "regtest" -> configConstructor.newInstance(
                 "http://10.0.2.2:3535",
@@ -113,12 +113,14 @@ class NoahPushService : PushService() {
                 12,
                 1
             )
+
             "signet" -> configConstructor.newInstance(
                 "ark.signet.2nd.dev",
                 "esplora.signet.2nd.dev",
                 null, null, null, null,
                 48, 10000L, 18, 12, 1
             )
+
             else -> configConstructor.newInstance(
                 "http://192.168.4.252:3535",
                 "https://mempool.space/api",
@@ -133,7 +135,7 @@ class NoahPushService : PushService() {
 
         loadWalletMethod.invoke(instance, datadir, mnemonic, regtest, signet, bitcoin, null, config)
         Log.i("NoahPushService", "Wallet loaded successfully via JNI")
-        
+
         val maintenanceMethod = clazz.getMethod("maintenance")
         maintenanceMethod.invoke(instance)
         Log.i("NoahPushService", "maintenance() called after load")

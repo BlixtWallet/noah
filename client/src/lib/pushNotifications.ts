@@ -23,7 +23,7 @@ export type PushPermissionStatus = {
 };
 
 export type RegisterForPushResult =
-  | { kind: "success"; pushToken: string }
+  | { kind: "success"; pushToken: string; pushType: "expo" | "unified" }
   | { kind: "permission_denied"; permissionStatus: Notifications.PermissionStatus }
   | { kind: "device_not_supported" };
 
@@ -274,9 +274,33 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
     });
   }
 
+  // Prefer UnifiedPush endpoint on Android real device without Play Services.
+  if (Platform.OS === "android" && Device.isDevice) {
+    try {
+      const { isGooglePlayServicesAvailable, getUnifiedPushEndpoint } = await import("noah-tools");
+      if (!isGooglePlayServicesAvailable()) {
+        const unifiedEndpoint = getUnifiedPushEndpoint();
+        if (unifiedEndpoint) {
+          return ok({ kind: "success", pushToken: unifiedEndpoint, pushType: "unified" });
+        }
+      }
+    } catch (e) {
+      log.w("UnifiedPush endpoint lookup failed", [e]);
+    }
+  }
+
   // If the device is not a physical device, return a non-supported status
   if (!Device.isDevice) {
     return ok({ kind: "device_not_supported" });
+  }
+
+  if (Platform.OS === "android") {
+    Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -314,7 +338,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
   }
 
   const pushTokenString = pushTokenResult.value.data;
-  return ok({ kind: "success", pushToken: pushTokenString });
+  return ok({ kind: "success", pushToken: pushTokenString, pushType: "expo" });
 }
 
 export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {
@@ -325,4 +349,9 @@ export async function registerPushTokenWithServer(pushToken: string): Promise<Re
   }
 
   return ok(undefined);
+}
+
+export async function registerUnifiedPushTokenWithServer(pushEndpoint: string): Promise<Result<void, Error>> {
+  // Reuse same API payload; server should treat endpoint as token for UnifiedPush
+  return registerPushTokenWithServer(pushEndpoint);
 }

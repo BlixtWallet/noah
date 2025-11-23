@@ -12,7 +12,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RouteProp } from "@react-navigation/native";
-import { registerPushTokenWithServer } from "~/lib/pushNotifications";
+import { registerUnifiedPushTokenWithServer } from "~/lib/pushNotifications";
 import Clipboard from "@react-native-clipboard/clipboard";
 import type { OnboardingStackParamList } from "~/Navigators";
 
@@ -70,7 +70,7 @@ const UnifiedPushScreen = () => {
           setEndpoint(ep);
           setStatus("registered");
           // Register with backend
-          registerPushTokenWithServer(ep).then((res) => {
+          registerUnifiedPushTokenWithServer(ep).then((res) => {
             if (res.isErr()) {
               // console.error("Failed to register with Noah server", res.error);
             }

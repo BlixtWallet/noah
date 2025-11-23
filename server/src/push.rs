@@ -1,5 +1,6 @@
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
 use futures_util::{StreamExt, stream};
+use reqwest::Client;
 use serde::Serialize;
 
 use crate::{
@@ -35,6 +36,7 @@ pub async fn send_push_notification_with_unique_k1(
     let expo = Expo::new(ExpoClientOptions {
         access_token: Some(app_state.config.load().expo_access_token.clone()),
     });
+    let http_client = Client::new();
 
     let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
 
@@ -58,6 +60,8 @@ pub async fn send_push_notification_with_unique_k1(
             let expo_clone = expo.clone();
             let app_state_clone = app_state.clone();
             let base_data_clone = base_notification_data.clone();
+            let http_client_clone = http_client.clone();
+            let ntfy_auth = app_state.config.load().ntfy_auth_token.clone();
             async move {
                 // Create notification data with unique k1 if needed
                 let mut notification_data = base_data_clone;
@@ -82,31 +86,45 @@ pub async fn send_push_notification_with_unique_k1(
                     }
                 };
 
-                let push_data = PushNotificationData {
-                    title: None,
-                    body: None,
-                    data: data_string,
-                    priority: "high".to_string(),
-                    content_available: true,
-                };
+                // Split expo vs unified
+                if push_token.starts_with("ExponentPushToken") {
+                    let push_data = PushNotificationData {
+                        title: None,
+                        body: None,
+                        data: data_string,
+                        priority: "high".to_string(),
+                        content_available: true,
+                    };
 
-                let message = match ExpoPushMessage::builder(vec![push_token])
-                    .data(&push_data.data)
-                    .and_then(|b| {
-                        b.priority(push_data.priority.clone())
-                            .content_available(push_data.content_available)
-                            .mutable_content(false)
-                            .build()
-                    }) {
-                    Ok(msg) => msg,
-                    Err(e) => {
-                        tracing::error!("Failed to build push notification message: {}", e);
-                        return;
+                    let message = match ExpoPushMessage::builder(vec![push_token])
+                        .data(&push_data.data)
+                        .and_then(|b| {
+                            b.priority(push_data.priority.clone())
+                                .content_available(push_data.content_available)
+                                .mutable_content(false)
+                                .build()
+                        }) {
+                        Ok(msg) => msg,
+                        Err(e) => {
+                            tracing::error!("Failed to build push notification message: {}", e);
+                            return;
+                        }
+                    };
+
+                    if let Err(e) = expo_clone.send_push_notifications(message).await {
+                        tracing::error!("Failed to send push notification: {}", e);
                     }
-                };
-
-                if let Err(e) = expo_clone.send_push_notifications(message).await {
-                    tracing::error!("Failed to send push notification: {}", e);
+                } else {
+                    if let Err(e) = send_unified_notification(
+                        &http_client_clone,
+                        &push_token,
+                        &data_string,
+                        ntfy_auth.as_deref(),
+                    )
+                    .await
+                    {
+                        tracing::error!("Failed to send unified push notification: {}", e);
+                    }
                 }
             }
         })
@@ -128,6 +146,7 @@ async fn send_push_notification_internal(
     let expo = Expo::new(ExpoClientOptions {
         access_token: Some(app_state.config.load().expo_access_token.clone()),
     });
+    let http_client = Client::new();
 
     let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
 
@@ -150,47 +169,102 @@ async fn send_push_notification_internal(
         push_tokens.len()
     );
 
-    let chunks = push_tokens
-        .chunks(100)
-        .map(|c| c.to_vec())
-        .collect::<Vec<_>>();
+    let (expo_tokens, unified_tokens): (Vec<_>, Vec<_>) = push_tokens
+        .into_iter()
+        .partition(|t| t.starts_with("ExponentPushToken"));
 
-    stream::iter(chunks)
-        .for_each_concurrent(None, |chunk| {
-            let expo_clone = expo.clone();
-            let data_clone = data.clone();
-            async move {
-                let mut builder = ExpoPushMessage::builder(chunk);
-                if let Some(title) = &data_clone.title {
-                    builder = builder.title(title.clone());
-                }
-                if let Some(body) = &data_clone.body {
-                    builder = builder.body(body.clone());
-                }
-                let message = match builder.data(&data_clone.data).and_then(|b| {
-                    b.priority(data_clone.priority.clone())
-                        .content_available(data_clone.content_available)
-                        .mutable_content(false)
-                        .build()
-                }) {
-                    Ok(msg) => msg,
-                    Err(e) => {
-                        tracing::error!("Failed to build push notification message: {}", e);
-                        return;
+    if !expo_tokens.is_empty() {
+        let chunks = expo_tokens
+            .chunks(100)
+            .map(|c| c.to_vec())
+            .collect::<Vec<_>>();
+
+        stream::iter(chunks)
+            .for_each_concurrent(None, |chunk| {
+                let expo_clone = expo.clone();
+                let data_clone = data.clone();
+                async move {
+                    let mut builder = ExpoPushMessage::builder(chunk);
+                    if let Some(title) = &data_clone.title {
+                        builder = builder.title(title.clone());
                     }
-                };
+                    if let Some(body) = &data_clone.body {
+                        builder = builder.body(body.clone());
+                    }
+                    let message = match builder.data(&data_clone.data).and_then(|b| {
+                        b.priority(data_clone.priority.clone())
+                            .content_available(data_clone.content_available)
+                            .mutable_content(false)
+                            .build()
+                    }) {
+                        Ok(msg) => msg,
+                        Err(e) => {
+                            tracing::error!("Failed to build push notification message: {}", e);
+                            return;
+                        }
+                    };
 
-                if let Err(e) = expo_clone.send_push_notifications(message).await {
-                    tracing::error!("Failed to send push notification chunk: {}", e);
+                    if let Err(e) = expo_clone.send_push_notifications(message).await {
+                        tracing::error!("Failed to send push notification chunk: {}", e);
+                    }
                 }
-            }
-        })
-        .await;
+            })
+            .await;
+    }
+
+    if !unified_tokens.is_empty() {
+        let ntfy_auth = app_state.config.load().ntfy_auth_token.clone();
+        let data_clone = data.clone();
+        stream::iter(unified_tokens)
+            .for_each_concurrent(None, |endpoint| {
+                let http_client_clone = http_client.clone();
+                let ntfy_auth = ntfy_auth.clone();
+                let payload = data_clone.clone();
+                async move {
+                    if let Err(e) = send_unified_notification(
+                        &http_client_clone,
+                        &endpoint,
+                        &payload.data,
+                        ntfy_auth.as_deref(),
+                    )
+                    .await
+                    {
+                        tracing::error!("Failed to send unified push notification: {}", e);
+                    }
+                }
+            })
+            .await;
+    }
 
     tracing::debug!(
         "send_push_notification: Sent push notification with data: {:?}",
         data.data
     );
+
+    Ok(())
+}
+
+async fn send_unified_notification(
+    client: &Client,
+    endpoint: &str,
+    payload: &str,
+    auth_token: Option<&str>,
+) -> Result<(), ApiError> {
+    let mut request = client.post(endpoint).body(payload.to_string());
+    if let Some(token) = auth_token {
+        request = request.bearer_auth(token);
+    }
+
+    let response = request
+        .send()
+        .await
+        .map_err(|e| ApiError::ServerErr(e.to_string()))?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let text = response.text().await.unwrap_or_default();
+        tracing::error!("UnifiedPush endpoint returned {}: {}", status, text);
+    }
 
     Ok(())
 }

@@ -120,10 +120,7 @@ repositories {
 }
 
 configurations.all {
-  resolutionStrategy {
-    force "com.google.crypto.tink:tink:1.8.0"
-    force "com.google.crypto.tink:tink-android:1.8.0"
-  }
+  exclude group: 'com.google.crypto.tink', module: 'tink'
 }
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
