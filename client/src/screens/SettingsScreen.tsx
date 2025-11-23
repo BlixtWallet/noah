@@ -2,7 +2,7 @@ import { Pressable, ScrollView, View, Switch, Image } from "react-native";
 import Constants from "expo-constants";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useWalletStore } from "../store/walletStore";
-import { ACTIVE_WALLET_CONFIG, PLATFORM } from "../constants";
+import { ACTIVE_WALLET_CONFIG, PLATFORM, hasGooglePlayServices } from "../constants";
 import { useServerStore } from "../store/serverStore";
 import { useTransactionStore } from "../store/transactionStore";
 import { APP_VARIANT } from "../config";
@@ -41,7 +41,8 @@ type Setting = {
     | "resetRegistration"
     | "backup"
     | "vtxos"
-    | "feedback";
+    | "feedback"
+    | "unifiedPush";
   title: string;
   value?: string;
   description?: string;
@@ -132,6 +133,8 @@ const SettingsScreen = () => {
       navigation.navigate("VTXOs");
     } else if (item.id === "feedback") {
       setShowFeedback(true);
+    } else if (item.id === "unifiedPush") {
+      navigation.navigate("UnifiedPush", { fromOnboarding: false });
     }
   };
 
@@ -200,6 +203,15 @@ const SettingsScreen = () => {
       description: "Automatically or manually backup your wallet after encrypting it.",
       isPressable: true,
     });
+
+    if (!hasGooglePlayServices()) {
+      walletData.push({
+        id: "unifiedPush",
+        title: "UnifiedPush Setup",
+        description: "Configure push notifications using UnifiedPush",
+        isPressable: true,
+      });
+    }
 
     debugData.push({
       id: "showLogs",

@@ -63,6 +63,7 @@ export type SettingsStackParamList = {
   VTXOs: undefined;
   VTXODetail: { vtxo: VTXOWithStatus };
   NoahStory: undefined;
+  UnifiedPush: { fromOnboarding?: boolean } | undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -116,6 +117,11 @@ const SettingsStackNav = () => (
       options={{ animation: "default" }}
     />
     <Stack.Screen name="NoahStory" component={NoahStoryScreen} options={{ animation: "default" }} />
+    <Stack.Screen
+      name="UnifiedPush"
+      component={UnifiedPushScreen}
+      options={{ animation: "default" }}
+    />
   </Stack.Navigator>
 );
 

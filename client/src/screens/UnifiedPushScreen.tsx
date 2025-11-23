@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, Pressable } from "react-native";
 import { Text } from "~/components/ui/text";
 import { NoahButton } from "~/components/ui/NoahButton";
+import { Button } from "~/components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
+import Icon from "@react-native-vector-icons/ionicons";
 import {
   registerUnifiedPush,
   getUnifiedPushEndpoint,
@@ -89,6 +91,22 @@ const UnifiedPushScreen = () => {
     }
   };
 
+  const handleSkip = () => {
+    if (fromOnboarding) {
+      navigation.navigate("LightningAddress", { fromOnboarding: true });
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleContinue = () => {
+    if (fromOnboarding) {
+      navigation.navigate("LightningAddress", { fromOnboarding: true });
+    } else {
+      navigation.goBack();
+    }
+  };
+
   const copyToClipboard = () => {
     Clipboard.setString(endpoint);
   };
@@ -96,7 +114,16 @@ const UnifiedPushScreen = () => {
   return (
     <NoahSafeAreaView className="flex-1 bg-background p-4">
       <View className="flex-1">
-        <Text className="text-2xl font-bold mb-4 mt-6 text-center">UnifiedPush Setup</Text>
+        <View className="flex-row items-center mb-4 mt-2">
+          {!fromOnboarding && (
+            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color="white" />
+            </Pressable>
+          )}
+          <Text className="text-2xl font-bold text-foreground">
+            {fromOnboarding ? "UnifiedPush Setup" : "UnifiedPush"}
+          </Text>
+        </View>
 
         <View className="bg-card p-4 rounded-lg mb-6">
           <Text className="text-muted-foreground mb-4">
@@ -112,15 +139,15 @@ const UnifiedPushScreen = () => {
               </Text>
             ) : (
               distributors.map((d) => (
-                <NoahButton
-                  key={d.id}
-                  variant={d.id === selectedDistributor ? "default" : "outline"}
-                  className="mb-2"
-                  onPress={() => handleSelectDistributor(d.id)}
-                >
-                  <Text className="font-semibold">{d.name}</Text>
-                  <Text className="text-xs text-muted-foreground">{d.id}</Text>
-                </NoahButton>
+                <View key={d.id} className="mb-3">
+                  <NoahButton
+                    variant={d.id === selectedDistributor ? "default" : "outline"}
+                    onPress={() => handleSelectDistributor(d.id)}
+                  >
+                    {d.name}
+                  </NoahButton>
+                  <Text className="text-xs text-muted-foreground mt-1 ml-1">{d.id}</Text>
+                </View>
               ))
             )}
           </View>
@@ -131,27 +158,39 @@ const UnifiedPushScreen = () => {
               {endpoint || "Not registered"}
             </Text>
             {endpoint ? (
-              <NoahButton onPress={copyToClipboard} variant="outline" className="mt-2">
+              <NoahButton onPress={copyToClipboard} className="mt-2">
                 Copy Endpoint
               </NoahButton>
             ) : null}
           </View>
 
-          {status === "idle" || status === "error" ? (
-            <NoahButton onPress={handleRegister}>Register with UnifiedPush</NoahButton>
-          ) : status === "registering" ? (
-            <NoahButton disabled>Registering...</NoahButton>
+          {fromOnboarding ? (
+            <View className="flex-row items-center gap-4">
+              <View className="flex-1">
+                <Button onPress={handleSkip} variant="outline">
+                  <Text>Skip</Text>
+                </Button>
+              </View>
+              <View className="flex-1">
+                {status === "idle" || status === "error" ? (
+                  <NoahButton onPress={handleRegister}>Register</NoahButton>
+                ) : status === "registering" ? (
+                  <NoahButton disabled>Registering...</NoahButton>
+                ) : (
+                  <NoahButton onPress={handleContinue}>Continue</NoahButton>
+                )}
+              </View>
+            </View>
           ) : (
-            <NoahButton
-              onPress={() =>
-                fromOnboarding
-                  ? navigation.navigate("LightningAddress", { fromOnboarding: true })
-                  : navigation.goBack()
-              }
-              variant="secondary"
-            >
-              Done
-            </NoahButton>
+            <>
+              {status === "idle" || status === "error" ? (
+                <NoahButton onPress={handleRegister}>Register with UnifiedPush</NoahButton>
+              ) : status === "registering" ? (
+                <NoahButton disabled>Registering...</NoahButton>
+              ) : (
+                <NoahButton onPress={handleContinue}>Done</NoahButton>
+              )}
+            </>
           )}
         </View>
 
