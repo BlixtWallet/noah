@@ -7,7 +7,6 @@ import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import { useCreateWallet } from "../hooks/useWallet";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
-import { isGooglePlayServicesAvailable } from "noah-tools";
 
 const OnboardingScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
@@ -18,13 +17,6 @@ const OnboardingScreen = () => {
       navigation.navigate("Mnemonic", { fromOnboarding: true });
     }
   }, [isSuccess, navigation]);
-
-  useEffect(() => {
-    if (!isGooglePlayServicesAvailable()) {
-      // Optionally auto-navigate or show toast?
-      // For now, let's add a button below
-    }
-  }, []);
 
   return (
     <View className="flex-1 items-center justify-center bg-background p-5">
@@ -48,14 +40,6 @@ const OnboardingScreen = () => {
               Restore Wallet
             </NoahButton>
           </View>
-
-          {!isGooglePlayServicesAvailable() && (
-            <View className="mt-8 items-center">
-              <NoahButton variant="ghost" onPress={() => navigation.navigate("UnifiedPush")}>
-                Setup UnifiedPush (No Google Play)
-              </NoahButton>
-            </View>
-          )}
         </View>
       )}
     </View>

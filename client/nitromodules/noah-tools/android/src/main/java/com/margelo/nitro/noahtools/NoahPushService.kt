@@ -2,6 +2,8 @@ package com.margelo.nitro.noahtools
 
 import android.content.Context
 import android.util.Log
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import org.unifiedpush.android.connector.PushService
 import org.unifiedpush.android.connector.data.PushEndpoint
 import org.unifiedpush.android.connector.data.PushMessage
@@ -30,7 +32,11 @@ class NoahPushService : PushService() {
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
         Log.i("NoahPushService", "New Endpoint: ${endpoint.url}")
         val prefs = getSharedPreferences("noah_unified_push", Context.MODE_PRIVATE)
-        prefs.edit().putString("endpoint", endpoint.url).apply()
+        // Save per-instance to avoid collisions between app variants, and keep legacy key for older reads.
+        prefs.edit()
+            .putString("endpoint_${instance}", endpoint.url)
+            .putString("endpoint", endpoint.url)
+            .apply()
     }
 
     override fun onRegistrationFailed(reason: FailedReason, instance: String) {
@@ -44,7 +50,7 @@ class NoahPushService : PushService() {
     private fun handleMaintenance(context: Context) {
         try {
             val clazz = Class.forName("com.margelo.nitro.nitroark.NitroArkNative")
-            val instance = clazz.getField("INSTANCE").get(null)
+            val instance = clazz.getField("INSTANCE").get(null) ?: return
             
             val isLoadedMethod = clazz.getMethod("isWalletLoaded")
             val isLoaded = isLoadedMethod.invoke(instance) as Boolean
@@ -63,18 +69,18 @@ class NoahPushService : PushService() {
     }
 
     private fun loadWallet(clazz: Class<*>, instance: Any, context: Context) {
-        val mnemonic = "" // TODO: Retrieve mnemonic
-        
-        if (mnemonic.isEmpty()) {
-            Log.e("NoahPushService", "Cannot load wallet: Mnemonic not found/decrypted.")
-            return
-        }
-
         val packageName = context.packageName
         val appVariant = when {
             packageName.endsWith(".regtest") -> "regtest"
             packageName.endsWith(".signet") -> "signet"
             else -> "mainnet"
+        }
+
+        val mnemonic = readMnemonicFromStorage(context, appVariant)
+
+        if (mnemonic.isNullOrEmpty()) {
+            Log.e("NoahPushService", "Cannot load wallet: Mnemonic not found/decrypted.")
+            return
         }
 
         val datadir = "${context.filesDir.path}/noah-data-$appVariant"
@@ -131,5 +137,24 @@ class NoahPushService : PushService() {
         val maintenanceMethod = clazz.getMethod("maintenance")
         maintenanceMethod.invoke(instance)
         Log.i("NoahPushService", "maintenance() called after load")
+    }
+
+    private fun readMnemonicFromStorage(context: Context, appVariant: String): String? {
+        return try {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+
+            val prefs = EncryptedSharedPreferences.create(
+                "noah_native_secrets",
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+
+            prefs.getString("mnemonic_$appVariant", null)
+        } catch (e: Exception) {
+            Log.e("NoahPushService", "Error retrieving mnemonic from native storage", e)
+            null
+        }
     }
 }

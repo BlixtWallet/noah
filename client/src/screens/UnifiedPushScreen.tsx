@@ -3,18 +3,33 @@ import { View } from "react-native";
 import { Text } from "~/components/ui/text";
 import { NoahButton } from "~/components/ui/NoahButton";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import { registerUnifiedPush, getUnifiedPushEndpoint } from "noah-tools";
-import { useNavigation } from "@react-navigation/native";
+import {
+  registerUnifiedPush,
+  getUnifiedPushEndpoint,
+  getUnifiedPushDistributors,
+  setUnifiedPushDistributor,
+} from "noah-tools";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RouteProp } from "@react-navigation/native";
 import { registerPushTokenWithServer } from "~/lib/pushNotifications";
 import Clipboard from "@react-native-clipboard/clipboard";
+import type { OnboardingStackParamList } from "~/Navigators";
 
 const UnifiedPushScreen = () => {
   const [endpoint, setEndpoint] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "registering" | "registered" | "error">("idle");
-  const navigation = useNavigation();
+  const route = useRoute<RouteProp<OnboardingStackParamList, "UnifiedPush">>();
+  const fromOnboarding = route.params?.fromOnboarding;
+  const [distributors, setDistributors] = useState<
+    Array<{ id: string; name: string; isSaved: boolean; isConnected: boolean }>
+  >([]);
+  const [selectedDistributor, setSelectedDistributor] = useState<string | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<OnboardingStackParamList>>();
 
   useEffect(() => {
     checkEndpoint();
+    refreshDistributors();
   }, []);
 
   const checkEndpoint = () => {
@@ -25,9 +40,26 @@ const UnifiedPushScreen = () => {
     }
   };
 
+  const refreshDistributors = () => {
+    const list = getUnifiedPushDistributors();
+    setDistributors(list);
+
+    const saved = list.find((d) => d.isSaved) ?? list.find((d) => d.isConnected);
+    setSelectedDistributor(saved?.id ?? null);
+  };
+
+  const handleSelectDistributor = (id: string | null) => {
+    setUnifiedPushDistributor(id);
+    setSelectedDistributor(id);
+    refreshDistributors();
+  };
+
   const handleRegister = async () => {
     try {
       setStatus("registering");
+      if (selectedDistributor) {
+        setUnifiedPushDistributor(selectedDistributor);
+      }
       registerUnifiedPush();
 
       // Poll for endpoint update since it's async via broadcast
@@ -60,13 +92,34 @@ const UnifiedPushScreen = () => {
   return (
     <NoahSafeAreaView className="flex-1 bg-background p-4">
       <View className="flex-1">
-        <Text className="text-2xl font-bold mb-4 text-center">UnifiedPush Setup</Text>
+        <Text className="text-2xl font-bold mb-4 mt-6 text-center">UnifiedPush Setup</Text>
 
         <View className="bg-card p-4 rounded-lg mb-6">
           <Text className="text-muted-foreground mb-4">
             Google Play Services is not available. To receive notifications, please use a
             UnifiedPush distributor (like ntfy).
           </Text>
+
+          <View className="mb-4">
+            <Text className="font-bold mb-2">Select Distributor</Text>
+            {distributors.length === 0 ? (
+              <Text className="text-sm text-muted-foreground">
+                No distributors detected. Install ntfy or another UnifiedPush distributor.
+              </Text>
+            ) : (
+              distributors.map((d) => (
+                <NoahButton
+                  key={d.id}
+                  variant={d.id === selectedDistributor ? "default" : "outline"}
+                  className="mb-2"
+                  onPress={() => handleSelectDistributor(d.id)}
+                >
+                  <Text className="font-semibold">{d.name}</Text>
+                  <Text className="text-xs text-muted-foreground">{d.id}</Text>
+                </NoahButton>
+              ))
+            )}
+          </View>
 
           <View className="mb-4">
             <Text className="font-bold mb-2">Current Endpoint:</Text>
@@ -85,7 +138,14 @@ const UnifiedPushScreen = () => {
           ) : status === "registering" ? (
             <NoahButton disabled>Registering...</NoahButton>
           ) : (
-            <NoahButton onPress={() => navigation.goBack()} variant="secondary">
+            <NoahButton
+              onPress={() =>
+                fromOnboarding
+                  ? navigation.navigate("LightningAddress", { fromOnboarding: true })
+                  : navigation.goBack()
+              }
+              variant="secondary"
+            >
               Done
             </NoahButton>
           )}

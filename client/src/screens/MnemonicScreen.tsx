@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, Platform } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,6 +13,8 @@ import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useWalletStore } from "../store/walletStore";
+import * as Device from "expo-device";
+import { isGooglePlayServicesAvailable } from "noah-tools";
 
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
@@ -85,6 +87,14 @@ const MnemonicScreen = () => {
 
   const handleContinue = () => {
     if (fromOnboarding) {
+      const shouldShowUnifiedPush =
+        Platform.OS === "android" && Device.isDevice && !isGooglePlayServicesAvailable();
+
+      if (shouldShowUnifiedPush) {
+        navigation.navigate("UnifiedPush", { fromOnboarding: true });
+        return;
+      }
+
       navigation.navigate("LightningAddress", { fromOnboarding: true });
     } else {
       navigation.goBack();

@@ -22,6 +22,8 @@ import {
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
+import { Platform } from "react-native";
+import * as Device from "expo-device";
 import {
   ARK_DATA_PATH,
   CACHES_DIRECTORY_PATH,
@@ -32,6 +34,7 @@ import {
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
+import { isGooglePlayServicesAvailable, storeNativeMnemonic } from "noah-tools";
 
 const log = logger("walletApi");
 
@@ -57,6 +60,16 @@ const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, 
 
   if (setMnemonicResult.isErr()) {
     return err(setMnemonicResult.error);
+  }
+
+  if (shouldStoreNativeMnemonic()) {
+    const storeNativeResult = await ResultAsync.fromPromise(
+      storeNativeMnemonic(mnemonic),
+      (e) => e as Error,
+    );
+    if (storeNativeResult.isErr()) {
+      log.w("Failed to store mnemonic natively for push service", [storeNativeResult.error]);
+    }
   }
 
   const loadResult = await loadWallet(mnemonic);
@@ -90,6 +103,16 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<boolean, E
   if (setResult.isErr()) {
     return err(setResult.error);
   }
+
+  if (shouldStoreNativeMnemonic()) {
+    const storeNativeResult = await ResultAsync.fromPromise(
+      storeNativeMnemonic(mnemonic),
+      (e) => e as Error,
+    );
+    if (storeNativeResult.isErr()) {
+      log.w("Failed to store mnemonic natively for push service", [storeNativeResult.error]);
+    }
+  }
   return loadWallet(mnemonic);
 };
 
@@ -122,6 +145,10 @@ const loadWalletFromStorage = async (): Promise<Result<boolean, Error>> => {
   }
 
   return loadWallet(mnemonic);
+};
+
+const shouldStoreNativeMnemonic = () => {
+  return Platform.OS === "android" && Device.isDevice && !isGooglePlayServicesAvailable();
 };
 
 export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {

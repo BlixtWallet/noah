@@ -119,12 +119,20 @@ repositories {
   google()
 }
 
+configurations.all {
+  resolutionStrategy {
+    force "com.google.crypto.tink:tink:1.8.0"
+    force "com.google.crypto.tink:tink-android:1.8.0"
+  }
+}
+
 def kotlin_version = getExtOrDefault("kotlinVersion")
 
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   implementation project(":react-native-nitro-modules")
+  implementation "androidx.security:security-crypto:1.1.0"
 
   // OkHttp for background networking
   implementation "com.squareup.okhttp3:okhttp:4.12.0"

@@ -14,12 +14,18 @@ namespace NoahTools { class HybridNoahToolsSpec_cxx; }
 
 // Forward declaration of `HttpResponse` to properly resolve imports.
 namespace margelo::nitro::noahtools { struct HttpResponse; }
+// Forward declaration of `UnifiedPushDistributor` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct UnifiedPushDistributor; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
 #include "HttpResponse.hpp"
 #include <unordered_map>
+#include "UnifiedPushDistributor.hpp"
+#include <NitroModules/Null.hpp>
+#include <variant>
+#include <optional>
 
 #include "NoahTools-Swift-Cxx-Umbrella.hpp"
 
@@ -197,6 +203,28 @@ namespace margelo::nitro::noahtools {
     }
     inline std::string getUnifiedPushEndpoint() override {
       auto __result = _swiftPart.getUnifiedPushEndpoint();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::vector<UnifiedPushDistributor> getUnifiedPushDistributors() override {
+      auto __result = _swiftPart.getUnifiedPushDistributors();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void setUnifiedPushDistributor(const std::optional<std::variant<nitro::NullType, std::string>>& distributorId) override {
+      auto __result = _swiftPart.setUnifiedPushDistributor(distributorId);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::shared_ptr<Promise<void>> storeNativeMnemonic(const std::string& mnemonic) override {
+      auto __result = _swiftPart.storeNativeMnemonic(mnemonic);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());
       }

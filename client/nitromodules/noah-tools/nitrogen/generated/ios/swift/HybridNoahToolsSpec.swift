@@ -33,6 +33,9 @@ public protocol HybridNoahToolsSpec_protocol: HybridObject {
   func isGooglePlayServicesAvailable() throws -> Bool
   func registerUnifiedPush() throws -> Void
   func getUnifiedPushEndpoint() throws -> String
+  func getUnifiedPushDistributors() throws -> [UnifiedPushDistributor]
+  func setUnifiedPushDistributor(distributorId: Variant_NullType_String?) throws -> Void
+  func storeNativeMnemonic(mnemonic: String) throws -> Promise<Void>
 }
 
 public extension HybridNoahToolsSpec_protocol {

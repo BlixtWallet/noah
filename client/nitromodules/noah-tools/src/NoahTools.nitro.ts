@@ -6,6 +6,13 @@ export interface HttpResponse {
   headers: Record<string, string>;
 }
 
+export interface UnifiedPushDistributor {
+  id: string;
+  name: string;
+  isSaved: boolean;
+  isConnected: boolean;
+}
+
 export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin" }> {
   getAppVariant(): string;
   getAppLogs(): Promise<string[]>;
@@ -55,4 +62,7 @@ export interface NoahTools extends HybridObject<{ ios: "swift"; android: "kotlin
 
   registerUnifiedPush(): void;
   getUnifiedPushEndpoint(): string;
+  getUnifiedPushDistributors(): UnifiedPushDistributor[];
+  setUnifiedPushDistributor(distributorId: string | null): void;
+  storeNativeMnemonic(mnemonic: string): Promise<void>;
 }

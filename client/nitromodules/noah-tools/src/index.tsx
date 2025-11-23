@@ -105,4 +105,16 @@ export function getUnifiedPushEndpoint(): string {
   return NoahToolsHybridObject.getUnifiedPushEndpoint();
 }
 
+export function getUnifiedPushDistributors() {
+  return NoahToolsHybridObject.getUnifiedPushDistributors();
+}
+
+export function setUnifiedPushDistributor(distributorId: string | null) {
+  NoahToolsHybridObject.setUnifiedPushDistributor(distributorId);
+}
+
+export function storeNativeMnemonic(mnemonic: string): Promise<void> {
+  return NoahToolsHybridObject.storeNativeMnemonic(mnemonic);
+}
+
 export type { HttpResponse } from "./NoahTools.nitro";

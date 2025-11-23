@@ -36,7 +36,6 @@ import VTXOsScreen, { type VTXOWithStatus } from "~/screens/VTXOsScreen";
 import VTXODetailScreen from "~/screens/VTXODetailScreen";
 import PushNotificationsRequiredScreen from "~/screens/PushNotificationsRequiredScreen";
 import UnifiedPushScreen from "~/screens/UnifiedPushScreen";
-import { isGooglePlayServicesAvailable } from "noah-tools";
 import {
   getPushPermissionStatus,
   registerForPushNotificationsAsync,
@@ -72,7 +71,7 @@ export type OnboardingStackParamList = {
   Mnemonic: { fromOnboarding: boolean };
   RestoreWallet: undefined;
   LightningAddress: { fromOnboarding: boolean };
-  UnifiedPush: undefined;
+  UnifiedPush: { fromOnboarding?: boolean } | undefined;
 };
 
 export type HomeStackParamList = {
