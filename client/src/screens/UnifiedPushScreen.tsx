@@ -75,7 +75,7 @@ const UnifiedPushScreen = () => {
           // Register with backend
           registerUnifiedPushTokenWithServer(ep).then((res) => {
             if (res.isErr()) {
-              // console.error("Failed to register with Noah server", res.error);
+              log.e("Failed to register with Noah server", [res.error]);
             }
           });
         }

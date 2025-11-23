@@ -10,6 +10,7 @@ redis_url = "redis://dragonfly:6379"
 postgres_max_connections = 10
 postgres_min_connections = 1
 expo_access_token = "test-expo-token"
+ntfy_auth_token = "test-ntfy-token"
 ark_server_url = "http://captaind:3535"
 server_network = "regtest"
 backup_cron = "every 24 hours"
