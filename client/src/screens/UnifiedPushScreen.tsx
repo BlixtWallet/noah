@@ -15,6 +15,9 @@ import type { RouteProp } from "@react-navigation/native";
 import { registerUnifiedPushTokenWithServer } from "~/lib/pushNotifications";
 import Clipboard from "@react-native-clipboard/clipboard";
 import type { OnboardingStackParamList } from "~/Navigators";
+import logger from "~/lib/log";
+
+const log = logger("UnifiedPushScreen");
 
 const UnifiedPushScreen = () => {
   const [endpoint, setEndpoint] = useState<string>("");
@@ -81,6 +84,7 @@ const UnifiedPushScreen = () => {
       // Timeout after 30s
       setTimeout(() => clearInterval(interval), 30000);
     } catch (e) {
+      log.e("Error registering unified push", [e]);
       setStatus("error");
     }
   };

@@ -22,7 +22,6 @@ import {
 } from "react-native-nitro-ark";
 import * as Keychain from "react-native-keychain";
 import RNFSTurbo from "react-native-fs-turbo";
-import { Platform } from "react-native";
 import {
   ARK_DATA_PATH,
   CACHES_DIRECTORY_PATH,
@@ -34,7 +33,7 @@ import {
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
-import { isGooglePlayServicesAvailable, storeNativeMnemonic } from "noah-tools";
+import { storeNativeMnemonic } from "noah-tools";
 
 const log = logger("walletApi");
 
