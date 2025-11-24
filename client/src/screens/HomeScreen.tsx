@@ -40,10 +40,10 @@ const HomeScreen = () => {
   const isFocused = useIsFocused();
   const { walletError } = useWalletStore();
   const { safelyExecuteWhenReady, isBackgroundJobRunning } = useBackgroundJobCoordination();
-  const { data: balance, refetch, error } = useBalance();
-  const { isPending } = useWalletSync();
+  const { data: balance, refetch, error, isLoading: isBalanceLoading } = useBalance();
+  const { isPending: isSyncPending } = useWalletSync();
   const { mutateAsync: loadWallet } = useLoadWallet();
-  const { data: btcToUsdRate } = useBtcToUsdRate();
+  const { data: btcToUsdRate, isLoading: isRateLoading } = useBtcToUsdRate();
   const [isOpen, setIsOpen] = useState(false);
   const [fact, setFact] = useState("");
   const bottomTabBarHeight = useBottomTabBarHeight();
@@ -68,6 +68,7 @@ const HomeScreen = () => {
     getRandomFact();
   }, [refetch, getRandomFact, safelyExecuteWhenReady, loadWallet]);
 
+  const isLoading = isBalanceLoading || isSyncPending || isRateLoading;
   const balances = balance ? calculateBalances(balance) : null;
   const totalBalance = balances?.totalBalance ?? 0;
   const onchainBalance = balances?.onchainBalance ?? 0;
@@ -129,7 +130,7 @@ const HomeScreen = () => {
         }}
         refreshControl={
           <RefreshControl
-            refreshing={isPending}
+            refreshing={isSyncPending}
             onRefresh={onRefresh}
             tintColor={COLORS.BITCOIN_ORANGE}
             colors={[COLORS.BITCOIN_ORANGE]}
@@ -154,9 +155,9 @@ const HomeScreen = () => {
           </View>
         )}
         <View className="items-center justify-center flex-1">
-          {isPending && !balance ? (
+          {isLoading && !balance ? (
             <NoahActivityIndicator size="large" />
-          ) : error || walletError ? (
+          ) : (error || walletError) && !balance ? (
             <Alert variant="destructive" icon={AlertCircle}>
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>
