@@ -245,7 +245,7 @@ setup_everything() {
     generate_blocks 150
 
     echo ""
-    fund_aspd 1
+    fund_aspd 5
 
     echo ""
     create_bark_wallet

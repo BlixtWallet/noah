@@ -1,6 +1,7 @@
 {
   "regtest": {
     "ark": "http://192.168.4.72:3535",
+    "server": "http://192.168.4.72:3000",
     "esplora": null,
     "bitcoind": "http://192.168.4.72:18443",
     "bitcoindCookie": null,
@@ -14,6 +15,7 @@
   },
   "signet": {
     "ark": "ark.signet.2nd.dev",
+    "server": "https://signet.noahwallet.io",
     "esplora": "esplora.signet.2nd.dev",
     "bitcoind": null,
     "bitcoindCookie": null,
@@ -27,6 +29,7 @@
   },
   "mainnet": {
     "ark": "http://192.168.4.252:3535",
+    "server": "https://noahwallet.io",
     "esplora": "https://mempool.space/api",
     "bitcoind": null,
     "bitcoindCookie": null,
