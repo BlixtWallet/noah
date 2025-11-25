@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor
 
 class NoahPushService : PushService() {
     private val notificationChannelId = "noah-push-default"
+    private val walletLock = Any()
 
     override fun onCreate() {
         super.onCreate()
@@ -136,11 +137,27 @@ class NoahPushService : PushService() {
     }
 
     private fun ensureWalletLoaded(clazz: Class<*>, instance: Any, context: Context) {
-        val isLoadedMethod = clazz.getMethod("isWalletLoaded")
-        val loaded = isLoadedMethod.invoke(instance) as Boolean
-        if (!loaded) {
-            NoahToolsLogging.performNativeLog("info", "NoahPushService", "Wallet not loaded, attempting to load...")
-            loadWallet(clazz, instance, context)
+        synchronized(walletLock) {
+            val isLoadedMethod = clazz.getMethod("isWalletLoaded")
+            val loaded = isLoadedMethod.invoke(instance) as Boolean
+            if (!loaded) {
+                NoahToolsLogging.performNativeLog("info", "NoahPushService", "Wallet not loaded, attempting to load...")
+                try {
+                    loadWallet(clazz, instance, context)
+                } catch (e: Exception) {
+                    if (e.message?.contains("already loaded") == true ||
+                        e.cause?.message?.contains("already loaded") == true
+                    ) {
+                        NoahToolsLogging.performNativeLog(
+                            "info",
+                            "NoahPushService",
+                            "Wallet was loaded by another thread/process, continuing..."
+                        )
+                    } else {
+                        throw e
+                    }
+                }
+            }
         }
     }
 
