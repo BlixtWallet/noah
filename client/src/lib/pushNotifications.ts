@@ -277,6 +277,22 @@ export async function registerForPushNotificationsAsync(): Promise<
     });
   }
 
+  // If the device is not a physical device, return a non-supported status
+  if (!Device.isDevice) {
+    return ok({ kind: "device_not_supported" });
+  }
+
+  // Request permissions for all devices first
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+  if (existingStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+  if (finalStatus !== "granted") {
+    return ok({ kind: "permission_denied", permissionStatus: finalStatus });
+  }
+
   // Prefer UnifiedPush endpoint on Android real device without Play Services.
   if (!hasGooglePlayServices()) {
     try {
@@ -288,21 +304,6 @@ export async function registerForPushNotificationsAsync(): Promise<
     } catch (e) {
       log.w("UnifiedPush endpoint lookup failed", [e]);
     }
-  }
-
-  // If the device is not a physical device, return a non-supported status
-  if (!Device.isDevice) {
-    return ok({ kind: "device_not_supported" });
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  if (finalStatus !== "granted") {
-    return ok({ kind: "permission_denied", permissionStatus: finalStatus });
   }
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
   if (!projectId) {
