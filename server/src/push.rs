@@ -125,7 +125,7 @@ pub async fn send_push_notification_with_unique_k1(
                         &http_client_clone,
                         &push_token,
                         &data_string,
-                        ntfy_auth.as_deref(),
+                        &ntfy_auth,
                     )
                     .await
                     {
@@ -230,7 +230,7 @@ async fn send_push_notification_internal(
                         &http_client_clone,
                         &endpoint,
                         &payload.data,
-                        ntfy_auth.as_deref(),
+                        &ntfy_auth,
                     )
                     .await
                     {
@@ -253,12 +253,10 @@ async fn send_unified_notification(
     client: &Client,
     endpoint: &str,
     payload: &str,
-    auth_token: Option<&str>,
+    auth_token: &str,
 ) -> Result<(), ApiError> {
     let mut request = client.post(endpoint).body(payload.to_string());
-    if let Some(token) = auth_token {
-        request = request.bearer_auth(token);
-    }
+    request = request.bearer_auth(auth_token);
 
     let response = request
         .send()

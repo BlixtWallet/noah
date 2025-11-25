@@ -74,7 +74,7 @@ impl TestUser {
             postgres_max_connections: 5,
             postgres_min_connections: Some(1),
             expo_access_token: "test-token".to_string(),
-            ntfy_auth_token: Some("test-token".to_string()),
+            ntfy_auth_token: "test-token".to_string(),
             ark_server_url: "http://localhost:8081".to_string(),
             server_network: "test-network".to_string(),
             sentry_url: Some("http://localhost:8082".to_string()),
