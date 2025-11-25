@@ -8,6 +8,13 @@ use crate::{
     utils::make_k1,
 };
 
+/// Determines if a push token is an Expo push token.
+/// Expo tokens have the format: `ExponentPushToken[...]`
+/// All other tokens (e.g., UnifiedPush HTTP endpoints) are treated as non-Expo.
+fn is_expo_token(token: &str) -> bool {
+    token.starts_with("ExponentPushToken[") && token.ends_with(']')
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct PushNotificationData {
     pub title: Option<String>,
@@ -86,8 +93,7 @@ pub async fn send_push_notification_with_unique_k1(
                     }
                 };
 
-                // Split expo vs unified
-                if push_token.starts_with("ExponentPushToken") {
+                if is_expo_token(&push_token) {
                     let push_data = PushNotificationData {
                         title: None,
                         body: None,
@@ -169,9 +175,8 @@ async fn send_push_notification_internal(
         push_tokens.len()
     );
 
-    let (expo_tokens, unified_tokens): (Vec<_>, Vec<_>) = push_tokens
-        .into_iter()
-        .partition(|t| t.starts_with("ExponentPushToken"));
+    let (expo_tokens, unified_tokens): (Vec<_>, Vec<_>) =
+        push_tokens.into_iter().partition(|t| is_expo_token(t));
 
     if !expo_tokens.is_empty() {
         let chunks = expo_tokens
