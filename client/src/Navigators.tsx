@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { NavigationContainer, DarkTheme, NavigatorScreenParams } from "@react-navigation/native";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform, View, Text, AppState } from "react-native";
+import { Platform, View, Text, AppState, ImageSourcePropType } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 
@@ -192,7 +192,50 @@ const OnboardingStackScreen = () => (
   </OnboardingStack.Navigator>
 );
 
-const AppTabs = () => {
+type PreloadedIcons = {
+  home: ImageSourcePropType;
+  homeOutline: ImageSourcePropType;
+  arrowDown: ImageSourcePropType;
+  arrowDownOutline: ImageSourcePropType;
+  arrowUp: ImageSourcePropType;
+  arrowUpOutline: ImageSourcePropType;
+  settings: ImageSourcePropType;
+  settingsOutline: ImageSourcePropType;
+};
+
+const preloadAndroidIcons = async (): Promise<PreloadedIcons> => {
+  const [
+    home,
+    homeOutline,
+    arrowDown,
+    arrowDownOutline,
+    arrowUp,
+    arrowUpOutline,
+    settings,
+    settingsOutline,
+  ] = await Promise.all([
+    Icon.getImageSource("home", 24),
+    Icon.getImageSource("home-outline", 24),
+    Icon.getImageSource("arrow-down", 24),
+    Icon.getImageSource("arrow-down-outline", 24),
+    Icon.getImageSource("arrow-up", 24),
+    Icon.getImageSource("arrow-up-outline", 24),
+    Icon.getImageSource("settings", 24),
+    Icon.getImageSource("settings-outline", 24),
+  ]);
+  return {
+    home: home!,
+    homeOutline: homeOutline!,
+    arrowDown: arrowDown!,
+    arrowDownOutline: arrowDownOutline!,
+    arrowUp: arrowUp!,
+    arrowUpOutline: arrowUpOutline!,
+    settings: settings!,
+    settingsOutline: settingsOutline!,
+  };
+};
+
+const AppTabs = ({ preloadedIcons }: { preloadedIcons: PreloadedIcons }) => {
   const isIos = Platform.OS === "ios";
 
   return (
@@ -215,8 +258,7 @@ const AppTabs = () => {
             if (isIos) {
               return { sfSymbol: "house.fill" };
             }
-            const iconName = focused ? "home" : "home-outline";
-            return Icon.getImageSourceSync(iconName, 24)!;
+            return focused ? preloadedIcons!.home : preloadedIcons!.homeOutline;
           },
         }}
         listeners={({ navigation }) => ({
@@ -252,8 +294,7 @@ const AppTabs = () => {
             if (isIos) {
               return { sfSymbol: "arrow.down.left" };
             }
-            const iconName = focused ? "arrow-down" : "arrow-down-outline";
-            return Icon.getImageSourceSync(iconName, 24)!;
+            return focused ? preloadedIcons!.arrowDown : preloadedIcons!.arrowDownOutline;
           },
         }}
       />
@@ -266,8 +307,7 @@ const AppTabs = () => {
             if (isIos) {
               return { sfSymbol: "arrow.up.right" };
             }
-            const iconName = focused ? "arrow-up" : "arrow-up-outline";
-            return Icon.getImageSourceSync(iconName, 24)!;
+            return focused ? preloadedIcons!.arrowUp : preloadedIcons!.arrowUpOutline;
           },
         }}
       />
@@ -280,8 +320,7 @@ const AppTabs = () => {
             if (isIos) {
               return { sfSymbol: "gear" };
             }
-            const iconName = focused ? "settings" : "settings-outline";
-            return Icon.getImageSourceSync(iconName, 24)!;
+            return focused ? preloadedIcons!.settings : preloadedIcons!.settingsOutline;
           },
         }}
         listeners={({ navigation }) => ({
@@ -320,7 +359,16 @@ const AppNavigation = () => {
   );
   const [isPhysicalDevice, setIsPhysicalDevice] = useState(true);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [preloadedIcons, setPreloadedIcons] = useState<PreloadedIcons | null>(null);
+  const iconsPreloadedRef = useRef(false);
   const log = logger("AppNavigation");
+
+  useEffect(() => {
+    if (Platform.OS !== "ios" && !iconsPreloadedRef.current) {
+      iconsPreloadedRef.current = true;
+      preloadAndroidIcons().then(setPreloadedIcons);
+    }
+  }, []);
 
   // Check for existing wallet on app start
   useEffect(() => {
@@ -425,8 +473,9 @@ const AppNavigation = () => {
     hasResolvedPushPermission &&
     pushPermissionStatus === PermissionStatus.DENIED;
 
-  // Show loading screen while checking for existing wallet
-  if (isCheckingWallet) {
+  const isLoadingIcons = Platform.OS !== "ios" && preloadedIcons === null;
+
+  if (isCheckingWallet || isLoadingIcons) {
     return (
       <NavigationContainer theme={DarkTheme}>
         <StatusBar style="light" />
@@ -460,7 +509,7 @@ const AppNavigation = () => {
       {isInitialized ? (
         <WalletLoader>
           <AppServices />
-          <AppTabs />
+          <AppTabs preloadedIcons={preloadedIcons!} />
         </WalletLoader>
       ) : (
         <OnboardingStackScreen />
