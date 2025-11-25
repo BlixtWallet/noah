@@ -1,4 +1,8 @@
-import { createBackup, restoreBackup as restoreBackupNative } from "noah-tools";
+import {
+  createBackup,
+  restoreBackup as restoreBackupNative,
+  storeNativeMnemonic,
+} from "noah-tools";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import {
   completeUpload,
@@ -17,6 +21,7 @@ import { useWalletStore } from "~/store/walletStore";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 import ky from "ky";
+import { hasGooglePlayServices } from "~/constants";
 
 const updateProgress = (step: string, progress: number) => {
   useWalletStore.getState().setRestoreProgress({ step, progress });
@@ -181,6 +186,16 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<void, Erro
 
     if (setMnemonicResult.isErr()) {
       return err(setMnemonicResult.error);
+    }
+
+    if (!hasGooglePlayServices()) {
+      const storeNativeResult = await ResultAsync.fromPromise(
+        storeNativeMnemonic(mnemonic),
+        (e) => e as Error,
+      );
+      if (storeNativeResult.isErr()) {
+        return err(storeNativeResult.error);
+      }
     }
 
     updateProgress("Loading wallet...", 95);
