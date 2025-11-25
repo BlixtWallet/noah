@@ -4,7 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import android.util.Log
+
 import androidx.core.app.NotificationCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
@@ -78,7 +78,7 @@ class NoahPushService : PushService() {
                 "x-auth-key" to publicKey
             )
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Failed to build auth headers", e)
+            NoahToolsLogging.performNativeLog("error", "NoahPushService", "Failed to build auth headers: ${e.message}")
             emptyMap()
         }
     }
@@ -101,7 +101,7 @@ class NoahPushService : PushService() {
             }
             response.status in 200.0..299.0
         } catch (e: Exception) {
-            Log.e("NoahPushService", "HTTP post failed", e)
+            NoahToolsLogging.performNativeLog("error", "NoahPushService", "HTTP post failed: ${e.message}")
             false
         }
     }
@@ -127,7 +127,11 @@ class NoahPushService : PushService() {
 
         val ok = postJson(server, "/report_job_status", payload, headers)
         if (!ok) {
-            Log.w("NoahPushService", "Failed to report job status: $reportType/$status")
+            NoahToolsLogging.performNativeLog(
+                "warn",
+                "NoahPushService",
+                "Failed to report job status: $reportType/$status"
+            )
         }
     }
 
@@ -135,14 +139,14 @@ class NoahPushService : PushService() {
         val isLoadedMethod = clazz.getMethod("isWalletLoaded")
         val loaded = isLoadedMethod.invoke(instance) as Boolean
         if (!loaded) {
-            Log.i("NoahPushService", "Wallet not loaded, attempting to load...")
+            NoahToolsLogging.performNativeLog("info", "NoahPushService", "Wallet not loaded, attempting to load...")
             loadWallet(clazz, instance, context)
         }
     }
 
     override fun onMessage(message: PushMessage, instance: String) {
         val messageString = String(message.content)
-        Log.d("NoahPushService", "Received message: $messageString")
+        NoahToolsLogging.performNativeLog("debug", "NoahPushService", "Received message: $messageString")
 
         try {
             val json = JSONObject(messageString)
@@ -155,27 +159,39 @@ class NoahPushService : PushService() {
 
             when (type) {
                 "maintenance" -> {
-                    Log.i("NoahPushService", "Handling maintenance notification via JNI")
+                    NoahToolsLogging.performNativeLog(
+                        "info",
+                        "NoahPushService",
+                        "Handling maintenance notification via JNI"
+                    )
                     handleMaintenance(this, clazz, nativeInstance, server, k1)
                 }
+
                 "lightning_invoice_request" -> {
                     handleLightningInvoiceRequest(this, clazz, nativeInstance, json, server, k1)
                 }
+
                 "offboarding" -> {
                     handleOffboarding(this, clazz, nativeInstance, json, server, k1)
                 }
+
                 "heartbeat" -> {
                     handleHeartbeat(clazz, nativeInstance, json, server, k1)
                 }
-                else -> Log.w("NoahPushService", "Unsupported notification type: $type")
+
+                else -> NoahToolsLogging.performNativeLog(
+                    "warn",
+                    "NoahPushService",
+                    "Unsupported notification type: $type"
+                )
             }
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Failed to parse message", e)
+            NoahToolsLogging.performNativeLog("error", "NoahPushService", "Failed to parse message: ${e.message}")
         }
     }
 
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
-        Log.i("NoahPushService", "New Endpoint: ${endpoint.url}")
+        NoahToolsLogging.performNativeLog("info", "NoahPushService", "New Endpoint: ${endpoint.url}")
         val prefs = getSharedPreferences("noah_unified_push", Context.MODE_PRIVATE)
         // Save per-instance to avoid collisions between app variants, and keep legacy key for older reads.
         prefs.edit()
@@ -185,11 +201,11 @@ class NoahPushService : PushService() {
     }
 
     override fun onRegistrationFailed(reason: FailedReason, instance: String) {
-        Log.e("NoahPushService", "Registration failed: $reason")
+        NoahToolsLogging.performNativeLog("error", "NoahPushService", "Registration failed: $reason")
     }
 
     override fun onUnregistered(instance: String) {
-        Log.i("NoahPushService", "Unregistered")
+        NoahToolsLogging.performNativeLog("info", "NoahPushService", "Unregistered")
     }
 
     private fun handleMaintenance(
@@ -206,14 +222,14 @@ class NoahPushService : PushService() {
             try {
                 clazz.getMethod("sync").invoke(instance)
             } catch (e: Exception) {
-                Log.w("NoahPushService", "sync() unavailable", e)
+                NoahToolsLogging.performNativeLog("warn", "NoahPushService", "sync() unavailable: ${e.message}")
             }
-            Log.i("NoahPushService", "maintenance() completed")
+            NoahToolsLogging.performNativeLog("info", "NoahPushService", "maintenance() completed")
             if (server != null) {
                 reportJobStatus(clazz, instance, server, "maintenance", "success", null, k1)
             }
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Maintenance handling failed", e)
+            NoahToolsLogging.performNativeLog("error", "NoahPushService", "Maintenance handling failed: ${e.message}")
             if (server != null) {
                 reportJobStatus(clazz, instance, server, "maintenance", "failure", e.message, k1)
             }
@@ -255,7 +271,7 @@ class NoahPushService : PushService() {
 
                     val ok = postJson(server, "/lnurlp/submit_invoice", payload, headers)
                     if (!ok) {
-                        Log.w("NoahPushService", "submit_invoice failed")
+                        NoahToolsLogging.performNativeLog("warn", "NoahPushService", "submit_invoice failed")
                         return
                     }
                 }
@@ -270,9 +286,13 @@ class NoahPushService : PushService() {
             )
             Thread {
                 try {
-                    Log.i("NoahPushService", "Waiting for lightning payment (async)...")
+                    NoahToolsLogging.performNativeLog(
+                        "info",
+                        "NoahPushService",
+                        "Waiting for lightning payment (async)..."
+                    )
                     tryClaim.invoke(instance, paymentHash, true, null)
-                    Log.i("NoahPushService", "Lightning payment claimed")
+                    NoahToolsLogging.performNativeLog("info", "NoahPushService", "Lightning payment claimed")
 
                     // Local notification to inform user only after claim succeeds
                     ensureNotificationChannel(context)
@@ -286,11 +306,19 @@ class NoahPushService : PushService() {
                     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     manager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
                 } catch (e: Exception) {
-                    Log.e("NoahPushService", "Failed while waiting/claiming lightning payment", e)
+                    NoahToolsLogging.performNativeLog(
+                        "error",
+                        "NoahPushService",
+                        "Failed while waiting/claiming lightning payment: ${e.message}"
+                    )
                 }
             }.start()
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Failed to handle lightning invoice request", e)
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Failed to handle lightning invoice request: ${e.message}"
+            )
         }
     }
 
@@ -336,7 +364,7 @@ class NoahPushService : PushService() {
                 reportJobStatus(clazz, instance, server, "offboarding", "success", null, k1)
             }
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Offboarding failed", e)
+            NoahToolsLogging.performNativeLog("error", "NoahPushService", "Offboarding failed: ${e.message}")
             if (server != null) {
                 reportJobStatus(clazz, instance, server, "offboarding", "failure", e.message, k1)
             }
@@ -361,9 +389,9 @@ class NoahPushService : PushService() {
 
         val ok = postJson(server, "/heartbeat_response", payload, headers)
         if (!ok) {
-            Log.w("NoahPushService", "Failed to respond to heartbeat")
+            NoahToolsLogging.performNativeLog("warn", "NoahPushService", "Failed to respond to heartbeat")
         } else {
-            Log.d("NoahPushService", "Heartbeat response sent")
+            NoahToolsLogging.performNativeLog("debug", "NoahPushService", "Heartbeat response sent")
         }
     }
 
@@ -378,7 +406,11 @@ class NoahPushService : PushService() {
         val mnemonic = readMnemonicFromStorage(context, appVariant)
 
         if (mnemonic.isNullOrEmpty()) {
-            Log.e("NoahPushService", "Cannot load wallet: Mnemonic not found/decrypted.")
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Cannot load wallet: Mnemonic not found/decrypted."
+            )
             return
         }
 
@@ -411,12 +443,20 @@ class NoahPushService : PushService() {
                 Integer::class.javaObjectType
             )
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Unable to find AndroidBarkConfig constructor", e)
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Unable to find AndroidBarkConfig constructor: ${e.message}"
+            )
             return
         }
 
         val config = loadBarkConfig(context, appVariant, configConstructor) ?: run {
-            Log.e("NoahPushService", "Cannot load wallet: Bark config missing for $appVariant")
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Cannot load wallet: Bark config missing for $appVariant"
+            )
             return
         }
 
@@ -425,7 +465,7 @@ class NoahPushService : PushService() {
         val bitcoin = appVariant == "mainnet"
 
         loadWalletMethod.invoke(instance, datadir, mnemonic, regtest, signet, bitcoin, null, config)
-        Log.i("NoahPushService", "Wallet loaded successfully via JNI")
+        NoahToolsLogging.performNativeLog("info", "NoahPushService", "Wallet loaded successfully via JNI")
     }
 
     private fun readMnemonicFromStorage(context: Context, appVariant: String): String? {
@@ -442,7 +482,11 @@ class NoahPushService : PushService() {
 
             prefs.getString("mnemonic_$appVariant", null)
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Error retrieving mnemonic from native storage", e)
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Error retrieving mnemonic from native storage: ${e.message}"
+            )
             null
         }
     }
@@ -452,7 +496,7 @@ class NoahPushService : PushService() {
         val variantJson = configJson.optJSONObject(appVariant)
 
         if (variantJson == null) {
-            Log.e("NoahPushService", "Config for variant $appVariant not found")
+            NoahToolsLogging.performNativeLog("error", "NoahPushService", "Config for variant $appVariant not found")
             return null
         }
 
@@ -471,7 +515,11 @@ class NoahPushService : PushService() {
                 variantJson.optNullableInt("roundTxRequiredConfirmations")
             )
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Failed to construct bark config for $appVariant", e)
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Failed to construct bark config for $appVariant: ${e.message}"
+            )
             null
         }
     }
@@ -483,7 +531,11 @@ class NoahPushService : PushService() {
                 JSONObject(jsonString)
             }
         } catch (e: Exception) {
-            Log.e("NoahPushService", "Failed to read bark config file", e)
+            NoahToolsLogging.performNativeLog(
+                "error",
+                "NoahPushService",
+                "Failed to read bark config file: ${e.message}"
+            )
             null
         }
     }
