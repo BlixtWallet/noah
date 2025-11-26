@@ -14,6 +14,7 @@ import { tryClaimLightningReceive } from "./paymentsApi";
 import { useWalletStore } from "~/store/walletStore";
 import { formatBip177 } from "./utils";
 import { updateWidget } from "~/hooks/useWidget";
+import { hasGooglePlayServices } from "~/constants";
 
 const log = logger("pushNotifications");
 
@@ -23,7 +24,7 @@ export type PushPermissionStatus = {
 };
 
 export type RegisterForPushResult =
-  | { kind: "success"; pushToken: string }
+  | { kind: "success"; pushToken: string; pushType: "expo" | "unified" }
   | { kind: "permission_denied"; permissionStatus: Notifications.PermissionStatus }
   | { kind: "device_not_supported" };
 
@@ -264,7 +265,9 @@ export async function getPushPermissionStatus(): Promise<Result<PushPermissionSt
   return ok({ status: permissionResult.value.status, isPhysicalDevice: true });
 }
 
-export async function registerForPushNotificationsAsync(): Promise<Result<RegisterForPushResult, Error>> {
+export async function registerForPushNotificationsAsync(): Promise<
+  Result<RegisterForPushResult, Error>
+> {
   if (Platform.OS === "android") {
     Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -279,6 +282,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
     return ok({ kind: "device_not_supported" });
   }
 
+  // Request permissions for all devices first
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
   if (existingStatus !== "granted") {
@@ -287,6 +291,19 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
   }
   if (finalStatus !== "granted") {
     return ok({ kind: "permission_denied", permissionStatus: finalStatus });
+  }
+
+  // Prefer UnifiedPush endpoint on Android real device without Play Services.
+  if (!hasGooglePlayServices()) {
+    try {
+      const { getUnifiedPushEndpoint } = await import("noah-tools");
+      const unifiedEndpoint = getUnifiedPushEndpoint();
+      if (unifiedEndpoint) {
+        return ok({ kind: "success", pushToken: unifiedEndpoint, pushType: "unified" });
+      }
+    } catch (e) {
+      log.w("UnifiedPush endpoint lookup failed", [e]);
+    }
   }
   const projectId = Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
   if (!projectId) {
@@ -314,7 +331,7 @@ export async function registerForPushNotificationsAsync(): Promise<Result<Regist
   }
 
   const pushTokenString = pushTokenResult.value.data;
-  return ok({ kind: "success", pushToken: pushTokenString });
+  return ok({ kind: "success", pushToken: pushTokenString, pushType: "expo" });
 }
 
 export async function registerPushTokenWithServer(pushToken: string): Promise<Result<void, Error>> {
@@ -325,4 +342,11 @@ export async function registerPushTokenWithServer(pushToken: string): Promise<Re
   }
 
   return ok(undefined);
+}
+
+export async function registerUnifiedPushTokenWithServer(
+  pushEndpoint: string,
+): Promise<Result<void, Error>> {
+  // Reuse same API payload; server should treat endpoint as token for UnifiedPush
+  return registerPushTokenWithServer(pushEndpoint);
 }

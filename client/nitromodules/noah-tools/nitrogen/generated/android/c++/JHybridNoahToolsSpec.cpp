@@ -9,6 +9,8 @@
 
 // Forward declaration of `HttpResponse` to properly resolve imports.
 namespace margelo::nitro::noahtools { struct HttpResponse; }
+// Forward declaration of `UnifiedPushDistributor` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct UnifiedPushDistributor; }
 
 #include <string>
 #include <vector>
@@ -17,6 +19,13 @@ namespace margelo::nitro::noahtools { struct HttpResponse; }
 #include "HttpResponse.hpp"
 #include "JHttpResponse.hpp"
 #include <unordered_map>
+#include "UnifiedPushDistributor.hpp"
+#include "JUnifiedPushDistributor.hpp"
+#include <NitroModules/Null.hpp>
+#include <variant>
+#include <optional>
+#include "JVariant_NullType_String.hpp"
+#include <NitroModules/JNull.hpp>
 
 namespace margelo::nitro::noahtools {
 
@@ -209,6 +218,53 @@ namespace margelo::nitro::noahtools {
   void JHybridNoahToolsSpec::updateWidgetData(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, double closestExpiryBlocks, double expiryThreshold, const std::string& appGroup) {
     static const auto method = javaClassStatic()->getMethod<void(double /* totalBalance */, double /* onchainBalance */, double /* offchainBalance */, double /* pendingBalance */, double /* closestExpiryBlocks */, double /* expiryThreshold */, jni::alias_ref<jni::JString> /* appGroup */)>("updateWidgetData");
     method(_javaPart, totalBalance, onchainBalance, offchainBalance, pendingBalance, closestExpiryBlocks, expiryThreshold, jni::make_jstring(appGroup));
+  }
+  bool JHybridNoahToolsSpec::isGooglePlayServicesAvailable() {
+    static const auto method = javaClassStatic()->getMethod<jboolean()>("isGooglePlayServicesAvailable");
+    auto __result = method(_javaPart);
+    return static_cast<bool>(__result);
+  }
+  void JHybridNoahToolsSpec::registerUnifiedPush() {
+    static const auto method = javaClassStatic()->getMethod<void()>("registerUnifiedPush");
+    method(_javaPart);
+  }
+  std::string JHybridNoahToolsSpec::getUnifiedPushEndpoint() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<jni::JString>()>("getUnifiedPushEndpoint");
+    auto __result = method(_javaPart);
+    return __result->toStdString();
+  }
+  std::vector<UnifiedPushDistributor> JHybridNoahToolsSpec::getUnifiedPushDistributors() {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<jni::JArrayClass<JUnifiedPushDistributor>>()>("getUnifiedPushDistributors");
+    auto __result = method(_javaPart);
+    return [&]() {
+      size_t __size = __result->size();
+      std::vector<UnifiedPushDistributor> __vector;
+      __vector.reserve(__size);
+      for (size_t __i = 0; __i < __size; __i++) {
+        auto __element = __result->getElement(__i);
+        __vector.push_back(__element->toCpp());
+      }
+      return __vector;
+    }();
+  }
+  void JHybridNoahToolsSpec::setUnifiedPushDistributor(const std::optional<std::variant<nitro::NullType, std::string>>& distributorId) {
+    static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<JVariant_NullType_String> /* distributorId */)>("setUnifiedPushDistributor");
+    method(_javaPart, distributorId.has_value() ? JVariant_NullType_String::fromCpp(distributorId.value()) : nullptr);
+  }
+  std::shared_ptr<Promise<void>> JHybridNoahToolsSpec::storeNativeMnemonic(const std::string& mnemonic) {
+    static const auto method = javaClassStatic()->getMethod<jni::local_ref<JPromise::javaobject>(jni::alias_ref<jni::JString> /* mnemonic */)>("storeNativeMnemonic");
+    auto __result = method(_javaPart, jni::make_jstring(mnemonic));
+    return [&]() {
+      auto __promise = Promise<void>::create();
+      __result->cthis()->addOnResolvedListener([=](const jni::alias_ref<jni::JObject>& /* unit */) {
+        __promise->resolve();
+      });
+      __result->cthis()->addOnRejectedListener([=](const jni::alias_ref<jni::JThrowable>& __throwable) {
+        jni::JniException __jniError(__throwable);
+        __promise->reject(std::make_exception_ptr(__jniError));
+      });
+      return __promise;
+    }();
   }
 
 } // namespace margelo::nitro::noahtools

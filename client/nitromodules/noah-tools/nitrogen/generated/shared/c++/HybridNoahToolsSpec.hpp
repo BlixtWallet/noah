@@ -15,12 +15,18 @@
 
 // Forward declaration of `HttpResponse` to properly resolve imports.
 namespace margelo::nitro::noahtools { struct HttpResponse; }
+// Forward declaration of `UnifiedPushDistributor` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct UnifiedPushDistributor; }
 
 #include <string>
 #include <vector>
 #include <NitroModules/Promise.hpp>
 #include "HttpResponse.hpp"
 #include <unordered_map>
+#include "UnifiedPushDistributor.hpp"
+#include <NitroModules/Null.hpp>
+#include <variant>
+#include <optional>
 
 namespace margelo::nitro::noahtools {
 
@@ -69,6 +75,12 @@ namespace margelo::nitro::noahtools {
       virtual double getAudioPosition() = 0;
       virtual bool isAudioPlaying() = 0;
       virtual void updateWidgetData(double totalBalance, double onchainBalance, double offchainBalance, double pendingBalance, double closestExpiryBlocks, double expiryThreshold, const std::string& appGroup) = 0;
+      virtual bool isGooglePlayServicesAvailable() = 0;
+      virtual void registerUnifiedPush() = 0;
+      virtual std::string getUnifiedPushEndpoint() = 0;
+      virtual std::vector<UnifiedPushDistributor> getUnifiedPushDistributors() = 0;
+      virtual void setUnifiedPushDistributor(const std::optional<std::variant<nitro::NullType, std::string>>& distributorId) = 0;
+      virtual std::shared_ptr<Promise<void>> storeNativeMnemonic(const std::string& mnemonic) = 0;
 
     protected:
       // Hybrid Setup

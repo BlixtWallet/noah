@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import {
   registerForPushNotificationsAsync,
   registerPushTokenWithServer,
+  registerUnifiedPushTokenWithServer,
 } from "~/lib/pushNotifications";
 import { useServerStore } from "~/store/serverStore";
 import logger from "~/lib/log";
@@ -33,7 +34,10 @@ export const usePushNotifications = (isReady: boolean) => {
         return;
       }
 
-      const registerResult = await registerPushTokenWithServer(tokenPayload.pushToken);
+      const registerResult =
+        tokenPayload.pushType === "unified"
+          ? await registerUnifiedPushTokenWithServer(tokenPayload.pushToken)
+          : await registerPushTokenWithServer(tokenPayload.pushToken);
       if (registerResult.isErr()) {
         log.w("Failed to register push token with server", [registerResult.error]);
         return;

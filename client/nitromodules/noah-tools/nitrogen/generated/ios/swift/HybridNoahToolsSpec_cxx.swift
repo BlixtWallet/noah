@@ -7,7 +7,6 @@
 
 import Foundation
 import NitroModules
-import NitroModules
 
 /**
  * A class implementation that bridges HybridNoahToolsSpec over to C++.
@@ -365,6 +364,108 @@ open class HybridNoahToolsSpec_cxx {
     } catch (let __error) {
       let __exceptionPtr = __error.toCpp()
       return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func isGooglePlayServicesAvailable() -> bridge.Result_bool_ {
+    do {
+      let __result = try self.__implementation.isGooglePlayServicesAvailable()
+      let __resultCpp = __result
+      return bridge.create_Result_bool_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_bool_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func registerUnifiedPush() -> bridge.Result_void_ {
+    do {
+      try self.__implementation.registerUnifiedPush()
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getUnifiedPushEndpoint() -> bridge.Result_std__string_ {
+    do {
+      let __result = try self.__implementation.getUnifiedPushEndpoint()
+      let __resultCpp = std.string(__result)
+      return bridge.create_Result_std__string_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__string_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getUnifiedPushDistributors() -> bridge.Result_std__vector_UnifiedPushDistributor__ {
+    do {
+      let __result = try self.__implementation.getUnifiedPushDistributors()
+      let __resultCpp = { () -> bridge.std__vector_UnifiedPushDistributor_ in
+        var __vector = bridge.create_std__vector_UnifiedPushDistributor_(__result.count)
+        for __item in __result {
+          __vector.push_back(__item)
+        }
+        return __vector
+      }()
+      return bridge.create_Result_std__vector_UnifiedPushDistributor__(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__vector_UnifiedPushDistributor__(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setUnifiedPushDistributor(distributorId: bridge.std__optional_std__variant_nitro__NullType__std__string__) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setUnifiedPushDistributor(distributorId: { () -> Variant_NullType_String? in
+        if bridge.has_value_std__optional_std__variant_nitro__NullType__std__string__(distributorId) {
+          let __unwrapped = bridge.get_std__optional_std__variant_nitro__NullType__std__string__(distributorId)
+          return { () -> Variant_NullType_String in
+            let __variant = bridge.std__variant_nitro__NullType__std__string_(__unwrapped)
+            switch __variant.index() {
+              case 0:
+                let __actual = __variant.get_0()
+                return .first(NullType.null)
+              case 1:
+                let __actual = __variant.get_1()
+                return .second(String(__actual))
+              default:
+                fatalError("Variant can never have index \(__variant.index())!")
+            }
+          }()
+        } else {
+          return nil
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func storeNativeMnemonic(mnemonic: std.string) -> bridge.Result_std__shared_ptr_Promise_void___ {
+    do {
+      let __result = try self.__implementation.storeNativeMnemonic(mnemonic: String(mnemonic))
+      let __resultCpp = { () -> bridge.std__shared_ptr_Promise_void__ in
+        let __promise = bridge.create_std__shared_ptr_Promise_void__()
+        let __promiseHolder = bridge.wrap_std__shared_ptr_Promise_void__(__promise)
+        __result
+          .then({ __result in __promiseHolder.resolve() })
+          .catch({ __error in __promiseHolder.reject(__error.toCpp()) })
+        return __promise
+      }()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__shared_ptr_Promise_void___(__exceptionPtr)
     }
   }
 }

@@ -30,6 +30,12 @@ namespace margelo::nitro::noahtools {
       prototype.registerHybridMethod("getAudioPosition", &HybridNoahToolsSpec::getAudioPosition);
       prototype.registerHybridMethod("isAudioPlaying", &HybridNoahToolsSpec::isAudioPlaying);
       prototype.registerHybridMethod("updateWidgetData", &HybridNoahToolsSpec::updateWidgetData);
+      prototype.registerHybridMethod("isGooglePlayServicesAvailable", &HybridNoahToolsSpec::isGooglePlayServicesAvailable);
+      prototype.registerHybridMethod("registerUnifiedPush", &HybridNoahToolsSpec::registerUnifiedPush);
+      prototype.registerHybridMethod("getUnifiedPushEndpoint", &HybridNoahToolsSpec::getUnifiedPushEndpoint);
+      prototype.registerHybridMethod("getUnifiedPushDistributors", &HybridNoahToolsSpec::getUnifiedPushDistributors);
+      prototype.registerHybridMethod("setUnifiedPushDistributor", &HybridNoahToolsSpec::setUnifiedPushDistributor);
+      prototype.registerHybridMethod("storeNativeMnemonic", &HybridNoahToolsSpec::storeNativeMnemonic);
     });
   }
 

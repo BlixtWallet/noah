@@ -36,6 +36,7 @@ target_sources(
   ../nitrogen/generated/shared/c++/HybridNoahToolsSpec.cpp
   # Android-specific Nitrogen C++ sources
   ../nitrogen/generated/android/c++/JHybridNoahToolsSpec.cpp
+  ../nitrogen/generated/android/c++/JVariant_NullType_String.cpp
 )
 
 # From node_modules/react-native/ReactAndroid/cmake-utils/folly-flags.cmake

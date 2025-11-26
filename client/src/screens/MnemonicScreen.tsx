@@ -17,6 +17,7 @@ import { useWalletStore } from "../store/walletStore";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
 import { getMnemonic } from "~/lib/crypto";
+import { hasGooglePlayServices } from "~/constants";
 
 type MnemonicScreenRouteProp = RouteProp<
   OnboardingStackParamList & SettingsStackParamList,
@@ -85,6 +86,11 @@ const MnemonicScreen = () => {
 
   const handleContinue = () => {
     if (fromOnboarding) {
+      if (!hasGooglePlayServices()) {
+        navigation.navigate("UnifiedPush", { fromOnboarding: true });
+        return;
+      }
+
       navigation.navigate("LightningAddress", { fromOnboarding: true });
     } else {
       navigation.goBack();

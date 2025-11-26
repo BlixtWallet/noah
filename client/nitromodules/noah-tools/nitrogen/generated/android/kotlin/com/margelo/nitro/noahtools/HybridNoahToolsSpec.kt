@@ -11,6 +11,7 @@ import androidx.annotation.Keep
 import com.facebook.jni.HybridData
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.Promise
+import com.margelo.nitro.core.NullType
 import com.margelo.nitro.core.HybridObject
 
 /**
@@ -109,6 +110,30 @@ abstract class HybridNoahToolsSpec: HybridObject() {
   @DoNotStrip
   @Keep
   abstract fun updateWidgetData(totalBalance: Double, onchainBalance: Double, offchainBalance: Double, pendingBalance: Double, closestExpiryBlocks: Double, expiryThreshold: Double, appGroup: String): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun isGooglePlayServicesAvailable(): Boolean
+  
+  @DoNotStrip
+  @Keep
+  abstract fun registerUnifiedPush(): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getUnifiedPushEndpoint(): String
+  
+  @DoNotStrip
+  @Keep
+  abstract fun getUnifiedPushDistributors(): Array<UnifiedPushDistributor>
+  
+  @DoNotStrip
+  @Keep
+  abstract fun setUnifiedPushDistributor(distributorId: Variant_NullType_String?): Unit
+  
+  @DoNotStrip
+  @Keep
+  abstract fun storeNativeMnemonic(mnemonic: String): Promise<Unit>
 
   private external fun initHybrid(): HybridData
 

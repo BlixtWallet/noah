@@ -12,16 +12,22 @@
 namespace margelo::nitro::noahtools { struct HttpResponse; }
 // Forward declaration of `HybridNoahToolsSpec` to properly resolve imports.
 namespace margelo::nitro::noahtools { class HybridNoahToolsSpec; }
+// Forward declaration of `UnifiedPushDistributor` to properly resolve imports.
+namespace margelo::nitro::noahtools { struct UnifiedPushDistributor; }
 
 // Include C++ defined types
 #include "HttpResponse.hpp"
 #include "HybridNoahToolsSpec.hpp"
+#include "UnifiedPushDistributor.hpp"
+#include <NitroModules/Null.hpp>
 #include <NitroModules/Promise.hpp>
 #include <NitroModules/Result.hpp>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 // C++ helpers for Swift

@@ -119,13 +119,20 @@ repositories {
   google()
 }
 
+configurations.all {
+  exclude group: 'com.google.crypto.tink', module: 'tink'
+}
+
 def kotlin_version = getExtOrDefault("kotlinVersion")
 
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
   implementation project(":react-native-nitro-modules")
+  implementation "androidx.security:security-crypto:1.1.0"
 
   // OkHttp for background networking
   implementation "com.squareup.okhttp3:okhttp:4.12.0"
+  implementation "com.google.android.gms:play-services-base:18.5.0"
+  implementation "org.unifiedpush.android:connector:3.1.2"
 }

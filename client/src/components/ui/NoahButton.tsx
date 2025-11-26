@@ -9,15 +9,22 @@ interface NoahButtonProps extends Omit<ButtonProps, "style"> {
   children: React.ReactNode;
   isLoading?: boolean;
   style?: ViewStyle;
+  textClassName?: string;
 }
 
-export const NoahButton = ({ children, isLoading, style, ...props }: NoahButtonProps) => {
+export const NoahButton = ({
+  children,
+  isLoading,
+  style,
+  textClassName,
+  ...props
+}: NoahButtonProps) => {
   return (
     <Button {...props} style={[{ backgroundColor: COLORS.BITCOIN_ORANGE }, style]}>
       {isLoading ? (
         <NoahActivityIndicator color="white" />
       ) : (
-        <Text className="font-bold">{children}</Text>
+        <Text className={textClassName || "font-bold"}>{children}</Text>
       )}
     </Button>
   );

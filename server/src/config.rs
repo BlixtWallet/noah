@@ -61,6 +61,8 @@ pub struct Config {
     pub minimum_app_version: String,
     #[serde(default = "default_redis_url")]
     pub redis_url: String,
+    #[serde(default)]
+    pub ntfy_auth_token: String,
 }
 
 impl Config {
@@ -121,6 +123,7 @@ impl Config {
         );
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
         tracing::debug!("Redis URL: {}", self.redis_url);
+        tracing::debug!("Ntfy Auth Token: [REDACTED]");
         tracing::debug!("============================");
     }
 

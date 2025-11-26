@@ -28,10 +28,12 @@ import {
   DOCUMENT_DIRECTORY_PATH,
   MNEMONIC_KEYCHAIN_SERVICE,
   ACTIVE_WALLET_CONFIG,
+  hasGooglePlayServices,
 } from "../constants";
 import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
+import { storeNativeMnemonic } from "noah-tools";
 
 const log = logger("walletApi");
 
@@ -57,6 +59,16 @@ const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, 
 
   if (setMnemonicResult.isErr()) {
     return err(setMnemonicResult.error);
+  }
+
+  if (!hasGooglePlayServices()) {
+    const storeNativeResult = await ResultAsync.fromPromise(
+      storeNativeMnemonic(mnemonic),
+      (e) => e as Error,
+    );
+    if (storeNativeResult.isErr()) {
+      log.w("Failed to store mnemonic natively for push service", [storeNativeResult.error]);
+    }
   }
 
   const loadResult = await loadWallet(mnemonic);
@@ -89,6 +101,16 @@ export const restoreWallet = async (mnemonic: string): Promise<Result<boolean, E
   const setResult = await ResultAsync.fromPromise(setMnemonic(mnemonic), (e) => e as Error);
   if (setResult.isErr()) {
     return err(setResult.error);
+  }
+
+  if (!hasGooglePlayServices()) {
+    const storeNativeResult = await ResultAsync.fromPromise(
+      storeNativeMnemonic(mnemonic),
+      (e) => e as Error,
+    );
+    if (storeNativeResult.isErr()) {
+      log.w("Failed to store mnemonic natively for push service", [storeNativeResult.error]);
+    }
   }
   return loadWallet(mnemonic);
 };

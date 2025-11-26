@@ -92,6 +92,38 @@ class NoahTools: HybridNoahToolsSpec {
             appGroup: appGroup
         )
     }
+
+    // MARK: - Android-only methods (placeholders for iOS)
+
+    func isGooglePlayServicesAvailable() throws -> Bool {
+        // Google Play Services is Android-only
+        return false
+    }
+
+    func registerUnifiedPush() throws {
+        // UnifiedPush is Android-only, no-op on iOS
+    }
+
+    func getUnifiedPushEndpoint() throws -> String {
+        // UnifiedPush is Android-only
+        return ""
+    }
+
+    func getUnifiedPushDistributors() throws -> [UnifiedPushDistributor] {
+        // UnifiedPush is Android-only
+        return []
+    }
+
+    func setUnifiedPushDistributor(distributorId: Variant_NullType_String?) throws {
+        // UnifiedPush is Android-only, no-op on iOS
+    }
+
+    func storeNativeMnemonic(mnemonic: String) throws -> Promise<Void> {
+        // This is Android-only, no-op on iOS
+        let promise = Promise<Void>()
+        promise.resolve()
+        return promise
+    }
 }
 
 // Include the extensions from other files
