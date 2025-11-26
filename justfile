@@ -93,6 +93,10 @@ server-test:
 server-check:
     cargo check
 
+# Load testing (requires server running on localhost:3000)
+load-test users="10" time="30s" host="http://localhost:3000":
+    LOADTEST_SCENARIO=all LOADTEST_HOST={{host}} cargo run --bin loadtest --features loadtest --release -- --users {{users}} --run-time {{time}} --host {{host}}
+
 # Combined checks
 check-all: check server-check
 
