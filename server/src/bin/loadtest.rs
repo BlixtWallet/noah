@@ -42,6 +42,29 @@ struct RegisterResponse {
     lightning_address: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct RegisterPushTokenPayload {
+    push_token: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct UpdateLnAddressPayload {
+    ln_address: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ReportJobStatusPayload {
+    report_type: String,
+    status: String,
+    error_message: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct RegisterOffboardingPayload {
+    address: String,
+    address_signature: String,
+}
+
 struct TestUser {
     keypair: bitcoin::key::Keypair,
     secp: bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>,
@@ -71,11 +94,76 @@ impl TestUser {
     }
 }
 
+fn leak_str(s: String) -> &'static str {
+    Box::leak(s.into_boxed_str())
+}
+
+async fn get_k1_and_sign(
+    user: &mut GooseUser,
+    test_user: &TestUser,
+    name_prefix: &'static str,
+) -> Option<(String, String)> {
+    let name = leak_str(format!("{}_get_k1", name_prefix));
+    let response = user.get_named("/v0/getk1", name).await.ok()?;
+
+    let k1_response: GetK1Response = match response.response {
+        Ok(r) if r.status().is_success() => r.json().await.ok()?,
+        _ => return None,
+    };
+
+    let sig = test_user.sign(&k1_response.k1);
+    Some((k1_response.k1, sig))
+}
+
+async fn register_test_user(
+    user: &mut GooseUser,
+    test_user: &TestUser,
+    name_prefix: &'static str,
+) -> Option<String> {
+    let (k1, sig) = get_k1_and_sign(user, test_user, name_prefix).await?;
+
+    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let ln_address = format!("loadtest{}@localhost", user_num);
+
+    let payload = RegisterPayload {
+        ln_address: Some(ln_address.clone()),
+        ark_address: None,
+        device_info: Some(DeviceInfo {
+            device_manufacturer: Some("LoadTest".to_string()),
+            device_model: Some(format!("loadtest-device-{}", user_num)),
+            os_name: Some("Android".to_string()),
+            os_version: Some("14".to_string()),
+            app_version: Some("1.0.0".to_string()),
+        }),
+    };
+
+    let request_builder = user
+        .get_request_builder(&GooseMethod::Post, "/v0/register")
+        .ok()?
+        .header("Content-Type", "application/json")
+        .header("x-auth-key", test_user.pubkey())
+        .header("x-auth-sig", sig)
+        .header("x-auth-k1", k1)
+        .body(serde_json::to_string(&payload).unwrap());
+
+    let name = leak_str(format!("{}_register", name_prefix));
+    let goose_request = GooseRequest::builder()
+        .set_request_builder(request_builder)
+        .name(name)
+        .build();
+
+    let response = user.request(goose_request).await.ok()?;
+
+    match response.response {
+        Ok(r) if r.status().is_success() => Some(ln_address),
+        _ => None,
+    }
+}
+
 async fn setup_test_user(host: &str) -> anyhow::Result<String> {
     let client = reqwest::Client::new();
     let test_user = TestUser::new_random();
 
-    // Get k1
     let k1_response: GetK1Response = client
         .get(format!("{}/v0/getk1", host))
         .send()
@@ -85,7 +173,6 @@ async fn setup_test_user(host: &str) -> anyhow::Result<String> {
 
     let sig = test_user.sign(&k1_response.k1);
 
-    // Don't specify ln_address - let server generate one with the correct domain
     let payload = RegisterPayload {
         ln_address: None,
         ark_address: None,
@@ -108,7 +195,6 @@ async fn setup_test_user(host: &str) -> anyhow::Result<String> {
         .lightning_address
         .ok_or_else(|| anyhow::anyhow!("Server didn't return lightning address"))?;
 
-    // Extract username from lightning address (part before @)
     let username = address.split('@').next().unwrap_or("loadtest_user");
 
     println!(
@@ -145,7 +231,7 @@ async fn loadtest_check_app_version(user: &mut GooseUser) -> TransactionResult {
     Ok(())
 }
 
-// Public endpoint: GET /.well-known/lnurlp/{username}
+// Public endpoint: GET /.well-known/lnurlp/{username} (DB read)
 async fn loadtest_lnurlp_request(user: &mut GooseUser) -> TransactionResult {
     let username = TEST_USER_LN_ADDRESS
         .get()
@@ -157,142 +243,41 @@ async fn loadtest_lnurlp_request(user: &mut GooseUser) -> TransactionResult {
     Ok(())
 }
 
-// Private endpoint: GET /health (on private port)
+// Private endpoint: GET /health
 async fn loadtest_health_check(user: &mut GooseUser) -> TransactionResult {
     let _response = user.get_named("/health", "health_check").await?;
     Ok(())
 }
 
-// Full registration flow: get k1 -> sign -> register
+// Full registration flow: get k1 -> sign -> register (DB write)
 async fn loadtest_registration_flow(user: &mut GooseUser) -> TransactionResult {
     let test_user = TestUser::new_random();
-
-    // Step 1: Get k1
-    let response = user.get_named("/v0/getk1", "register_get_k1").await?;
-
-    let k1_response: GetK1Response = match response.response {
-        Ok(r) => {
-            if !r.status().is_success() {
-                return Ok(());
-            }
-            match r.json().await {
-                Ok(json) => json,
-                Err(_) => return Ok(()),
-            }
-        }
-        Err(_) => return Ok(()),
-    };
-
-    // Step 2: Sign the k1
-    let sig = test_user.sign(&k1_response.k1);
-
-    // Step 3: Register
-    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
-    let payload = RegisterPayload {
-        ln_address: Some(format!("loadtest{}@localhost", user_num)),
-        ark_address: None,
-        device_info: Some(DeviceInfo {
-            device_manufacturer: Some("LoadTest".to_string()),
-            device_model: Some(format!("loadtest-device-{}", user_num)),
-            os_name: Some("Android".to_string()),
-            os_version: Some("14".to_string()),
-            app_version: Some("1.0.0".to_string()),
-        }),
-    };
-
-    let request_builder = user
-        .get_request_builder(&GooseMethod::Post, "/v0/register")?
-        .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1_response.k1)
-        .body(serde_json::to_string(&payload).unwrap());
-
-    let goose_request = GooseRequest::builder()
-        .set_request_builder(request_builder)
-        .name("register")
-        .build();
-
-    let _response = user.request(goose_request).await?;
+    let _ = register_test_user(user, &test_user, "registration").await;
     Ok(())
 }
 
-// Authenticated flow: get user info
+// Register + get user info (DB write + read)
 async fn loadtest_get_user_info(user: &mut GooseUser) -> TransactionResult {
     let test_user = TestUser::new_random();
 
-    // Get k1 and register first
-    let response = user.get_named("/v0/getk1", "userinfo_get_k1_1").await?;
-
-    let k1_response: GetK1Response = match response.response {
-        Ok(r) => {
-            if !r.status().is_success() {
-                return Ok(());
-            }
-            match r.json().await {
-                Ok(json) => json,
-                Err(_) => return Ok(()),
-            }
-        }
-        Err(_) => return Ok(()),
-    };
-
-    let sig = test_user.sign(&k1_response.k1);
-    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
-
-    let register_payload = RegisterPayload {
-        ln_address: Some(format!("loadtestinfo{}@localhost", user_num)),
-        ark_address: None,
-        device_info: None,
-    };
-
-    let request_builder = user
-        .get_request_builder(&GooseMethod::Post, "/v0/register")?
-        .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", &k1_response.k1)
-        .body(serde_json::to_string(&register_payload).unwrap());
-
-    let goose_request = GooseRequest::builder()
-        .set_request_builder(request_builder)
-        .name("userinfo_register")
-        .build();
-
-    let response = user.request(goose_request).await?;
-
-    if let Ok(r) = &response.response {
-        if !r.status().is_success() {
-            return Ok(());
-        }
-    } else {
+    if register_test_user(user, &test_user, "userinfo")
+        .await
+        .is_none()
+    {
         return Ok(());
     }
 
-    // Get a new k1 for the user_info request
-    let response = user.get_named("/v0/getk1", "userinfo_get_k1_2").await?;
-
-    let k1_response: GetK1Response = match response.response {
-        Ok(r) => {
-            if !r.status().is_success() {
-                return Ok(());
-            }
-            match r.json().await {
-                Ok(json) => json,
-                Err(_) => return Ok(()),
-            }
-        }
-        Err(_) => return Ok(()),
+    let (k1, sig) = match get_k1_and_sign(user, &test_user, "userinfo_fetch").await {
+        Some(v) => v,
+        None => return Ok(()),
     };
-
-    let sig = test_user.sign(&k1_response.k1);
 
     let request_builder = user
         .get_request_builder(&GooseMethod::Post, "/v0/user_info")?
         .header("Content-Type", "application/json")
         .header("x-auth-key", test_user.pubkey())
         .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1_response.k1)
+        .header("x-auth-k1", k1)
         .body("{}");
 
     let goose_request = GooseRequest::builder()
@@ -304,7 +289,160 @@ async fn loadtest_get_user_info(user: &mut GooseUser) -> TransactionResult {
     Ok(())
 }
 
-// Scenario for public endpoints
+// Register + register push token (DB write + write)
+async fn loadtest_register_push_token(user: &mut GooseUser) -> TransactionResult {
+    let test_user = TestUser::new_random();
+
+    if register_test_user(user, &test_user, "pushtoken")
+        .await
+        .is_none()
+    {
+        return Ok(());
+    }
+
+    let (k1, sig) = match get_k1_and_sign(user, &test_user, "pushtoken_register").await {
+        Some(v) => v,
+        None => return Ok(()),
+    };
+
+    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let payload = RegisterPushTokenPayload {
+        push_token: format!("loadtest_push_token_{}", user_num),
+    };
+
+    let request_builder = user
+        .get_request_builder(&GooseMethod::Post, "/v0/register_push_token")?
+        .header("Content-Type", "application/json")
+        .header("x-auth-key", test_user.pubkey())
+        .header("x-auth-sig", sig)
+        .header("x-auth-k1", k1)
+        .body(serde_json::to_string(&payload).unwrap());
+
+    let goose_request = GooseRequest::builder()
+        .set_request_builder(request_builder)
+        .name("register_push_token")
+        .build();
+
+    let _response = user.request(goose_request).await?;
+    Ok(())
+}
+
+// Register + update ln address (DB write + write)
+async fn loadtest_update_ln_address(user: &mut GooseUser) -> TransactionResult {
+    let test_user = TestUser::new_random();
+
+    if register_test_user(user, &test_user, "update_ln")
+        .await
+        .is_none()
+    {
+        return Ok(());
+    }
+
+    let (k1, sig) = match get_k1_and_sign(user, &test_user, "update_ln_addr").await {
+        Some(v) => v,
+        None => return Ok(()),
+    };
+
+    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let payload = UpdateLnAddressPayload {
+        ln_address: format!("updated{}@localhost", user_num),
+    };
+
+    let request_builder = user
+        .get_request_builder(&GooseMethod::Post, "/v0/update_ln_address")?
+        .header("Content-Type", "application/json")
+        .header("x-auth-key", test_user.pubkey())
+        .header("x-auth-sig", sig)
+        .header("x-auth-k1", k1)
+        .body(serde_json::to_string(&payload).unwrap());
+
+    let goose_request = GooseRequest::builder()
+        .set_request_builder(request_builder)
+        .name("update_ln_address")
+        .build();
+
+    let _response = user.request(goose_request).await?;
+    Ok(())
+}
+
+// Register + report job status (DB write + write)
+async fn loadtest_report_job_status(user: &mut GooseUser) -> TransactionResult {
+    let test_user = TestUser::new_random();
+
+    if register_test_user(user, &test_user, "job_status")
+        .await
+        .is_none()
+    {
+        return Ok(());
+    }
+
+    let (k1, sig) = match get_k1_and_sign(user, &test_user, "job_status_report").await {
+        Some(v) => v,
+        None => return Ok(()),
+    };
+
+    let payload = ReportJobStatusPayload {
+        report_type: "Maintenance".to_string(),
+        status: "Success".to_string(),
+        error_message: None,
+    };
+
+    let request_builder = user
+        .get_request_builder(&GooseMethod::Post, "/v0/report_job_status")?
+        .header("Content-Type", "application/json")
+        .header("x-auth-key", test_user.pubkey())
+        .header("x-auth-sig", sig)
+        .header("x-auth-k1", k1)
+        .body(serde_json::to_string(&payload).unwrap());
+
+    let goose_request = GooseRequest::builder()
+        .set_request_builder(request_builder)
+        .name("report_job_status")
+        .build();
+
+    let _response = user.request(goose_request).await?;
+    Ok(())
+}
+
+// Register + register offboarding request (DB write + write)
+async fn loadtest_register_offboarding(user: &mut GooseUser) -> TransactionResult {
+    let test_user = TestUser::new_random();
+
+    if register_test_user(user, &test_user, "offboard")
+        .await
+        .is_none()
+    {
+        return Ok(());
+    }
+
+    let (k1, sig) = match get_k1_and_sign(user, &test_user, "offboard_register").await {
+        Some(v) => v,
+        None => return Ok(()),
+    };
+
+    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
+    let payload = RegisterOffboardingPayload {
+        address: format!("bc1qloadtest{}", user_num),
+        address_signature: format!("sig_{}", user_num),
+    };
+
+    let request_builder = user
+        .get_request_builder(&GooseMethod::Post, "/v0/register_offboarding_request")?
+        .header("Content-Type", "application/json")
+        .header("x-auth-key", test_user.pubkey())
+        .header("x-auth-sig", sig)
+        .header("x-auth-k1", k1)
+        .body(serde_json::to_string(&payload).unwrap());
+
+    let goose_request = GooseRequest::builder()
+        .set_request_builder(request_builder)
+        .name("register_offboarding")
+        .build();
+
+    let _response = user.request(goose_request).await?;
+    Ok(())
+}
+
 fn build_public_scenario() -> Scenario {
     scenario!("Public Endpoints")
         .register_transaction(transaction!(loadtest_get_k1).set_weight(3).unwrap())
@@ -316,7 +454,6 @@ fn build_public_scenario() -> Scenario {
         .register_transaction(transaction!(loadtest_lnurlp_request).set_weight(1).unwrap())
 }
 
-// Scenario for registration flow
 fn build_registration_scenario() -> Scenario {
     scenario!("Registration Flow").register_transaction(
         transaction!(loadtest_registration_flow)
@@ -325,29 +462,56 @@ fn build_registration_scenario() -> Scenario {
     )
 }
 
-// Scenario for authenticated user operations
 fn build_authenticated_scenario() -> Scenario {
     scenario!("Authenticated Operations")
         .register_transaction(transaction!(loadtest_get_user_info).set_weight(1).unwrap())
 }
 
-// Scenario for health check (private port)
 fn build_health_scenario() -> Scenario {
     scenario!("Health Check").register_transaction(transaction!(loadtest_health_check))
 }
 
+fn build_db_stress_scenario() -> Scenario {
+    scenario!("DB Stress Test")
+        .register_transaction(
+            transaction!(loadtest_registration_flow)
+                .set_weight(3)
+                .unwrap(),
+        )
+        .register_transaction(transaction!(loadtest_get_user_info).set_weight(2).unwrap())
+        .register_transaction(
+            transaction!(loadtest_register_push_token)
+                .set_weight(2)
+                .unwrap(),
+        )
+        .register_transaction(
+            transaction!(loadtest_update_ln_address)
+                .set_weight(2)
+                .unwrap(),
+        )
+        .register_transaction(
+            transaction!(loadtest_report_job_status)
+                .set_weight(2)
+                .unwrap(),
+        )
+        .register_transaction(
+            transaction!(loadtest_register_offboarding)
+                .set_weight(1)
+                .unwrap(),
+        )
+        .register_transaction(transaction!(loadtest_lnurlp_request).set_weight(3).unwrap())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), GooseError> {
-    // Use LOADTEST_SCENARIO env var to select scenario
-    // Available: public, registration, authenticated, health, all
+    // Available scenarios: public, registration, authenticated, health, dbstress, all
     let scenario_name = std::env::var("LOADTEST_SCENARIO").unwrap_or_else(|_| "public".to_string());
     let scenario_name = scenario_name.as_str();
 
     let host =
         std::env::var("LOADTEST_HOST").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
-    // Setup: Create a test user for lnurlp tests
-    if scenario_name == "public" || scenario_name == "all" {
+    if scenario_name == "public" || scenario_name == "all" || scenario_name == "dbstress" {
         match setup_test_user(&host).await {
             Ok(username) => {
                 let _ = TEST_USER_LN_ADDRESS.set(username);
@@ -368,12 +532,14 @@ async fn main() -> Result<(), GooseError> {
             GooseAttack::initialize()?.register_scenario(build_authenticated_scenario())
         }
         "health" => GooseAttack::initialize()?.register_scenario(build_health_scenario()),
+        "dbstress" => GooseAttack::initialize()?.register_scenario(build_db_stress_scenario()),
         "all" => GooseAttack::initialize()?
             .register_scenario(build_public_scenario())
-            .register_scenario(build_registration_scenario()),
+            .register_scenario(build_registration_scenario())
+            .register_scenario(build_db_stress_scenario()),
         _ => {
             eprintln!(
-                "Unknown scenario: {}. Available: public, registration, authenticated, health, all",
+                "Unknown scenario: {}. Available: public, registration, authenticated, health, dbstress, all",
                 scenario_name
             );
             std::process::exit(1);
