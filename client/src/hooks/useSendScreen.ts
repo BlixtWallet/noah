@@ -300,6 +300,8 @@ export const useSendScreen = () => {
 
   const handleClear = () => {
     setDestination("");
+    setComment("");
+    setAmount("");
     setShowConfirmation(false);
     setShowSuccess(false);
   };

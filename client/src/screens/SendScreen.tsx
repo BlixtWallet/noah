@@ -172,7 +172,7 @@ const SendScreen = () => {
               {destination ? (
                 <View className="flex-1">
                   <Button onPress={handleClear} variant="outline">
-                    <Text>Cancel</Text>
+                    <Text>Clear</Text>
                   </Button>
                 </View>
               ) : null}
