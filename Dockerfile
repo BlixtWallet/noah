@@ -17,7 +17,7 @@ FROM chef AS builder
 RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
 
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json --manifest-path ./server/Cargo.toml
+RUN cargo chef cook --release --recipe-path recipe.json -p server
 
 # Stage 4: Build application
 COPY ./Cargo.toml ./Cargo.toml
@@ -25,13 +25,15 @@ COPY ./server/Cargo.toml ./server/Cargo.toml
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./server/src/ ./server/src
 COPY ./server/migrations ./server/migrations
-RUN cargo build --release --manifest-path ./server/Cargo.toml
+WORKDIR /app/server
+RUN cargo build --release
 
 # Stage 5: Runtime image
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update && apt-get install -y ca-certificates curl pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/server /usr/local/bin/
+COPY --from=builder /app/target/release/noah-cli /usr/local/bin/
 RUN mkdir -p /etc/server
 
 EXPOSE 3000

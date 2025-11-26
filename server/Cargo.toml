@@ -44,6 +44,7 @@ semver = "1.0.27"
 sqlx = { version = "0.8.2", default-features = false, features = ["runtime-tokio", "postgres", "uuid", "chrono", "macros", "migrate"] }
 reqwest = "0.12.24"
 goose = { version = "0.17", optional = true }
+clap = { version = "4.5", features = ["derive"] }
 
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["full"] }
@@ -57,3 +58,7 @@ loadtest = ["goose"]
 name = "loadtest"
 path = "src/bin/loadtest.rs"
 required-features = ["loadtest"]
+
+[[bin]]
+name = "noah-cli"
+path = "src/bin/cli.rs"
