@@ -63,3 +63,4 @@ config.toml
 
 client/android/app/release.keystore
 local.properties
+report.html
