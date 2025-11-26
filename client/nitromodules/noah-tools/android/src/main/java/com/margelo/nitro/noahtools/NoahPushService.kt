@@ -308,20 +308,46 @@ class NoahPushService : PushService() {
                         "NoahPushService",
                         "Waiting for lightning payment (async)..."
                     )
-                    tryClaim.invoke(instance, paymentHash, true, null)
-                    NoahToolsLogging.performNativeLog("info", "NoahPushService", "Lightning payment claimed")
 
-                    // Local notification to inform user only after claim succeeds
-                    ensureNotificationChannel(context)
-                    val notification = NotificationCompat.Builder(context, notificationChannelId)
-                        .setSmallIcon(android.R.drawable.stat_notify_more)
-                        .setContentTitle("Lightning Payment Received! ⚡")
-                        .setContentText("You received $sats sats")
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
-                        .setAutoCancel(true)
-                        .build()
-                    val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    manager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+                    var claimSucceeded = false
+                    for (attempt in 1..30) {
+                        try {
+                            tryClaim.invoke(instance, paymentHash, false, null)
+                            claimSucceeded = true
+                            break
+                        } catch (e: Exception) {
+                            NoahToolsLogging.performNativeLog(
+                                "warn",
+                                "NoahPushService",
+                                "tryClaim attempt $attempt/30 failed: ${e.message}"
+                            )
+                            if (attempt < 30) {
+                                Thread.sleep(800)
+                            }
+                        }
+                    }
+
+                    if (claimSucceeded) {
+                        NoahToolsLogging.performNativeLog("info", "NoahPushService", "Lightning payment claimed")
+
+                        // Local notification to inform user only after claim succeeds
+                        ensureNotificationChannel(context)
+                        val notification = NotificationCompat.Builder(context, notificationChannelId)
+                            .setSmallIcon(android.R.drawable.stat_notify_more)
+                            .setContentTitle("Lightning Payment Received! ⚡")
+                            .setContentText("You received $sats sats")
+                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .setAutoCancel(true)
+                            .build()
+                        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        manager.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+                    } else {
+                        NoahToolsLogging.performNativeLog(
+                            "warn",
+                            "NoahPushService",
+                            "tryClaim failed after 30 attempts, skipping notification"
+                        )
+                    }
                 } catch (e: Exception) {
                     NoahToolsLogging.performNativeLog(
                         "error",
