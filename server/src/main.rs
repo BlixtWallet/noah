@@ -78,7 +78,7 @@ fn main() -> anyhow::Result<()> {
                 sentry::ClientOptions {
                     release: sentry::release_name!(),
                     enable_logs: true,
-                    send_default_pii: true,
+                    send_default_pii: false,
                     traces_sample_rate: 1.0,
                     ..Default::default()
                 },
