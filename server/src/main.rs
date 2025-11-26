@@ -11,9 +11,11 @@ mod routes;
 mod types;
 use bitcoin::Network;
 use dashmap::DashMap;
-use sentry::integrations::{tower::NewSentryLayer, tracing::EventFilter};
+use sentry::integrations::{
+    tower::{NewSentryLayer, SentryHttpLayer},
+    tracing::EventFilter,
+};
 use std::{net::SocketAddr, sync::Arc};
-use tower::ServiceBuilder;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -77,6 +79,7 @@ fn main() -> anyhow::Result<()> {
                     release: sentry::release_name!(),
                     enable_logs: true,
                     send_default_pii: false,
+                    traces_sample_rate: 1.0,
                     ..Default::default()
                 },
             )));
@@ -222,7 +225,8 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
         .merge(lnurl_router)
         .with_state(app_state.clone())
         .layer(middleware::from_fn(trace_layer::trace_middleware))
-        .layer(ServiceBuilder::new().layer(NewSentryLayer::new_from_top()));
+        .layer(SentryHttpLayer::new().enable_transaction())
+        .layer(NewSentryLayer::new_from_top());
 
     let addr = SocketAddr::from((host, config.port));
     tracing::debug!("server started listening on {}", addr);
