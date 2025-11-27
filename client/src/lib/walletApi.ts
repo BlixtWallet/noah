@@ -272,11 +272,15 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
     });
   }
 
-  // Delete the keychain
-  await ResultAsync.fromPromise(clearStaleKeychain(), (error) => {
-    log.w("Failed to clear keychain when deleting the wallet", [error]);
-    return error;
-  });
+  const clearKeyChainResult = await ResultAsync.fromPromise(
+    clearStaleKeychain(),
+    (e) => e as Error,
+  );
+
+  if (clearKeyChainResult.isErr()) {
+    log.e("Failed to clear keychain while deleting wallet", [clearKeyChainResult.error]);
+    return err(clearKeyChainResult.error);
+  }
 
   return ok(undefined);
 };
