@@ -272,11 +272,11 @@ export const deleteWallet = async (): Promise<Result<void, Error>> => {
     });
   }
 
-  const resetResult = await ResultAsync.fromPromise(
-    Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
-    (e) => e as Error,
-  );
-  if (resetResult.isErr()) return err(resetResult.error);
+  // Delete the keychain
+  await ResultAsync.fromPromise(clearStaleKeychain(), (error) => {
+    log.w("Failed to clear keychain when deleting the wallet", [error]);
+    return error;
+  });
 
   return ok(undefined);
 };

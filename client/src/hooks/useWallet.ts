@@ -14,7 +14,6 @@ import {
   getExpiringVtxos,
   closeWalletIfLoaded,
   sync,
-  clearStaleKeychain,
 } from "../lib/walletApi";
 import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
@@ -213,12 +212,6 @@ export function useDeleteWallet() {
       useTransactionStore.getState().reset();
       useWalletStore.getState().reset();
       useServerStore.getState().resetRegistration();
-
-      // Delete the keychain
-      await ResultAsync.fromPromise(clearStaleKeychain(), (error) => {
-        log.w("Failed to clear keychain when deleting the wallet", [error]);
-        return error;
-      });
 
       // Clear query cache
       queryClient.clear();
