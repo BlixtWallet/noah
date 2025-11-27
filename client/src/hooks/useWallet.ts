@@ -14,6 +14,7 @@ import {
   getExpiringVtxos,
   closeWalletIfLoaded,
   sync,
+  clearStaleKeychain,
 } from "../lib/walletApi";
 import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
@@ -198,8 +199,6 @@ export function useOnchainSync() {
 }
 
 export function useDeleteWallet() {
-  const { reset } = useWalletStore();
-  const { resetRegistration } = useServerStore();
   const { showAlert } = useAlert();
 
   return useMutation({
@@ -210,12 +209,16 @@ export function useDeleteWallet() {
         return error;
       });
 
-      // Reset stores BEFORE deleting files to avoid storage errors
-      reset();
-      resetRegistration();
-
-      // Also reset transaction store
+      // Also reset all MMKV stores
       useTransactionStore.getState().reset();
+      useWalletStore.getState().reset();
+      useServerStore.getState().resetRegistration();
+
+      // Delete the keychain
+      await ResultAsync.fromPromise(clearStaleKeychain(), (error) => {
+        log.w("Failed to clear keychain when deleting the wallet", [error]);
+        return error;
+      });
 
       // Clear query cache
       queryClient.clear();

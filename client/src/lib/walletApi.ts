@@ -125,6 +125,12 @@ const loadWallet = async (mnemonic: string): Promise<Result<boolean, Error>> => 
   );
 
   if (loadResult.isErr()) {
+    // Handle race condition: if wallet is already loaded, treat as success
+    const errorMessage = loadResult.error.message?.toLowerCase() ?? "";
+    if (errorMessage.includes("already loaded")) {
+      log.d("Wallet already loaded (race condition), treating as success");
+      return ok(true);
+    }
     return err(loadResult.error);
   }
 
