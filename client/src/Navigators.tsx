@@ -26,12 +26,15 @@ import RestoreWalletScreen from "~/screens/RestoreWalletScreen";
 import NoahStoryScreen from "~/screens/NoahStoryScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
+import { useServerStore } from "~/store/serverStore";
+import { useTransactionStore } from "~/store/transactionStore";
 import { COLORS } from "~/lib/styleConstants";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
 import { Transaction } from "~/types/transaction";
 import { OnboardingRequest, OffboardingRequest } from "~/lib/transactionsDb";
 import { getMnemonic } from "~/lib/crypto";
+import { walletDataExists, clearStaleKeychain } from "~/lib/walletApi";
 import VTXOsScreen, { type VTXOWithStatus } from "~/screens/VTXOsScreen";
 import VTXODetailScreen from "~/screens/VTXODetailScreen";
 import PushNotificationsRequiredScreen from "~/screens/PushNotificationsRequiredScreen";
@@ -395,8 +398,21 @@ const AppNavigation = () => {
       const mnemonicResult = await getMnemonic();
 
       if (mnemonicResult.isOk() && mnemonicResult.value) {
-        useWalletStore.getState().finishOnboarding();
-        shouldCheckWallet = false;
+        // Check if wallet data exists on disk
+        // iOS Keychain persists after uninstall, but app data is deleted
+        // This detects that inconsistent state and clears the stale keychain
+        if (!walletDataExists()) {
+          log.w("Mnemonic found in keychain but wallet data missing - clearing stale keychain");
+          await clearStaleKeychain();
+          // Reset all stores to ensure clean state
+          useWalletStore.getState().reset();
+          useServerStore.getState().resetRegistration();
+          useTransactionStore.getState().reset();
+          // Don't call finishOnboarding, let user go through onboarding
+        } else {
+          useWalletStore.getState().finishOnboarding();
+          shouldCheckWallet = false;
+        }
       }
 
       if (shouldCheckWallet) {

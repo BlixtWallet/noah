@@ -285,3 +285,37 @@ export const getExpiringVtxos = async () => {
     (e) => e as Error,
   );
 };
+
+/**
+ * Checks if wallet data exists on disk.
+ * Used to detect stale keychain state after app reinstall on iOS.
+ * iOS Keychain persists after uninstall, but app data is deleted.
+ */
+export const walletDataExists = (): boolean => {
+  try {
+    if (!RNFSTurbo.exists(ARK_DATA_PATH)) {
+      return false;
+    }
+    const contents = RNFSTurbo.readdir(ARK_DATA_PATH);
+    return contents.length > 0;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Clears stale keychain mnemonic when wallet data doesn't exist.
+ * This handles the iOS reinstall case where keychain persists but app data is gone.
+ */
+export const clearStaleKeychain = async (): Promise<Result<void, Error>> => {
+  const resetResult = await ResultAsync.fromPromise(
+    Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+  if (resetResult.isErr()) {
+    log.w("Failed to clear stale keychain", [resetResult.error]);
+    return err(resetResult.error);
+  }
+  log.i("Cleared stale keychain mnemonic after reinstall detection");
+  return ok(undefined);
+};
