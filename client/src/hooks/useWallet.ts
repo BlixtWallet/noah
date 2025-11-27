@@ -198,8 +198,6 @@ export function useOnchainSync() {
 }
 
 export function useDeleteWallet() {
-  const { reset } = useWalletStore();
-  const { resetRegistration } = useServerStore();
   const { showAlert } = useAlert();
 
   return useMutation({
@@ -210,12 +208,10 @@ export function useDeleteWallet() {
         return error;
       });
 
-      // Reset stores BEFORE deleting files to avoid storage errors
-      reset();
-      resetRegistration();
-
-      // Also reset transaction store
+      // Also reset all MMKV stores
       useTransactionStore.getState().reset();
+      useWalletStore.getState().reset();
+      useServerStore.getState().resetRegistration();
 
       // Clear query cache
       queryClient.clear();

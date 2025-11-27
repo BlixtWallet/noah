@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Text } from "react-native";
 import { useWalletStore } from "../store/walletStore";
 import { useLoadWallet, useCloseWallet } from "../hooks/useWallet";
@@ -26,6 +26,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
   const { mutate: loadWallet, isPending: isWalletLoading } = useLoadWallet();
   const { mutate: closeWallet } = useCloseWallet();
   const { safelyExecuteWhenReady } = useBackgroundJobCoordination();
+  const isLoadingRef = useRef(false);
 
   // kick-off the wallet load once onboarding is finished
   useEffect(() => {
@@ -41,9 +42,14 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
           return;
         }
 
-        // If wallet isn't loaded, load it
-        if (!actuallyLoaded) {
-          loadWallet();
+        // If wallet isn't loaded, load it (prevent concurrent attempts)
+        if (!actuallyLoaded && !isLoadingRef.current) {
+          isLoadingRef.current = true;
+          loadWallet(undefined, {
+            onSettled: () => {
+              isLoadingRef.current = false;
+            },
+          });
         }
       });
     };
