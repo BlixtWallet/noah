@@ -17,5 +17,6 @@ backup_cron = "every 24 hours"
 heartbeat_cron = "every 24 hours"
 deregistration_cron = "every 24 hours"
 maintenance_interval_rounds = 1
+notification_spacing_minutes = 0
 s3_bucket_name = "test-bucket"
 minimum_app_version = "0.0.1"
