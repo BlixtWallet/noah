@@ -1,6 +1,6 @@
 services:
   bitcoind:
-    image: bitcoin/bitcoin:29
+    image: bitcoin/bitcoin:30
     command:
       [
         "bitcoind",
@@ -96,7 +96,7 @@ services:
       captaind:
         condition: service_started
   lnd:
-    image: lightninglabs/lnd:v0.19.3-beta
+    image: lightninglabs/lnd:v0.20.0-beta
     command:
       [
         "--bitcoin.regtest",
