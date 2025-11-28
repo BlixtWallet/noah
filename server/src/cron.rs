@@ -4,11 +4,10 @@ use crate::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
         offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
     },
-    notification_coordinator::{
-        NotificationCoordinator, NotificationPriority, NotificationRequest,
-    },
+    notification_coordinator::{NotificationCoordinator, NotificationRequest},
     types::{BackupTriggerNotification, HeartbeatNotification, NotificationData},
 };
+use expo_push_notification_client::Priority;
 use tokio_cron_scheduler::{Job, JobScheduler};
 use tracing::info;
 
@@ -26,7 +25,7 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
         });
 
         let request = NotificationRequest {
-            priority: NotificationPriority::Normal,
+            priority: Priority::Normal,
             data: notification_data,
             target_pubkey: Some(pubkey),
         };
@@ -59,7 +58,7 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
         });
 
         let request = NotificationRequest {
-            priority: NotificationPriority::Normal,
+            priority: Priority::Normal,
             data: notification_data,
             target_pubkey: Some(pubkey.clone()),
         };

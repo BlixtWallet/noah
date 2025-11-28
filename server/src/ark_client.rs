@@ -1,15 +1,14 @@
 use crate::{
     AppState,
     db::offboarding_repo::OffboardingRepository,
-    notification_coordinator::{
-        NotificationCoordinator, NotificationPriority, NotificationRequest,
-    },
+    notification_coordinator::{NotificationCoordinator, NotificationRequest},
     types::{
         MaintenanceNotification, NotificationData, OffboardingNotification, OffboardingStatus,
     },
 };
 
 use bitcoin::hex::DisplayHex;
+use expo_push_notification_client::Priority;
 use futures_util::stream::StreamExt;
 use server_rpc::{
     ArkServiceClient,
@@ -137,7 +136,7 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Critical,
+        priority: Priority::High,
         data: notification_data,
         target_pubkey: None, // Broadcast to all users
     };
@@ -179,7 +178,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
         });
 
         let notification_request = NotificationRequest {
-            priority: NotificationPriority::Critical,
+            priority: Priority::High,
             data: notification_data,
             target_pubkey: Some(request.pubkey.clone()),
         };

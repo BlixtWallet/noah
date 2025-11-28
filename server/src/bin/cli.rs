@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
+use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage, Sound};
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 
@@ -115,7 +115,7 @@ async fn cmd_broadcast(config: &Config, title: String, body: String, dry_run: bo
         let message = ExpoPushMessage::builder(chunk.clone())
             .title(&title)
             .body(&body)
-            .sound("default")
+            .sound(Sound::Default)
             .build();
 
         match message {
