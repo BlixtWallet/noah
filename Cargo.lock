@@ -4705,6 +4705,7 @@ dependencies = [
  "rand 0.9.2",
  "random_word",
  "redis 0.25.4",
+ "regex",
  "reqwest 0.12.24",
  "semver",
  "sentry",

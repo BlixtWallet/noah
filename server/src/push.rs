@@ -9,10 +9,13 @@ use crate::{
 };
 
 /// Determines if a push token is an Expo push token.
-/// Expo tokens have the format: `ExponentPushToken[...]`
 /// All other tokens (e.g., UnifiedPush HTTP endpoints) are treated as non-Expo.
 fn is_expo_token(token: &str) -> bool {
-    token.starts_with("ExponentPushToken[") && token.ends_with(']')
+    ((token.starts_with("ExponentPushToken[") || token.starts_with("ExpoPushToken["))
+        && token.ends_with(']'))
+        || regex::Regex::new(r"^[a-z\d]{8}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{12}$")
+            .expect("regex is valid")
+            .is_match(token)
 }
 
 #[derive(Serialize, Clone, Debug)]
