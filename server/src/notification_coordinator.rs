@@ -183,7 +183,7 @@ impl NotificationCoordinator {
             return Ok(false);
         }
 
-        // Critical notifications bypass spacing checks (except maintenance for offboarding)
+        // `Priority::High` notifications bypass spacing checks (except maintenance for offboarding)
         if request.priority == Priority::High {
             return Ok(true);
         }
