@@ -33,7 +33,7 @@ import { useWalletStore } from "~/store/walletStore";
 import { updateWidget, useWidget } from "~/hooks/useWidget";
 import { formatBip177 } from "~/lib/utils";
 import { calculateBalances } from "~/lib/balanceUtils";
-import { sync } from "~/lib/walletApi";
+import { onchainSync, sync } from "~/lib/walletApi";
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
@@ -63,6 +63,7 @@ const HomeScreen = () => {
     await safelyExecuteWhenReady(() => loadWallet());
 
     await sync();
+    await onchainSync();
     await refetch();
     await updateWidget();
     getRandomFact();

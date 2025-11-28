@@ -24,6 +24,7 @@ import LightningAddressScreen from "~/screens/LightningAddressScreen";
 import { BackupSettingsScreen } from "~/screens/BackupSettingsScreen";
 import RestoreWalletScreen from "~/screens/RestoreWalletScreen";
 import NoahStoryScreen from "~/screens/NoahStoryScreen";
+import DebugScreen from "~/screens/DebugScreen";
 import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { useServerStore } from "~/store/serverStore";
@@ -67,6 +68,7 @@ export type SettingsStackParamList = {
   VTXODetail: { vtxo: VTXOWithStatus };
   NoahStory: undefined;
   UnifiedPush: { fromOnboarding?: boolean } | undefined;
+  Debug: undefined;
 };
 
 export type OnboardingStackParamList = {
@@ -125,6 +127,7 @@ const SettingsStackNav = () => (
       component={UnifiedPushScreen}
       options={{ animation: "default" }}
     />
+    <Stack.Screen name="Debug" component={DebugScreen} options={{ animation: "default" }} />
   </Stack.Navigator>
 );
 

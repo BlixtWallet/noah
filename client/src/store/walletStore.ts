@@ -49,6 +49,7 @@ interface WalletState {
   staticVtxoPubkey: string | null;
   restoreProgress: RestoreProgress | null;
   isBiometricsEnabled: boolean;
+  isDebugModeEnabled: boolean;
   /** Flag indicating if a background push notification job is currently running */
   isBackgroundJobRunning: boolean;
   /** Timestamp (Date.now()) when the current background job started, used to detect stale flags */
@@ -60,6 +61,7 @@ interface WalletState {
   setStaticVtxoPubkey: (pubkey: string) => void;
   setRestoreProgress: (progress: RestoreProgress | null) => void;
   setBiometricsEnabled: (enabled: boolean) => void;
+  setDebugModeEnabled: (enabled: boolean) => void;
   setBackgroundJobRunning: (running: boolean) => void;
   clearStaleBackgroundJobFlag: () => void;
   reset: () => void;
@@ -72,6 +74,7 @@ const initialState = {
   staticVtxoPubkey: null,
   restoreProgress: null,
   isBiometricsEnabled: false,
+  isDebugModeEnabled: false,
   isBackgroundJobRunning: false,
   backgroundJobStartTime: null,
 };
@@ -87,6 +90,7 @@ export const useWalletStore = create<WalletState>()(
       setStaticVtxoPubkey: (pubkey) => set({ staticVtxoPubkey: pubkey }),
       setRestoreProgress: (progress) => set({ restoreProgress: progress }),
       setBiometricsEnabled: (enabled) => set({ isBiometricsEnabled: enabled }),
+      setDebugModeEnabled: (enabled) => set({ isDebugModeEnabled: enabled }),
       /**
        * Sets the background job running flag and records the start time.
        *
@@ -147,6 +151,7 @@ export const useWalletStore = create<WalletState>()(
         isWalletLoaded: state.isWalletLoaded,
         staticVtxoPubkey: state.staticVtxoPubkey,
         isBiometricsEnabled: state.isBiometricsEnabled,
+        isDebugModeEnabled: state.isDebugModeEnabled,
       }),
     },
   ),

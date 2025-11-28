@@ -10,7 +10,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Text } from "../components/ui/text";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
@@ -42,7 +42,8 @@ type Setting = {
     | "backup"
     | "vtxos"
     | "feedback"
-    | "unifiedPush";
+    | "unifiedPush"
+    | "debug";
   title: string;
   value?: string;
   description?: string;
@@ -79,7 +80,14 @@ const SettingsScreen = () => {
   const [confirmText, setConfirmText] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [copiedLightningAddress, setCopiedLightningAddress] = useState(false);
-  const { isInitialized, isBiometricsEnabled, setBiometricsEnabled } = useWalletStore();
+  const {
+    isInitialized,
+    isBiometricsEnabled,
+    setBiometricsEnabled,
+    isDebugModeEnabled,
+    setDebugModeEnabled,
+  } = useWalletStore();
+  const [versionTapCount, setVersionTapCount] = useState(0);
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
@@ -103,6 +111,28 @@ const SettingsScreen = () => {
     };
     checkBiometrics();
   }, []);
+
+  const versionTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleVersionTap = () => {
+    if (isDebugModeEnabled) return;
+
+    if (versionTapTimeoutRef.current) {
+      clearTimeout(versionTapTimeoutRef.current);
+    }
+
+    const newCount = versionTapCount + 1;
+    setVersionTapCount(newCount);
+
+    if (newCount >= 5) {
+      setDebugModeEnabled(true);
+      setVersionTapCount(0);
+    } else {
+      versionTapTimeoutRef.current = setTimeout(() => {
+        setVersionTapCount(0);
+      }, 2000);
+    }
+  };
 
   const handleBiometricsToggle = async (value: boolean) => {
     if (value) {
@@ -135,6 +165,8 @@ const SettingsScreen = () => {
       setShowFeedback(true);
     } else if (item.id === "unifiedPush") {
       navigation.navigate("UnifiedPush", { fromOnboarding: false });
+    } else if (item.id === "debug") {
+      navigation.navigate("Debug");
     }
   };
 
@@ -231,6 +263,14 @@ const SettingsScreen = () => {
       description: "Report bugs or share feedback with the Noah team",
       isPressable: true,
     });
+    if (isDebugModeEnabled) {
+      debugData.push({
+        id: "debug",
+        title: "Debug Screen",
+        description: "Advanced debug actions for developers",
+        isPressable: true,
+      });
+    }
   }
 
   const renderSettingItem = (item: Setting) => {
@@ -488,9 +528,15 @@ const SettingsScreen = () => {
         )}
 
         <View className="items-center py-8 px-4">
-          <Text className="text-muted-foreground text-sm mb-1">
-            v{Constants.expoConfig?.version || "0.0.1"}
-          </Text>
+          <Pressable onPress={handleVersionTap}>
+            <Text className="text-muted-foreground text-sm mb-1">
+              v{Constants.expoConfig?.version || "0.0.1"}
+              {versionTapCount > 0 &&
+                versionTapCount < 5 &&
+                ` (${5 - versionTapCount} taps to unlock debug)`}
+              {isDebugModeEnabled && " 🔧"}
+            </Text>
+          </Pressable>
           <Text className="text-muted-foreground text-sm">Made with ❤️ from Noah team</Text>
         </View>
       </ScrollView>

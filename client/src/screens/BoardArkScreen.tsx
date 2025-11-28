@@ -54,21 +54,22 @@ type BoardingResponse = {
 type Flow = "onboard" | "offboard";
 
 // Custom hook for parsing boarding results
-const useParsedBoardingResult = (
-  boardResult?: BoardResult,
-  boardAllResult?: BoardResult,
-  offboardResult?: string,
-) => {
+const useParsedBoardingResult = (boardResult?: BoardResult, boardAllResult?: BoardResult) => {
   const [parsedData, setParsedData] = useState<BoardingResponse | null>(null);
 
   useEffect(() => {
-    const result = boardResult || boardAllResult || offboardResult;
+    const result = boardResult || boardAllResult;
+
+    log.i("BoardingResult", [result]);
     if (result) {
-      if (parsedData) {
-        setParsedData(parsedData);
-      }
+      const parsed: BoardingResponse = {
+        funding_txid: result.funding_txid,
+        vtxos: result.vtxos as unknown as Vtxo[],
+      };
+      log.i("Boarding result ParsedData", [parsed]);
+      setParsedData(parsed);
     }
-  }, [boardResult, boardAllResult, offboardResult]);
+  }, [boardResult, boardAllResult]);
 
   return { parsedData, setParsedData };
 };
@@ -274,7 +275,6 @@ const BoardArkScreen = () => {
   } = useBoardAllAmountArk();
 
   const [flow, setFlow] = useState<Flow>("onboard");
-  const offboardResult = undefined; // Placeholder for offboard result
   const [amount, setAmount] = useState("");
   const [isMaxAmount, setIsMaxAmount] = useState(false);
   const [address, setAddress] = useState("");
@@ -282,11 +282,7 @@ const BoardArkScreen = () => {
   const [offboardingRequestId, setOffboardingRequestId] = useState<string | null>(null);
 
   // Use custom hook for parsing results
-  const { parsedData, setParsedData } = useParsedBoardingResult(
-    boardResult,
-    boardAllResult,
-    offboardResult,
-  );
+  const { parsedData, setParsedData } = useParsedBoardingResult(boardResult, boardAllResult);
 
   // Store onboarding request in database when successful
   useEffect(() => {
