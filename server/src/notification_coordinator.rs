@@ -123,7 +123,7 @@ impl NotificationCoordinator {
         for pubkey in eligible_users {
             // For Normal priority, users are already filtered by get_eligible_users()
             // For Critical priority, we still need to check offboarding status
-            let should_send = if request.priority == NotificationPriority::Critical {
+            let should_send = if request.priority == Priority::High {
                 self.should_send_to_user(&pubkey, request, tracking_repo)
                     .await?
             } else {
