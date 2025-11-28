@@ -5,6 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
+use expo_push_notification_client::Priority;
 use rand::Rng;
 use uuid::Uuid;
 
@@ -206,7 +207,7 @@ pub async fn lnurlp_request(
                 },
             ))
             .unwrap(),
-            priority: "high".to_string(),
+            priority: Priority::High,
             content_available: true,
         };
         if let Err(e) = send_push_notification(state_clone, data, Some(pubkey)).await {
