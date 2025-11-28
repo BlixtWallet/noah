@@ -128,10 +128,16 @@ impl NotificationCoordinator {
         let mut skipped_count = 0;
 
         for pubkey in eligible_users {
-            if self
-                .should_send_to_user(&pubkey, request, tracking_repo)
-                .await?
-            {
+            // For Normal priority, users are already filtered by get_eligible_users()
+            // For Critical priority, we still need to check offboarding status
+            let should_send = if request.priority == NotificationPriority::Critical {
+                self.should_send_to_user(&pubkey, request, tracking_repo)
+                    .await?
+            } else {
+                true
+            };
+
+            if should_send {
                 // Send the notification
                 if let Err(e) = send_push_notification_with_unique_k1(
                     self.app_state.clone(),
