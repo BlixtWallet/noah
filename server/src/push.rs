@@ -1,4 +1,4 @@
-use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
+use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage, Priority};
 use futures_util::{StreamExt, stream};
 use reqwest::Client;
 use serde::Serialize;
@@ -20,7 +20,7 @@ pub struct PushNotificationData {
     pub title: Option<String>,
     pub body: Option<String>,
     pub data: String,
-    pub priority: String,
+    pub priority: Priority,
     // This is iOS only which makes the app wake up to do things
     pub content_available: bool,
 }
@@ -98,7 +98,7 @@ pub async fn send_push_notification_with_unique_k1(
                         title: None,
                         body: None,
                         data: data_string,
-                        priority: "high".to_string(),
+                        priority: Priority::High,
                         content_available: true,
                     };
 
