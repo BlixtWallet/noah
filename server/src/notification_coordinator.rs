@@ -94,7 +94,7 @@ impl NotificationCoordinator {
         tracking_repo: &NotificationTrackingRepository<'_>,
     ) -> Result<()> {
         let eligible_users = if request.priority == Priority::High {
-            // Critical notifications can go to all users (but still respect offboarding rules)
+            // `Priority::High` is used for critical notifications that can go to all users (but still respect offboarding rules)
             self.get_all_users().await?
         } else {
             // Normal notifications respect spacing
