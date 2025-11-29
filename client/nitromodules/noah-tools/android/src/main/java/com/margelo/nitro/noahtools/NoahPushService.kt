@@ -145,17 +145,12 @@ class NoahPushService : PushService() {
                 try {
                     loadWallet(clazz, instance, context)
                 } catch (e: Exception) {
-                    if (e.message?.contains("already loaded") == true ||
-                        e.cause?.message?.contains("already loaded") == true
-                    ) {
-                        NoahToolsLogging.performNativeLog(
-                            "info",
-                            "NoahPushService",
-                            "Wallet was loaded by another thread/process, continuing..."
-                        )
-                    } else {
-                        throw e
-                    }
+                    NoahToolsLogging.performNativeLog(
+                        "info",
+                        "NoahPushService",
+                        "Wallet was loaded by another thread/process, continuing..."
+                    )
+                    throw e;
                 }
             }
         }
