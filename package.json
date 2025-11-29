@@ -16,8 +16,5 @@
     "postinstall": "bun scripts/download_ark_binaries.js",
     "prepare": "husky",
     "check": "bun client check"
-  },
-  "patchedDependencies": {
-    "expo-modules-autolinking@3.0.15": "patches/expo-modules-autolinking@3.0.15.patch"
   }
 }
