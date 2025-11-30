@@ -1,4 +1,4 @@
-use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage};
+use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage, Priority};
 use futures_util::{StreamExt, stream};
 use reqwest::Client;
 use serde::Serialize;
@@ -9,10 +9,13 @@ use crate::{
 };
 
 /// Determines if a push token is an Expo push token.
-/// Expo tokens have the format: `ExponentPushToken[...]`
 /// All other tokens (e.g., UnifiedPush HTTP endpoints) are treated as non-Expo.
 fn is_expo_token(token: &str) -> bool {
-    token.starts_with("ExponentPushToken[") && token.ends_with(']')
+    ((token.starts_with("ExponentPushToken[") || token.starts_with("ExpoPushToken["))
+        && token.ends_with(']'))
+        || regex::Regex::new(r"^[a-z\d]{8}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{4}-[a-z\d]{12}$")
+            .expect("regex is valid")
+            .is_match(token)
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -20,7 +23,7 @@ pub struct PushNotificationData {
     pub title: Option<String>,
     pub body: Option<String>,
     pub data: String,
-    pub priority: String,
+    pub priority: Priority,
     // This is iOS only which makes the app wake up to do things
     pub content_available: bool,
 }
@@ -98,7 +101,7 @@ pub async fn send_push_notification_with_unique_k1(
                         title: None,
                         body: None,
                         data: data_string,
-                        priority: "high".to_string(),
+                        priority: Priority::High,
                         content_available: true,
                     };
 

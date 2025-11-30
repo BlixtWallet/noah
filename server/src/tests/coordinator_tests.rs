@@ -1,15 +1,14 @@
 use crate::db::notification_tracking_repo::NotificationTrackingRepository;
 use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::user_repo::UserRepository;
-use crate::notification_coordinator::{
-    NotificationCoordinator, NotificationPriority, NotificationRequest,
-};
+use crate::notification_coordinator::{NotificationCoordinator, NotificationRequest};
 use crate::tests::common::{TestUser, setup_test_app};
 use crate::types::{
     BackupTriggerNotification, HeartbeatNotification, MaintenanceNotification, NotificationData,
     OffboardingStatus,
 };
 use chrono::{Duration, Utc};
+use expo_push_notification_client::Priority;
 
 #[tracing_test::traced_test]
 #[tokio::test]
@@ -45,7 +44,7 @@ async fn test_normal_priority_respects_spacing() {
         NotificationData::BackupTrigger(BackupTriggerNotification { k1: String::new() });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Normal,
+        priority: Priority::Normal,
         data: notification_data,
         target_pubkey: Some(pubkey.clone()),
     };
@@ -100,7 +99,7 @@ async fn test_critical_priority_bypasses_spacing() {
         NotificationData::Maintenance(MaintenanceNotification { k1: String::new() });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Critical,
+        priority: Priority::High,
         data: notification_data.clone(),
         target_pubkey: Some(pubkey.clone()),
     };
@@ -147,7 +146,7 @@ async fn test_offboarding_skips_maintenance() {
         NotificationData::Maintenance(MaintenanceNotification { k1: String::new() });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Critical,
+        priority: Priority::High,
         data: notification_data.clone(),
         target_pubkey: Some(pubkey.clone()),
     };
@@ -198,7 +197,7 @@ async fn test_notification_tracking_records_sent() {
     });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Normal,
+        priority: Priority::Normal,
         data: notification_data.clone(),
         target_pubkey: Some(pubkey.clone()),
     };
@@ -262,7 +261,7 @@ async fn test_broadcast_filters_ineligible_users() {
         NotificationData::BackupTrigger(BackupTriggerNotification { k1: String::new() });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Normal,
+        priority: Priority::Normal,
         data: notification_data,
         target_pubkey: None, // Broadcast
     };
@@ -454,7 +453,7 @@ async fn test_offboarding_with_processing_status_skips_maintenance() {
         NotificationData::Maintenance(MaintenanceNotification { k1: String::new() });
 
     let request = NotificationRequest {
-        priority: NotificationPriority::Critical,
+        priority: Priority::High,
         data: notification_data.clone(),
         target_pubkey: Some(pubkey.clone()),
     };

@@ -4,19 +4,12 @@ use crate::{
 };
 use anyhow::Result;
 use chrono::Utc;
+use expo_push_notification_client::Priority;
 use tracing::{debug, info, warn};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NotificationPriority {
-    /// Critical notifications that must go out immediately (offboarding, maintenance)
-    Critical,
-    /// Normal notifications that respect spacing rules (backup, heartbeat)
-    Normal,
-}
 
 #[derive(Debug, Clone)]
 pub struct NotificationRequest {
-    pub priority: NotificationPriority,
+    pub priority: Priority,
     pub data: NotificationData,
     pub target_pubkey: Option<String>, // None means broadcast to all users
 }
@@ -100,8 +93,8 @@ impl NotificationCoordinator {
         request: &NotificationRequest,
         tracking_repo: &NotificationTrackingRepository<'_>,
     ) -> Result<()> {
-        let eligible_users = if request.priority == NotificationPriority::Critical {
-            // Critical notifications can go to all users (but still respect offboarding rules)
+        let eligible_users = if request.priority == Priority::High {
+            // `Priority::High` is used for critical notifications that can go to all users (but still respect offboarding rules)
             self.get_all_users().await?
         } else {
             // Normal notifications respect spacing
@@ -130,7 +123,7 @@ impl NotificationCoordinator {
         for pubkey in eligible_users {
             // For Normal priority, users are already filtered by get_eligible_users()
             // For Critical priority, we still need to check offboarding status
-            let should_send = if request.priority == NotificationPriority::Critical {
+            let should_send = if request.priority == Priority::High {
                 self.should_send_to_user(&pubkey, request, tracking_repo)
                     .await?
             } else {
@@ -190,8 +183,8 @@ impl NotificationCoordinator {
             return Ok(false);
         }
 
-        // Critical notifications bypass spacing checks (except maintenance for offboarding)
-        if request.priority == NotificationPriority::Critical {
+        // `Priority::High` notifications bypass spacing checks (except maintenance for offboarding)
+        if request.priority == Priority::High {
             return Ok(true);
         }
 
@@ -229,10 +222,7 @@ mod tests {
 
     #[test]
     fn test_priority_levels() {
-        assert_eq!(
-            NotificationPriority::Critical,
-            NotificationPriority::Critical
-        );
-        assert_ne!(NotificationPriority::Critical, NotificationPriority::Normal);
+        assert_eq!(Priority::High, Priority::High);
+        assert_ne!(Priority::High, Priority::Normal);
     }
 }
