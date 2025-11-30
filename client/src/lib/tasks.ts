@@ -1,4 +1,4 @@
-import { loadWalletIfNeeded, maintanance } from "./walletApi";
+import { loadWalletIfNeeded, maintanance, sync } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice, offboardAllArk } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
@@ -13,7 +13,7 @@ import { isNetworkMatch } from "./utils";
 
 const log = logger("tasks");
 
-export async function maintenance(): Promise<Result<void, Error>> {
+export async function maintenanceTask(): Promise<Result<void, Error>> {
   const loadResult = await loadWalletIfNeeded();
   if (loadResult.isErr()) {
     const e = new Error("Failed to load wallet for maintenance");
@@ -27,10 +27,18 @@ export async function maintenance(): Promise<Result<void, Error>> {
     return err(maintenanceResult.error);
   }
   log.d("[Maintenance Job] completed");
+
+  const syncResult = await sync();
+  // It's alright if sync fails
+  // We can simply log the error and continue
+  if (syncResult.isErr()) {
+    log.e("Sync failed", [syncResult.error]);
+  }
+
   return ok(undefined);
 }
 
-export async function submitInvoice(
+export async function submitInvoiceTask(
   transaction_id: string,
   k1: string,
   amountMsat: number,

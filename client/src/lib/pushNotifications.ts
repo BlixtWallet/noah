@@ -5,11 +5,10 @@ import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { offboardTask, submitInvoice, triggerBackupTask } from "./tasks";
+import { offboardTask, submitInvoiceTask, triggerBackupTask, maintenanceTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
-import { maintanance, sync } from "./walletApi";
 import { tryClaimLightningReceive } from "./paymentsApi";
 import { useWalletStore } from "~/store/walletStore";
 import { formatBip177 } from "./utils";
@@ -124,9 +123,8 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
         (async () => {
           switch (notificationData.notification_type) {
             case "maintenance": {
-              const result = await maintanance();
+              const result = await maintenanceTask();
               // Also perform a sync after maintenance
-              await sync();
               await handleTaskCompletion("maintenance", result, notificationData.k1);
 
               // Refresh widget after maintenance
@@ -136,7 +134,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
             case "lightning_invoice_request": {
               log.i("Received lightning invoice request", [notificationData]);
-              const invoiceResult = await submitInvoice(
+              const invoiceResult = await submitInvoiceTask(
                 notificationData.transaction_id,
                 notificationData.k1,
                 notificationData.amount,
