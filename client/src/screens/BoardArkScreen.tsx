@@ -11,6 +11,7 @@ import { useNavigation } from "@react-navigation/native";
 import uuid from "react-native-uuid";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { Text } from "../components/ui/text";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -260,6 +261,7 @@ const ErrorDisplay = ({ errorMessage }: { errorMessage: string }) => (
 const BoardArkScreen = () => {
   const { showAlert } = useAlert();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const iconColor = useIconColor();
   const { data: balance, isLoading: isBalanceLoading } = useBalance();
   const {
     mutate: boardArk,
@@ -440,7 +442,7 @@ const BoardArkScreen = () => {
             <View className="flex-row items-center justify-between mb-8">
               <View className="flex-row items-center">
                 <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                  <Icon name="arrow-back-outline" size={24} color="white" />
+                  <Icon name="arrow-back-outline" size={24} color={iconColor} />
                 </Pressable>
                 <Text className="text-2xl font-bold text-foreground">
                   {flow === "onboard" ? "Board Ark" : "Offboard Ark"}
@@ -450,7 +452,7 @@ const BoardArkScreen = () => {
                 onPress={() => navigation.navigate("BoardingTransactions")}
                 className="p-2"
               >
-                <Icon name="time-outline" size={24} color="white" />
+                <Icon name="time-outline" size={24} color={iconColor} />
               </Pressable>
             </View>
 

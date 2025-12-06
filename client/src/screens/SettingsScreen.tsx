@@ -25,6 +25,7 @@ import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
 import logoImage from "../../assets/1024_no_background.png";
 import { COLORS } from "~/lib/styleConstants";
+import { useIconColor } from "~/hooks/useTheme";
 import { FeedbackModal } from "~/components/FeedbackModal";
 import { performServerRegistration } from "../lib/server";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
@@ -77,6 +78,7 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 };
 
 const SettingsScreen = () => {
+  const iconColor = useIconColor();
   const [confirmText, setConfirmText] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [copiedLightningAddress, setCopiedLightningAddress] = useState(false);
@@ -331,7 +333,7 @@ const SettingsScreen = () => {
             <Text className="text-muted-foreground text-base mt-1">{item.description}</Text>
           )}
         </View>
-        {item.isPressable && <Icon name="chevron-forward-outline" size={24} color="white" />}
+        {item.isPressable && <Icon name="chevron-forward-outline" size={24} color={iconColor} />}
       </Pressable>
     );
   };
@@ -341,7 +343,7 @@ const SettingsScreen = () => {
       <View className="px-4 pt-4">
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
-            <Icon name="arrow-back-outline" size={24} color="white" />
+            <Icon name="arrow-back-outline" size={24} color={iconColor} />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Settings</Text>
         </View>
@@ -421,7 +423,7 @@ const SettingsScreen = () => {
                 {copiedLightningAddress ? (
                   <Icon name="checkmark-circle" size={24} color={COLORS.BITCOIN_ORANGE} />
                 ) : (
-                  <Icon name="chevron-forward-outline" size={24} color="white" />
+                  <Icon name="chevron-forward-outline" size={24} color={iconColor} />
                 )}
               </Pressable>
             )}

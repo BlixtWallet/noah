@@ -15,6 +15,7 @@ import { Text } from "./ui/text";
 import { Pressable, View } from "react-native";
 import { Label } from "./ui/label";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 
 type DangerZoneRowProps = {
   title: string;
@@ -31,6 +32,7 @@ export const DangerZoneRow = ({
   variant = "default",
   onPress,
 }: DangerZoneRowProps) => {
+  const iconColor = useIconColor();
   return (
     <Pressable
       disabled={!isPressable}
@@ -45,7 +47,7 @@ export const DangerZoneRow = ({
         </Label>
         {description && <Text className="text-muted-foreground text-base mt-1">{description}</Text>}
       </View>
-      {isPressable && <Icon name="chevron-forward-outline" size={24} color="white" />}
+      {isPressable && <Icon name="chevron-forward-outline" size={24} color={iconColor} />}
     </Pressable>
   );
 };

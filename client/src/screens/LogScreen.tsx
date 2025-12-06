@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { getAppLogs } from "noah-tools";
@@ -20,6 +21,7 @@ const log = logger("LogScreen");
 
 const LogScreen = () => {
   const navigation = useNavigation();
+  const iconColor = useIconColor();
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,16 +115,16 @@ const LogScreen = () => {
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
+              <Icon name="arrow-back-outline" size={24} color={iconColor} />
             </Pressable>
             <Text className="text-2xl font-bold text-foreground">App Logs</Text>
           </View>
           <View className="flex-row space-x-2">
             <Button onPress={fetchLogs} variant="outline" disabled={isLoading}>
-              <Icon name="refresh-outline" size={20} color="white" />
+              <Icon name="refresh-outline" size={20} color={iconColor} />
             </Button>
             <Button onPress={handleShare} variant="outline" disabled={logs.length === 0}>
-              <Icon name="share-outline" size={20} color="white" />
+              <Icon name="share-outline" size={20} color={iconColor} />
             </Button>
           </View>
         </View>

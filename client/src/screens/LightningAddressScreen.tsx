@@ -7,6 +7,7 @@ import { Button } from "../components/ui/button";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Text } from "../components/ui/text";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useUpdateLightningAddress } from "../hooks/useUpdateLightningAddress";
 import { getLnurlDomain } from "../constants";
@@ -25,6 +26,7 @@ type LightningAddressScreenRouteProp = RouteProp<
 
 const LightningAddressScreen = () => {
   const navigation = useNavigation();
+  const iconColor = useIconColor();
   const route = useRoute<LightningAddressScreenRouteProp>();
   const { showAlert } = useAlert();
   const { fromOnboarding } = route.params || {};
@@ -97,7 +99,7 @@ const LightningAddressScreen = () => {
         <View className="flex-row items-center mb-8">
           {!fromOnboarding && (
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
+              <Icon name="arrow-back-outline" size={24} color={iconColor} />
             </Pressable>
           )}
           <Text className="text-2xl font-bold text-foreground">

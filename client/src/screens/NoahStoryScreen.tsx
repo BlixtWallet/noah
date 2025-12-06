@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import Slider from "@react-native-community/slider";
@@ -26,6 +27,7 @@ const log = logger("NoahStoryScreen");
 
 const NoahStoryScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const iconColor = useIconColor();
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
@@ -156,7 +158,7 @@ const NoahStoryScreen = () => {
       <View className="p-4 flex-1">
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
-            <Icon name="arrow-back-outline" size={24} color="white" />
+            <Icon name="arrow-back-outline" size={24} color={iconColor} />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Noah's Ark Story</Text>
         </View>

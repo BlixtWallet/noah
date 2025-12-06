@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import { Label } from "~/components/ui/label";
@@ -57,6 +58,7 @@ const DEBUG_ACTIONS: ActionOption[] = [
 
 const DebugScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const iconColor = useIconColor();
   const { showAlert } = useAlert();
   const [selectedOption, setSelectedOption] = useState<Option | undefined>(undefined);
   const [inputValue, setInputValue] = useState("");
@@ -153,7 +155,7 @@ const DebugScreen = () => {
     <NoahSafeAreaView className="flex-1 bg-background">
       <View className="flex-row items-center px-4 pb-4">
         <Pressable onPress={() => navigation.goBack()} className="mr-4">
-          <Icon name="arrow-back" size={24} color="white" />
+          <Icon name="arrow-back" size={24} color={iconColor} />
         </Pressable>
         <Text className="text-2xl font-bold text-foreground">Debug</Text>
       </View>

@@ -5,6 +5,7 @@ import { NoahButton } from "~/components/ui/NoahButton";
 import { Button } from "~/components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import {
   registerUnifiedPush,
   getUnifiedPushEndpoint,
@@ -22,6 +23,7 @@ import logger from "~/lib/log";
 const log = logger("UnifiedPushScreen");
 
 const UnifiedPushScreen = () => {
+  const iconColor = useIconColor();
   const [endpoint, setEndpoint] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "registering" | "registered" | "error">("idle");
   const route = useRoute<RouteProp<OnboardingStackParamList, "UnifiedPush">>();
@@ -117,7 +119,7 @@ const UnifiedPushScreen = () => {
         <View className="flex-row items-center mb-4 mt-2">
           {!fromOnboarding && (
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
+              <Icon name="arrow-back-outline" size={24} color={iconColor} />
             </Pressable>
           )}
           <Text className="text-2xl font-bold text-foreground">
