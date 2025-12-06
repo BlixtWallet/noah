@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
@@ -26,6 +27,7 @@ import { CurrencyToggle } from "~/components/CurrencyToggle";
 const SendScreen = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const iconColor = useIconColor();
   const {
     destination,
     setDestination,
@@ -81,12 +83,12 @@ const SendScreen = () => {
         <View className="flex-1">
           <View className="flex-row items-center p-4">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back" size={28} color="white" />
+              <Icon name="arrow-back" size={28} color={iconColor} />
             </TouchableOpacity>
             <Text className="text-2xl font-bold text-foreground">Send</Text>
             <View className="flex-1 items-end">
               <TouchableOpacity onPress={handleScanPress}>
-                <Icon name="scan" size={28} color="white" />
+                <Icon name="scan" size={28} color={iconColor} />
               </TouchableOpacity>
             </View>
           </View>

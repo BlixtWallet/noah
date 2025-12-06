@@ -3,6 +3,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import { useState } from "react";
 import { COLORS } from "~/lib/styleConstants";
@@ -24,6 +25,7 @@ const VTXODetailRow = ({
   copyable?: boolean;
 }) => {
   const [copied, setCopied] = useState(false);
+  const iconColor = useIconColor();
 
   const onCopy = async () => {
     await copyToClipboard(value, {
@@ -50,7 +52,7 @@ const VTXODetailRow = ({
           {copied ? (
             <Icon name="checkmark-circle-outline" size={16} color={COLORS.SUCCESS} />
           ) : (
-            <Icon name="copy-outline" size={16} color="white" />
+            <Icon name="copy-outline" size={16} color={iconColor} />
           )}
         </Pressable>
       ) : (
@@ -70,6 +72,7 @@ const VTXODetailRow = ({
 const VTXODetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const iconColor = useIconColor();
   const { data: blockHeight } = useGetBlockHeight();
   const { vtxo } = route.params as { vtxo: VTXOWithStatus };
 
@@ -98,7 +101,7 @@ const VTXODetailScreen = () => {
       <View className="p-4 flex-1">
         <View className="flex-row items-center mb-8">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
-            <Icon name="arrow-back-outline" size={24} color="white" />
+            <Icon name="arrow-back-outline" size={24} color={iconColor} />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">VTXO Details</Text>
         </View>

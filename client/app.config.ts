@@ -6,7 +6,7 @@ const config: { expo: ExpoConfig } = {
     slug: "noahs-ark-wallet",
     version: "0.0.5",
     orientation: "portrait",
-    userInterfaceStyle: "dark",
+    userInterfaceStyle: "automatic",
     newArchEnabled: true,
     experiments: {
       reactCompiler: true,

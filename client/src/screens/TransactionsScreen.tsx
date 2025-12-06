@@ -8,6 +8,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { type Transaction, type PaymentTypes } from "../types/transaction";
 import { Label } from "~/components/ui/label";
 import { useNavigation } from "@react-navigation/native";
@@ -23,6 +24,7 @@ const log = logger("TransactionsScreen");
 
 const TransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const iconColor = useIconColor();
   const { transactions, removeTransaction } = useTransactionStore();
   const [filter, setFilter] = useState<PaymentTypes | "all" | "Lightning">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -146,12 +148,12 @@ const TransactionsScreen = () => {
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
               <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                <Icon name="arrow-back-outline" size={24} color="white" />
+                <Icon name="arrow-back-outline" size={24} color={iconColor} />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Transactions</Text>
             </View>
             <Pressable onPress={exportToCSV} className="p-2">
-              <Icon name="download-outline" size={24} color="white" />
+              <Icon name="download-outline" size={24} color={iconColor} />
             </Pressable>
           </View>
           <View className="flex-row justify-around mb-4">

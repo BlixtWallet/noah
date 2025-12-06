@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
-import { NavigationContainer, DarkTheme, NavigatorScreenParams } from "@react-navigation/native";
+import {
+  NavigationContainer,
+  DarkTheme,
+  DefaultTheme,
+  NavigatorScreenParams,
+} from "@react-navigation/native";
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform, View, Text, AppState, ImageSourcePropType } from "react-native";
+import { Platform, View, Text, AppState, ImageSourcePropType, useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 
@@ -29,7 +34,7 @@ import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { useServerStore } from "~/store/serverStore";
 import { useTransactionStore } from "~/store/transactionStore";
-import { COLORS } from "~/lib/styleConstants";
+import { COLORS, getThemedColors } from "~/lib/styleConstants";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
 import { Transaction } from "~/types/transaction";
@@ -256,6 +261,9 @@ const preloadAndroidIcons = async (): Promise<PreloadedIcons> => {
 
 const AppTabs = ({ preloadedIcons }: { preloadedIcons: PreloadedIcons }) => {
   const isIos = Platform.OS === "ios";
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const themedColors = getThemedColors(isDark);
 
   return (
     <Tab.Navigator
@@ -263,9 +271,9 @@ const AppTabs = ({ preloadedIcons }: { preloadedIcons: PreloadedIcons }) => {
         tabBarActiveTintColor: COLORS.BITCOIN_ORANGE,
       }}
       tabBarStyle={{
-        backgroundColor: COLORS.TAB_BAR_BACKGROUND,
+        backgroundColor: themedColors.tabBarBackground,
       }}
-      tabBarInactiveTintColor={COLORS.TAB_BAR_INACTIVE}
+      tabBarInactiveTintColor={themedColors.tabBarInactive}
       hapticFeedbackEnabled
       disablePageAnimations={true}
     >
@@ -381,6 +389,11 @@ const AppNavigation = () => {
   const [preloadedIcons, setPreloadedIcons] = useState<PreloadedIcons | null>(null);
   const iconsPreloadedRef = useRef(false);
   const log = logger("AppNavigation");
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const themedColors = getThemedColors(isDark);
+  const navigationTheme = isDark ? DarkTheme : DefaultTheme;
+  const statusBarStyle = isDark ? "light" : "dark";
 
   useEffect(() => {
     if (Platform.OS !== "ios" && !iconsPreloadedRef.current) {
@@ -509,11 +522,11 @@ const AppNavigation = () => {
 
   if (isCheckingWallet || isLoadingIcons) {
     return (
-      <NavigationContainer theme={DarkTheme}>
-        <StatusBar style="light" />
+      <NavigationContainer theme={navigationTheme}>
+        <StatusBar style={statusBarStyle} />
         <View className="flex-1 items-center justify-center bg-background">
           <NoahActivityIndicator size="large" />
-          <Text style={{ marginTop: 10, color: "white" }}>Loading...</Text>
+          <Text style={{ marginTop: 10, color: themedColors.foreground }}>Loading...</Text>
         </View>
         <PortalHost />
       </NavigationContainer>
@@ -522,8 +535,8 @@ const AppNavigation = () => {
 
   if (shouldShowPushPermissionScreen) {
     return (
-      <NavigationContainer theme={DarkTheme}>
-        <StatusBar style="light" />
+      <NavigationContainer theme={navigationTheme}>
+        <StatusBar style={statusBarStyle} />
         <PushNotificationsRequiredScreen
           status={pushPermissionStatus}
           isRequesting={isRequestingPermission}
@@ -536,8 +549,8 @@ const AppNavigation = () => {
   }
 
   return (
-    <NavigationContainer theme={DarkTheme}>
-      <StatusBar style="light" />
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar style={statusBarStyle} />
       {isInitialized ? (
         <WalletLoader>
           <AppServices />

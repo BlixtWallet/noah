@@ -5,6 +5,7 @@ import type { RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { Text } from "../components/ui/text";
 import { NoahButton } from "../components/ui/NoahButton";
 import { Button } from "../components/ui/button";
@@ -28,6 +29,7 @@ const MnemonicScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<OnboardingStackParamList & SettingsStackParamList>>();
   const route = useRoute<MnemonicScreenRouteProp>();
+  const iconColor = useIconColor();
   const { fromOnboarding } = route.params || {};
 
   const [mnemonic, setMnemonic] = useState("");
@@ -103,7 +105,7 @@ const MnemonicScreen = () => {
         <View className="flex-row items-center mb-8">
           {!fromOnboarding && (
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back-outline" size={24} color="white" />
+              <Icon name="arrow-back-outline" size={24} color={iconColor} />
             </Pressable>
           )}
           <Text className="text-2xl font-bold text-foreground">Your Recovery Phrase</Text>

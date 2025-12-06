@@ -7,6 +7,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { Label } from "~/components/ui/label";
 import { useNavigation } from "@react-navigation/native";
 import { HomeStackParamList } from "~/Navigators";
@@ -30,6 +31,7 @@ type BoardingTransaction = (OnboardingRequest | OffboardingRequest) & {
 
 const BoardingTransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
+  const iconColor = useIconColor();
   const [transactions, setTransactions] = useState<BoardingTransaction[]>([]);
   const [filter, setFilter] = useState<"all" | "onboarding" | "offboarding">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -197,12 +199,12 @@ const BoardingTransactionsScreen = () => {
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
               <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                <Icon name="arrow-back-outline" size={24} color="white" />
+                <Icon name="arrow-back-outline" size={24} color={iconColor} />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Boarding History</Text>
             </View>
             <Pressable onPress={exportToCSV} className="p-2">
-              <Icon name="download-outline" size={24} color="white" />
+              <Icon name="download-outline" size={24} color={iconColor} />
             </Pressable>
           </View>
           <View className="flex-row justify-around mb-4">

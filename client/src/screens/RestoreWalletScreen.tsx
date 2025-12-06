@@ -14,11 +14,13 @@ import { useRestoreWallet } from "~/hooks/useWallet";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { useWalletStore } from "~/store/walletStore";
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, "RestoreWallet">;
 
 const RestoreWalletScreen = ({ navigation }: Props) => {
+  const iconColor = useIconColor();
   const [mnemonic, setMnemonic] = useState("");
   const { mutate: restoreWallet, isPending } = useRestoreWallet();
   const restoreProgress = useWalletStore((state) => state.restoreProgress);
@@ -40,7 +42,7 @@ const RestoreWalletScreen = ({ navigation }: Props) => {
           <View className="p-4 flex-1">
             <View className="flex-row items-center mb-4">
               <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                <Icon name="arrow-back-outline" size={24} color="white" />
+                <Icon name="arrow-back-outline" size={24} color={iconColor} />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Restore Wallet</Text>
             </View>

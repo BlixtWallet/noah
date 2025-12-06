@@ -4,6 +4,28 @@
 
 @layer base {
   :root {
+    --background: 40 20% 96%;
+    --foreground: 240 10% 10%;
+    --card: 40 15% 93%;
+    --card-foreground: 240 10% 10%;
+    --popover: 40 15% 93%;
+    --popover-foreground: 240 10% 10%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 40 20% 96%;
+    --secondary: 40 10% 88%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 40 10% 88%;
+    --muted-foreground: 240 5% 40%;
+    --accent: 40 10% 88%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 10% 82%;
+    --input: 40 10% 82%;
+    --ring: 240 5% 40%;
+  }
+
+  .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
