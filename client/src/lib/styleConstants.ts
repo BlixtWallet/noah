@@ -7,8 +7,8 @@ export const COLORS = {
 
 export const LIGHT_COLORS = {
   foreground: "#1a1a1a",
-  background: "#ebe5db",
-  tabBarBackground: "#ebe5db",
+  background: "#f4f3f0",
+  tabBarBackground: "#f4f3f0",
   tabBarInactive: "#6b6b70",
 };
 

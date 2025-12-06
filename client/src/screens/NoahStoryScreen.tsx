@@ -209,7 +209,7 @@ const NoahStoryScreen = () => {
                 className="p-4 rounded-full"
                 style={({ pressed }) => ({
                   opacity: pressed && duration ? 0.5 : 1,
-                  backgroundColor: !duration ? "#374151" : isDark ? "#27272a" : "#d1cdc4",
+                  backgroundColor: !duration ? "#374151" : isDark ? "#27272a" : "#e0dfdb",
                 })}
               >
                 <Icon name="stop" size={32} color={!duration ? "#666666" : "#F7931A"} />
@@ -221,7 +221,7 @@ const NoahStoryScreen = () => {
                 className="p-4 rounded-full"
                 style={({ pressed }) => ({
                   opacity: pressed && !isLoading ? 0.5 : 1,
-                  backgroundColor: isLoading ? "#374151" : isDark ? "#27272a" : "#d1cdc4",
+                  backgroundColor: isLoading ? "#374151" : isDark ? "#27272a" : "#e0dfdb",
                 })}
               >
                 {isLoading ? (
