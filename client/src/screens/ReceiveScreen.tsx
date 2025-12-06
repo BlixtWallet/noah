@@ -25,7 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import { useIconColor } from "../hooks/useTheme";
+import { useIconColor, useThemeColors } from "../hooks/useTheme";
 import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
@@ -79,6 +79,7 @@ const CopyableDetail = ({
 const ReceiveScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
   const iconColor = useIconColor();
+  const colors = useThemeColors();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
@@ -221,7 +222,7 @@ const ReceiveScreen = () => {
                   <TextInput
                     className="text-foreground text-3xl font-bold text-center min-w-[50px]"
                     placeholder={currency === "USD" ? "0.00" : "0"}
-                    placeholderTextColor="#4b5563"
+                    placeholderTextColor={colors.mutedForeground}
                     keyboardType="numeric"
                     value={amount}
                     onChangeText={setAmount}

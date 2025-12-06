@@ -34,7 +34,8 @@ import WalletLoader from "~/components/WalletLoader";
 import { useWalletStore } from "~/store/walletStore";
 import { useServerStore } from "~/store/serverStore";
 import { useTransactionStore } from "~/store/transactionStore";
-import { COLORS, getThemedColors } from "~/lib/styleConstants";
+import { COLORS } from "~/lib/styleConstants";
+import { useThemeColors } from "~/hooks/useTheme";
 import { PortalHost } from "@rn-primitives/portal";
 import AppServices from "~/AppServices";
 import { Transaction } from "~/types/transaction";
@@ -261,9 +262,7 @@ const preloadAndroidIcons = async (): Promise<PreloadedIcons> => {
 
 const AppTabs = ({ preloadedIcons }: { preloadedIcons: PreloadedIcons }) => {
   const isIos = Platform.OS === "ios";
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const themedColors = getThemedColors(isDark);
+  const themedColors = useThemeColors();
 
   return (
     <Tab.Navigator
@@ -389,9 +388,9 @@ const AppNavigation = () => {
   const [preloadedIcons, setPreloadedIcons] = useState<PreloadedIcons | null>(null);
   const iconsPreloadedRef = useRef(false);
   const log = logger("AppNavigation");
+  const themedColors = useThemeColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const themedColors = getThemedColors(isDark);
   const navigationTheme = isDark ? DarkTheme : DefaultTheme;
   const statusBarStyle = isDark ? "light" : "dark";
 

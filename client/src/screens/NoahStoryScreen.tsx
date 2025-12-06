@@ -206,11 +206,7 @@ const NoahStoryScreen = () => {
               <Pressable
                 onPress={handleStop}
                 disabled={!duration}
-                className="p-4 rounded-full"
-                style={({ pressed }) => ({
-                  opacity: pressed && duration ? 0.5 : 1,
-                  backgroundColor: !duration ? "#374151" : isDark ? "#27272a" : "#e0e8f2",
-                })}
+                className={`p-4 rounded-full active:opacity-50 ${!duration ? "bg-gray-700" : "bg-secondary"}`}
               >
                 <Icon name="stop" size={32} color={!duration ? "#666666" : "#F7931A"} />
               </Pressable>
@@ -218,11 +214,7 @@ const NoahStoryScreen = () => {
               <Pressable
                 onPress={handlePlayPause}
                 disabled={isLoading}
-                className="p-4 rounded-full"
-                style={({ pressed }) => ({
-                  opacity: pressed && !isLoading ? 0.5 : 1,
-                  backgroundColor: isLoading ? "#374151" : isDark ? "#27272a" : "#e0e8f2",
-                })}
+                className={`p-4 rounded-full active:opacity-50 ${isLoading ? "bg-gray-700" : "bg-secondary"}`}
               >
                 {isLoading ? (
                   <Icon name="hourglass-outline" size={48} color="#666666" />
