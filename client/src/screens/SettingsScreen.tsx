@@ -24,7 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
 import logoImageDark from "../../assets/1024_no_background.png";
-import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_light_mode_ios.png";
+import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_clear_tinted_ios.png";
 import { COLORS } from "~/lib/styleConstants";
 import { useIconColor, useTheme } from "~/hooks/useTheme";
 import { FeedbackModal } from "~/components/FeedbackModal";

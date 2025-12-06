@@ -21,7 +21,7 @@ import {
 } from "noah-tools";
 import audioFile from "../../assets/noahs-ark-story.m4a";
 import logoImageDark from "../../assets/1024_no_background.png";
-import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_light_mode_ios.png";
+import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_clear_tinted_ios.png";
 import logger from "~/lib/log";
 
 const log = logger("NoahStoryScreen");

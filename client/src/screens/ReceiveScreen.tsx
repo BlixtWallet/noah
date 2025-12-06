@@ -216,10 +216,10 @@ const ReceiveScreen = () => {
               <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
                 <View className="flex-row items-center justify-center">
                   {currency === "USD" && (
-                    <Text className="text-white text-2xl font-bold mr-2">$</Text>
+                    <Text className="text-foreground text-2xl font-bold mr-2">$</Text>
                   )}
                   <TextInput
-                    className="text-white text-3xl font-bold text-center min-w-[50px]"
+                    className="text-foreground text-3xl font-bold text-center min-w-[50px]"
                     placeholder={currency === "USD" ? "0.00" : "0"}
                     placeholderTextColor="#4b5563"
                     keyboardType="numeric"
@@ -229,7 +229,7 @@ const ReceiveScreen = () => {
                     maxLength={12}
                   />
                   {currency === "SATS" && (
-                    <Text className="text-white text-2xl font-bold ml-1">₿</Text>
+                    <Text className="text-foreground text-2xl font-bold ml-1">₿</Text>
                   )}
                 </View>
               </View>

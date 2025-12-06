@@ -102,10 +102,10 @@ const SendScreen = () => {
               <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
                 <View className="flex-row items-center justify-center">
                   {currency === "USD" && (
-                    <Text className="text-white text-2xl font-bold mr-2">$</Text>
+                    <Text className="text-foreground text-2xl font-bold mr-2">$</Text>
                   )}
                   <TextInput
-                    className="text-white text-3xl font-bold text-center min-w-[50px]"
+                    className="text-foreground text-3xl font-bold text-center min-w-[50px]"
                     placeholder={currency === "USD" ? "0.00" : "0"}
                     placeholderTextColor="#4b5563"
                     keyboardType="numeric"
@@ -117,7 +117,7 @@ const SendScreen = () => {
                     maxLength={12}
                   />
                   {currency === "SATS" && (
-                    <Text className="text-white text-2xl font-bold ml-1">₿</Text>
+                    <Text className="text-foreground text-2xl font-bold ml-1">₿</Text>
                   )}
                 </View>
               </View>
@@ -149,7 +149,7 @@ const SendScreen = () => {
               <View className="mt-8 ml-4 mr-4">
                 <View className="flex-row items-center border border-border bg-card p-4 rounded-lg">
                   <TextInput
-                    className="flex-1 text-white"
+                    className="flex-1 text-foreground"
                     placeholder="Address, invoice, or lightning address"
                     placeholderTextColor="#6b7280"
                     autoCorrect={false}
@@ -158,7 +158,7 @@ const SendScreen = () => {
                     onChangeText={setDestination}
                   />
                   <TouchableOpacity onPress={handlePaste} className="p-2">
-                    <Text className="text-white">Paste</Text>
+                    <Text className="text-foreground font-semibold">Paste</Text>
                   </TouchableOpacity>
                 </View>
                 <TextInput

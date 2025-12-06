@@ -38,7 +38,7 @@ export const PushNotificationsRequiredScreen = ({
     <NoahSafeAreaView className="flex-1 bg-background">
       <View className="flex-1 px-6 py-10">
         <View className="items-center">
-          <View className="h-24 w-24 items-center justify-center rounded-3xl bg-card border border-white/10 shadow-lg shadow-black/30">
+          <View className="h-24 w-24 items-center justify-center rounded-3xl bg-card border border-border shadow-lg shadow-black/30">
             <BellRing size={48} color="#f97316" />
           </View>
           <Text className="mt-6 text-3xl font-bold text-center">Turn on push notifications</Text>
@@ -52,7 +52,7 @@ export const PushNotificationsRequiredScreen = ({
           {highlights.map((item) => (
             <View
               key={item.title}
-              className="flex-row items-center rounded-2xl border border-white/10 bg-card px-4 py-4 mb-2"
+              className="flex-row items-center rounded-2xl border border-border bg-card px-4 py-4 mb-2"
             >
               <View className="mr-4 h-11 w-11 items-center justify-center rounded-xl bg-orange-500/15">
                 <item.icon size={22} color="#f97316" />
@@ -72,11 +72,11 @@ export const PushNotificationsRequiredScreen = ({
           <View className="space-y-3 mt-3">
             <Button
               variant="outline"
-              className="border-white/15 bg-card"
+              className="border-border bg-card"
               onPress={onRetryStatus}
               disabled={isRequesting}
             >
-              <Text className="text-white">I turned them on — check again</Text>
+              <Text className="text-foreground">I turned them on — check again</Text>
             </Button>
             <Button
               variant="ghost"
