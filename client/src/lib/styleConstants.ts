@@ -7,9 +7,9 @@ export const COLORS = {
 
 export const LIGHT_COLORS = {
   foreground: "#1a1a1a",
-  background: "#f5f2ed",
-  tabBarBackground: "#f5f2ed",
-  tabBarInactive: "#8e8e93",
+  background: "#ebe5db",
+  tabBarBackground: "#ebe5db",
+  tabBarInactive: "#6b6b70",
 };
 
 export const DARK_COLORS = {

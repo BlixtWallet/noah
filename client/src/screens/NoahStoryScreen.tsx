@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import { useIconColor } from "../hooks/useTheme";
+import { useIconColor, useTheme } from "../hooks/useTheme";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import Slider from "@react-native-community/slider";
@@ -20,7 +20,8 @@ import {
   isAudioPlaying,
 } from "noah-tools";
 import audioFile from "../../assets/noahs-ark-story.m4a";
-import logoImage from "../../assets/1024_no_background.png";
+import logoImageDark from "../../assets/1024_no_background.png";
+import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_light_mode_ios.png";
 import logger from "~/lib/log";
 
 const log = logger("NoahStoryScreen");
@@ -28,6 +29,8 @@ const log = logger("NoahStoryScreen");
 const NoahStoryScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const iconColor = useIconColor();
+  const { isDark } = useTheme();
+  const logoImage = isDark ? logoImageDark : logoImageLight;
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
@@ -203,9 +206,10 @@ const NoahStoryScreen = () => {
               <Pressable
                 onPress={handleStop}
                 disabled={!duration}
-                className={`p-4 rounded-full ${!duration ? "bg-gray-700" : "bg-card"}`}
+                className="p-4 rounded-full"
                 style={({ pressed }) => ({
                   opacity: pressed && duration ? 0.5 : 1,
+                  backgroundColor: !duration ? "#374151" : isDark ? "#27272a" : "#d1cdc4",
                 })}
               >
                 <Icon name="stop" size={32} color={!duration ? "#666666" : "#F7931A"} />
@@ -214,9 +218,10 @@ const NoahStoryScreen = () => {
               <Pressable
                 onPress={handlePlayPause}
                 disabled={isLoading}
-                className={`p-4 rounded-full ${isLoading ? "bg-gray-700" : "bg-card"}`}
+                className="p-4 rounded-full"
                 style={({ pressed }) => ({
                   opacity: pressed && !isLoading ? 0.5 : 1,
+                  backgroundColor: isLoading ? "#374151" : isDark ? "#27272a" : "#d1cdc4",
                 })}
               >
                 {isLoading ? (

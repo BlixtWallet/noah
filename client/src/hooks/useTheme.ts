@@ -4,13 +4,13 @@ export type ColorScheme = "light" | "dark";
 
 const lightColors = {
   foreground: "#1a1a1a",
-  background: "#f5f2ed",
-  mutedForeground: "#666666",
-  border: "#d1cdc4",
-  card: "#edebe6",
+  background: "#ebe5db",
+  mutedForeground: "#555559",
+  border: "#c7c0b5",
+  card: "#e2dcd2",
   primary: "#1a1a1a",
-  tabBarBackground: "#f5f2ed",
-  tabBarInactive: "#8e8e93",
+  tabBarBackground: "#ebe5db",
+  tabBarInactive: "#6b6b70",
 };
 
 const darkColors = {

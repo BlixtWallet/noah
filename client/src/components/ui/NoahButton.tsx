@@ -4,6 +4,7 @@ import { Text } from "./text";
 import { Button, type ButtonProps } from "./button";
 import { COLORS } from "../../lib/styleConstants";
 import { NoahActivityIndicator } from "./NoahActivityIndicator";
+import { useTheme } from "../../hooks/useTheme";
 
 interface NoahButtonProps extends Omit<ButtonProps, "style"> {
   children: React.ReactNode;
@@ -19,12 +20,17 @@ export const NoahButton = ({
   textClassName,
   ...props
 }: NoahButtonProps) => {
+  const { isDark } = useTheme();
+  const textColor = isDark ? "white" : "#1a1a1a";
+
   return (
     <Button {...props} style={[{ backgroundColor: COLORS.BITCOIN_ORANGE }, style]}>
       {isLoading ? (
-        <NoahActivityIndicator color="white" />
+        <NoahActivityIndicator color={textColor} />
       ) : (
-        <Text className={textClassName || "font-bold"}>{children}</Text>
+        <Text className={textClassName || "font-bold"} style={{ color: textColor }}>
+          {children}
+        </Text>
       )}
     </Button>
   );

@@ -23,9 +23,10 @@ import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDia
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
 import { usePeakKeyPair } from "~/hooks/useCrypto";
-import logoImage from "../../assets/1024_no_background.png";
+import logoImageDark from "../../assets/1024_no_background.png";
+import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_light_mode_ios.png";
 import { COLORS } from "~/lib/styleConstants";
-import { useIconColor } from "~/hooks/useTheme";
+import { useIconColor, useTheme } from "~/hooks/useTheme";
 import { FeedbackModal } from "~/components/FeedbackModal";
 import { performServerRegistration } from "../lib/server";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
@@ -79,6 +80,8 @@ const CopyableSettingRow = ({ label, value }: { label: string; value: string }) 
 
 const SettingsScreen = () => {
   const iconColor = useIconColor();
+  const { isDark } = useTheme();
+  const logoImage = isDark ? logoImageDark : logoImageLight;
   const [confirmText, setConfirmText] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [copiedLightningAddress, setCopiedLightningAddress] = useState(false);
