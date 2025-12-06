@@ -3,14 +3,14 @@ import { useColorScheme } from "react-native";
 export type ColorScheme = "light" | "dark";
 
 const lightColors = {
-  foreground: "#1a1a1a",
-  background: "#f4f3f0",
-  mutedForeground: "#606066",
-  border: "#d4d2cd",
-  card: "#ebeae6",
-  primary: "#1a1a1a",
-  tabBarBackground: "#f4f3f0",
-  tabBarInactive: "#6b6b70",
+  foreground: "#1a2332",
+  background: "#f5f8fc",
+  mutedForeground: "#5a6578",
+  border: "#d8e2ed",
+  card: "#edf2f9",
+  primary: "#1a2332",
+  tabBarBackground: "#f5f8fc",
+  tabBarInactive: "#6b7a8a",
 };
 
 const darkColors = {

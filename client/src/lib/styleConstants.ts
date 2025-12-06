@@ -6,10 +6,10 @@ export const COLORS = {
 };
 
 export const LIGHT_COLORS = {
-  foreground: "#1a1a1a",
-  background: "#f4f3f0",
-  tabBarBackground: "#f4f3f0",
-  tabBarInactive: "#6b6b70",
+  foreground: "#1a2332",
+  background: "#f5f8fc",
+  tabBarBackground: "#f5f8fc",
+  tabBarInactive: "#6b7a8a",
 };
 
 export const DARK_COLORS = {
