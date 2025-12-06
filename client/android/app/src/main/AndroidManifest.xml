@@ -41,43 +41,26 @@
         <data android:scheme="exp+noahs-ark-wallet"/>
       </intent-filter>
     </activity>
-
-    <!-- Widget Providers -->
-    <receiver
-        android:name=".widgets.NoahWidgetRegtestProvider"
-        android:exported="true">
+    <receiver android:name=".widgets.NoahWidgetRegtestProvider" android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
         <action android:name="com.noahwallet.action.WIDGET_DATA_CHANGED"/>
       </intent-filter>
-      <meta-data
-          android:name="android.appwidget.provider"
-          android:resource="@xml/noah_widget_regtest_info"/>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/noah_widget_regtest_info"/>
     </receiver>
-
-    <receiver
-        android:name=".widgets.NoahWidgetSignetProvider"
-        android:exported="true">
+    <receiver android:name=".widgets.NoahWidgetSignetProvider" android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
         <action android:name="com.noahwallet.action.WIDGET_DATA_CHANGED"/>
       </intent-filter>
-      <meta-data
-          android:name="android.appwidget.provider"
-          android:resource="@xml/noah_widget_signet_info"/>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/noah_widget_signet_info"/>
     </receiver>
-
-    <receiver
-        android:name=".widgets.NoahWidgetMainnetProvider"
-        android:exported="true">
+    <receiver android:name=".widgets.NoahWidgetMainnetProvider" android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
         <action android:name="com.noahwallet.action.WIDGET_DATA_CHANGED"/>
       </intent-filter>
-      <meta-data
-          android:name="android.appwidget.provider"
-          android:resource="@xml/noah_widget_mainnet_info"/>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/noah_widget_mainnet_info"/>
     </receiver>
-
   </application>
 </manifest>
