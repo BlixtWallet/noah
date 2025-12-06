@@ -492,7 +492,7 @@ const BoardArkScreen = () => {
                   isLoading={isBalanceLoading}
                 />
                 <View className="mb-4">
-                  <Text className="text-lg text-red-400 mb-2">
+                  <Text className="text-lg text-amber-600 dark:text-amber-400 mb-2">
                     Important: Please only input an external address like your cold storage wallet,
                     DO NOT use Noah wallet address, if you do, you will be boarding into Ark again.
                   </Text>
