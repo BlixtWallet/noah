@@ -4636,7 +4636,6 @@ dependencies = [
  "bitcoin",
  "chrono",
  "clap",
- "dashmap",
  "deadpool-redis",
  "expo_push_notification_client",
  "futures-util",

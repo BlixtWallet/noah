@@ -80,21 +80,16 @@ pub async fn submit_invoice(
         payload.transaction_id
     );
 
-    let sender = state
-        .invoice_data_transmitters
-        .remove(&payload.transaction_id)
-        .map(|(_, tx)| tx);
+    state
+        .invoice_store
+        .store(&payload.transaction_id, &payload.invoice)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to store invoice in Redis: {}", e);
+            ApiError::ServerErr("Failed to store invoice".to_string())
+        })?;
 
-    if let Some(tx) = sender {
-        tx.send(payload.invoice)
-            .map_err(|_| ApiError::ServerErr("Failed to send invoice".to_string()))?;
-
-        Ok(Json(DefaultSuccessPayload { success: true }))
-    } else {
-        Err(ApiError::InvalidArgument(
-            "Payment request transaction not found".to_string(),
-        ))
-    }
+    Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
 /// Retrieves the user's information.

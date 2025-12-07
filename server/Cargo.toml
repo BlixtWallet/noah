@@ -21,7 +21,6 @@ rand = "0.9.2"
 bitcoin = "0.32.7"
 expo_push_notification_client = { git = "https://github.com/katayama8000/expo-push-notification-client-rust", ref = "05bb08ae5a7671dfd587df80a249fd344284601d" }
 thiserror = "2.0.17"
-dashmap = "6.1.0"
 tokio-cron-scheduler = { version = "0.15.1", features = ["english"] }
 serde_json = "1.0.145"
 random_word = { version = "0.5.0", features = ["en"] }

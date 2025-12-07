@@ -10,7 +10,7 @@ use rand::Rng;
 use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
-use tokio::{sync::oneshot, time::timeout};
+use tokio::time::sleep;
 use validator::{Validate, ValidateEmail};
 
 use crate::{
@@ -173,19 +173,13 @@ pub async fn lnurlp_request(
         }
     }
 
-    let (tx, rx) = oneshot::channel();
-
     // Generate a unique transaction ID for this payment request
     let transaction_id = Uuid::new_v4().to_string();
-    state
-        .invoice_data_transmitters
-        .insert(transaction_id.clone(), tx);
 
     // Generate a k1 for authentication optimization (avoids extra network call)
     let k1 = match make_k1(&state.k1_cache).await {
         Ok(value) => value,
         Err(e) => {
-            state.invoice_data_transmitters.remove(&transaction_id);
             tracing::error!("Failed to create k1 for LNURL request: {}", e);
             return Err(ApiError::ServerErr(
                 "Failed to create authentication challenge".to_string(),
@@ -215,25 +209,37 @@ pub async fn lnurlp_request(
         }
     });
 
-    tracing::debug!("Waiting for invoice with a 30s timeout...");
-    let invoice_result = timeout(Duration::from_secs(30), rx).await;
+    tracing::debug!("Polling for invoice with a 30s timeout...");
 
-    let invoice = match invoice_result {
-        Ok(Ok(invoice)) => Ok(invoice),
-        Ok(Err(_)) => {
-            state.invoice_data_transmitters.remove(&transaction_id);
-            Err(ApiError::ServerErr("Failed to receive invoice".to_string()))
+    const POLL_INTERVAL: Duration = Duration::from_millis(500);
+    const TIMEOUT: Duration = Duration::from_secs(30);
+    let start = std::time::Instant::now();
+
+    let invoice = loop {
+        match state.invoice_store.get(&transaction_id).await {
+            Ok(Some(inv)) => {
+                // Clean up after successful retrieval
+                let _ = state.invoice_store.remove(&transaction_id).await;
+                break inv;
+            }
+            Ok(None) => {
+                if start.elapsed() >= TIMEOUT {
+                    tracing::error!(
+                        "Invoice request timed out after 30s for transaction_id: {}",
+                        transaction_id
+                    );
+                    return Err(ApiError::ServerErr("Request timed out".to_string()));
+                }
+                sleep(POLL_INTERVAL).await;
+            }
+            Err(e) => {
+                tracing::error!("Failed to poll invoice from Redis: {}", e);
+                return Err(ApiError::ServerErr(
+                    "Failed to retrieve invoice".to_string(),
+                ));
+            }
         }
-        Err(_) => {
-            // Timeout occurred
-            state.invoice_data_transmitters.remove(&transaction_id);
-            tracing::error!(
-                "Invoice request timed out after 30s for transaction_id: {}",
-                transaction_id
-            );
-            Err(ApiError::ServerErr("Request timed out".to_string()))
-        }
-    }?;
+    };
 
     let response = LnurlpInvoiceResponse {
         pr: invoice,
