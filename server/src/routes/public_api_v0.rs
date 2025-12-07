@@ -37,6 +37,8 @@ pub struct GetK1 {
 const LNURLP_MIN_SENDABLE: u64 = 330000;
 const LNURLP_MAX_SENDABLE: u64 = 100000000;
 const COMMENT_ALLOWED_SIZE: u16 = 280;
+const POLL_INTERVAL: Duration = Duration::from_millis(500);
+const TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Generates and returns a new `k1` value for an LNURL-auth flow.
 ///
@@ -211,8 +213,6 @@ pub async fn lnurlp_request(
 
     tracing::debug!("Polling for invoice with a 30s timeout...");
 
-    const POLL_INTERVAL: Duration = Duration::from_millis(500);
-    const TIMEOUT: Duration = Duration::from_secs(30);
     let start = std::time::Instant::now();
 
     let invoice = loop {
