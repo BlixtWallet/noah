@@ -3,3 +3,4 @@
 
 CREATE DATABASE "noah";
 CREATE DATABASE "noah_test";
+CREATE DATABASE "cln";

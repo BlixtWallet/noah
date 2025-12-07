@@ -21,6 +21,7 @@ export const syncWallet = async () => {
     onchainSync(),
     tryClaimAllLightningReceives(false),
   ]);
+
   results.forEach((result) => {
     if (result.status === "rejected") {
       log.e("background sync failed:", [result.reason]);
