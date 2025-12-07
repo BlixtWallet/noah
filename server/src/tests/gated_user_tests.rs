@@ -157,7 +157,7 @@ async fn test_register_offboarding_request() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let res: RegisterOffboardingResponse = serde_json::from_slice(&body).unwrap();
 
-    assert_eq!(res.success, true);
+    assert!(res.success);
     assert!(!res.request_id.is_empty());
 
     // Verify the offboarding request was stored in the database

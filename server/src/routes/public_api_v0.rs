@@ -159,20 +159,18 @@ pub async fn lnurlp_request(
         )));
     }
 
-    if let Some(wallet) = &query.wallet {
-        if wallet == "noahwallet" {
-            if let Some(ark_address) = &user.ark_address {
-                let response = LnurlpInvoiceResponse {
-                    pr: "".to_string(),
-                    routes: vec![],
-                    ark: Some(ark_address.clone()),
-                };
-                return Ok(Json(
-                    serde_json::to_value(response)
-                        .map_err(|e| ApiError::SerializeErr(e.to_string()))?,
-                ));
-            }
-        }
+    if let Some(wallet) = &query.wallet
+        && wallet == "noahwallet"
+        && let Some(ark_address) = &user.ark_address
+    {
+        let response = LnurlpInvoiceResponse {
+            pr: "".to_string(),
+            routes: vec![],
+            ark: Some(ark_address.clone()),
+        };
+        return Ok(Json(
+            serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
+        ));
     }
 
     // Generate a unique transaction ID for this payment request
@@ -219,7 +217,14 @@ pub async fn lnurlp_request(
         match state.invoice_store.get(&transaction_id).await {
             Ok(Some(inv)) => {
                 // Clean up after successful retrieval
-                let _ = state.invoice_store.remove(&transaction_id).await;
+                if let Err(e) = state.invoice_store.remove(&transaction_id).await {
+                    tracing::warn!(
+                        "Failed to remove invoice for transaction_id {}: {}",
+                        transaction_id,
+                        e
+                    );
+                }
+
                 break inv;
             }
             Ok(None) => {
@@ -261,10 +266,11 @@ pub async fn register(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<RegisterResponse>, ApiError> {
-    if let Some(_ln_address) = &payload.ln_address {
-        if let Err(e) = payload.validate() {
-            return Err(ApiError::InvalidArgument(e.to_string()));
-        }
+    if payload.ln_address.is_some()
+        && payload.validate().is_err()
+        && let Err(e) = payload.validate()
+    {
+        return Err(ApiError::InvalidArgument(e.to_string()));
     }
 
     let user_repo = UserRepository::new(&state.db_pool);
@@ -278,20 +284,19 @@ pub async fn register(
     if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
         tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
 
-        if let Some(ark_address) = &payload.ark_address {
-            if let Err(e) = user_repo
+        if let Some(ark_address) = &payload.ark_address
+            && let Err(e) = user_repo
                 .update_ark_address(&auth_payload.key, ark_address)
                 .await
-            {
-                if e.is::<crate::db::user_repo::DuplicateArkAddressError>() {
-                    // If address is taken, we can either return error or just ignore and keep old one.
-                    // Returning error is safer to let client know.
-                    return Err(ApiError::InvalidArgument(
-                        "Ark address already taken".to_string(),
-                    ));
-                }
-                return Err(e.into());
+        {
+            if e.is::<crate::db::user_repo::DuplicateArkAddressError>() {
+                // If address is taken, we can either return error or just ignore and keep old one.
+                // Returning error is safer to let client know.
+                return Err(ApiError::InvalidArgument(
+                    "Ark address already taken".to_string(),
+                ));
             }
+            return Err(e.into());
         }
 
         if let Some(device_info) = payload.device_info {

@@ -89,32 +89,27 @@ async fn establish_connection_and_process(
     while let Some(item) = stream.next().await {
         match item {
             Ok(round_event) => {
-                if let Some(event) = round_event.event {
-                    match event {
-                        round_event::Event::Start(event) => {
-                            round_counter += 1;
+                if let Some(round_event::Event::Start(event)) = round_event.event {
+                    round_counter += 1;
 
-                            // Handle offboarding requests for every round
-                            let app_state_clone = app_state.clone();
-                            tokio::spawn(async move {
-                                let _ = handle_offboarding_requests(app_state_clone).await;
-                            });
+                    // Handle offboarding requests for every round
+                    let app_state_clone = app_state.clone();
+                    tokio::spawn(async move {
+                        let _ = handle_offboarding_requests(app_state_clone).await;
+                    });
 
-                            // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
-                            if round_counter >= maintenance_interval_rounds {
-                                tracing::info!(
-                                    "Round started, triggering maintenance task for round_seq: {}, offboard_feerate: {}",
-                                    event.round_seq,
-                                    event.offboard_feerate_sat_vkb
-                                );
-                                let app_state_clone = app_state.clone();
-                                tokio::spawn(async move {
-                                    let _ = maintenance(app_state_clone).await;
-                                });
-                                round_counter = 0;
-                            }
-                        }
-                        _ => {}
+                    // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
+                    if round_counter >= maintenance_interval_rounds {
+                        tracing::info!(
+                            "Round started, triggering maintenance task for round_seq: {}, offboard_feerate: {}",
+                            event.round_seq,
+                            event.offboard_feerate_sat_vkb
+                        );
+                        let app_state_clone = app_state.clone();
+                        tokio::spawn(async move {
+                            let _ = maintenance(app_state_clone).await;
+                        });
+                        round_counter = 0;
                     }
                 }
             }

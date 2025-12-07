@@ -71,9 +71,9 @@ fn main() -> anyhow::Result<()> {
 
     // Initialize Sentry first if we're on production networks
     let _sentry_guard = if server_network == Network::Bitcoin || server_network == Network::Signet {
-        if let Some(sentry_url) = config.sentry_url.clone() {
-            let guard = Some(sentry::init((
-                sentry_url.clone(),
+        config.sentry_url.clone().map(|sentry_url| {
+            sentry::init((
+                sentry_url,
                 sentry::ClientOptions {
                     release: sentry::release_name!(),
                     enable_logs: true,
@@ -81,12 +81,8 @@ fn main() -> anyhow::Result<()> {
                     traces_sample_rate: 1.0,
                     ..Default::default()
                 },
-            )));
-
-            guard
-        } else {
-            None
-        }
+            ))
+        })
     } else {
         None
     };

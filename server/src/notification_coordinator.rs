@@ -34,7 +34,7 @@ impl NotificationCoordinator {
 
         match request.target_pubkey {
             Some(ref pubkey) => {
-                self.send_to_user(&pubkey, &request, &tracking_repo).await?;
+                self.send_to_user(pubkey, &request, &tracking_repo).await?;
             }
             None => {
                 self.broadcast_notification(&request, &tracking_repo)
@@ -193,14 +193,14 @@ impl NotificationCoordinator {
             .can_send_notification(pubkey, self.min_spacing_minutes)
             .await?;
 
-        if !can_send {
-            if let Some(last_time) = tracking_repo.get_last_notification_time(pubkey).await? {
-                let minutes_since = (Utc::now() - last_time).num_minutes();
-                debug!(
-                    "Spacing check failed for {}: last notification {} minutes ago (need {})",
-                    pubkey, minutes_since, self.min_spacing_minutes
-                );
-            }
+        if !can_send
+            && let Some(last_time) = tracking_repo.get_last_notification_time(pubkey).await?
+        {
+            let minutes_since = (Utc::now() - last_time).num_minutes();
+            debug!(
+                "Spacing check failed for {}: last notification {} minutes ago (need {})",
+                pubkey, minutes_since, self.min_spacing_minutes
+            );
         }
 
         Ok(can_send)
