@@ -58,12 +58,8 @@ services:
       - "6379:6379"
 
   cln:
-    build:
-      context: ../
-      dockerfile: scripts/cln.Dockerfile
+    image: niteshbalusu/bark-cln:latest
     restart: on-failure
-    entrypoint: ["/root/cln/start.sh"]
-
     volumes:
       - bitcoind:/root/.bitcoin
       - cln:/root/.lightning
