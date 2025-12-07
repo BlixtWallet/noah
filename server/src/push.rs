@@ -108,7 +108,7 @@ pub async fn send_push_notification_with_unique_k1(
                     let message = match ExpoPushMessage::builder(vec![push_token])
                         .data(&push_data.data)
                         .and_then(|b| {
-                            b.priority(push_data.priority.clone())
+                            b.priority(push_data.priority)
                                 .content_available(push_data.content_available)
                                 .mutable_content(false)
                                 .build()
@@ -123,17 +123,15 @@ pub async fn send_push_notification_with_unique_k1(
                     if let Err(e) = expo_clone.send_push_notifications(message).await {
                         tracing::error!("Failed to send push notification: {}", e);
                     }
-                } else {
-                    if let Err(e) = send_unified_notification(
-                        &http_client_clone,
-                        &push_token,
-                        &data_string,
-                        &ntfy_auth,
-                    )
-                    .await
-                    {
-                        tracing::error!("Failed to send unified push notification: {}", e);
-                    }
+                } else if let Err(e) = send_unified_notification(
+                    &http_client_clone,
+                    &push_token,
+                    &data_string,
+                    &ntfy_auth,
+                )
+                .await
+                {
+                    tracing::error!("Failed to send unified push notification: {}", e);
                 }
             }
         })
@@ -200,7 +198,7 @@ async fn send_push_notification_internal(
                         builder = builder.body(body.clone());
                     }
                     let message = match builder.data(&data_clone.data).and_then(|b| {
-                        b.priority(data_clone.priority.clone())
+                        b.priority(data_clone.priority)
                             .content_available(data_clone.content_available)
                             .mutable_content(false)
                             .build()

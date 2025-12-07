@@ -10,7 +10,6 @@ mod constants;
 mod routes;
 mod types;
 use bitcoin::Network;
-use dashmap::DashMap;
 use sentry::integrations::{
     tower::{NewSentryLayer, SentryHttpLayer},
     tracing::EventFilter,
@@ -20,7 +19,7 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    cache::{k1_store::K1Store, redis_client::RedisClient},
+    cache::{invoice_store::InvoiceStore, k1_store::K1Store, redis_client::RedisClient},
     config::Config,
     cron::cron_scheduler,
     routes::{
@@ -61,7 +60,7 @@ pub struct AppStruct {
     pub lnurl_domain: String,
     pub db_pool: PgPool,
     pub k1_cache: K1Store,
-    pub invoice_data_transmitters: Arc<DashMap<String, tokio::sync::oneshot::Sender<String>>>,
+    pub invoice_store: InvoiceStore,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -72,9 +71,9 @@ fn main() -> anyhow::Result<()> {
 
     // Initialize Sentry first if we're on production networks
     let _sentry_guard = if server_network == Network::Bitcoin || server_network == Network::Signet {
-        if let Some(sentry_url) = config.sentry_url.clone() {
-            let guard = Some(sentry::init((
-                sentry_url.clone(),
+        config.sentry_url.clone().map(|sentry_url| {
+            sentry::init((
+                sentry_url,
                 sentry::ClientOptions {
                     release: sentry::release_name!(),
                     enable_logs: true,
@@ -82,12 +81,8 @@ fn main() -> anyhow::Result<()> {
                     traces_sample_rate: 1.0,
                     ..Default::default()
                 },
-            )));
-
-            guard
-        } else {
-            None
-        }
+            ))
+        })
     } else {
         None
     };
@@ -138,7 +133,8 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
 
     let redis_client = RedisClient::new(&config.redis_url)?;
     redis_client.check_connection().await?;
-    let k1_cache = K1Store::new(redis_client, K1_TTL_SECONDS);
+    let k1_cache = K1Store::new(redis_client.clone(), K1_TTL_SECONDS);
+    let invoice_store = InvoiceStore::new(redis_client);
 
     let config_swap = Arc::new(ArcSwap::from_pointee(config.clone()));
 
@@ -147,7 +143,7 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
         lnurl_domain: config.lnurl_domain.clone(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
-        invoice_data_transmitters: Arc::new(DashMap::new()),
+        invoice_store,
     });
 
     config_watcher::start_config_watcher(config_path.clone(), config_swap).await?;

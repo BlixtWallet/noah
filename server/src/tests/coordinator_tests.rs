@@ -19,7 +19,7 @@ async fn test_normal_priority_respects_spacing() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user1@test.com"), None)
+    UserRepository::create(&mut tx, &pubkey, "user1@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -33,7 +33,7 @@ async fn test_normal_priority_respects_spacing() {
     )
     .bind(pubkey.clone())
     .bind("backup_trigger")
-    .bind(recent_time.clone())
+    .bind(recent_time)
     .execute(&app_state.db_pool)
     .await
     .unwrap();
@@ -74,7 +74,7 @@ async fn test_critical_priority_bypasses_spacing() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user2@test.com"), None)
+    UserRepository::create(&mut tx, &pubkey, "user2@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -128,7 +128,7 @@ async fn test_offboarding_skips_maintenance() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user3@test.com"), None)
+    UserRepository::create(&mut tx, &pubkey, "user3@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();
@@ -176,7 +176,7 @@ async fn test_notification_tracking_records_sent() {
 
     // Register user
     let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, &format!("user4@test.com"), None)
+    UserRepository::create(&mut tx, &pubkey, "user4@test.com", None)
         .await
         .unwrap();
     tx.commit().await.unwrap();

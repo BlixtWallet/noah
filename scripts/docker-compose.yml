@@ -60,7 +60,6 @@ services:
   cln:
     image: niteshbalusu/bark-cln:latest
     restart: on-failure
-    entrypoint: ["/usr/local/bin/cln_start.sh"]
     volumes:
       - bitcoind:/root/.bitcoin
       - cln:/root/.lightning
@@ -69,6 +68,8 @@ services:
       - "9736:9736"
     depends_on:
       bitcoind:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   captaind:

@@ -68,7 +68,7 @@ async fn test_complete_upload() {
         .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
-    let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
+    let s3_key = format!("{}/backup_v1.db", user.pubkey());
 
     let response = app
         .oneshot(
@@ -119,7 +119,7 @@ async fn test_complete_upload_upsert() {
         .expect("failed to create k1");
     let auth_payload = user.auth_payload(&k1);
 
-    let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
+    let s3_key = format!("{}/backup_v1.db", user.pubkey());
 
     // First upload
     let response = app
@@ -284,7 +284,7 @@ async fn test_get_download_url_specific_version() {
     create_test_user(&app_state, &user, None).await;
 
     // Insert test backup metadata
-    let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
+    let s3_key = format!("{}/backup_v1.db", user.pubkey());
     let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_metadata(&user.pubkey().to_string(), &s3_key, 1024, 1)
@@ -436,7 +436,7 @@ async fn test_delete_backup() {
     create_test_user(&app_state, &user, None).await;
 
     // Insert test backup metadata
-    let s3_key = format!("{}/backup_v1.db", user.pubkey().to_string());
+    let s3_key = format!("{}/backup_v1.db", user.pubkey());
     let backup_repo = BackupRepository::new(&app_state.db_pool);
     backup_repo
         .upsert_metadata(&user.pubkey().to_string(), &s3_key, 1024, 1)
@@ -560,7 +560,7 @@ async fn test_update_backup_settings_enable() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(backup_enabled, true);
+    assert!(backup_enabled);
 }
 
 #[tracing_test::traced_test]
@@ -611,5 +611,5 @@ async fn test_update_backup_settings_disable() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(backup_enabled, false);
+    assert!(!backup_enabled);
 }

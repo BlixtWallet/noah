@@ -10,7 +10,7 @@ use rand::Rng;
 use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
-use tokio::{sync::oneshot, time::timeout};
+use tokio::time::sleep;
 use validator::{Validate, ValidateEmail};
 
 use crate::{
@@ -37,6 +37,8 @@ pub struct GetK1 {
 const LNURLP_MIN_SENDABLE: u64 = 330000;
 const LNURLP_MAX_SENDABLE: u64 = 100000000;
 const COMMENT_ALLOWED_SIZE: u16 = 280;
+const POLL_INTERVAL: Duration = Duration::from_millis(500);
+const TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Generates and returns a new `k1` value for an LNURL-auth flow.
 ///
@@ -157,35 +159,27 @@ pub async fn lnurlp_request(
         )));
     }
 
-    if let Some(wallet) = &query.wallet {
-        if wallet == "noahwallet" {
-            if let Some(ark_address) = &user.ark_address {
-                let response = LnurlpInvoiceResponse {
-                    pr: "".to_string(),
-                    routes: vec![],
-                    ark: Some(ark_address.clone()),
-                };
-                return Ok(Json(
-                    serde_json::to_value(response)
-                        .map_err(|e| ApiError::SerializeErr(e.to_string()))?,
-                ));
-            }
-        }
+    if let Some(wallet) = &query.wallet
+        && wallet == "noahwallet"
+        && let Some(ark_address) = &user.ark_address
+    {
+        let response = LnurlpInvoiceResponse {
+            pr: "".to_string(),
+            routes: vec![],
+            ark: Some(ark_address.clone()),
+        };
+        return Ok(Json(
+            serde_json::to_value(response).map_err(|e| ApiError::SerializeErr(e.to_string()))?,
+        ));
     }
-
-    let (tx, rx) = oneshot::channel();
 
     // Generate a unique transaction ID for this payment request
     let transaction_id = Uuid::new_v4().to_string();
-    state
-        .invoice_data_transmitters
-        .insert(transaction_id.clone(), tx);
 
     // Generate a k1 for authentication optimization (avoids extra network call)
     let k1 = match make_k1(&state.k1_cache).await {
         Ok(value) => value,
         Err(e) => {
-            state.invoice_data_transmitters.remove(&transaction_id);
             tracing::error!("Failed to create k1 for LNURL request: {}", e);
             return Err(ApiError::ServerErr(
                 "Failed to create authentication challenge".to_string(),
@@ -215,25 +209,42 @@ pub async fn lnurlp_request(
         }
     });
 
-    tracing::debug!("Waiting for invoice with a 30s timeout...");
-    let invoice_result = timeout(Duration::from_secs(30), rx).await;
+    tracing::debug!("Polling for invoice with a 30s timeout...");
 
-    let invoice = match invoice_result {
-        Ok(Ok(invoice)) => Ok(invoice),
-        Ok(Err(_)) => {
-            state.invoice_data_transmitters.remove(&transaction_id);
-            Err(ApiError::ServerErr("Failed to receive invoice".to_string()))
+    let start = std::time::Instant::now();
+
+    let invoice = loop {
+        match state.invoice_store.get(&transaction_id).await {
+            Ok(Some(inv)) => {
+                // Clean up after successful retrieval
+                if let Err(e) = state.invoice_store.remove(&transaction_id).await {
+                    tracing::warn!(
+                        "Failed to remove invoice for transaction_id {}: {}",
+                        transaction_id,
+                        e
+                    );
+                }
+
+                break inv;
+            }
+            Ok(None) => {
+                if start.elapsed() >= TIMEOUT {
+                    tracing::error!(
+                        "Invoice request timed out after 30s for transaction_id: {}",
+                        transaction_id
+                    );
+                    return Err(ApiError::ServerErr("Request timed out".to_string()));
+                }
+                sleep(POLL_INTERVAL).await;
+            }
+            Err(e) => {
+                tracing::error!("Failed to poll invoice from Redis: {}", e);
+                return Err(ApiError::ServerErr(
+                    "Failed to retrieve invoice".to_string(),
+                ));
+            }
         }
-        Err(_) => {
-            // Timeout occurred
-            state.invoice_data_transmitters.remove(&transaction_id);
-            tracing::error!(
-                "Invoice request timed out after 30s for transaction_id: {}",
-                transaction_id
-            );
-            Err(ApiError::ServerErr("Request timed out".to_string()))
-        }
-    }?;
+    };
 
     let response = LnurlpInvoiceResponse {
         pr: invoice,
@@ -255,10 +266,11 @@ pub async fn register(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<RegisterResponse>, ApiError> {
-    if let Some(_ln_address) = &payload.ln_address {
-        if let Err(e) = payload.validate() {
-            return Err(ApiError::InvalidArgument(e.to_string()));
-        }
+    if payload.ln_address.is_some()
+        && payload.validate().is_err()
+        && let Err(e) = payload.validate()
+    {
+        return Err(ApiError::InvalidArgument(e.to_string()));
     }
 
     let user_repo = UserRepository::new(&state.db_pool);
@@ -272,20 +284,19 @@ pub async fn register(
     if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
         tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
 
-        if let Some(ark_address) = &payload.ark_address {
-            if let Err(e) = user_repo
+        if let Some(ark_address) = &payload.ark_address
+            && let Err(e) = user_repo
                 .update_ark_address(&auth_payload.key, ark_address)
                 .await
-            {
-                if e.is::<crate::db::user_repo::DuplicateArkAddressError>() {
-                    // If address is taken, we can either return error or just ignore and keep old one.
-                    // Returning error is safer to let client know.
-                    return Err(ApiError::InvalidArgument(
-                        "Ark address already taken".to_string(),
-                    ));
-                }
-                return Err(e.into());
+        {
+            if e.is::<crate::db::user_repo::DuplicateArkAddressError>() {
+                // If address is taken, we can either return error or just ignore and keep old one.
+                // Returning error is safer to let client know.
+                return Err(ApiError::InvalidArgument(
+                    "Ark address already taken".to_string(),
+                ));
             }
+            return Err(e.into());
         }
 
         if let Some(device_info) = payload.device_info {

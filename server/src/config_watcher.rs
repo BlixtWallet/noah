@@ -16,13 +16,13 @@ pub async fn start_config_watcher(
 
     let mut watcher: RecommendedWatcher =
         notify::recommended_watcher(move |res: Result<Event, _>| {
-            if let Ok(event) = res {
-                if matches!(
+            if let Ok(event) = res
+                && matches!(
                     event.kind,
                     notify::EventKind::Modify(_) | notify::EventKind::Create(_)
-                ) {
-                    let _ = tx.blocking_send(event);
-                }
+                )
+            {
+                let _ = tx.blocking_send(event);
             }
         })
         .context("Failed to create file watcher")?;

@@ -8,6 +8,13 @@
       "binary": {
         "path": "/run/current-system/sw/bin/nix"
       }
+    },
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy"
+        }
+      }
     }
   },
   "languages": {

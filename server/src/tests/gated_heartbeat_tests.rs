@@ -54,7 +54,7 @@ async fn test_heartbeat_response_success() {
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let res: DefaultSuccessPayload = serde_json::from_slice(&body).unwrap();
-    assert_eq!(res.success, true);
+    assert!(res.success);
 
     // Verify the heartbeat was marked as responded in the database
     let (status, responded_at): (String, Option<chrono::DateTime<Utc>>) = sqlx::query_as(
