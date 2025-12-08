@@ -1,0 +1,134 @@
+# Railway-specific Dockerfile for Noah Server
+# This generates config.toml from environment variables at runtime
+
+# Stage 1: Install cargo-chef
+FROM rust:1.88 AS chef
+RUN cargo install cargo-chef
+WORKDIR /app
+
+# Stage 2: Analyze dependencies
+FROM chef AS planner
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./server/Cargo.toml ./server/Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./server/src/ ./server/src
+COPY ./server/migrations ./server/migrations
+RUN cargo chef prepare --recipe-path recipe.json
+
+# Stage 3: Build dependencies (cached layer)
+FROM chef AS builder
+RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
+
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json -p server
+
+# Stage 4: Build application
+COPY ./Cargo.toml ./Cargo.toml
+COPY ./server/Cargo.toml ./server/Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./server/src/ ./server/src
+COPY ./server/migrations ./server/migrations
+WORKDIR /app/server
+RUN cargo build --release
+
+# Stage 5: Runtime image
+FROM debian:bookworm-slim AS runtime
+RUN apt-get update && apt-get install -y ca-certificates curl pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/server /usr/local/bin/
+COPY --from=builder /app/target/release/noah-cli /usr/local/bin/
+RUN mkdir -p /etc/server
+
+# Create entrypoint script that generates config.toml from environment variables
+RUN cat > /usr/local/bin/docker-entrypoint.sh << 'ENTRYPOINT_EOF'
+#!/bin/sh
+set -e
+
+CONFIG_PATH="${CONFIG_PATH:-/etc/server/config.toml}"
+CONFIG_DIR=$(dirname "$CONFIG_PATH")
+
+mkdir -p "$CONFIG_DIR"
+
+cat > "$CONFIG_PATH" << EOF
+# Auto-generated config from environment variables
+host = "${HOST:-0.0.0.0}"
+port = ${PORT:-3000}
+private_port = ${PRIVATE_PORT:-3099}
+lnurl_domain = "${LNURL_DOMAIN:-localhost}"
+postgres_url = "${POSTGRES_URL:-${DATABASE_URL}}"
+redis_url = "${REDIS_URL:-redis://127.0.0.1:6379}"
+expo_access_token = "${EXPO_ACCESS_TOKEN}"
+ark_server_url = "${ARK_SERVER_URL}"
+server_network = "${SERVER_NETWORK:-regtest}"
+s3_bucket_name = "${S3_BUCKET_NAME}"
+minimum_app_version = "${MINIMUM_APP_VERSION:-0.0.1}"
+EOF
+
+# Optional: postgres connection pool settings
+if [ -n "$POSTGRES_MAX_CONNECTIONS" ]; then
+    echo "postgres_max_connections = $POSTGRES_MAX_CONNECTIONS" >> "$CONFIG_PATH"
+fi
+
+if [ -n "$POSTGRES_MIN_CONNECTIONS" ]; then
+    echo "postgres_min_connections = $POSTGRES_MIN_CONNECTIONS" >> "$CONFIG_PATH"
+fi
+
+# Optional: Sentry URL
+if [ -n "$SENTRY_URL" ]; then
+    echo "sentry_url = \"$SENTRY_URL\"" >> "$CONFIG_PATH"
+fi
+
+# Optional: AWS credentials
+if [ -n "$AWS_ACCESS_KEY_ID" ]; then
+    echo "aws_access_key_id = \"$AWS_ACCESS_KEY_ID\"" >> "$CONFIG_PATH"
+fi
+
+if [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo "aws_secret_access_key = \"$AWS_SECRET_ACCESS_KEY\"" >> "$CONFIG_PATH"
+fi
+
+if [ -n "$AWS_REGION" ]; then
+    echo "aws_region = \"$AWS_REGION\"" >> "$CONFIG_PATH"
+fi
+
+# Optional: Ntfy auth token
+if [ -n "$NTFY_AUTH_TOKEN" ]; then
+    echo "ntfy_auth_token = \"$NTFY_AUTH_TOKEN\"" >> "$CONFIG_PATH"
+fi
+
+# Optional: Cron schedules
+if [ -n "$BACKUP_CRON" ]; then
+    echo "backup_cron = \"$BACKUP_CRON\"" >> "$CONFIG_PATH"
+fi
+
+if [ -n "$HEARTBEAT_CRON" ]; then
+    echo "heartbeat_cron = \"$HEARTBEAT_CRON\"" >> "$CONFIG_PATH"
+fi
+
+if [ -n "$DEREGISTRATION_CRON" ]; then
+    echo "deregistration_cron = \"$DEREGISTRATION_CRON\"" >> "$CONFIG_PATH"
+fi
+
+# Optional: Maintenance and notification settings
+if [ -n "$MAINTENANCE_INTERVAL_ROUNDS" ]; then
+    echo "maintenance_interval_rounds = $MAINTENANCE_INTERVAL_ROUNDS" >> "$CONFIG_PATH"
+fi
+
+if [ -n "$NOTIFICATION_SPACING_MINUTES" ]; then
+    echo "notification_spacing_minutes = $NOTIFICATION_SPACING_MINUTES" >> "$CONFIG_PATH"
+fi
+
+echo "Generated config at $CONFIG_PATH"
+
+exec "$@"
+ENTRYPOINT_EOF
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENV CONFIG_PATH=/etc/server/config.toml
+
+EXPOSE 3000
+EXPOSE 3099
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["server", "--config-path", "/etc/server/config.toml"]

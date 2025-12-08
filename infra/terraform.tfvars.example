@@ -1,0 +1,36 @@
+# Railway API token - get from https://railway.app/account/tokens
+railway_token = "your-railway-api-token"
+
+# Project settings
+project_name = "noah-server"
+
+# Database
+postgres_password = "your-secure-postgres-password"
+
+# GitHub repository (required for deployment)
+github_repo   = "your-username/noah"
+github_branch = "main"
+
+# Server configuration
+server_network      = "bitcoin"  # Options: bitcoin, signet, regtest
+lnurl_domain        = "your-domain.com"
+ark_server_url      = "https://your-ark-server.com"
+minimum_app_version = "0.0.1"
+
+# Expo push notifications (required)
+expo_access_token = "your-expo-access-token"
+
+# AWS S3 for backups (required)
+s3_bucket_name        = "your-s3-bucket"
+aws_access_key_id     = "your-aws-access-key"
+aws_secret_access_key = "your-aws-secret-key"
+aws_region            = "us-east-2"
+
+# Optional: Custom domain (leave empty to use Railway's domain)
+# custom_domain = "api.your-domain.com"
+
+# Optional: Sentry DSN for error tracking
+# sentry_url = "https://your-dsn@sentry.io/project-id"
+
+# Optional: Ntfy auth token for notifications
+# ntfy_auth_token = "your-ntfy-token"
