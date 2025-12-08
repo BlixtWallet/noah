@@ -44,7 +44,7 @@ pub async fn send_push_notification_with_unique_k1(
     // For notifications that need unique k1 per device, we don't use the batching approach
     // Instead, we send individual notifications with unique k1 values
     let expo = Expo::new(ExpoClientOptions {
-        access_token: Some(app_state.config.load().expo_access_token.clone()),
+        access_token: Some(app_state.config.expo_access_token.clone()),
     });
     let http_client = Client::new();
 
@@ -71,7 +71,7 @@ pub async fn send_push_notification_with_unique_k1(
             let app_state_clone = app_state.clone();
             let base_data_clone = base_notification_data.clone();
             let http_client_clone = http_client.clone();
-            let ntfy_auth = app_state.config.load().ntfy_auth_token.clone();
+            let ntfy_auth = app_state.config.ntfy_auth_token.clone();
             async move {
                 // Create notification data with unique k1 if needed
                 let mut notification_data = base_data_clone;
@@ -151,7 +151,7 @@ async fn send_push_notification_internal(
     pubkey: Option<String>,
 ) -> anyhow::Result<(), ApiError> {
     let expo = Expo::new(ExpoClientOptions {
-        access_token: Some(app_state.config.load().expo_access_token.clone()),
+        access_token: Some(app_state.config.expo_access_token.clone()),
     });
     let http_client = Client::new();
 
@@ -219,7 +219,7 @@ async fn send_push_notification_internal(
     }
 
     if !unified_tokens.is_empty() {
-        let ntfy_auth = app_state.config.load().ntfy_auth_token.clone();
+        let ntfy_auth = app_state.config.ntfy_auth_token.clone();
         let data_clone = data.clone();
         stream::iter(unified_tokens)
             .for_each_concurrent(None, |endpoint| {

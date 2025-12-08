@@ -82,7 +82,7 @@ async fn establish_connection_and_process(
 
     let mut stream = client.subscribe_rounds(Empty {}).await?.into_inner();
 
-    let maintenance_interval_rounds = app_state.config.load().maintenance_interval_rounds;
+    let maintenance_interval_rounds = app_state.config.maintenance_interval_rounds;
     let mut round_counter = 0;
 
     tracing::info!("Starting round subscription");

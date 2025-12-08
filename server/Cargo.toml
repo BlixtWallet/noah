@@ -6,8 +6,7 @@ edition = "2024"
 [dependencies]
 axum = { version = "0.8.7", features = ["json"] }
 anyhow = "1.0.100"
-arc-swap = "1.7.1"
-notify = "8.2.0"
+dotenvy = "0.15"
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.43"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
@@ -38,7 +37,6 @@ ts-rs = "11.1.0"
 sentry = { version = "0.46.0", features = ["tracing", "logs", "tower-axum-matched-path"] }
 tower = "0.5.2"
 uuid = "1.18.1"
-toml = "0.9.8"
 semver = "1.0.27"
 sqlx = { version = "0.8.2", default-features = false, features = ["runtime-tokio", "postgres", "uuid", "chrono", "macros", "migrate"] }
 reqwest = "0.12.24"

@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use arc_swap::ArcSwap;
 use axum::Router;
 use axum::{middleware, routing::post};
 use bitcoin::key::Keypair;
@@ -122,7 +121,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
-        config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
+        config: Arc::new(TestUser::get_config()),
     });
 
     // Middleware layers
@@ -175,7 +174,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
-        config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
+        config: Arc::new(TestUser::get_config()),
     });
 
     let app = Router::new()

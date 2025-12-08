@@ -1,17 +1,12 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage, Sound};
-use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
 
 #[derive(Parser)]
 #[command(name = "noah-cli")]
 #[command(about = "CLI tool for Noah server administration", long_about = None)]
 struct Cli {
-    /// Path to config file
-    #[arg(long, default_value = "/etc/server/config.toml")]
-    config: String,
-
     #[command(subcommand)]
     command: Commands,
 }
@@ -37,18 +32,25 @@ enum Commands {
     Stats,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 struct Config {
     postgres_url: String,
     expo_access_token: String,
 }
 
 impl Config {
-    fn from_file(path: &str) -> Result<Self> {
-        let content = std::fs::read_to_string(path)
-            .context(format!("Failed to read config file: {}", path))?;
-        let config: Config = toml::from_str(&content).context("Failed to parse config")?;
-        Ok(config)
+    fn from_env() -> Result<Self> {
+        // Load .env file if present (useful for local development)
+        let _ = dotenvy::dotenv();
+
+        let postgres_url =
+            std::env::var("NOAH_POSTGRES_URL").context("NOAH_POSTGRES_URL is required")?;
+        let expo_access_token = std::env::var("NOAH_EXPO_ACCESS_TOKEN")
+            .context("NOAH_EXPO_ACCESS_TOKEN is required")?;
+        Ok(Self {
+            postgres_url,
+            expo_access_token,
+        })
     }
 }
 
@@ -186,7 +188,7 @@ async fn cmd_stats(config: &Config) -> Result<()> {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let config = Config::from_file(&cli.config)?;
+    let config = Config::from_env()?;
 
     match cli.command {
         Commands::Broadcast {

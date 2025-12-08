@@ -148,7 +148,7 @@ pub async fn get_upload_url(
     Extension(auth_payload): Extension<AuthPayload>,
     Json(payload): Json<GetUploadUrlPayload>,
 ) -> Result<Json<UploadUrlResponse>, ApiError> {
-    let s3_client = S3BackupClient::new(state.config.load().s3_bucket_name.clone()).await?;
+    let s3_client = S3BackupClient::new(state.config.s3_bucket_name.clone()).await?;
     let s3_key = format!(
         "{}/backup_v{}.db",
         auth_payload.key.clone(),
@@ -205,7 +205,7 @@ pub async fn get_download_url(
             .ok_or(ApiError::NotFound("Backup not found".to_string()))?
     };
 
-    let s3_client = S3BackupClient::new(state.config.load().s3_bucket_name.clone()).await?;
+    let s3_client = S3BackupClient::new(state.config.s3_bucket_name.clone()).await?;
     let download_url = s3_client.generate_download_url(&s3_key).await?;
 
     Ok(Json(DownloadUrlResponse {
@@ -226,7 +226,7 @@ pub async fn delete_backup(
         .await?
         .ok_or(ApiError::NotFound("Backup not found".to_string()))?;
 
-    let s3_client = S3BackupClient::new(state.config.load().s3_bucket_name.clone()).await?;
+    let s3_client = S3BackupClient::new(state.config.s3_bucket_name.clone()).await?;
     s3_client.delete_object(&s3_key).await?;
 
     backup_repo
