@@ -1,17 +1,13 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage, Sound};
-use serde::Deserialize;
+use server::config::Config;
 use sqlx::postgres::PgPoolOptions;
 
 #[derive(Parser)]
 #[command(name = "noah-cli")]
 #[command(about = "CLI tool for Noah server administration", long_about = None)]
 struct Cli {
-    /// Path to config file
-    #[arg(long, default_value = "/etc/server/config.toml")]
-    config: String,
-
     #[command(subcommand)]
     command: Commands,
 }
@@ -35,21 +31,6 @@ enum Commands {
 
     /// Show statistics about registered users
     Stats,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct Config {
-    postgres_url: String,
-    expo_access_token: String,
-}
-
-impl Config {
-    fn from_file(path: &str) -> Result<Self> {
-        let content = std::fs::read_to_string(path)
-            .context(format!("Failed to read config file: {}", path))?;
-        let config: Config = toml::from_str(&content).context("Failed to parse config")?;
-        Ok(config)
-    }
 }
 
 fn is_expo_token(token: &str) -> bool {
@@ -186,7 +167,7 @@ async fn cmd_stats(config: &Config) -> Result<()> {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let config = Config::from_file(&cli.config)?;
+    let config = Config::load()?;
 
     match cli.command {
         Commands::Broadcast {

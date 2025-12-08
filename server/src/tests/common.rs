@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use arc_swap::ArcSwap;
 use axum::Router;
 use axum::{middleware, routing::post};
 use bitcoin::key::Keypair;
@@ -62,9 +61,6 @@ impl TestUser {
     pub fn get_config() -> Config {
         Config {
             s3_bucket_name: "test-bucket".to_string(),
-            aws_access_key_id: Some("test-key".to_string()),
-            aws_secret_access_key: Some("test-secret".to_string()),
-            aws_region: Some("us-east-1".to_string()),
             host: "localhost".to_string(),
             port: 3000,
             private_port: 3001,
@@ -122,7 +118,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
-        config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
+        config: Arc::new(TestUser::get_config()),
     });
 
     // Middleware layers
@@ -175,7 +171,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
-        config: Arc::new(ArcSwap::from_pointee(TestUser::get_config())),
+        config: Arc::new(TestUser::get_config()),
     });
 
     let app = Router::new()

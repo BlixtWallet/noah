@@ -21,7 +21,7 @@ pub struct NotificationCoordinator {
 
 impl NotificationCoordinator {
     pub fn new(app_state: AppState) -> Self {
-        let min_spacing_minutes = app_state.config.load().notification_spacing_minutes;
+        let min_spacing_minutes = app_state.config.notification_spacing_minutes;
         Self {
             app_state,
             min_spacing_minutes,

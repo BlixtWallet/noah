@@ -1,71 +1,117 @@
 use anyhow::{Context, Result};
 use bitcoin::Network;
-use serde::Deserialize;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 
 /// Configuration for the Noah server
 ///
-/// # Hot-Reloadable Configuration
-/// Most config values can be updated at runtime by modifying the config file.
-/// The server watches for file changes and automatically reloads the config.
-///
-/// ## Non-Reloadable (requires restart):
-/// - `host`, `port`, `private_port`: Network binding configuration
-/// - `postgres_url`: Database connection settings
-/// - `server_network`: Bitcoin network selection
-///
-/// ## Hot-Reloadable (applies automatically):
-/// - `lnurl_domain`, `ark_server_url`: External service URLs
-/// - `expo_access_token`: Push notification credentials
-/// - `backup_cron`, `heartbeat_cron`, `deregister_cron`: Cron schedules
-/// - `maintenance_interval_rounds`: Maintenance settings
-/// - `s3_bucket_name`, AWS credentials: S3 configuration
-/// - `minimum_app_version`: App version requirements
-/// - `sentry_url`: Monitoring configuration
-#[derive(Debug, Clone, Deserialize)]
+/// All config fields are set via environment variables:
+/// - `HOST`, `PORT`, `PRIVATE_PORT`
+/// - `POSTGRES_URL`, `REDIS_URL`
+/// - `EXPO_ACCESS_TOKEN`, `ARK_SERVER_URL`
+/// - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
+#[derive(Debug, Clone)]
 pub struct Config {
-    #[serde(default = "default_host")]
     pub host: String,
-    #[serde(default = "default_port")]
     pub port: u16,
-    #[serde(default = "default_private_port")]
     pub private_port: u16,
-    #[serde(default = "default_lnurl_domain")]
     pub lnurl_domain: String,
     pub postgres_url: String,
-    #[serde(default = "default_postgres_max_connections")]
     pub postgres_max_connections: u32,
-    #[serde(default)]
     pub postgres_min_connections: Option<u32>,
     pub expo_access_token: String,
     pub ark_server_url: String,
-    #[serde(default = "default_server_network")]
     pub server_network: String,
     pub sentry_url: Option<String>,
-    #[serde(default = "default_backup_cron")]
     pub backup_cron: String,
-    #[serde(default = "default_maintenance_interval_rounds")]
     pub maintenance_interval_rounds: u16,
-    #[serde(default = "default_heartbeat_cron")]
     pub heartbeat_cron: String,
-    #[serde(default = "default_deregister_cron")]
     pub deregister_cron: String,
-    #[serde(default = "default_notification_spacing_minutes")]
     pub notification_spacing_minutes: i64,
     pub s3_bucket_name: String,
-    pub aws_access_key_id: Option<String>,
-    pub aws_secret_access_key: Option<String>,
-    pub aws_region: Option<String>,
-    #[serde(default = "default_minimum_app_version")]
     pub minimum_app_version: String,
-    #[serde(default = "default_redis_url")]
     pub redis_url: String,
-    #[serde(default)]
     pub ntfy_auth_token: String,
 }
 
 impl Config {
+    pub fn load() -> Result<Self> {
+        dotenvy::dotenv().ok();
+
+        let config = Self {
+            host: std::env::var("HOST").unwrap_or_else(|_| default_host()),
+            port: std::env::var("PORT")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or_else(default_port),
+            private_port: std::env::var("PRIVATE_PORT")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or_else(default_private_port),
+            lnurl_domain: std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| default_lnurl_domain()),
+            postgres_url: std::env::var("POSTGRES_URL").unwrap_or_default(),
+            postgres_max_connections: std::env::var("POSTGRES_MAX_CONNECTIONS")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(10),
+            postgres_min_connections: std::env::var("POSTGRES_MIN_CONNECTIONS")
+                .ok()
+                .and_then(|v| v.parse().ok()),
+            expo_access_token: std::env::var("EXPO_ACCESS_TOKEN").unwrap_or_default(),
+            ark_server_url: std::env::var("ARK_SERVER_URL").unwrap_or_default(),
+            server_network: std::env::var("SERVER_NETWORK")
+                .unwrap_or_else(|_| default_server_network()),
+            sentry_url: std::env::var("SENTRY_URL").ok(),
+            backup_cron: std::env::var("BACKUP_CRON").unwrap_or_else(|_| default_backup_cron()),
+            maintenance_interval_rounds: std::env::var("MAINTENANCE_INTERVAL_ROUNDS")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or_else(default_maintenance_interval_rounds),
+            heartbeat_cron: std::env::var("HEARTBEAT_CRON")
+                .unwrap_or_else(|_| default_heartbeat_cron()),
+            deregister_cron: std::env::var("DEREGISTER_CRON")
+                .unwrap_or_else(|_| default_deregister_cron()),
+            notification_spacing_minutes: std::env::var("NOTIFICATION_SPACING_MINUTES")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(45),
+            s3_bucket_name: std::env::var("S3_BUCKET_NAME").unwrap_or_default(),
+            minimum_app_version: std::env::var("MINIMUM_APP_VERSION")
+                .unwrap_or_else(|_| "0.0.1".to_string()),
+            redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| default_redis_url()),
+            ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
+        };
+
+        config.validate()?;
+
+        Ok(config)
+    }
+
+    fn validate(&self) -> Result<()> {
+        if self.postgres_url.is_empty() {
+            anyhow::bail!("POSTGRES_URL is required");
+        }
+        if self.expo_access_token.is_empty() {
+            anyhow::bail!("EXPO_ACCESS_TOKEN is required");
+        }
+        if self.ark_server_url.is_empty() {
+            anyhow::bail!("ARK_SERVER_URL is required");
+        }
+        if self.s3_bucket_name.is_empty() {
+            anyhow::bail!("S3_BUCKET_NAME is required");
+        }
+        Ok(())
+    }
+
+    pub fn host(&self) -> Result<Ipv4Addr> {
+        Ipv4Addr::from_str(&self.host).context(format!("Invalid host address: {}", self.host))
+    }
+
+    pub fn network(&self) -> Result<Network> {
+        Network::from_str(&self.server_network)
+            .context(format!("Invalid network: {}", self.server_network))
+    }
+
     pub fn log_config(&self) {
         tracing::debug!("=== Server Configuration ===");
         tracing::debug!("Host: {}", self.host);
@@ -101,82 +147,10 @@ impl Config {
             self.maintenance_interval_rounds
         );
         tracing::debug!("S3 Bucket Name: {}", self.s3_bucket_name);
-        tracing::debug!(
-            "AWS Access Key ID: {}",
-            if self.aws_access_key_id.is_some() {
-                "[SET]"
-            } else {
-                "[NOT SET]"
-            }
-        );
-        tracing::debug!(
-            "AWS Secret Access Key: {}",
-            if self.aws_secret_access_key.is_some() {
-                "[SET]"
-            } else {
-                "[NOT SET]"
-            }
-        );
-        tracing::debug!(
-            "AWS Region: {}",
-            self.aws_region.as_deref().unwrap_or("[NOT SET]")
-        );
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
         tracing::debug!("Redis URL: {}", self.redis_url);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
         tracing::debug!("============================");
-    }
-
-    pub fn from_file(path: &str) -> Result<Self> {
-        let content = std::fs::read_to_string(path)
-            .context(format!("Failed to read config file at: {}", path))?;
-        let config: Config = toml::from_str(&content).context("Failed to parse TOML config")?;
-
-        // Set AWS credentials as environment variables if provided in config
-        if let Some(access_key) = &config.aws_access_key_id {
-            unsafe {
-                std::env::set_var("AWS_ACCESS_KEY_ID", access_key);
-            }
-        }
-        if let Some(secret_key) = &config.aws_secret_access_key {
-            unsafe {
-                std::env::set_var("AWS_SECRET_ACCESS_KEY", secret_key);
-            }
-        }
-
-        if let Some(region) = &config.aws_region {
-            unsafe {
-                std::env::set_var("AWS_REGION", region);
-            }
-        }
-
-        Ok(config)
-    }
-
-    pub fn host(&self) -> Result<Ipv4Addr> {
-        Ipv4Addr::from_str(&self.host).context(format!("Invalid host address: {}", self.host))
-    }
-
-    pub fn network(&self) -> Result<Network> {
-        Network::from_str(&self.server_network)
-            .context(format!("Invalid network: {}", self.server_network))
-    }
-
-    pub fn get_config_path() -> String {
-        // Check for --config-path CLI argument first
-        let args: Vec<String> = std::env::args().collect();
-        for i in 0..args.len() {
-            if args[i] == "--config-path" && i + 1 < args.len() {
-                return args[i + 1].clone();
-            }
-        }
-
-        // Fall back to CONFIG_PATH env variable
-        std::env::var("CONFIG_PATH").unwrap_or_else(|_| "config.toml".to_string())
-    }
-
-    pub fn load_config(path: &str) -> anyhow::Result<Config> {
-        Self::from_file(path)
     }
 }
 
@@ -212,20 +186,8 @@ fn default_deregister_cron() -> String {
     crate::constants::DEFAULT_DEREGISTER_CRON.to_string()
 }
 
-fn default_postgres_max_connections() -> u32 {
-    10
-}
-
 fn default_maintenance_interval_rounds() -> u16 {
     crate::constants::DEFAULT_MAINTENANCE_INTERVAL_ROUNDS
-}
-
-fn default_notification_spacing_minutes() -> i64 {
-    45
-}
-
-fn default_minimum_app_version() -> String {
-    "0.0.1".to_string()
 }
 
 fn default_redis_url() -> String {

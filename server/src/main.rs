@@ -1,11 +1,9 @@
-use arc_swap::ArcSwap;
 use axum::{
     Router, middleware,
     routing::{get, post},
 };
 mod cache;
 mod config;
-mod config_watcher;
 mod constants;
 mod routes;
 mod types;
@@ -56,7 +54,7 @@ const K1_TTL_SECONDS: usize = 600;
 
 #[derive(Clone)]
 pub struct AppStruct {
-    pub config: Arc<ArcSwap<Config>>,
+    pub config: Arc<Config>,
     pub lnurl_domain: String,
     pub db_pool: PgPool,
     pub k1_cache: K1Store,
@@ -64,8 +62,7 @@ pub struct AppStruct {
 }
 
 fn main() -> anyhow::Result<()> {
-    let config_path = Config::get_config_path();
-    let config = Config::load_config(&config_path)?;
+    let config = Config::load()?;
 
     let server_network = config.network()?;
 
@@ -114,12 +111,12 @@ fn main() -> anyhow::Result<()> {
         .enable_all()
         .build()?;
 
-    runtime.block_on(async { start_server(config, config_path).await })?;
+    runtime.block_on(async { start_server(config).await })?;
 
     Ok(())
 }
 
-async fn start_server(config: Config, config_path: String) -> anyhow::Result<()> {
+async fn start_server(config: Config) -> anyhow::Result<()> {
     let host = config.host()?;
     let _server_network = config.network()?;
 
@@ -136,17 +133,13 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
     let k1_cache = K1Store::new(redis_client.clone(), K1_TTL_SECONDS);
     let invoice_store = InvoiceStore::new(redis_client);
 
-    let config_swap = Arc::new(ArcSwap::from_pointee(config.clone()));
-
     let app_state = Arc::new(AppStruct {
-        config: config_swap.clone(),
+        config: Arc::new(config.clone()),
         lnurl_domain: config.lnurl_domain.clone(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
     });
-
-    config_watcher::start_config_watcher(config_path.clone(), config_swap).await?;
 
     config.log_config();
 
