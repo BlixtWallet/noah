@@ -13,35 +13,19 @@ output "server_service_id" {
   value       = railway_service.server.id
 }
 
-output "postgres_service_id" {
-  description = "PostgreSQL service ID"
-  value       = railway_service.postgres.id
-}
-
-output "redis_service_id" {
-  description = "Redis service ID"
-  value       = railway_service.redis.id
-}
-
-output "postgres_password" {
-  description = "Auto-generated PostgreSQL password"
-  value       = random_password.postgres.result
-  sensitive   = true
-}
-
 output "server_domain" {
   description = "Railway-generated domain for the server"
+  value       = railway_service_domain.server.domain
+}
+
+output "cname_target" {
+  description = "CNAME target for custom domain - point your Cloudflare DNS here"
   value       = railway_service_domain.server.domain
 }
 
 output "custom_domain" {
   description = "Custom domain if configured"
   value       = var.custom_domain != "" ? railway_custom_domain.server[0].domain : null
-}
-
-output "cname_target" {
-  description = "CNAME target for custom domain - point your Cloudflare DNS here"
-  value       = railway_service_domain.server.domain
 }
 
 output "railway_dashboard_url" {

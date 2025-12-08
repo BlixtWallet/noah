@@ -5,24 +5,11 @@ terraform {
       source  = "terraform-community-providers/railway"
       version = "~> 0.4"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
   }
 }
 
 provider "railway" {
   token = var.railway_token
-}
-
-# ========================================
-# Auto-generated PostgreSQL password
-# ========================================
-resource "random_password" "postgres" {
-  length           = 32
-  special          = true
-  override_special = "!#$%&*-_=+<>?"
 }
 
 # ========================================
@@ -33,42 +20,18 @@ resource "railway_project" "noah" {
 }
 
 # ========================================
-# PostgreSQL Database Service
+# NOTE: PostgreSQL and Redis
 # ========================================
-resource "railway_service" "postgres" {
-  project_id = railway_project.noah.id
-  name       = "PostgreSQL"
-}
-
-resource "railway_variable_collection" "postgres" {
-  service_id     = railway_service.postgres.id
-  environment_id = railway_project.noah.default_environment.id
-
-  variables = [
-    { name = "RAILWAY_DOCKER_IMAGE", value = "postgres:16-alpine" },
-    { name = "POSTGRES_USER", value = "noah" },
-    { name = "POSTGRES_PASSWORD", value = random_password.postgres.result },
-    { name = "POSTGRES_DB", value = "noah" },
-    { name = "PGDATA", value = "/var/lib/postgresql/data/pgdata" },
-  ]
-}
-
+# Railway databases should be added via the dashboard using their templates:
+# 1. Go to your project in Railway dashboard
+# 2. Click "+ New" -> "Database" -> "PostgreSQL"
+# 3. Click "+ New" -> "Database" -> "Redis"
+#
+# Railway will auto-generate connection URLs that you can reference
+# in your service variables using the syntax:
+#   ${{Postgres.DATABASE_URL}}
+#   ${{Redis.REDIS_URL}}
 # ========================================
-# Redis Cache Service
-# ========================================
-resource "railway_service" "redis" {
-  project_id = railway_project.noah.id
-  name       = "Redis"
-}
-
-resource "railway_variable_collection" "redis" {
-  service_id     = railway_service.redis.id
-  environment_id = railway_project.noah.default_environment.id
-
-  variables = [
-    { name = "RAILWAY_DOCKER_IMAGE", value = "redis:7-alpine" },
-  ]
-}
 
 # ========================================
 # Noah Server Service
@@ -84,11 +47,6 @@ resource "railway_service" "server" {
 # ========================================
 # Server Configuration Variables
 # ========================================
-locals {
-  postgres_internal_url = "postgresql://noah:${random_password.postgres.result}@PostgreSQL.railway.internal:5432/noah"
-  redis_internal_url    = "redis://Redis.railway.internal:6379"
-}
-
 resource "railway_variable_collection" "server" {
   service_id     = railway_service.server.id
   environment_id = railway_project.noah.default_environment.id
@@ -99,9 +57,10 @@ resource "railway_variable_collection" "server" {
     { name = "PRIVATE_PORT", value = "3099" },
     { name = "HOST", value = "0.0.0.0" },
 
-    # Database connections (using Railway private networking)
-    { name = "POSTGRES_URL", value = local.postgres_internal_url },
-    { name = "REDIS_URL", value = local.redis_internal_url },
+    # Database connections - using Railway's reference syntax
+    # These reference the Postgres and Redis services added via dashboard
+    { name = "POSTGRES_URL", value = "$${{Postgres.DATABASE_URL}}" },
+    { name = "REDIS_URL", value = "$${{Redis.REDIS_URL}}" },
 
     # Server configuration
     { name = "SERVER_NETWORK", value = var.server_network },
