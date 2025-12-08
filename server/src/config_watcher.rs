@@ -38,7 +38,7 @@ pub async fn start_config_watcher(
         let _watcher = watcher;
 
         while let Some(_event) = rx.recv().await {
-            debug!("Config file changed, reloading...");
+            debug!("Config file changed, reloading (env vars will also be re-read)...");
 
             match Config::from_file(&config_path) {
                 Ok(new_config) => {

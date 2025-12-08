@@ -65,7 +65,7 @@ pub struct AppStruct {
 
 fn main() -> anyhow::Result<()> {
     let config_path = Config::get_config_path();
-    let config = Config::load_config(&config_path)?;
+    let config = Config::load_config(config_path.as_deref())?;
 
     let server_network = config.network()?;
 
@@ -119,7 +119,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn start_server(config: Config, config_path: String) -> anyhow::Result<()> {
+async fn start_server(config: Config, config_path: Option<String>) -> anyhow::Result<()> {
     let host = config.host()?;
     let _server_network = config.network()?;
 
@@ -146,7 +146,11 @@ async fn start_server(config: Config, config_path: String) -> anyhow::Result<()>
         invoice_store,
     });
 
-    config_watcher::start_config_watcher(config_path.clone(), config_swap).await?;
+    if let Some(path) = &config_path {
+        config_watcher::start_config_watcher(path.clone(), config_swap).await?;
+    } else {
+        tracing::info!("Running in env-only mode, config file watching disabled");
+    }
 
     config.log_config();
 
