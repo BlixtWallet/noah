@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y ca-certificates curl pkg-config libssl-
 
 COPY --from=builder /app/target/release/server /usr/local/bin/
 COPY --from=builder /app/target/release/noah-cli /usr/local/bin/
-RUN mkdir -p /etc/server
 
 EXPOSE 3000
-CMD ["server", "--config-path", "/etc/server/config.toml"]
+CMD ["server"]

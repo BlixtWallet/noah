@@ -121,8 +121,8 @@ services:
 
   noah-server:
     image: niteshbalusu/noah-server:latest
-    volumes:
-      - ./server-config.toml:/etc/server/config.toml:ro
+    env_file:
+      - .env.regtest
     ports:
       - "3000:3000"
       - "3099:3099"
