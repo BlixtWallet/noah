@@ -36,11 +36,7 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Result<Self> {
-        // Load .env file if present (useful for local development)
-        // Try current directory first, then parent directory
-        if dotenvy::dotenv().is_err() {
-            let _ = dotenvy::from_filename("../.env");
-        }
+        dotenvy::dotenv().ok();
 
         let config = Self {
             host: std::env::var("HOST").unwrap_or_else(|_| default_host()),
