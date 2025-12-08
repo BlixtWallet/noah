@@ -42,7 +42,10 @@ pub struct Config {
 impl Config {
     pub fn load() -> Result<Self> {
         // Load .env file if present (useful for local development)
-        let _ = dotenvy::dotenv();
+        // Try current directory first, then parent directory
+        if dotenvy::dotenv().is_err() {
+            let _ = dotenvy::from_filename("../.env");
+        }
 
         let config = Self {
             host: get_env("HOST").unwrap_or_else(default_host),
