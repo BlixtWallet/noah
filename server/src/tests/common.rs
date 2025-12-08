@@ -61,9 +61,6 @@ impl TestUser {
     pub fn get_config() -> Config {
         Config {
             s3_bucket_name: "test-bucket".to_string(),
-            aws_access_key_id: Some("test-key".to_string()),
-            aws_secret_access_key: Some("test-secret".to_string()),
-            aws_region: Some("us-east-1".to_string()),
             host: "localhost".to_string(),
             port: 3000,
             private_port: 3001,

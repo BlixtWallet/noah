@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use expo_push_notification_client::{Expo, ExpoClientOptions, ExpoPushMessage, Sound};
+use server::config::Config;
 use sqlx::postgres::PgPoolOptions;
 
 #[derive(Parser)]
@@ -30,28 +31,6 @@ enum Commands {
 
     /// Show statistics about registered users
     Stats,
-}
-
-#[derive(Debug, Clone)]
-struct Config {
-    postgres_url: String,
-    expo_access_token: String,
-}
-
-impl Config {
-    fn from_env() -> Result<Self> {
-        // Load .env file if present (useful for local development)
-        let _ = dotenvy::dotenv();
-
-        let postgres_url =
-            std::env::var("NOAH_POSTGRES_URL").context("NOAH_POSTGRES_URL is required")?;
-        let expo_access_token = std::env::var("NOAH_EXPO_ACCESS_TOKEN")
-            .context("NOAH_EXPO_ACCESS_TOKEN is required")?;
-        Ok(Self {
-            postgres_url,
-            expo_access_token,
-        })
-    }
 }
 
 fn is_expo_token(token: &str) -> bool {
@@ -188,7 +167,7 @@ async fn cmd_stats(config: &Config) -> Result<()> {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let config = Config::from_env()?;
+    let config = Config::load()?;
 
     match cli.command {
         Commands::Broadcast {

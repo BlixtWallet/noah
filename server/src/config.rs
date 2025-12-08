@@ -3,15 +3,13 @@ use bitcoin::Network;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 
-const ENV_PREFIX: &str = "NOAH_";
-
 /// Configuration for the Noah server
 ///
-/// All config fields are set via environment variables with the `NOAH_` prefix.
-/// Field names are converted to SCREAMING_SNAKE_CASE:
-/// - `host` -> `NOAH_HOST`
-/// - `postgres_url` -> `NOAH_POSTGRES_URL`
-/// - `ark_server_url` -> `NOAH_ARK_SERVER_URL`
+/// All config fields are set via environment variables:
+/// - `HOST`, `PORT`, `PRIVATE_PORT`
+/// - `POSTGRES_URL`, `REDIS_URL`
+/// - `EXPO_ACCESS_TOKEN`, `ARK_SERVER_URL`
+/// - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
 #[derive(Debug, Clone)]
 pub struct Config {
     pub host: String,
@@ -31,9 +29,6 @@ pub struct Config {
     pub deregister_cron: String,
     pub notification_spacing_minutes: i64,
     pub s3_bucket_name: String,
-    pub aws_access_key_id: Option<String>,
-    pub aws_secret_access_key: Option<String>,
-    pub aws_region: Option<String>,
     pub minimum_app_version: String,
     pub redis_url: String,
     pub ntfy_auth_token: String,
@@ -48,81 +43,68 @@ impl Config {
         }
 
         let config = Self {
-            host: get_env("HOST").unwrap_or_else(default_host),
-            port: get_env("PORT")
+            host: std::env::var("HOST").unwrap_or_else(|_| default_host()),
+            port: std::env::var("PORT")
+                .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or_else(default_port),
-            private_port: get_env("PRIVATE_PORT")
+            private_port: std::env::var("PRIVATE_PORT")
+                .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or_else(default_private_port),
-            lnurl_domain: get_env("LNURL_DOMAIN").unwrap_or_else(default_lnurl_domain),
-            postgres_url: get_env("POSTGRES_URL").unwrap_or_default(),
-            postgres_max_connections: get_env("POSTGRES_MAX_CONNECTIONS")
+            lnurl_domain: std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| default_lnurl_domain()),
+            postgres_url: std::env::var("POSTGRES_URL").unwrap_or_default(),
+            postgres_max_connections: std::env::var("POSTGRES_MAX_CONNECTIONS")
+                .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(10),
-            postgres_min_connections: get_env("POSTGRES_MIN_CONNECTIONS")
+            postgres_min_connections: std::env::var("POSTGRES_MIN_CONNECTIONS")
+                .ok()
                 .and_then(|v| v.parse().ok()),
-            expo_access_token: get_env("EXPO_ACCESS_TOKEN").unwrap_or_default(),
-            ark_server_url: get_env("ARK_SERVER_URL").unwrap_or_default(),
-            server_network: get_env("SERVER_NETWORK").unwrap_or_else(default_server_network),
-            sentry_url: get_env("SENTRY_URL"),
-            backup_cron: get_env("BACKUP_CRON").unwrap_or_else(default_backup_cron),
-            maintenance_interval_rounds: get_env("MAINTENANCE_INTERVAL_ROUNDS")
+            expo_access_token: std::env::var("EXPO_ACCESS_TOKEN").unwrap_or_default(),
+            ark_server_url: std::env::var("ARK_SERVER_URL").unwrap_or_default(),
+            server_network: std::env::var("SERVER_NETWORK")
+                .unwrap_or_else(|_| default_server_network()),
+            sentry_url: std::env::var("SENTRY_URL").ok(),
+            backup_cron: std::env::var("BACKUP_CRON").unwrap_or_else(|_| default_backup_cron()),
+            maintenance_interval_rounds: std::env::var("MAINTENANCE_INTERVAL_ROUNDS")
+                .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or_else(default_maintenance_interval_rounds),
-            heartbeat_cron: get_env("HEARTBEAT_CRON").unwrap_or_else(default_heartbeat_cron),
-            deregister_cron: get_env("DEREGISTER_CRON").unwrap_or_else(default_deregister_cron),
-            notification_spacing_minutes: get_env("NOTIFICATION_SPACING_MINUTES")
+            heartbeat_cron: std::env::var("HEARTBEAT_CRON")
+                .unwrap_or_else(|_| default_heartbeat_cron()),
+            deregister_cron: std::env::var("DEREGISTER_CRON")
+                .unwrap_or_else(|_| default_deregister_cron()),
+            notification_spacing_minutes: std::env::var("NOTIFICATION_SPACING_MINUTES")
+                .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(45),
-            s3_bucket_name: get_env("S3_BUCKET_NAME").unwrap_or_default(),
-            aws_access_key_id: get_env("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key: get_env("AWS_SECRET_ACCESS_KEY"),
-            aws_region: get_env("AWS_REGION"),
-            minimum_app_version: get_env("MINIMUM_APP_VERSION")
-                .unwrap_or_else(|| "0.0.1".to_string()),
-            redis_url: get_env("REDIS_URL").unwrap_or_else(default_redis_url),
-            ntfy_auth_token: get_env("NTFY_AUTH_TOKEN").unwrap_or_default(),
+            s3_bucket_name: std::env::var("S3_BUCKET_NAME").unwrap_or_default(),
+            minimum_app_version: std::env::var("MINIMUM_APP_VERSION")
+                .unwrap_or_else(|_| "0.0.1".to_string()),
+            redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| default_redis_url()),
+            ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
         };
 
         config.validate()?;
-        config.set_aws_env_vars();
 
         Ok(config)
     }
 
     fn validate(&self) -> Result<()> {
         if self.postgres_url.is_empty() {
-            anyhow::bail!("NOAH_POSTGRES_URL is required");
+            anyhow::bail!("POSTGRES_URL is required");
         }
         if self.expo_access_token.is_empty() {
-            anyhow::bail!("NOAH_EXPO_ACCESS_TOKEN is required");
+            anyhow::bail!("EXPO_ACCESS_TOKEN is required");
         }
         if self.ark_server_url.is_empty() {
-            anyhow::bail!("NOAH_ARK_SERVER_URL is required");
+            anyhow::bail!("ARK_SERVER_URL is required");
         }
         if self.s3_bucket_name.is_empty() {
-            anyhow::bail!("NOAH_S3_BUCKET_NAME is required");
+            anyhow::bail!("S3_BUCKET_NAME is required");
         }
         Ok(())
-    }
-
-    fn set_aws_env_vars(&self) {
-        if let Some(access_key) = &self.aws_access_key_id {
-            unsafe {
-                std::env::set_var("AWS_ACCESS_KEY_ID", access_key);
-            }
-        }
-        if let Some(secret_key) = &self.aws_secret_access_key {
-            unsafe {
-                std::env::set_var("AWS_SECRET_ACCESS_KEY", secret_key);
-            }
-        }
-        if let Some(region) = &self.aws_region {
-            unsafe {
-                std::env::set_var("AWS_REGION", region);
-            }
-        }
     }
 
     pub fn host(&self) -> Result<Ipv4Addr> {
@@ -169,35 +151,11 @@ impl Config {
             self.maintenance_interval_rounds
         );
         tracing::debug!("S3 Bucket Name: {}", self.s3_bucket_name);
-        tracing::debug!(
-            "AWS Access Key ID: {}",
-            if self.aws_access_key_id.is_some() {
-                "[SET]"
-            } else {
-                "[NOT SET]"
-            }
-        );
-        tracing::debug!(
-            "AWS Secret Access Key: {}",
-            if self.aws_secret_access_key.is_some() {
-                "[SET]"
-            } else {
-                "[NOT SET]"
-            }
-        );
-        tracing::debug!(
-            "AWS Region: {}",
-            self.aws_region.as_deref().unwrap_or("[NOT SET]")
-        );
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
         tracing::debug!("Redis URL: {}", self.redis_url);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
         tracing::debug!("============================");
     }
-}
-
-fn get_env(name: &str) -> Option<String> {
-    std::env::var(format!("{ENV_PREFIX}{name}")).ok()
 }
 
 fn default_host() -> String {
