@@ -255,42 +255,44 @@ just test               # Run server tests
 
 ## 📡 Running the server
 
-**Important note:** The server now uses PostgreSQL for all environments. Point `postgres_url` at the database for the current network (run separate DB instances per network).
+**Important note:** The server now uses PostgreSQL for all environments. Point `POSTGRES_URL` at the database for the current network (run separate DB instances per network).
 
 ### Configuration Setup
 
-The server uses a TOML configuration file instead of environment variables.
+The server uses environment variables for configuration. For local development, create a `.env` file in the project root.
 
-1. **Copy the example configuration file:**
+1. **Create a `.env` file in the project root:**
    ```bash
-   cd server
-   cp config.toml.example config.toml
+   cp .env.example .env
    ```
 
-2. **Edit `config.toml` with your values:**
-   ```toml
-   host = "0.0.0.0"
-   port = 3000
-   private_port = 3099
-   lnurl_domain = "localhost"
-   postgres_url = "postgres://postgres:postgres@localhost:5432/noah"
-   postgres_max_connections = 10
-   postgres_min_connections = 1
-   expo_access_token = "your-expo-access-token"
-   ark_server_url = "http://localhost:8080"
-   server_network = "regtest"
-   backup_cron = "every 2 hours"
-   s3_bucket_name = "noah-regtest-backups"
+2. **Edit `.env` with your values:**
+   ```bash
+   HOST=0.0.0.0
+   PORT=3000
+   PRIVATE_PORT=3099
+   LNURL_DOMAIN=localhost
+   POSTGRES_URL=postgres://postgres:postgres@localhost:5432/noah
+   POSTGRES_MAX_CONNECTIONS=10
+   REDIS_URL=redis://127.0.0.1:6379
+   EXPO_ACCESS_TOKEN=your-expo-access-token
+   ARK_SERVER_URL=http://localhost:3535
+   SERVER_NETWORK=regtest
+   BACKUP_CRON="every 2 hours"
+   S3_BUCKET_NAME=noah-regtest-backups
+   MINIMUM_APP_VERSION=0.0.1
 
-   # Optional: AWS credentials for S3 (if not using environment variables)
-   # aws_access_key_id = "your-aws-access-key-id"
-   # aws_secret_access_key = "your-aws-secret-access-key"
+   # AWS credentials for S3
+   AWS_ACCESS_KEY_ID=your-aws-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+   AWS_REGION=us-east-2
    ```
 
-3. **Specify config path (optional):**
-   - By default, the server looks for `config.toml` in the current directory
-   - Use `--config-path` CLI argument: `cargo run -- --config-path /path/to/config.toml`
-   - Or set `CONFIG_PATH` environment variable: `CONFIG_PATH=/path/to/config.toml cargo run`
+**Required environment variables:**
+- `POSTGRES_URL` - PostgreSQL connection string
+- `EXPO_ACCESS_TOKEN` - Expo push notification token
+- `ARK_SERVER_URL` - Ark server endpoint
+- `S3_BUCKET_NAME` - S3 bucket for backups
 
 ### Running
 
