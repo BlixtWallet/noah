@@ -5,11 +5,24 @@ terraform {
       source  = "terraform-community-providers/railway"
       version = "~> 0.4"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 }
 
 provider "railway" {
   token = var.railway_token
+}
+
+# ========================================
+# Auto-generated PostgreSQL password
+# ========================================
+resource "random_password" "postgres" {
+  length           = 32
+  special          = true
+  override_special = "!#$%&*-_=+<>?"
 }
 
 # ========================================
@@ -34,7 +47,7 @@ resource "railway_variable_collection" "postgres" {
   variables = [
     { name = "RAILWAY_DOCKER_IMAGE", value = "postgres:16-alpine" },
     { name = "POSTGRES_USER", value = "noah" },
-    { name = "POSTGRES_PASSWORD", value = var.postgres_password },
+    { name = "POSTGRES_PASSWORD", value = random_password.postgres.result },
     { name = "POSTGRES_DB", value = "noah" },
     { name = "PGDATA", value = "/var/lib/postgresql/data/pgdata" },
   ]
@@ -72,7 +85,7 @@ resource "railway_service" "server" {
 # Server Configuration Variables
 # ========================================
 locals {
-  postgres_internal_url = "postgresql://noah:${var.postgres_password}@PostgreSQL.railway.internal:5432/noah"
+  postgres_internal_url = "postgresql://noah:${random_password.postgres.result}@PostgreSQL.railway.internal:5432/noah"
   redis_internal_url    = "redis://Redis.railway.internal:6379"
 }
 

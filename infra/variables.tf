@@ -4,12 +4,6 @@ variable "railway_token" {
   sensitive   = true
 }
 
-variable "postgres_password" {
-  description = "Password for the PostgreSQL database"
-  type        = string
-  sensitive   = true
-}
-
 variable "project_name" {
   description = "Name of the Railway project"
   type        = string

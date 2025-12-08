@@ -4,9 +4,6 @@ railway_token = "your-railway-api-token"
 # Project settings
 project_name = "noah-server"
 
-# Database
-postgres_password = "your-secure-postgres-password"
-
 # GitHub repository (required for deployment)
 github_repo   = "your-username/noah"
 github_branch = "main"
