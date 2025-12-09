@@ -121,16 +121,28 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let host = config.host()?;
     let _server_network = config.network()?;
 
+    tracing::info!("Checking Postgres connection...");
     let db_pool = PgPoolOptions::new()
         .max_connections(config.postgres_max_connections)
         .min_connections(config.postgres_min_connections.unwrap_or(1))
         .connect(&config.postgres_url)
         .await?;
 
+    sqlx::query("SELECT 1")
+        .execute(&db_pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to connect to Postgres: {}", e))?;
+    tracing::info!("Postgres connection established");
+
     db::migrations::run_migrations(&db_pool).await?;
 
+    tracing::info!("Checking Redis connection...");
     let redis_client = RedisClient::new(&config.redis_url)?;
-    redis_client.check_connection().await?;
+    redis_client
+        .check_connection()
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to connect to Redis: {}", e))?;
+    tracing::info!("Redis connection established");
     let k1_cache = K1Store::new(redis_client.clone(), K1_TTL_SECONDS);
     let invoice_store = InvoiceStore::new(redis_client);
 
