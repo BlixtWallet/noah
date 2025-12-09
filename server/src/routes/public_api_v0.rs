@@ -394,16 +394,3 @@ pub async fn check_app_version(
         update_required,
     }))
 }
-
-#[derive(Serialize)]
-pub struct HealthCheckResponse {
-    status: String,
-    message: String,
-}
-
-pub async fn health_check() -> Result<Json<HealthCheckResponse>, StatusCode> {
-    Ok(Json(HealthCheckResponse {
-        status: "OK".to_string(),
-        message: "Server is running".to_string(),
-    }))
-}

@@ -30,7 +30,7 @@ use crate::{
             register_push_token, report_job_status, submit_invoice, update_backup_settings,
             update_ln_address,
         },
-        public_api_v0::{check_app_version, get_k1, health_check, lnurlp_request, register},
+        public_api_v0::{check_app_version, get_k1, lnurlp_request, register},
     },
 };
 
@@ -212,7 +212,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { StatusCode::NO_CONTENT }))
-        .route("/health", get(health_check))
+        .route("/health", get(|| async { StatusCode::OK }))
         .nest("/v0", v0_router)
         .merge(lnurl_router)
         .with_state(app_state.clone())
