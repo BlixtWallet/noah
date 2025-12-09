@@ -81,3 +81,15 @@ jobs:
           docker buildx imagetools create -t ${{ secrets.DOCKERHUB_USERNAME }}/noah-server:latest \
             ${{ secrets.DOCKERHUB_USERNAME }}/noah-server:latest-amd64 \
             ${{ secrets.DOCKERHUB_USERNAME }}/noah-server:latest-arm64
+
+  fly-deploy:
+    name: Deploy to Fly
+    needs: create-manifest
+    runs-on: ubuntu-latest
+    concurrency: deploy-group
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
