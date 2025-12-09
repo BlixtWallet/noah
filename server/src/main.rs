@@ -15,7 +15,7 @@ use sentry::integrations::{
     tracing::EventFilter,
 };
 use std::{net::SocketAddr, sync::Arc};
-use tower_http::trace::TraceLayer;
+
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -30,8 +30,7 @@ use crate::{
             register_push_token, report_job_status, submit_invoice, update_backup_settings,
             update_ln_address,
         },
-        private_api_v0::health_check,
-        public_api_v0::{check_app_version, get_k1, lnurlp_request, register},
+        public_api_v0::{check_app_version, get_k1, health_check, lnurlp_request, register},
     },
 };
 
@@ -213,6 +212,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(|| async { StatusCode::NO_CONTENT }))
+        .route("/health", get(health_check))
         .nest("/v0", v0_router)
         .merge(lnurl_router)
         .with_state(app_state.clone())
@@ -223,18 +223,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let addr = SocketAddr::from((host, config.port));
     tracing::debug!("server started listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-
-    // Private routes, not exposed to the internet.
-    let private_addr = SocketAddr::from((host, config.private_port));
-    let private_router = Router::new()
-        .route("/health", get(health_check))
-        .layer(TraceLayer::new_for_http());
-    tracing::debug!("private server started listening on {}", private_addr);
-    let private_listener = tokio::net::TcpListener::bind(private_addr).await?;
-
-    tokio::spawn(async move {
-        axum::serve(private_listener, private_router).await.unwrap();
-    });
 
     // Important: Use into_make_service_with_connect_info to provide IP information for rate limiting
     axum::serve(

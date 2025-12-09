@@ -25,7 +25,8 @@ pub async fn trace_middleware(req: Request, next: Next) -> impl IntoResponse {
     let status = response.status();
 
     // Define high-frequency endpoints that we don't want to spam logs with
-    let is_high_frequency = path == "/v0/getk1" || path.starts_with("/.well-known/");
+    let is_high_frequency =
+        path == "/v0/getk1" || path == "/health" || path.starts_with("/.well-known/");
 
     match status {
         // Success cases
