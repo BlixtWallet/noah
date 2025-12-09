@@ -1,5 +1,7 @@
 use axum::{
-    Router, middleware,
+    Router,
+    http::StatusCode,
+    middleware,
     routing::{get, post},
 };
 mod cache;
@@ -210,6 +212,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let lnurl_router = Router::new().route("/.well-known/lnurlp/{username}", get(lnurlp_request));
 
     let app = Router::new()
+        .route("/", get(|| async { StatusCode::NO_CONTENT }))
         .nest("/v0", v0_router)
         .merge(lnurl_router)
         .with_state(app_state.clone())
