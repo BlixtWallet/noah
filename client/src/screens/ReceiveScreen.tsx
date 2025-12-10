@@ -25,6 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor, useThemeColors } from "../hooks/useTheme";
 import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
@@ -50,6 +51,7 @@ const CopyableDetail = ({
   onCopy: () => void;
   isCopied: boolean;
 }) => {
+  const iconColor = useIconColor();
   return (
     <Pressable
       onPress={onCopy}
@@ -67,7 +69,7 @@ const CopyableDetail = ({
         {isCopied ? (
           <Icon name="checkmark-circle-outline" size={16} color={COLORS.SUCCESS} />
         ) : (
-          <Icon name="copy-outline" size={16} color="white" />
+          <Icon name="copy-outline" size={16} color={iconColor} />
         )}
       </View>
     </Pressable>
@@ -76,6 +78,8 @@ const CopyableDetail = ({
 
 const ReceiveScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
+  const iconColor = useIconColor();
+  const colors = useThemeColors();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
@@ -199,7 +203,7 @@ const ReceiveScreen = () => {
           <View className="p-4">
             <View className="flex-row items-center mb-4">
               <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                <Icon name="arrow-back-outline" size={24} color="white" />
+                <Icon name="arrow-back-outline" size={24} color={iconColor} />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">Receive</Text>
             </View>
@@ -213,12 +217,12 @@ const ReceiveScreen = () => {
               <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
                 <View className="flex-row items-center justify-center">
                   {currency === "USD" && (
-                    <Text className="text-white text-2xl font-bold mr-2">$</Text>
+                    <Text className="text-foreground text-2xl font-bold mr-2">$</Text>
                   )}
                   <TextInput
-                    className="text-white text-3xl font-bold text-center min-w-[50px]"
+                    className="text-foreground text-3xl font-bold text-center min-w-[50px]"
                     placeholder={currency === "USD" ? "0.00" : "0"}
-                    placeholderTextColor="#4b5563"
+                    placeholderTextColor={colors.mutedForeground}
                     keyboardType="numeric"
                     value={amount}
                     onChangeText={setAmount}
@@ -226,7 +230,7 @@ const ReceiveScreen = () => {
                     maxLength={12}
                   />
                   {currency === "SATS" && (
-                    <Text className="text-white text-2xl font-bold ml-1">₿</Text>
+                    <Text className="text-foreground text-2xl font-bold ml-1">₿</Text>
                   )}
                 </View>
               </View>

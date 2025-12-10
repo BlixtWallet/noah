@@ -4,6 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor, useTheme } from "../hooks/useTheme";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import Slider from "@react-native-community/slider";
@@ -19,13 +20,17 @@ import {
   isAudioPlaying,
 } from "noah-tools";
 import audioFile from "../../assets/noahs-ark-story.m4a";
-import logoImage from "../../assets/1024_no_background.png";
+import logoImageDark from "../../assets/1024_no_background.png";
+import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_clear_tinted_ios.png";
 import logger from "~/lib/log";
 
 const log = logger("NoahStoryScreen");
 
 const NoahStoryScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const iconColor = useIconColor();
+  const { isDark } = useTheme();
+  const logoImage = isDark ? logoImageDark : logoImageLight;
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
@@ -156,7 +161,7 @@ const NoahStoryScreen = () => {
       <View className="p-4 flex-1">
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
-            <Icon name="arrow-back-outline" size={24} color="white" />
+            <Icon name="arrow-back-outline" size={24} color={iconColor} />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Noah's Ark Story</Text>
         </View>
@@ -201,10 +206,7 @@ const NoahStoryScreen = () => {
               <Pressable
                 onPress={handleStop}
                 disabled={!duration}
-                className={`p-4 rounded-full ${!duration ? "bg-gray-700" : "bg-card"}`}
-                style={({ pressed }) => ({
-                  opacity: pressed && duration ? 0.5 : 1,
-                })}
+                className={`p-4 rounded-full active:opacity-50 ${!duration ? "bg-gray-700" : "bg-secondary"}`}
               >
                 <Icon name="stop" size={32} color={!duration ? "#666666" : "#F7931A"} />
               </Pressable>
@@ -212,10 +214,7 @@ const NoahStoryScreen = () => {
               <Pressable
                 onPress={handlePlayPause}
                 disabled={isLoading}
-                className={`p-4 rounded-full ${isLoading ? "bg-gray-700" : "bg-card"}`}
-                style={({ pressed }) => ({
-                  opacity: pressed && !isLoading ? 0.5 : 1,
-                })}
+                className={`p-4 rounded-full active:opacity-50 ${isLoading ? "bg-gray-700" : "bg-secondary"}`}
               >
                 {isLoading ? (
                   <Icon name="hourglass-outline" size={48} color="#666666" />

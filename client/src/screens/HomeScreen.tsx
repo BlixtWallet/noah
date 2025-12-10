@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
 import { AlertCircle, ChevronDown } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 import { COLORS } from "../lib/styleConstants";
+import { useIconColor } from "../hooks/useTheme";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance, useLoadWallet, useWalletSync } from "../hooks/useWallet";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -38,6 +39,7 @@ import { onchainSync, sync } from "~/lib/walletApi";
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const isFocused = useIsFocused();
+  const iconColor = useIconColor();
   const { walletError } = useWalletStore();
   const { safelyExecuteWhenReady, isBackgroundJobRunning } = useBackgroundJobCoordination();
   const { data: balance, refetch, error, isLoading: isBalanceLoading } = useBalance();
@@ -112,7 +114,7 @@ const HomeScreen = () => {
     >
       <View className="flex-row items-center justify-between p-4">
         <Pressable onPress={() => navigation.navigate("BoardArk")}>
-          <Icon name="boat" size={28} color="white" />
+          <Icon name="boat" size={28} color={iconColor} />
         </Pressable>
         <View className="flex-1 items-center">
           {APP_VARIANT !== "mainnet" && (
@@ -122,7 +124,7 @@ const HomeScreen = () => {
           )}
         </View>
         <Pressable onPress={() => navigation.navigate("Transactions")}>
-          <Icon name="list" size={28} color="white" />
+          <Icon name="list" size={28} color={iconColor} />
         </Pressable>
       </View>
       <ScrollView
@@ -189,7 +191,7 @@ const HomeScreen = () => {
                       <View className="flex-row items-center space-x-2">
                         <Text className="text-4xl font-bold">{formatBip177(totalBalance)}</Text>
                         <Animated.View style={animatedRotation}>
-                          <ChevronDown color="white" size={28} />
+                          <ChevronDown color={iconColor} size={28} />
                         </Animated.View>
                       </View>
                       {totalPendingBalance > 0 && (

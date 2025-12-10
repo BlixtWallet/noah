@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor, useThemeColors } from "../hooks/useTheme";
 import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
@@ -26,6 +27,8 @@ import { CurrencyToggle } from "~/components/CurrencyToggle";
 const SendScreen = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const iconColor = useIconColor();
+  const colors = useThemeColors();
   const {
     destination,
     setDestination,
@@ -81,12 +84,12 @@ const SendScreen = () => {
         <View className="flex-1">
           <View className="flex-row items-center p-4">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back" size={28} color="white" />
+              <Icon name="arrow-back" size={28} color={iconColor} />
             </TouchableOpacity>
             <Text className="text-2xl font-bold text-foreground">Send</Text>
             <View className="flex-1 items-end">
               <TouchableOpacity onPress={handleScanPress}>
-                <Icon name="scan" size={28} color="white" />
+                <Icon name="scan" size={28} color={iconColor} />
               </TouchableOpacity>
             </View>
           </View>
@@ -100,12 +103,12 @@ const SendScreen = () => {
               <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
                 <View className="flex-row items-center justify-center">
                   {currency === "USD" && (
-                    <Text className="text-white text-2xl font-bold mr-2">$</Text>
+                    <Text className="text-foreground text-2xl font-bold mr-2">$</Text>
                   )}
                   <TextInput
-                    className="text-white text-3xl font-bold text-center min-w-[50px]"
+                    className="text-foreground text-3xl font-bold text-center min-w-[50px]"
                     placeholder={currency === "USD" ? "0.00" : "0"}
-                    placeholderTextColor="#4b5563"
+                    placeholderTextColor={colors.mutedForeground}
                     keyboardType="numeric"
                     value={amount}
                     onChangeText={setAmount}
@@ -115,7 +118,7 @@ const SendScreen = () => {
                     maxLength={12}
                   />
                   {currency === "SATS" && (
-                    <Text className="text-white text-2xl font-bold ml-1">₿</Text>
+                    <Text className="text-foreground text-2xl font-bold ml-1">₿</Text>
                   )}
                 </View>
               </View>
@@ -147,22 +150,22 @@ const SendScreen = () => {
               <View className="mt-8 ml-4 mr-4">
                 <View className="flex-row items-center border border-border bg-card p-4 rounded-lg">
                   <TextInput
-                    className="flex-1 text-white"
+                    className="flex-1 text-foreground"
                     placeholder="Address, invoice, or lightning address"
-                    placeholderTextColor="#6b7280"
+                    placeholderTextColor={colors.mutedForeground}
                     autoCorrect={false}
                     autoCapitalize="none"
                     value={destination}
                     onChangeText={setDestination}
                   />
                   <TouchableOpacity onPress={handlePaste} className="p-2">
-                    <Text className="text-white">Paste</Text>
+                    <Text className="text-foreground font-semibold">Paste</Text>
                   </TouchableOpacity>
                 </View>
                 <TextInput
                   className="border border-border bg-card p-4 rounded-lg text-foreground mt-4"
                   placeholder="Add a note (optional)"
-                  placeholderTextColor="#6b7280"
+                  placeholderTextColor={colors.mutedForeground}
                   value={comment}
                   onChangeText={setComment}
                 />

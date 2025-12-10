@@ -19,12 +19,16 @@ export const NoahButton = ({
   textClassName,
   ...props
 }: NoahButtonProps) => {
+  const textColor = "#1a1a1a";
+
   return (
     <Button {...props} style={[{ backgroundColor: COLORS.BITCOIN_ORANGE }, style]}>
       {isLoading ? (
-        <NoahActivityIndicator color="white" />
+        <NoahActivityIndicator color={textColor} />
       ) : (
-        <Text className={textClassName || "font-bold"}>{children}</Text>
+        <Text className={textClassName || "font-bold"} style={{ color: textColor }}>
+          {children}
+        </Text>
       )}
     </Button>
   );

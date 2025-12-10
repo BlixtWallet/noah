@@ -5,6 +5,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { Label } from "~/components/ui/label";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -19,6 +20,7 @@ export type VTXOWithStatus = BarkVtxo & {
 
 const VTXOsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const iconColor = useIconColor();
   const [filter, setFilter] = useState<"all" | "active" | "expiring" | "locked">("all");
 
   const { data: allVtxos = [], isLoading: isLoadingAll } = useGetVtxos();
@@ -66,7 +68,7 @@ const VTXOsScreen = () => {
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
               <Pressable onPress={() => navigation.goBack()} className="mr-4">
-                <Icon name="arrow-back-outline" size={24} color="white" />
+                <Icon name="arrow-back-outline" size={24} color={iconColor} />
               </Pressable>
               <Text className="text-2xl font-bold text-foreground">VTXOs</Text>
             </View>
@@ -74,7 +76,7 @@ const VTXOsScreen = () => {
               <Text className="text-muted-foreground text-sm mr-2">
                 {vtxosWithStatus.length} total
               </Text>
-              <Icon name="cube-outline" size={24} color="white" />
+              <Icon name="cube-outline" size={24} color={iconColor} />
             </View>
           </View>
 
@@ -147,7 +149,7 @@ const VTXOsScreen = () => {
                           Expiry: Block {item.expiry_height}
                         </Text>
                       </View>
-                      <Icon name="chevron-forward-outline" size={24} color="white" />
+                      <Icon name="chevron-forward-outline" size={24} color={iconColor} />
                     </View>
                   </Pressable>
                 </View>

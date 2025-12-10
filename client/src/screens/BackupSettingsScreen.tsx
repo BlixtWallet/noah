@@ -8,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "../components/ui/alert";
 import Icon from "@react-native-vector-icons/ionicons";
+import { useIconColor } from "../hooks/useTheme";
 import { CheckCircle } from "lucide-react-native";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { NoahButton } from "~/components/ui/NoahButton";
@@ -15,6 +16,7 @@ import * as Haptics from "expo-haptics";
 
 export const BackupSettingsScreen = () => {
   const navigation = useNavigation();
+  const iconColor = useIconColor();
   const {
     isBackupEnabled,
     setBackupEnabled,
@@ -33,7 +35,7 @@ export const BackupSettingsScreen = () => {
       <ScrollView contentContainerClassName="p-4 flex-1">
         <View className="flex-row items-center mb-8">
           <Pressable onPress={() => navigation.goBack()} className="mr-4">
-            <Icon name="arrow-back-outline" size={24} color="white" />
+            <Icon name="arrow-back-outline" size={24} color={iconColor} />
           </Pressable>
           <Text className="text-2xl font-bold text-foreground">Backup</Text>
         </View>
