@@ -19,7 +19,8 @@ const SUBSYSTEM_KIND_TO_MOVEMENT_KIND: Record<string, MovementKind> = {
   "bark.board:board": "onboard",
   "bark.arkoor:receive": "arkoor-receive",
   "bark.round:offboard": "offboard",
-  "bark.round:send-onchain": "exit",
+  "bark.round:send_onchain": "offboard",
+  "bark.exit:start": "exit",
   "bark.lightning_receive:receive": "lightning-receive",
 };
 
@@ -86,7 +87,9 @@ export const syncArkReceives = async () => {
       }
 
       const totalAmount = getMovementAmount(movement, isIncoming);
-      const movementDateIso = getMovementDateIso(movement.created_at);
+      const movementDateIso = getMovementDateIso(
+        (movement as { time?: { created_at?: string } }).time?.created_at ?? movement.created_at,
+      );
 
       log.d(`Syncing new ${movementKind} transaction: ${movement.id}`, [movement]);
 
