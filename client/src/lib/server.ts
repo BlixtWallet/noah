@@ -6,6 +6,7 @@ import { type Result, err } from "neverthrow";
 import { RegisterResponse } from "~/types/serverTypes";
 import Constants from "expo-constants";
 import { peakAddress } from "~/lib/paymentsApi";
+import { performIosAttestation } from "~/hooks/useAppAttestation";
 
 const log = logger("server");
 
@@ -21,6 +22,14 @@ export const performServerRegistration = async (
   }
   const ark_address = addressResult.value.address;
 
+  // Attempt iOS attestation (fails silently on error or unsupported devices)
+  const attestationResult = await performIosAttestation();
+  const ios_attestation = attestationResult.isOk() ? attestationResult.value.ios_attestation : null;
+
+  if (ios_attestation) {
+    log.d("Including iOS attestation in registration");
+  }
+
   // Register with server and pass user device information.
   const result = await registerWithServer({
     device_info: {
@@ -32,6 +41,7 @@ export const performServerRegistration = async (
     },
     ln_address,
     ark_address,
+    ios_attestation,
   });
 
   if (result.isErr()) {

@@ -5,6 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
+use bitcoin::Network;
 use expo_push_notification_client::Priority;
 use rand::Rng;
 use uuid::Uuid;
@@ -15,7 +16,11 @@ use validator::{Validate, ValidateEmail};
 
 use crate::{
     AppState,
-    db::{device_repo::DeviceRepository, user_repo::UserRepository},
+    attestation::{IosAttestationParams, verify_ios_attestation},
+    db::{
+        attestation_repo::AttestationRepository, device_repo::DeviceRepository,
+        user_repo::UserRepository,
+    },
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
@@ -281,6 +286,66 @@ pub async fn register(
         auth_payload.k1,
     );
 
+    // Check if we should verify attestation (skip on regtest)
+    let network = state.config.network().unwrap_or(Network::Regtest);
+    let should_verify_attestation = network != Network::Regtest;
+
+    // Process iOS attestation if provided
+    let ios_attestation_result = if let Some(ref ios_attestation) = payload.ios_attestation {
+        if should_verify_attestation {
+            let team_id = state.config.apple_team_identifier.as_deref().unwrap_or("");
+            let bundle_id = state
+                .config
+                .apple_bundle_identifier
+                .as_deref()
+                .unwrap_or("");
+
+            if team_id.is_empty() || bundle_id.is_empty() {
+                tracing::warn!(
+                    "iOS attestation provided but APPLE_TEAM_IDENTIFIER or APPLE_BUNDLE_IDENTIFIER not configured"
+                );
+                Some((
+                    false,
+                    Some("Server not configured for iOS attestation".to_string()),
+                    None,
+                ))
+            } else {
+                let params = IosAttestationParams {
+                    attestation_base64: &ios_attestation.attestation,
+                    challenge: &ios_attestation.challenge,
+                    key_id: &ios_attestation.key_id,
+                    bundle_identifier: bundle_id,
+                    team_identifier: team_id,
+                    allow_development: true,
+                };
+
+                match verify_ios_attestation(params) {
+                    Ok(result) => {
+                        tracing::info!(
+                            "iOS attestation verified for pubkey: {}, environment: {}",
+                            auth_payload.key,
+                            result.environment
+                        );
+                        Some((true, None, Some(result)))
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "iOS attestation verification failed for pubkey: {}: {}",
+                            auth_payload.key,
+                            e
+                        );
+                        Some((false, Some(e.to_string()), None))
+                    }
+                }
+            }
+        } else {
+            tracing::debug!("Skipping iOS attestation verification on regtest");
+            None
+        }
+    } else {
+        None
+    };
+
     if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
         tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
 
@@ -303,6 +368,31 @@ pub async fn register(
             // For existing users, we'll just register the device in its own transaction
             let mut tx = state.db_pool.begin().await?;
             DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
+
+            // Store attestation result if we have one
+            if let Some((passed, failure_reason, result)) = &ios_attestation_result {
+                let key_id = payload
+                    .ios_attestation
+                    .as_ref()
+                    .map(|a| a.key_id.as_str())
+                    .unwrap_or("");
+                AttestationRepository::upsert(
+                    &mut tx,
+                    &auth_payload.key,
+                    "ios",
+                    key_id,
+                    result.as_ref().map(|r| r.public_key_bytes.as_slice()),
+                    result.as_ref().map(|r| r.receipt.as_slice()),
+                    result
+                        .as_ref()
+                        .map(|r| r.environment.as_str())
+                        .unwrap_or("unknown"),
+                    *passed,
+                    failure_reason.as_deref(),
+                )
+                .await?;
+            }
+
             tx.commit().await?;
         }
 
@@ -352,6 +442,30 @@ pub async fn register(
 
     if let Some(device_info) = payload.device_info {
         DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
+    }
+
+    // Store attestation result if we have one
+    if let Some((passed, failure_reason, result)) = &ios_attestation_result {
+        let key_id = payload
+            .ios_attestation
+            .as_ref()
+            .map(|a| a.key_id.as_str())
+            .unwrap_or("");
+        AttestationRepository::upsert(
+            &mut tx,
+            &auth_payload.key,
+            "ios",
+            key_id,
+            result.as_ref().map(|r| r.public_key_bytes.as_slice()),
+            result.as_ref().map(|r| r.receipt.as_slice()),
+            result
+                .as_ref()
+                .map(|r| r.environment.as_str())
+                .unwrap_or("unknown"),
+            *passed,
+            failure_reason.as_deref(),
+        )
+        .await?;
     }
 
     tx.commit().await?;

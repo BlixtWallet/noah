@@ -35,6 +35,7 @@ use crate::{
 };
 
 mod ark_client;
+mod attestation;
 mod cron;
 pub mod db;
 mod errors;

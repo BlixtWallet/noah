@@ -38,6 +38,23 @@ export type HeartbeatNotification = { k1: string, notification_id: string, };
 
 export type HeartbeatResponsePayload = { notification_id: string, };
 
+/**
+ * iOS App Attestation payload sent during registration
+ */
+export type IosAttestationPayload = { 
+/**
+ * Base64-encoded attestation object from attestKeyIos()
+ */
+attestation: string, 
+/**
+ * The challenge/nonce used for attestation
+ */
+challenge: string, 
+/**
+ * Key identifier from generateKeyIos()
+ */
+key_id: string, };
+
 export type LightningInvoiceRequestNotification = { k1: string, transaction_id: string, amount: number, };
 
 export type MaintenanceNotification = { k1: string, };
@@ -67,7 +84,11 @@ device_info: DeviceInfo | null,
 /**
  * Optional Ark address
  */
-ark_address: string | null, };
+ark_address: string | null, 
+/**
+ * Optional iOS attestation data
+ */
+ios_attestation: IosAttestationPayload | null, };
 
 /**
  * Defines the payload for registering a push notification token.

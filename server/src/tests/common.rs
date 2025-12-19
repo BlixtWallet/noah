@@ -81,6 +81,8 @@ impl TestUser {
             minimum_app_version: "0.0.1".to_string(),
             redis_url: std::env::var("TEST_REDIS_URL")
                 .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
+            apple_team_identifier: None,
+            apple_bundle_identifier: None,
         }
     }
 

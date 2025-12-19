@@ -1,3 +1,4 @@
+pub mod attestation_repo;
 pub mod backup_repo;
 pub mod device_repo;
 pub mod heartbeat_repo;
