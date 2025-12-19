@@ -16,7 +16,10 @@ use validator::{Validate, ValidateEmail};
 
 use crate::{
     AppState,
-    attestation::{IosAttestationParams, verify_ios_attestation},
+    attestation::{
+        AndroidAttestationParams, IosAttestationParams, verify_android_integrity,
+        verify_ios_attestation,
+    },
     db::{
         attestation_repo::AttestationRepository, device_repo::DeviceRepository,
         user_repo::UserRepository,
@@ -346,6 +349,63 @@ pub async fn register(
         None
     };
 
+    // Process Android attestation if provided
+    let android_attestation_result = if let Some(ref android_attestation) =
+        payload.android_attestation
+    {
+        if should_verify_attestation {
+            let package_name = state.config.android_package_name.as_deref().unwrap_or("");
+            let service_account_json = state
+                .config
+                .google_service_account_json
+                .as_deref()
+                .unwrap_or("");
+
+            if package_name.is_empty() || service_account_json.is_empty() {
+                tracing::warn!(
+                    "Android attestation provided but ANDROID_PACKAGE_NAME or GOOGLE_SERVICE_ACCOUNT_JSON not configured"
+                );
+                Some((
+                    false,
+                    Some("Server not configured for Android attestation".to_string()),
+                    None,
+                ))
+            } else {
+                let params = AndroidAttestationParams {
+                    integrity_token: &android_attestation.integrity_token,
+                    package_name,
+                    expected_nonce: Some(&android_attestation.challenge),
+                    service_account_json,
+                };
+
+                match verify_android_integrity(params).await {
+                    Ok(result) => {
+                        tracing::info!(
+                            "Android attestation verified for pubkey: {}, environment: {}, device_verdict: {:?}",
+                            auth_payload.key,
+                            result.environment,
+                            result.device_recognition_verdict
+                        );
+                        Some((true, None, Some(result)))
+                    }
+                    Err(e) => {
+                        tracing::warn!(
+                            "Android attestation verification failed for pubkey: {}: {}",
+                            auth_payload.key,
+                            e
+                        );
+                        Some((false, Some(e.to_string()), None))
+                    }
+                }
+            }
+        } else {
+            tracing::debug!("Skipping Android attestation verification on regtest");
+            None
+        }
+    } else {
+        None
+    };
+
     if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
         tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
 
@@ -369,7 +429,7 @@ pub async fn register(
             let mut tx = state.db_pool.begin().await?;
             DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
 
-            // Store attestation result if we have one
+            // Store iOS attestation result if we have one
             if let Some((passed, failure_reason, result)) = &ios_attestation_result {
                 let key_id = payload
                     .ios_attestation
@@ -383,6 +443,25 @@ pub async fn register(
                     key_id,
                     result.as_ref().map(|r| r.public_key_bytes.as_slice()),
                     result.as_ref().map(|r| r.receipt.as_slice()),
+                    result
+                        .as_ref()
+                        .map(|r| r.environment.as_str())
+                        .unwrap_or("unknown"),
+                    *passed,
+                    failure_reason.as_deref(),
+                )
+                .await?;
+            }
+
+            // Store Android attestation result if we have one
+            if let Some((passed, failure_reason, result)) = &android_attestation_result {
+                AttestationRepository::upsert(
+                    &mut tx,
+                    &auth_payload.key,
+                    "android",
+                    "", // Android doesn't have a key_id like iOS
+                    None,
+                    None,
                     result
                         .as_ref()
                         .map(|r| r.environment.as_str())
@@ -444,7 +523,7 @@ pub async fn register(
         DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
     }
 
-    // Store attestation result if we have one
+    // Store iOS attestation result if we have one
     if let Some((passed, failure_reason, result)) = &ios_attestation_result {
         let key_id = payload
             .ios_attestation
@@ -458,6 +537,25 @@ pub async fn register(
             key_id,
             result.as_ref().map(|r| r.public_key_bytes.as_slice()),
             result.as_ref().map(|r| r.receipt.as_slice()),
+            result
+                .as_ref()
+                .map(|r| r.environment.as_str())
+                .unwrap_or("unknown"),
+            *passed,
+            failure_reason.as_deref(),
+        )
+        .await?;
+    }
+
+    // Store Android attestation result if we have one
+    if let Some((passed, failure_reason, result)) = &android_attestation_result {
+        AttestationRepository::upsert(
+            &mut tx,
+            &auth_payload.key,
+            "android",
+            "", // Android doesn't have a key_id like iOS
+            None,
+            None,
             result
                 .as_ref()
                 .map(|r| r.environment.as_str())

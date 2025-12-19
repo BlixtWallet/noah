@@ -45,6 +45,7 @@ impl<'a> AttestationRepository<'a> {
         Ok(attestation)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn upsert(
         tx: &mut Transaction<'_, Postgres>,
         pubkey: &str,

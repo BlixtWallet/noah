@@ -14,6 +14,16 @@ pub struct IosAttestationPayload {
     pub key_id: String,
 }
 
+/// Android Play Integrity payload sent during registration
+#[derive(Debug, Serialize, Deserialize, TS, Clone)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct AndroidAttestationPayload {
+    /// The integrity token from requestIntegrityTokenAndroid()
+    pub integrity_token: String,
+    /// The challenge/nonce used for attestation (hashed request data)
+    pub challenge: String,
+}
+
 #[derive(Deserialize, Debug, Clone, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct AuthPayload {
@@ -69,6 +79,8 @@ pub struct RegisterPayload {
     pub ark_address: Option<String>,
     /// Optional iOS attestation data
     pub ios_attestation: Option<IosAttestationPayload>,
+    /// Optional Android attestation data
+    pub android_attestation: Option<AndroidAttestationPayload>,
 }
 
 /// Defines the payload for registering a push notification token.

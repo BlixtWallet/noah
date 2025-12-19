@@ -35,6 +35,9 @@ pub struct Config {
     // Apple App Attestation
     pub apple_team_identifier: Option<String>,
     pub apple_bundle_identifier: Option<String>,
+    // Android Play Integrity
+    pub android_package_name: Option<String>,
+    pub google_service_account_json: Option<String>,
 }
 
 impl Config {
@@ -85,6 +88,8 @@ impl Config {
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
             apple_team_identifier: std::env::var("APPLE_TEAM_IDENTIFIER").ok(),
             apple_bundle_identifier: std::env::var("APPLE_BUNDLE_IDENTIFIER").ok(),
+            android_package_name: std::env::var("ANDROID_PACKAGE_NAME").ok(),
+            google_service_account_json: std::env::var("GOOGLE_SERVICE_ACCOUNT_JSON").ok(),
         };
 
         config.validate()?;
@@ -164,6 +169,18 @@ impl Config {
             self.apple_bundle_identifier
                 .as_deref()
                 .unwrap_or("[NOT SET]")
+        );
+        tracing::debug!(
+            "Android Package Name: {}",
+            self.android_package_name.as_deref().unwrap_or("[NOT SET]")
+        );
+        tracing::debug!(
+            "Google Service Account: {}",
+            if self.google_service_account_json.is_some() {
+                "[SET]"
+            } else {
+                "[NOT SET]"
+            }
         );
         tracing::debug!("============================");
     }
