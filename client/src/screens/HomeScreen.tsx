@@ -19,7 +19,9 @@ import { APP_VARIANT } from "~/config";
 import { BITCOIN_FACTS, PLATFORM } from "~/constants";
 import { useAppVersionCheck } from "~/hooks/useAppVersionCheck";
 import { UpdateWarningBanner } from "~/components/UpdateWarningBanner";
+import { EmailVerificationBanner } from "~/components/EmailVerificationBanner";
 import { useBackgroundJobCoordination } from "~/hooks/useBackgroundJobCoordination";
+import { useServerStore } from "~/store/serverStore";
 
 import Animated, {
   FadeInDown,
@@ -50,6 +52,11 @@ const HomeScreen = () => {
   const [fact, setFact] = useState("");
   const bottomTabBarHeight = useBottomTabBarHeight();
   const { isUpdateRequired, minimumVersion, currentVersion } = useAppVersionCheck();
+  const { isEmailVerified } = useServerStore();
+
+  const handleEmailVerificationPress = useCallback(() => {
+    navigation.navigate("EmailVerification", { fromSettings: true });
+  }, [navigation]);
 
   const getRandomFact = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * BITCOIN_FACTS.length);
@@ -149,6 +156,7 @@ const HomeScreen = () => {
             minimumVersion={minimumVersion || "0.0.1"}
           />
         )}
+        {!isEmailVerified && <EmailVerificationBanner onPress={handleEmailVerificationPress} />}
         {isBackgroundJobRunning && (
           <View className="px-4 py-2 bg-blue-500/20 border-b border-blue-500/40">
             <View className="flex-row items-center justify-center space-x-2">

@@ -15,12 +15,17 @@ use validator::{Validate, ValidateEmail};
 
 use crate::{
     AppState,
-    db::{device_repo::DeviceRepository, user_repo::UserRepository},
+    cache::email_verification_store::EmailVerificationStore,
+    db::{
+        device_repo::DeviceRepository,
+        user_repo::{DuplicateEmailError, UserRepository},
+    },
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
-        AppVersionCheckPayload, AppVersionInfo, AuthEvent, AuthPayload,
+        AppVersionCheckPayload, AppVersionInfo, AuthEvent, AuthPayload, EmailVerificationResponse,
         LightningInvoiceRequestNotification, NotificationData, RegisterPayload, RegisterResponse,
+        SendEmailVerificationPayload, VerifyEmailPayload,
     },
     utils::make_k1,
 };
@@ -393,4 +398,130 @@ pub async fn check_app_version(
         minimum_required_version: minimum_required.clone(),
         update_required,
     }))
+}
+
+/// Sends an email verification code to the user's email address.
+pub async fn send_verification_email(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<SendEmailVerificationPayload>,
+) -> anyhow::Result<Json<EmailVerificationResponse>, ApiError> {
+    if let Err(e) = payload.validate() {
+        return Err(ApiError::InvalidArgument(e.to_string()));
+    }
+
+    let user_repo = UserRepository::new(&state.db_pool);
+    let user = user_repo
+        .find_by_pubkey(&auth_payload.key)
+        .await?
+        .ok_or_else(|| ApiError::UserNotFound)?;
+
+    if user.is_email_verified {
+        return Ok(Json(EmailVerificationResponse {
+            success: true,
+            message: Some("Email already verified".to_string()),
+        }));
+    }
+
+    // Check if email is already in use by another user
+    if user_repo
+        .email_exists(&payload.email, &auth_payload.key)
+        .await?
+    {
+        return Err(ApiError::InvalidArgument(
+            "This email address is already in use by another account".to_string(),
+        ));
+    }
+
+    let code = EmailVerificationStore::generate_code();
+
+    state
+        .email_verification_store
+        .store(&auth_payload.key, &payload.email, &code)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to store verification code: {}", e);
+            ApiError::ServerErr("Failed to store verification code".to_string())
+        })?;
+
+    state
+        .email_client
+        .send_verification_email(&payload.email, &code)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to send verification email: {}", e);
+            ApiError::ServerErr("Failed to send verification email".to_string())
+        })?;
+
+    tracing::info!(
+        "Verification email sent to {} for user {}",
+        payload.email,
+        auth_payload.key
+    );
+
+    Ok(Json(EmailVerificationResponse {
+        success: true,
+        message: Some("Verification code sent".to_string()),
+    }))
+}
+
+/// Verifies the email verification code.
+pub async fn verify_email(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+    Json(payload): Json<VerifyEmailPayload>,
+) -> anyhow::Result<Json<EmailVerificationResponse>, ApiError> {
+    let user_repo = UserRepository::new(&state.db_pool);
+
+    let user = user_repo
+        .find_by_pubkey(&auth_payload.key)
+        .await?
+        .ok_or_else(|| ApiError::UserNotFound)?;
+
+    if user.is_email_verified {
+        return Ok(Json(EmailVerificationResponse {
+            success: true,
+            message: Some("Email already verified".to_string()),
+        }));
+    }
+
+    let email = state
+        .email_verification_store
+        .verify(&auth_payload.key, &payload.code)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to verify code: {}", e);
+            ApiError::ServerErr("Failed to verify code".to_string())
+        })?;
+
+    match email {
+        Some(verified_email) => {
+            if let Err(e) = user_repo
+                .update_email(&auth_payload.key, &verified_email)
+                .await
+            {
+                if e.is::<DuplicateEmailError>() {
+                    return Err(ApiError::InvalidArgument(
+                        "This email address is already in use by another account".to_string(),
+                    ));
+                }
+                return Err(e.into());
+            }
+            user_repo.set_email_verified(&auth_payload.key).await?;
+
+            tracing::info!(
+                "Email {} verified for user {}",
+                verified_email,
+                auth_payload.key
+            );
+
+            Ok(Json(EmailVerificationResponse {
+                success: true,
+                message: Some("Email verified successfully".to_string()),
+            }))
+        }
+        None => Err(ApiError::InvalidArgument(
+            "Invalid or expired verification code".to_string(),
+        )),
+    }
 }

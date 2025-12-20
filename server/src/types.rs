@@ -377,3 +377,26 @@ pub struct AppVersionInfo {
     pub minimum_required_version: String,
     pub update_required: bool,
 }
+
+/// Defines the payload for requesting an email verification code.
+#[derive(Serialize, Deserialize, TS, Validate)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct SendEmailVerificationPayload {
+    #[validate(email)]
+    pub email: String,
+}
+
+/// Defines the payload for verifying an email with a code.
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct VerifyEmailPayload {
+    pub code: String,
+}
+
+/// Represents the response for email verification requests.
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct EmailVerificationResponse {
+    pub success: bool,
+    pub message: Option<String>,
+}

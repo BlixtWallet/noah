@@ -5,7 +5,8 @@ use axum::{
 };
 
 use crate::{
-    AppState, errors::ApiError, types::AuthPayload, utils::verify_auth, utils::verify_user_exists,
+    AppState, db::user_repo::UserRepository, errors::ApiError, types::AuthPayload,
+    utils::verify_auth, utils::verify_user_exists,
 };
 use std::time::SystemTime;
 
@@ -200,6 +201,56 @@ pub async fn user_exists_middleware(
         uri = %uri_path,
         public_key = %auth_payload.key,
         "User existence check passed"
+    );
+
+    Ok(next.run(request).await)
+}
+
+pub async fn email_verified_middleware(
+    State(state): State<AppState>,
+    request: Request,
+    next: Next,
+) -> Result<Response, impl IntoResponse> {
+    let auth_payload = match request.extensions().get::<AuthPayload>() {
+        Some(payload) => payload,
+        None => {
+            return Err(ApiError::ServerErr(
+                "Auth payload not found in request extensions".to_string(),
+            )
+            .into_response());
+        }
+    };
+
+    let uri_path = request.uri().path().to_string();
+
+    let user_repo = UserRepository::new(&state.db_pool);
+    let is_verified = user_repo
+        .is_email_verified(&auth_payload.key)
+        .await
+        .map_err(|e| {
+            tracing::error!(
+                uri = %uri_path,
+                key = %auth_payload.key,
+                error = %e,
+                "Email verification check failed: Error checking email verification status"
+            );
+            ApiError::ServerErr("Failed to check email verification status".to_string())
+                .into_response()
+        })?;
+
+    if !is_verified {
+        tracing::warn!(
+            uri = %uri_path,
+            key = %auth_payload.key,
+            "Email verification check failed: Email not verified"
+        );
+        return Err(ApiError::InvalidArgument("Email not verified".to_string()).into_response());
+    }
+
+    tracing::debug!(
+        uri = %uri_path,
+        public_key = %auth_payload.key,
+        "Email verification check passed"
     );
 
     Ok(next.run(request).await)

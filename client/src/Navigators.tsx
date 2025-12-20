@@ -26,6 +26,7 @@ import TransactionDetailScreen from "~/screens/TransactionDetailScreen";
 import BoardingTransactionsScreen from "~/screens/BoardingTransactionsScreen";
 import BoardingTransactionDetailScreen from "~/screens/BoardingTransactionDetailScreen";
 import LightningAddressScreen from "~/screens/LightningAddressScreen";
+import EmailVerificationScreen from "~/screens/EmailVerificationScreen";
 import { BackupSettingsScreen } from "~/screens/BackupSettingsScreen";
 import RestoreWalletScreen from "~/screens/RestoreWalletScreen";
 import NoahStoryScreen from "~/screens/NoahStoryScreen";
@@ -82,6 +83,7 @@ export type OnboardingStackParamList = {
   Configuration: undefined;
   Mnemonic: { fromOnboarding: boolean };
   RestoreWallet: undefined;
+  EmailVerification: undefined;
   LightningAddress: { fromOnboarding: boolean };
   UnifiedPush: { fromOnboarding?: boolean } | undefined;
 };
@@ -95,6 +97,7 @@ export type HomeStackParamList = {
   BoardingTransactions: undefined;
   BoardingTransactionDetail: { transaction: BoardingTransaction };
   ReceiveSuccess: { amountSat: number };
+  EmailVerification: { fromSettings?: boolean } | undefined;
 };
 
 const Tab = createNativeBottomTabNavigator<TabParamList>();
@@ -179,6 +182,11 @@ const HomeStackScreen = () => (
       component={ReceiveSuccessScreen}
       options={{ headerShown: false, animation: "default" }}
     />
+    <HomeStack.Screen
+      name="EmailVerification"
+      component={EmailVerificationScreen}
+      options={{ headerShown: false, animation: "default" }}
+    />
   </HomeStack.Navigator>
 );
 
@@ -202,6 +210,11 @@ const OnboardingStackScreen = () => (
     <OnboardingStack.Screen
       name="RestoreWallet"
       component={RestoreWalletScreen}
+      options={{ animation: "default" }}
+    />
+    <OnboardingStack.Screen
+      name="EmailVerification"
+      component={EmailVerificationScreen}
       options={{ animation: "default" }}
     />
     <OnboardingStack.Screen
