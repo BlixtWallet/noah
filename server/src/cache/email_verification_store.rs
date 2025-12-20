@@ -5,6 +5,13 @@ use super::redis_client::RedisClient;
 
 const EMAIL_VERIFICATION_PREFIX: &str = "email_verification:";
 const EMAIL_VERIFICATION_TTL_SECONDS: u64 = 600; // 10 minutes
+const TEST_VERIFICATION_CODE: &str = "000000";
+
+fn is_dev_mode() -> bool {
+    std::env::var("EMAIL_DEV_MODE")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false)
+}
 
 #[derive(Clone)]
 pub struct EmailVerificationStore {
@@ -44,6 +51,15 @@ impl EmailVerificationStore {
     }
 
     pub async fn verify(&self, pubkey: &str, code: &str) -> anyhow::Result<Option<String>> {
+        // In dev mode, accept the test code
+        if is_dev_mode() && code == TEST_VERIFICATION_CODE {
+            let email = self.get_email(pubkey).await?;
+            if email.is_some() {
+                self.remove(pubkey).await?;
+                return Ok(email);
+            }
+        }
+
         let stored_code = self.get_code(pubkey).await?;
         match stored_code {
             Some(stored) if stored == code => {

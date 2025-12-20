@@ -2,12 +2,37 @@
 
 appId: com.noahwallet.regtest
 ---
-- launchApp
+- launchApp:
+    clearState: true
+
 - tapOn: "Create Wallet"
 - assertVisible: "Your Recovery Phrase"
 - tapOn: "I Have Saved It, Continue"
-- assertVisible: "Choose your Lightning Address"
+
+# Email Verification screen
+- assertVisible: "Verify Your Email"
+- tapOn:
+    text: "your@email.com"
+    optional: true
+- inputText: "test@example.com"
+- tapOn: "Send Verification Code"
+
+# Wait for code entry screen
+- extendedWaitUntil:
+    visible: "Enter Verification Code"
+    timeout: 10000
+
+# Enter test verification code (000000 works in dev mode with EMAIL_DEV_MODE=true)
+- inputText: "000000"
+- tapOn: "Verify Email"
+
+# Lightning Address screen
+- extendedWaitUntil:
+    visible: "Choose your Lightning Address"
+    timeout: 10000
 - tapOn: "Skip"
+
+# Home screen
 - assertVisible: "📷 Scan QR Code"
 
 # Clean up: Delete the wallet
