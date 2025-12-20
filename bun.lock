@@ -70,6 +70,7 @@
         "react-native-reanimated": "~4.1.5",
         "react-native-safe-area-context": "~5.6.2",
         "react-native-screens": "~4.16.0",
+        "react-native-secure-enclave-operations": "^0.0.9",
         "react-native-share": "^12.2.1",
         "react-native-svg": "15.12.1",
         "react-native-uuid": "^2.0.3",
@@ -1746,6 +1747,8 @@
     "react-native-safe-area-context": ["react-native-safe-area-context@5.6.2", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-4XGqMNj5qjUTYywJqpdWZ9IG8jgkS3h06sfVjfw5yZQZfWnRFXczi0GnYyFyCc2EBps/qFmoCH8fez//WumdVg=="],
 
     "react-native-screens": ["react-native-screens@4.16.0", "", { "dependencies": { "react-freeze": "^1.0.0", "react-native-is-edge-to-edge": "^1.2.1", "warn-once": "^0.1.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-yIAyh7F/9uWkOzCi1/2FqvNvK6Wb9Y1+Kzn16SuGfN9YFJDTbwlzGRvePCNTOX0recpLQF3kc2FmvMUhyTCH1Q=="],
+
+    "react-native-secure-enclave-operations": ["react-native-secure-enclave-operations@0.0.9", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.31.10" } }, "sha512-xgI/3Di0hJ3Zj+nbRViRMk+TnX621agOCE4dYQaC5NEriFhJKiDJK8VlSGVqV0g1t+1v5bSOfqk6qKFZ9YXzOQ=="],
 
     "react-native-share": ["react-native-share@12.2.1", "", {}, "sha512-DPfvqQMbbLK4ykPkqYarby5AXdgFsbefOhsQHkOrDeAIixWzeI4oe/WvI7AoYmlQxM4Ys2DcBPBWDYQ6gn5xYA=="],
 

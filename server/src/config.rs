@@ -32,6 +32,12 @@ pub struct Config {
     pub minimum_app_version: String,
     pub redis_url: String,
     pub ntfy_auth_token: String,
+    // App Attestation
+    pub apple_team_identifier: Option<String>,
+    pub apple_bundle_identifier: Option<String>,
+    pub android_package_name: Option<String>,
+    pub google_service_account_json: Option<String>,
+    pub allow_development_attestation: bool,
 }
 
 impl Config {
@@ -80,6 +86,13 @@ impl Config {
                 .unwrap_or_else(|_| "0.0.1".to_string()),
             redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| default_redis_url()),
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
+            apple_team_identifier: std::env::var("APPLE_TEAM_IDENTIFIER").ok(),
+            apple_bundle_identifier: std::env::var("APPLE_BUNDLE_IDENTIFIER").ok(),
+            android_package_name: std::env::var("ANDROID_PACKAGE_NAME").ok(),
+            google_service_account_json: std::env::var("GOOGLE_SERVICE_ACCOUNT_JSON").ok(),
+            allow_development_attestation: std::env::var("ALLOW_DEVELOPMENT_ATTESTATION")
+                .map(|v| v == "true" || v == "1")
+                .unwrap_or(false),
         };
 
         config.validate()?;
@@ -150,6 +163,32 @@ impl Config {
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
         tracing::debug!("Redis URL: {}", self.redis_url);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
+        tracing::debug!(
+            "Apple Team Identifier: {}",
+            self.apple_team_identifier.as_deref().unwrap_or("[NOT SET]")
+        );
+        tracing::debug!(
+            "Apple Bundle Identifier: {}",
+            self.apple_bundle_identifier
+                .as_deref()
+                .unwrap_or("[NOT SET]")
+        );
+        tracing::debug!(
+            "Android Package Name: {}",
+            self.android_package_name.as_deref().unwrap_or("[NOT SET]")
+        );
+        tracing::debug!(
+            "Google Service Account: {}",
+            if self.google_service_account_json.is_some() {
+                "[SET]"
+            } else {
+                "[NOT SET]"
+            }
+        );
+        tracing::debug!(
+            "Allow Development Attestation: {}",
+            self.allow_development_attestation
+        );
         tracing::debug!("============================");
     }
 }
