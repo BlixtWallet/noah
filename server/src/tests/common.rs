@@ -19,7 +19,9 @@ use crate::routes::gated_api_v0::{
     heartbeat_response, list_backups, register_offboarding_request, register_push_token,
     report_job_status, submit_invoice, update_backup_settings, update_ln_address,
 };
-use crate::routes::public_api_v0::{check_app_version, get_k1, lnurlp_request, register};
+use crate::routes::public_api_v0::{
+    check_app_version, get_k1, lnurlp_request, register, send_verification_email, verify_email,
+};
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
 
@@ -105,12 +107,13 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     // Ensure tests run sequentially against the shared Postgres instance
     let guard = acquire_test_db_guard().await;
 
-    // Set up environment variables for S3 testing
+    // Set up environment variables for testing
     unsafe {
         std::env::set_var("S3_BUCKET_NAME", "test-bucket");
         std::env::set_var("AWS_ACCESS_KEY_ID", "test-key");
         std::env::set_var("AWS_SECRET_ACCESS_KEY", "test-secret");
         std::env::set_var("AWS_REGION", "us-east-1");
+        std::env::set_var("EMAIL_DEV_MODE", "true");
     }
 
     let db_pool = setup_test_database().await;
@@ -137,6 +140,12 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     let user_exists_layer =
         middleware::from_fn_with_state(app_state.clone(), user_exists_middleware);
 
+    // Email verification routes - need auth and user to exist
+    let email_verification_router = Router::new()
+        .route("/email/send_verification", post(send_verification_email))
+        .route("/email/verify", post(verify_email))
+        .layer(user_exists_layer.clone());
+
     // Gated routes that need auth AND user to exist in database
     let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
@@ -161,6 +170,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     // Routes that need auth but user may not exist (like registration)
     let auth_router = Router::new()
         .route("/register", post(register))
+        .merge(email_verification_router)
         .merge(gated_router)
         .layer(auth_layer);
 
