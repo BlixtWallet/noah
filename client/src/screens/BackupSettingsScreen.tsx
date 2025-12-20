@@ -74,7 +74,7 @@ export const BackupSettingsScreen = () => {
         </NoahButton>
 
         <View className="mt-8">
-          <NoahButton
+          <Button
             variant="outline"
             onPress={async () => {
               const result = await listBackups();
@@ -82,12 +82,11 @@ export const BackupSettingsScreen = () => {
                 setShowBackups(true);
               }
             }}
-            className="mb-8 border-gray-600"
+            className="mb-8 border-border"
             disabled={isLoading}
-            style={{ backgroundColor: "black" }}
           >
-            <Text>List Backups</Text>
-          </NoahButton>
+            <Text className="text-foreground font-bold">List Backups</Text>
+          </Button>
 
           {showBackups && backupsList && (
             <View className="mb-4 p-4 bg-card rounded-lg border border-border">

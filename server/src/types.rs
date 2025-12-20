@@ -31,6 +31,8 @@ pub struct RegisterResponse {
     pub reason: Option<String>,
     /// The user's lightning address.
     pub lightning_address: Option<String>,
+    /// Whether the user's email is verified.
+    pub is_email_verified: bool,
 }
 
 /// Defines device information captured during registration.

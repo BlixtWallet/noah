@@ -102,7 +102,11 @@ reason: string | null,
 /**
  * The user's lightning address.
  */
-lightning_address: string | null, };
+lightning_address: string | null, 
+/**
+ * Whether the user's email is verified.
+ */
+is_email_verified: boolean, };
 
 export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
 

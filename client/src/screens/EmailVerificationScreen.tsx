@@ -18,7 +18,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
 import { sendVerificationEmail, verifyEmail } from "~/lib/api";
-import { performServerRegistration } from "~/lib/server";
+import { useServerRegistrationMutation } from "~/hooks/useServerRegistration";
 import { useServerStore } from "~/store/serverStore";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { hasGooglePlayServices } from "~/constants";
@@ -50,33 +50,19 @@ const EmailVerificationScreen = () => {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
 
   const { isRegisteredWithServer, setEmailVerified } = useServerStore();
+  const registerMutation = useServerRegistrationMutation();
 
   useEffect(() => {
-    const registerIfNeeded = async () => {
-      // Skip registration if coming from settings (user is already registered)
-      if (fromSettings) {
-        return;
-      }
-      if (!isRegisteredWithServer) {
-        setIsRegistering(true);
-        log.i("Registering with server before email verification...");
-        const result = await performServerRegistration(null);
-        if (result.isErr()) {
-          log.e("Failed to register with server", [result.error]);
-          showAlert({
-            title: "Registration Error",
-            description: "Failed to register with server. Please try again.",
-          });
-          navigation.goBack();
-        }
-        setIsRegistering(false);
-      }
-    };
-    registerIfNeeded();
-  }, [isRegisteredWithServer, navigation, showAlert, fromSettings]);
+    if (fromSettings || isRegisteredWithServer) {
+      return;
+    }
+    log.i("Registering with server before email verification...");
+    registerMutation.mutate(undefined, {
+      onError: () => navigation.goBack(),
+    });
+  }, []);
 
   const ref = useBlurOnFulfill({ value: code, cellCount: CELL_COUNT });
   const [props, getCellOnLayoutHandler] = useClearByFocusCell({
@@ -104,6 +90,23 @@ const EmailVerificationScreen = () => {
     const result = await sendVerificationEmail({ email });
 
     if (result.isOk()) {
+      if (result.value.message === "Email already verified") {
+        log.i("Email is already verified on server, syncing local state");
+        setEmailVerified(true);
+        if (fromSettings) {
+          showAlert({
+            title: "Already Verified",
+            description: "Your email is already verified.",
+          });
+          navigation.goBack();
+        } else if (!hasGooglePlayServices()) {
+          navigation.navigate("UnifiedPush", { fromOnboarding: true });
+        } else {
+          navigation.navigate("LightningAddress", { fromOnboarding: true });
+        }
+        setIsSendingCode(false);
+        return;
+      }
       setCodeSent(true);
       log.i("Verification code sent to", [email]);
     } else {
@@ -166,7 +169,7 @@ const EmailVerificationScreen = () => {
     await handleSendCode();
   };
 
-  if (isRegistering) {
+  if (registerMutation.isPending) {
     return (
       <NoahSafeAreaView className="flex-1 bg-background">
         <View className="flex-1 justify-center items-center p-4">
