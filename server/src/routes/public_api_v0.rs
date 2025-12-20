@@ -21,7 +21,8 @@ use crate::{
         verify_ios_attestation,
     },
     db::{
-        attestation_repo::AttestationRepository, device_repo::DeviceRepository,
+        attestation_repo::{AttestationRepository, UpsertAttestationData},
+        device_repo::DeviceRepository,
         user_repo::UserRepository,
     },
     errors::ApiError,
@@ -264,6 +265,72 @@ pub async fn lnurlp_request(
     ))
 }
 
+type IosAttestationResultTuple = Option<(
+    bool,
+    Option<String>,
+    Option<crate::attestation::ios::IosAttestationResult>,
+)>;
+type AndroidAttestationResultTuple = Option<(
+    bool,
+    Option<String>,
+    Option<crate::attestation::android::AndroidAttestationResult>,
+)>;
+
+async fn store_attestation_results(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    pubkey: &str,
+    payload: &RegisterPayload,
+    ios_attestation_result: &IosAttestationResultTuple,
+    android_attestation_result: &AndroidAttestationResultTuple,
+) -> Result<(), ApiError> {
+    if let Some((passed, failure_reason, result)) = ios_attestation_result {
+        let key_id = payload
+            .ios_attestation
+            .as_ref()
+            .map(|a| a.key_id.as_str())
+            .unwrap_or("");
+        AttestationRepository::upsert(
+            tx,
+            &UpsertAttestationData {
+                pubkey,
+                platform: "ios",
+                key_id,
+                public_key_bytes: result.as_ref().map(|r| r.public_key_bytes.as_slice()),
+                receipt: result.as_ref().map(|r| r.receipt.as_slice()),
+                environment: result
+                    .as_ref()
+                    .map(|r| r.environment.as_str())
+                    .unwrap_or("unknown"),
+                attestation_passed: *passed,
+                failure_reason: failure_reason.as_deref(),
+            },
+        )
+        .await?;
+    }
+
+    if let Some((passed, failure_reason, result)) = android_attestation_result {
+        AttestationRepository::upsert(
+            tx,
+            &UpsertAttestationData {
+                pubkey,
+                platform: "android",
+                key_id: "",
+                public_key_bytes: None,
+                receipt: None,
+                environment: result
+                    .as_ref()
+                    .map(|r| r.environment.as_str())
+                    .unwrap_or("unknown"),
+                attestation_passed: *passed,
+                failure_reason: failure_reason.as_deref(),
+            },
+        )
+        .await?;
+    }
+
+    Ok(())
+}
+
 /// Handles user registration via LNURL-auth.
 ///
 /// This endpoint receives a user's public key, a signature, and a `k1` value.
@@ -319,7 +386,7 @@ pub async fn register(
                     key_id: &ios_attestation.key_id,
                     bundle_identifier: bundle_id,
                     team_identifier: team_id,
-                    allow_development: true,
+                    allow_development: state.config.allow_development_attestation,
                 };
 
                 match verify_ios_attestation(params) {
@@ -424,53 +491,19 @@ pub async fn register(
             return Err(e.into());
         }
 
-        if let Some(device_info) = payload.device_info {
+        if let Some(ref device_info) = payload.device_info {
             // For existing users, we'll just register the device in its own transaction
             let mut tx = state.db_pool.begin().await?;
-            DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
+            DeviceRepository::upsert(&mut tx, &auth_payload.key, device_info).await?;
 
-            // Store iOS attestation result if we have one
-            if let Some((passed, failure_reason, result)) = &ios_attestation_result {
-                let key_id = payload
-                    .ios_attestation
-                    .as_ref()
-                    .map(|a| a.key_id.as_str())
-                    .unwrap_or("");
-                AttestationRepository::upsert(
-                    &mut tx,
-                    &auth_payload.key,
-                    "ios",
-                    key_id,
-                    result.as_ref().map(|r| r.public_key_bytes.as_slice()),
-                    result.as_ref().map(|r| r.receipt.as_slice()),
-                    result
-                        .as_ref()
-                        .map(|r| r.environment.as_str())
-                        .unwrap_or("unknown"),
-                    *passed,
-                    failure_reason.as_deref(),
-                )
-                .await?;
-            }
-
-            // Store Android attestation result if we have one
-            if let Some((passed, failure_reason, result)) = &android_attestation_result {
-                AttestationRepository::upsert(
-                    &mut tx,
-                    &auth_payload.key,
-                    "android",
-                    "", // Android doesn't have a key_id like iOS
-                    None,
-                    None,
-                    result
-                        .as_ref()
-                        .map(|r| r.environment.as_str())
-                        .unwrap_or("unknown"),
-                    *passed,
-                    failure_reason.as_deref(),
-                )
-                .await?;
-            }
+            store_attestation_results(
+                &mut tx,
+                &auth_payload.key,
+                &payload,
+                &ios_attestation_result,
+                &android_attestation_result,
+            )
+            .await?;
 
             tx.commit().await?;
         }
@@ -483,7 +516,7 @@ pub async fn register(
         }));
     }
 
-    let ln_address = payload.ln_address.unwrap_or_else(|| {
+    let ln_address = payload.ln_address.clone().unwrap_or_else(|| {
         let number = rand::rng().random_range(0..100);
         let random_word = random_word::get(random_word::Lang::En);
         format!("{}{}@{}", random_word, number, state.lnurl_domain)
@@ -519,52 +552,18 @@ pub async fn register(
         return Err(e.into());
     }
 
-    if let Some(device_info) = payload.device_info {
-        DeviceRepository::upsert(&mut tx, &auth_payload.key, &device_info).await?;
+    if let Some(ref device_info) = payload.device_info {
+        DeviceRepository::upsert(&mut tx, &auth_payload.key, device_info).await?;
     }
 
-    // Store iOS attestation result if we have one
-    if let Some((passed, failure_reason, result)) = &ios_attestation_result {
-        let key_id = payload
-            .ios_attestation
-            .as_ref()
-            .map(|a| a.key_id.as_str())
-            .unwrap_or("");
-        AttestationRepository::upsert(
-            &mut tx,
-            &auth_payload.key,
-            "ios",
-            key_id,
-            result.as_ref().map(|r| r.public_key_bytes.as_slice()),
-            result.as_ref().map(|r| r.receipt.as_slice()),
-            result
-                .as_ref()
-                .map(|r| r.environment.as_str())
-                .unwrap_or("unknown"),
-            *passed,
-            failure_reason.as_deref(),
-        )
-        .await?;
-    }
-
-    // Store Android attestation result if we have one
-    if let Some((passed, failure_reason, result)) = &android_attestation_result {
-        AttestationRepository::upsert(
-            &mut tx,
-            &auth_payload.key,
-            "android",
-            "", // Android doesn't have a key_id like iOS
-            None,
-            None,
-            result
-                .as_ref()
-                .map(|r| r.environment.as_str())
-                .unwrap_or("unknown"),
-            *passed,
-            failure_reason.as_deref(),
-        )
-        .await?;
-    }
+    store_attestation_results(
+        &mut tx,
+        &auth_payload.key,
+        &payload,
+        &ios_attestation_result,
+        &android_attestation_result,
+    )
+    .await?;
 
     tx.commit().await?;
 

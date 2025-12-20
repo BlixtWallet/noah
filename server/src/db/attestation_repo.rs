@@ -8,11 +8,22 @@ pub struct DeviceAttestation {
     pub pubkey: String,
     pub platform: String,
     pub key_id: String,
-    pub public_key: Option<String>, // Base64-encoded public key bytes
+    pub public_key: Option<String>,
     pub receipt: Option<Vec<u8>>,
     pub environment: String,
     pub attestation_passed: bool,
     pub failure_reason: Option<String>,
+}
+
+pub struct UpsertAttestationData<'a> {
+    pub pubkey: &'a str,
+    pub platform: &'a str,
+    pub key_id: &'a str,
+    pub public_key_bytes: Option<&'a [u8]>,
+    pub receipt: Option<&'a [u8]>,
+    pub environment: &'a str,
+    pub attestation_passed: bool,
+    pub failure_reason: Option<&'a str>,
 }
 
 pub struct AttestationRepository<'a> {
@@ -45,19 +56,11 @@ impl<'a> AttestationRepository<'a> {
         Ok(attestation)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn upsert(
         tx: &mut Transaction<'_, Postgres>,
-        pubkey: &str,
-        platform: &str,
-        key_id: &str,
-        public_key_bytes: Option<&[u8]>,
-        receipt: Option<&[u8]>,
-        environment: &str,
-        attestation_passed: bool,
-        failure_reason: Option<&str>,
+        data: &UpsertAttestationData<'_>,
     ) -> Result<()> {
-        let public_key_b64 = public_key_bytes.map(|bytes| BASE64.encode(bytes));
+        let public_key_b64 = data.public_key_bytes.map(|bytes| BASE64.encode(bytes));
 
         sqlx::query(
             r#"
@@ -74,14 +77,14 @@ impl<'a> AttestationRepository<'a> {
                 updated_at = now()
             "#,
         )
-        .bind(pubkey)
-        .bind(platform)
-        .bind(key_id)
+        .bind(data.pubkey)
+        .bind(data.platform)
+        .bind(data.key_id)
         .bind(public_key_b64)
-        .bind(receipt)
-        .bind(environment)
-        .bind(attestation_passed)
-        .bind(failure_reason)
+        .bind(data.receipt)
+        .bind(data.environment)
+        .bind(data.attestation_passed)
+        .bind(data.failure_reason)
         .execute(&mut **tx)
         .await?;
 

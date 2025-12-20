@@ -32,12 +32,12 @@ pub struct Config {
     pub minimum_app_version: String,
     pub redis_url: String,
     pub ntfy_auth_token: String,
-    // Apple App Attestation
+    // App Attestation
     pub apple_team_identifier: Option<String>,
     pub apple_bundle_identifier: Option<String>,
-    // Android Play Integrity
     pub android_package_name: Option<String>,
     pub google_service_account_json: Option<String>,
+    pub allow_development_attestation: bool,
 }
 
 impl Config {
@@ -90,6 +90,9 @@ impl Config {
             apple_bundle_identifier: std::env::var("APPLE_BUNDLE_IDENTIFIER").ok(),
             android_package_name: std::env::var("ANDROID_PACKAGE_NAME").ok(),
             google_service_account_json: std::env::var("GOOGLE_SERVICE_ACCOUNT_JSON").ok(),
+            allow_development_attestation: std::env::var("ALLOW_DEVELOPMENT_ATTESTATION")
+                .map(|v| v == "true" || v == "1")
+                .unwrap_or(false),
         };
 
         config.validate()?;
@@ -181,6 +184,10 @@ impl Config {
             } else {
                 "[NOT SET]"
             }
+        );
+        tracing::debug!(
+            "Allow Development Attestation: {}",
+            self.allow_development_attestation
         );
         tracing::debug!("============================");
     }

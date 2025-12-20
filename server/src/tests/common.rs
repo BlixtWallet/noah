@@ -85,6 +85,7 @@ impl TestUser {
             apple_bundle_identifier: None,
             android_package_name: None,
             google_service_account_json: None,
+            allow_development_attestation: false,
         }
     }
 
