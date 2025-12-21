@@ -82,7 +82,7 @@ impl Config {
             redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| default_redis_url()),
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
             ses_from_address: std::env::var("SES_FROM_ADDRESS")
-                .unwrap_or_else(|_| "noreply@noahwallet.com".to_string()),
+                .unwrap_or_else(|_| "noreply@noahwallet.io".to_string()),
         };
 
         config.validate()?;
