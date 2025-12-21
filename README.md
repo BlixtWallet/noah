@@ -286,6 +286,7 @@ The server uses environment variables for configuration. For local development, 
    AWS_ACCESS_KEY_ID=your-aws-access-key-id
    AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
    AWS_REGION=us-east-2
+   EMAIL_DEV_MODE=true
    ```
 
 **Required environment variables:**
