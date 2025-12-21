@@ -24,6 +24,9 @@ import {
   DefaultSuccessPayload,
   SubmitInvoicePayload,
   RegisterPayload,
+  SendEmailVerificationPayload,
+  VerifyEmailPayload,
+  EmailVerificationResponse,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
 import ky from "ky";
@@ -172,6 +175,15 @@ export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1?: str
     "/heartbeat_response",
     payload,
   );
+
+export const sendVerificationEmail = (payload: SendEmailVerificationPayload) =>
+  post<SendEmailVerificationPayload, EmailVerificationResponse>(
+    "/email/send_verification",
+    payload,
+  );
+
+export const verifyEmail = (payload: VerifyEmailPayload) =>
+  post<VerifyEmailPayload, EmailVerificationResponse>("/email/verify", payload);
 
 export const getK1 = async (): Promise<Result<string, Error>> => {
   const headers: Record<string, string> = {

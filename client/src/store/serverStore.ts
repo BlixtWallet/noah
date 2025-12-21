@@ -41,6 +41,7 @@ interface ServerState {
   isRegisteredWithServer: boolean;
   lightningAddress: string | null;
   isBackupEnabled: boolean;
+  isEmailVerified: boolean;
   setRegisteredWithServer: (
     isRegistered: boolean,
     lightningAddress: string | null,
@@ -48,6 +49,7 @@ interface ServerState {
   ) => void;
   setLightningAddress: (lightningAddress: string) => void;
   setBackupEnabled: (enabled: boolean) => void;
+  setEmailVerified: (verified: boolean) => void;
   resetRegistration: () => void;
 }
 
@@ -57,12 +59,19 @@ export const useServerStore = create<ServerState>()(
       isRegisteredWithServer: false,
       lightningAddress: null,
       isBackupEnabled: false,
+      isEmailVerified: false,
       setRegisteredWithServer: (isRegistered, lightningAddress, isBackupEnabled) =>
         set({ isRegisteredWithServer: isRegistered, lightningAddress, isBackupEnabled }),
       setLightningAddress: (lightningAddress) => set({ lightningAddress }),
       setBackupEnabled: (enabled) => set({ isBackupEnabled: enabled }),
+      setEmailVerified: (verified) => set({ isEmailVerified: verified }),
       resetRegistration: () =>
-        set({ isRegisteredWithServer: false, lightningAddress: null, isBackupEnabled: false }),
+        set({
+          isRegisteredWithServer: false,
+          lightningAddress: null,
+          isBackupEnabled: false,
+          isEmailVerified: false,
+        }),
     }),
     {
       name: "server-storage",

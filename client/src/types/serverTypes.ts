@@ -30,6 +30,11 @@ export type DeviceInfo = { device_manufacturer: string | null, device_model: str
 
 export type DownloadUrlResponse = { download_url: string, backup_size: number, };
 
+/**
+ * Represents the response for email verification requests.
+ */
+export type EmailVerificationResponse = { success: boolean, message: string | null, };
+
 export type GetDownloadUrlPayload = { backup_version: number | null, };
 
 export type GetUploadUrlPayload = { backup_version: number, };
@@ -97,13 +102,22 @@ reason: string | null,
 /**
  * The user's lightning address.
  */
-lightning_address: string | null, };
+lightning_address: string | null, 
+/**
+ * Whether the user's email is verified.
+ */
+is_email_verified: boolean, };
 
 export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
 
 export type ReportStatus = "success" | "failure";
 
 export type ReportType = "maintenance" | "backup" | "offboarding";
+
+/**
+ * Defines the payload for requesting an email verification code.
+ */
+export type SendEmailVerificationPayload = { email: string, };
 
 /**
  * Defines the payload for submitting a BOLT11 invoice.
@@ -128,3 +142,8 @@ export type UpdateLnAddressPayload = {
 ln_address: string, };
 
 export type UploadUrlResponse = { upload_url: string, s3_key: string, };
+
+/**
+ * Defines the payload for verifying an email with a code.
+ */
+export type VerifyEmailPayload = { code: string, };

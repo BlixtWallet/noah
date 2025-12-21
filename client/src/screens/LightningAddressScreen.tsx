@@ -16,8 +16,6 @@ import { useWalletStore } from "../store/walletStore";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { CheckCircle } from "lucide-react-native";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
-import { performServerRegistration } from "~/lib/server";
-import { useAlert } from "~/contexts/AlertProvider";
 
 type LightningAddressScreenRouteProp = RouteProp<
   OnboardingStackParamList & SettingsStackParamList,
@@ -28,7 +26,6 @@ const LightningAddressScreen = () => {
   const navigation = useNavigation();
   const iconColor = useIconColor();
   const route = useRoute<LightningAddressScreenRouteProp>();
-  const { showAlert } = useAlert();
   const { fromOnboarding } = route.params || {};
   const { finishOnboarding } = useWalletStore();
   const { lightningAddress } = useServerStore();
@@ -36,8 +33,6 @@ const LightningAddressScreen = () => {
   const currentUsername = lightningAddress ? lightningAddress.split("@")[0] : "";
   const [username, setUsername] = useState(currentUsername);
   const [showUpdateSuccess, setShowUpdateSuccess] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSkipping, setIsSkipping] = useState(false);
 
   const updateLightningAddressMutation = useUpdateLightningAddress({
     onSuccess: () => {
@@ -56,40 +51,18 @@ const LightningAddressScreen = () => {
   const handleSave = async () => {
     if (username) {
       const newAddress = `${username.toLowerCase()}@${domain}`;
-      if (fromOnboarding) {
-        setIsSaving(true);
-        const result = await performServerRegistration(newAddress);
-        if (result.isOk()) {
-          finishOnboarding();
-        } else {
-          showAlert({
-            title: "Error",
-            description: `Failed to register lightning address: ${result.error.message}`,
-          });
-        }
-        setIsSaving(false);
-      } else if (newAddress !== lightningAddress) {
+      if (newAddress !== lightningAddress) {
         updateLightningAddressMutation.mutate(newAddress);
+      } else if (fromOnboarding) {
+        finishOnboarding();
       }
     }
   };
 
-  const handleSkip = async () => {
+  const handleSkip = () => {
     if (fromOnboarding) {
-      setIsSkipping(true);
-      // Register with a server-generated lightning address
-      const result = await performServerRegistration(null);
-      if (result.isOk()) {
-        finishOnboarding();
-      } else {
-        finishOnboarding();
-
-        showAlert({
-          title: "Error",
-          description: `Failed to register with server: ${result.error.message}`,
-        });
-      }
-      setIsSkipping(false);
+      // User already registered with server-generated lightning address during email verification
+      finishOnboarding();
     }
   };
 
@@ -141,14 +114,18 @@ const LightningAddressScreen = () => {
         {fromOnboarding ? (
           <View className="flex-row items-center mt-8 gap-4">
             <View className="flex-1">
-              <Button onPress={handleSkip} variant="outline" disabled={isSkipping}>
-                <Text>{isSkipping ? "Skipping..." : "Skip"}</Text>
+              <Button
+                onPress={handleSkip}
+                variant="outline"
+                disabled={updateLightningAddressMutation.isPending}
+              >
+                <Text>Skip</Text>
               </Button>
             </View>
             <View className="flex-1">
               <NoahButton
                 onPress={handleSave}
-                isLoading={isSaving || updateLightningAddressMutation.isPending}
+                isLoading={updateLightningAddressMutation.isPending}
                 disabled={!username}
               >
                 {`${username}@${domain}` === lightningAddress ? "Continue" : "Save"}
@@ -159,7 +136,7 @@ const LightningAddressScreen = () => {
           <NoahButton
             onPress={handleSave}
             className="mt-8"
-            isLoading={isSaving || updateLightningAddressMutation.isPending}
+            isLoading={updateLightningAddressMutation.isPending}
             disabled={!username}
           >
             Save

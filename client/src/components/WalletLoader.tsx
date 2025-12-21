@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { Text } from "./ui/text";
 import { useWalletStore } from "../store/walletStore";
 import { useLoadWallet, useCloseWallet } from "../hooks/useWallet";
 import { isWalletLoaded as isWalletLoadedNitro } from "react-native-nitro-ark";
@@ -97,7 +98,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <NoahActivityIndicator size="large" />
-        <Text style={{ marginTop: 10, color: "white" }}>Loading Wallet...</Text>
+        <Text className="mt-2.5 text-foreground">Loading Wallet...</Text>
       </View>
     );
   }

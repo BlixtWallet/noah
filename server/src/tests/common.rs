@@ -8,14 +8,20 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
-use crate::cache::{invoice_store::InvoiceStore, k1_store::K1Store, redis_client::RedisClient};
+use crate::cache::{
+    email_verification_store::EmailVerificationStore, invoice_store::InvoiceStore,
+    k1_store::K1Store, redis_client::RedisClient,
+};
 use crate::config::Config;
+use crate::email_client::EmailClient;
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
     heartbeat_response, list_backups, register_offboarding_request, register_push_token,
     report_job_status, submit_invoice, update_backup_settings, update_ln_address,
 };
-use crate::routes::public_api_v0::{check_app_version, get_k1, lnurlp_request, register};
+use crate::routes::public_api_v0::{
+    check_app_version, get_k1, lnurlp_request, register, send_verification_email, verify_email,
+};
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
 
@@ -81,6 +87,7 @@ impl TestUser {
             minimum_app_version: "0.0.1".to_string(),
             redis_url: std::env::var("TEST_REDIS_URL")
                 .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
+            ses_from_address: "test@noahwallet.com".to_string(),
         }
     }
 
@@ -100,24 +107,31 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     // Ensure tests run sequentially against the shared Postgres instance
     let guard = acquire_test_db_guard().await;
 
-    // Set up environment variables for S3 testing
+    // Set up environment variables for testing
     unsafe {
         std::env::set_var("S3_BUCKET_NAME", "test-bucket");
         std::env::set_var("AWS_ACCESS_KEY_ID", "test-key");
         std::env::set_var("AWS_SECRET_ACCESS_KEY", "test-secret");
         std::env::set_var("AWS_REGION", "us-east-1");
+        std::env::set_var("EMAIL_DEV_MODE", "true");
     }
 
     let db_pool = setup_test_database().await;
 
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
+    let email_verification_store = setup_test_email_verification_store().await;
+    let email_client = EmailClient::new("test@noahwallet.com".to_string())
+        .await
+        .expect("Failed to create email client");
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
+        email_verification_store,
+        email_client,
         config: Arc::new(TestUser::get_config()),
     });
 
@@ -125,6 +139,12 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     let auth_layer = middleware::from_fn_with_state(app_state.clone(), auth_middleware);
     let user_exists_layer =
         middleware::from_fn_with_state(app_state.clone(), user_exists_middleware);
+
+    // Email verification routes - need auth and user to exist
+    let email_verification_router = Router::new()
+        .route("/email/send_verification", post(send_verification_email))
+        .route("/email/verify", post(verify_email))
+        .layer(user_exists_layer.clone());
 
     // Gated routes that need auth AND user to exist in database
     let gated_router = Router::new()
@@ -150,6 +170,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     // Routes that need auth but user may not exist (like registration)
     let auth_router = Router::new()
         .route("/register", post(register))
+        .merge(email_verification_router)
         .merge(gated_router)
         .layer(auth_layer);
 
@@ -165,12 +186,18 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
+    let email_verification_store = setup_test_email_verification_store().await;
+    let email_client = EmailClient::new("test@noahwallet.com".to_string())
+        .await
+        .expect("Failed to create email client");
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
+        email_verification_store,
+        email_client,
         config: Arc::new(TestUser::get_config()),
     });
 
@@ -234,6 +261,13 @@ async fn setup_test_invoice_store() -> InvoiceStore {
         std::env::var("TEST_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
     let redis_client = RedisClient::new(&redis_url).expect("Failed to create Redis client");
     InvoiceStore::new(redis_client)
+}
+
+async fn setup_test_email_verification_store() -> EmailVerificationStore {
+    let redis_url =
+        std::env::var("TEST_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+    let redis_client = RedisClient::new(&redis_url).expect("Failed to create Redis client");
+    EmailVerificationStore::new(redis_client)
 }
 
 async fn reset_database(pool: &PgPool) -> sqlx::Result<()> {

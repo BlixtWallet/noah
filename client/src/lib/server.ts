@@ -12,7 +12,7 @@ const log = logger("server");
 export const performServerRegistration = async (
   ln_address: string | null,
 ): Promise<Result<RegisterResponse, Error>> => {
-  const { setRegisteredWithServer } = useServerStore.getState();
+  const { setRegisteredWithServer, setEmailVerified } = useServerStore.getState();
 
   const addressResult = await peakAddress(0);
   if (addressResult.isErr()) {
@@ -39,8 +39,9 @@ export const performServerRegistration = async (
     return result;
   }
 
-  const { lightning_address } = result.value;
-  log.d("Successfully registered with server");
+  const { lightning_address, is_email_verified } = result.value;
+  log.d("Successfully registered with server", [is_email_verified]);
   setRegisteredWithServer(true, lightning_address, true);
+  setEmailVerified(is_email_verified);
   return result;
 };

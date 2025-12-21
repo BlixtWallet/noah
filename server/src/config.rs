@@ -32,6 +32,7 @@ pub struct Config {
     pub minimum_app_version: String,
     pub redis_url: String,
     pub ntfy_auth_token: String,
+    pub ses_from_address: String,
 }
 
 impl Config {
@@ -80,6 +81,8 @@ impl Config {
                 .unwrap_or_else(|_| "0.0.1".to_string()),
             redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| default_redis_url()),
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
+            ses_from_address: std::env::var("SES_FROM_ADDRESS")
+                .unwrap_or_else(|_| "noreply@noahwallet.com".to_string()),
         };
 
         config.validate()?;
@@ -150,6 +153,7 @@ impl Config {
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
         tracing::debug!("Redis URL: {}", self.redis_url);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
+        tracing::debug!("SES From Address: {}", self.ses_from_address);
         tracing::debug!("============================");
     }
 }

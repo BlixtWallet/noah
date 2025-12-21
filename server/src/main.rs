@@ -19,9 +19,13 @@ use std::{net::SocketAddr, sync::Arc};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
-    cache::{invoice_store::InvoiceStore, k1_store::K1Store, redis_client::RedisClient},
+    cache::{
+        email_verification_store::EmailVerificationStore, invoice_store::InvoiceStore,
+        k1_store::K1Store, redis_client::RedisClient,
+    },
     config::Config,
     cron::cron_scheduler,
+    email_client::EmailClient,
     routes::{
         app_middleware,
         gated_api_v0::{
@@ -30,13 +34,17 @@ use crate::{
             register_push_token, report_job_status, submit_invoice, update_backup_settings,
             update_ln_address,
         },
-        public_api_v0::{check_app_version, get_k1, lnurlp_request, register},
+        public_api_v0::{
+            check_app_version, get_k1, lnurlp_request, register, send_verification_email,
+            verify_email,
+        },
     },
 };
 
 mod ark_client;
 mod cron;
 pub mod db;
+mod email_client;
 mod errors;
 mod notification_coordinator;
 mod push;
@@ -60,6 +68,8 @@ pub struct AppStruct {
     pub db_pool: PgPool,
     pub k1_cache: K1Store,
     pub invoice_store: InvoiceStore,
+    pub email_verification_store: EmailVerificationStore,
+    pub email_client: EmailClient,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -144,7 +154,12 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .map_err(|e| anyhow::anyhow!("Failed to connect to Redis: {}", e))?;
     tracing::info!("Redis connection established");
     let k1_cache = K1Store::new(redis_client.clone(), K1_TTL_SECONDS);
-    let invoice_store = InvoiceStore::new(redis_client);
+    let invoice_store = InvoiceStore::new(redis_client.clone());
+    let email_verification_store = EmailVerificationStore::new(redis_client);
+
+    tracing::info!("Initializing email client...");
+    let email_client = EmailClient::new(config.ses_from_address.clone()).await?;
+    tracing::info!("Email client initialized");
 
     let app_state = Arc::new(AppStruct {
         config: Arc::new(config.clone()),
@@ -152,6 +167,8 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
+        email_verification_store,
+        email_client,
     });
 
     config.log_config();
@@ -180,11 +197,23 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let user_exists_layer =
         middleware::from_fn_with_state(app_state.clone(), app_middleware::user_exists_middleware);
 
+    // Middleware that checks if user's email is verified
+    let email_verified_layer = middleware::from_fn_with_state(
+        app_state.clone(),
+        app_middleware::email_verified_middleware,
+    );
+
     // Create rate limiters
     let public_rate_limiter = rate_limit::create_public_rate_limiter();
     let auth_rate_limiter = rate_limit::create_auth_rate_limiter();
 
-    // Gated routes, need auth and for user to exist
+    // Email verification routes - need auth and user to exist, but NOT email verification
+    let email_verification_router = Router::new()
+        .route("/email/send_verification", post(send_verification_email))
+        .route("/email/verify", post(verify_email))
+        .layer(user_exists_layer.clone());
+
+    // Fully gated routes - need auth, user to exist, AND email to be verified
     let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
         .route(
@@ -203,12 +232,14 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route("/backup/settings", post(update_backup_settings))
         .route("/report_job_status", post(report_job_status))
         .route("/heartbeat_response", post(heartbeat_response))
+        .layer(email_verified_layer)
         .layer(user_exists_layer);
 
     // Routes that need auth but user may not exist (like registration)
     // Apply auth rate limiter to these routes
     let auth_router = Router::new()
         .route("/register", post(register))
+        .merge(email_verification_router)
         .merge(gated_router)
         .layer(auth_rate_limiter)
         .layer(auth_layer);

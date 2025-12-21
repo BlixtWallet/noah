@@ -65,3 +65,4 @@ client/android/app/release.keystore
 local.properties
 report.html
 .ngrok-domain
+client/maestro-debug-output/

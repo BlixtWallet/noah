@@ -120,7 +120,9 @@ services:
         condition: service_healthy
 
   noah-server:
-    image: niteshbalusu/noah-server:latest
+    build:
+      context: ../
+      dockerfile: Dockerfile
     env_file:
       - .env.regtest
     ports:
