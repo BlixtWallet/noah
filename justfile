@@ -1,6 +1,6 @@
 # Noah Wallet Justfile
 
-set positional-arguments
+set positional-arguments := true
 
 # Default recipe to display available commands
 default:
@@ -98,8 +98,12 @@ ngrok:
     ngrok http 3000 --domain $(cat .ngrok-domain)
 
 # Load testing (requires server running on localhost:3000)
-load-test users="30" time="30s" host="http://localhost:3000":
-    LOADTEST_SCENARIO=all LOADTEST_HOST={{host}} cargo run --bin loadtest --features loadtest --release -- --users {{users}} --run-time {{time}} --host {{host}} --report-file report.html
+load-test-regtest users="30" time="2m" host="http://localhost:3000":
+    LOADTEST_SCENARIO=all LOADTEST_HOST={{ host }} cargo run --bin loadtest --features loadtest --release -- --users {{ users }} --run-time {{ time }} --host {{ host }} --report-file report.html
+
+# Load testing (requires server running on localhost:3000)
+load-test-signet users="30" time="2m" host="https://signet.noahwallet.io":
+    LOADTEST_SCENARIO=all LOADTEST_HOST={{ host }} cargo run --bin loadtest --features loadtest --release -- --users {{ users }} --run-time {{ time }} --host {{ host }} --report-file report.html
 
 # Combined checks
 check-all: check server-check
@@ -145,13 +149,13 @@ create-bark-wallet:
     ./scripts/ark-dev.sh create-bark-wallet
 
 generate blocks="101":
-    ./scripts/ark-dev.sh generate {{blocks}}
+    ./scripts/ark-dev.sh generate {{ blocks }}
 
 fund-aspd amount:
-    ./scripts/ark-dev.sh fund-aspd {{amount}}
+    ./scripts/ark-dev.sh fund-aspd {{ amount }}
 
 send-to address amount:
-    ./scripts/ark-dev.sh send-to {{address}} {{amount}}
+    ./scripts/ark-dev.sh send-to {{ address }} {{ amount }}
 
 # Lightning commands
 setup-lightning:

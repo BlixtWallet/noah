@@ -13,10 +13,9 @@ type RateLimiter = GovernorLayer<
 /// Creates a rate limiting layer for public endpoints like getk1
 /// This is more restrictive to prevent abuse
 pub fn create_public_rate_limiter() -> RateLimiter {
-    // 30 requests per minute per IP with burst capability
     let config = GovernorConfigBuilder::default()
-        .per_second(2) // Replenish 2 tokens per second (120 per minute steady state)
-        .burst_size(30) // Allow bursts of up to 30 requests
+        .per_second(1000)
+        .burst_size(10000)
         .key_extractor(SmartIpKeyExtractor)
         .finish()
         .expect("Failed to create rate limiter config");
@@ -27,10 +26,9 @@ pub fn create_public_rate_limiter() -> RateLimiter {
 /// Creates a rate limiting layer for authenticated endpoints
 /// This is less restrictive as users are already authenticated
 pub fn create_auth_rate_limiter() -> RateLimiter {
-    // 60 requests per minute per IP with burst capability
     let config = GovernorConfigBuilder::default()
-        .per_second(5) // Replenish 5 tokens per second (300 per minute steady state)
-        .burst_size(60) // Allow bursts of up to 60 requests
+        .per_second(1000)
+        .burst_size(10000)
         .key_extractor(SmartIpKeyExtractor)
         .finish()
         .expect("Failed to create rate limiter config");
