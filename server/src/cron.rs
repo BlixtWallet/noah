@@ -1,5 +1,5 @@
 use crate::{
-    AppState, constants,
+    AppState,
     db::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
         offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
@@ -139,6 +139,8 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
 pub async fn cron_scheduler(
     app_state: AppState,
     backup_cron: String,
+    heartbeat_cron: String,
+    deregister_cron: String,
 ) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
 
@@ -155,9 +157,9 @@ pub async fn cron_scheduler(
     })?;
     sched.add(backup_job).await?;
 
-    // Heartbeat notifications - every 48 hours
+    // Heartbeat notifications
     let heartbeat_app_state = app_state.clone();
-    let heartbeat_job = Job::new_async(constants::DEFAULT_HEARTBEAT_CRON, move |_, _| {
+    let heartbeat_job = Job::new_async(&heartbeat_cron, move |_, _| {
         let app_state = heartbeat_app_state.clone();
         Box::pin(async move {
             if let Err(e) = send_heartbeat_notifications(app_state).await {
@@ -167,9 +169,9 @@ pub async fn cron_scheduler(
     })?;
     sched.add(heartbeat_job).await?;
 
-    // Check for inactive users - every 12 hours
+    // Check for inactive users
     let inactive_check_app_state = app_state.clone();
-    let inactive_check_job = Job::new_async(constants::DEFAULT_DEREGISTER_CRON, move |_, _| {
+    let inactive_check_job = Job::new_async(&deregister_cron, move |_, _| {
         let app_state = inactive_check_app_state.clone();
         Box::pin(async move {
             if let Err(e) = check_and_deregister_inactive_users(app_state).await {

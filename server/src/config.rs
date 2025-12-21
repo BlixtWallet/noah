@@ -40,16 +40,16 @@ impl Config {
         dotenvy::dotenv().ok();
 
         let config = Self {
-            host: std::env::var("HOST").unwrap_or_else(|_| default_host()),
+            host: std::env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
             port: std::env::var("PORT")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or_else(default_port),
+                .unwrap_or(3000),
             private_port: std::env::var("PRIVATE_PORT")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or_else(default_private_port),
-            lnurl_domain: std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| default_lnurl_domain()),
+                .unwrap_or(3099),
+            lnurl_domain: std::env::var("LNURL_DOMAIN").unwrap_or_else(|_| "localhost".to_string()),
             postgres_url: std::env::var("POSTGRES_URL").unwrap_or_default(),
             postgres_max_connections: std::env::var("POSTGRES_MAX_CONNECTIONS")
                 .ok()
@@ -61,17 +61,18 @@ impl Config {
             expo_access_token: std::env::var("EXPO_ACCESS_TOKEN").unwrap_or_default(),
             ark_server_url: std::env::var("ARK_SERVER_URL").unwrap_or_default(),
             server_network: std::env::var("SERVER_NETWORK")
-                .unwrap_or_else(|_| default_server_network()),
+                .unwrap_or_else(|_| "regtest".to_string()),
             sentry_url: std::env::var("SENTRY_URL").ok(),
-            backup_cron: std::env::var("BACKUP_CRON").unwrap_or_else(|_| default_backup_cron()),
+            backup_cron: std::env::var("BACKUP_CRON")
+                .unwrap_or_else(|_| "every 2 hours".to_string()),
             maintenance_interval_rounds: std::env::var("MAINTENANCE_INTERVAL_ROUNDS")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or_else(default_maintenance_interval_rounds),
+                .unwrap_or(1),
             heartbeat_cron: std::env::var("HEARTBEAT_CRON")
-                .unwrap_or_else(|_| default_heartbeat_cron()),
+                .unwrap_or_else(|_| "every 48 hours".to_string()),
             deregister_cron: std::env::var("DEREGISTER_CRON")
-                .unwrap_or_else(|_| default_deregister_cron()),
+                .unwrap_or_else(|_| "every 12 hours".to_string()),
             notification_spacing_minutes: std::env::var("NOTIFICATION_SPACING_MINUTES")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -79,7 +80,8 @@ impl Config {
             s3_bucket_name: std::env::var("S3_BUCKET_NAME").unwrap_or_default(),
             minimum_app_version: std::env::var("MINIMUM_APP_VERSION")
                 .unwrap_or_else(|_| "0.0.1".to_string()),
-            redis_url: std::env::var("REDIS_URL").unwrap_or_else(|_| default_redis_url()),
+            redis_url: std::env::var("REDIS_URL")
+                .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
             ses_from_address: std::env::var("SES_FROM_ADDRESS")
                 .unwrap_or_else(|_| "noreply@noahwallet.io".to_string()),
@@ -156,44 +158,4 @@ impl Config {
         tracing::debug!("SES From Address: {}", self.ses_from_address);
         tracing::debug!("============================");
     }
-}
-
-fn default_host() -> String {
-    crate::constants::DEFAULT_HOST.to_string()
-}
-
-fn default_port() -> u16 {
-    crate::constants::DEFAULT_PORT.parse().unwrap()
-}
-
-fn default_private_port() -> u16 {
-    crate::constants::DEFAULT_PRIVATE_PORT.parse().unwrap()
-}
-
-fn default_lnurl_domain() -> String {
-    crate::constants::DEFAULT_LNURL_DOMAIN.to_string()
-}
-
-fn default_server_network() -> String {
-    crate::constants::DEFAULT_SERVER_NETWORK.to_string()
-}
-
-fn default_backup_cron() -> String {
-    crate::constants::DEFAULT_BACKUP_CRON.to_string()
-}
-
-fn default_heartbeat_cron() -> String {
-    crate::constants::DEFAULT_HEARTBEAT_CRON.to_string()
-}
-
-fn default_deregister_cron() -> String {
-    crate::constants::DEFAULT_DEREGISTER_CRON.to_string()
-}
-
-fn default_maintenance_interval_rounds() -> u16 {
-    crate::constants::DEFAULT_MAINTENANCE_INTERVAL_ROUNDS
-}
-
-fn default_redis_url() -> String {
-    crate::constants::DEFAULT_REDIS_URL.to_string()
 }

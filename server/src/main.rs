@@ -6,7 +6,6 @@ use axum::{
 };
 mod cache;
 mod config;
-mod constants;
 mod routes;
 mod types;
 use bitcoin::Network;
@@ -174,7 +173,15 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     config.log_config();
 
     let backup_cron = config.backup_cron.clone();
-    let cron_handle = cron_scheduler(app_state.clone(), backup_cron).await?;
+    let heartbeat_cron = config.heartbeat_cron.clone();
+    let deregister_cron = config.deregister_cron.clone();
+    let cron_handle = cron_scheduler(
+        app_state.clone(),
+        backup_cron,
+        heartbeat_cron,
+        deregister_cron,
+    )
+    .await?;
 
     cron_handle.start().await?;
 
