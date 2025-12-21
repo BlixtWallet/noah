@@ -1,6 +1,5 @@
 # Stage 1: Install cargo-chef
-FROM rust:1.88 AS chef
-RUN cargo install cargo-chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.92.0-alpine3.21 AS chef
 WORKDIR /app
 
 # Stage 2: Analyze dependencies
