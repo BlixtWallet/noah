@@ -14,8 +14,8 @@ type RateLimiter = GovernorLayer<
 /// This is more restrictive to prevent abuse
 pub fn create_public_rate_limiter() -> RateLimiter {
     let config = GovernorConfigBuilder::default()
-        .per_second(1000)
-        .burst_size(10000)
+        .per_second(5)
+        .burst_size(60)
         .key_extractor(SmartIpKeyExtractor)
         .finish()
         .expect("Failed to create rate limiter config");
@@ -27,8 +27,8 @@ pub fn create_public_rate_limiter() -> RateLimiter {
 /// This is less restrictive as users are already authenticated
 pub fn create_auth_rate_limiter() -> RateLimiter {
     let config = GovernorConfigBuilder::default()
-        .per_second(1000)
-        .burst_size(10000)
+        .per_second(10)
+        .burst_size(120)
         .key_extractor(SmartIpKeyExtractor)
         .finish()
         .expect("Failed to create rate limiter config");
