@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Pressable, Keyboard } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -70,6 +70,14 @@ const EmailVerificationScreen = () => {
     setValue: setCode,
   });
 
+  const navigateToNextOnboardingStep = useCallback(() => {
+    if (!hasGooglePlayServices()) {
+      navigation.navigate("UnifiedPush", { fromOnboarding: true });
+    } else {
+      navigation.navigate("LightningAddress", { fromOnboarding: true });
+    }
+  }, [navigation]);
+
   const isValidEmail = (emailInput: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(emailInput);
@@ -99,10 +107,8 @@ const EmailVerificationScreen = () => {
             description: "Your email is already verified.",
           });
           navigation.goBack();
-        } else if (!hasGooglePlayServices()) {
-          navigation.navigate("UnifiedPush", { fromOnboarding: true });
         } else {
-          navigation.navigate("LightningAddress", { fromOnboarding: true });
+          navigateToNextOnboardingStep();
         }
         setIsSendingCode(false);
         return;
@@ -144,10 +150,8 @@ const EmailVerificationScreen = () => {
           description: "Your email has been verified successfully.",
         });
         navigation.goBack();
-      } else if (!hasGooglePlayServices()) {
-        navigation.navigate("UnifiedPush", { fromOnboarding: true });
       } else {
-        navigation.navigate("LightningAddress", { fromOnboarding: true });
+        navigateToNextOnboardingStep();
       }
     } else {
       const errorMessage = result.isErr()
