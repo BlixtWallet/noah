@@ -22,7 +22,9 @@ appId: com.noahwallet.regtest
     visible: "Enter Verification Code"
     timeout: 10000
 
-# Enter test verification code (000000 works in dev mode with EMAIL_DEV_MODE=true)
+# Tap on code field to focus it, then enter test verification code
+- tapOn:
+    id: "verification-code-input"
 - inputText: "000000"
 - tapOn: "Verify Email"
 

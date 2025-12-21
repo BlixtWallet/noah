@@ -244,6 +244,9 @@ const EmailVerificationScreen = () => {
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"
                 autoComplete="one-time-code"
+                testID="verification-code-input"
+                accessibilityLabel="verification-code-input"
+                autoFocus={true}
                 renderCell={({ index, symbol, isFocused }) => (
                   <View
                     key={index}

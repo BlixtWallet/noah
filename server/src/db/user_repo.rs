@@ -256,12 +256,11 @@ fn is_ark_address_conflict(error: &sqlx::Error) -> bool {
 
 fn is_email_conflict(error: &sqlx::Error) -> bool {
     if let sqlx::Error::Database(db_err) = error {
-        if db_err.code().as_deref() == Some("23505") {
-            // Check for both possible constraint names
-            let constraint = db_err.constraint();
-            return constraint == Some("users_email_key")
-                || constraint == Some("idx_users_email_unique");
-        }
+        // Check for both possible constraint names
+        let constraint = db_err.constraint();
+        return db_err.code().as_deref() == Some("23505")
+            && (constraint == Some("users_email_key")
+                || constraint == Some("idx_users_email_unique"));
     }
 
     false

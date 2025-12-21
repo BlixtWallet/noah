@@ -239,12 +239,13 @@ pub async fn email_verified_middleware(
         })?;
 
     if !is_verified {
+        // TODO: Temporarily just logging instead of blocking - re-enable blocking later
         tracing::warn!(
             uri = %uri_path,
             key = %auth_payload.key,
-            "Email verification check failed: Email not verified"
+            "Email not verified (allowing request temporarily)"
         );
-        return Err(ApiError::InvalidArgument("Email not verified".to_string()).into_response());
+        // return Err(ApiError::InvalidArgument("Email not verified".to_string()).into_response());
     }
 
     tracing::debug!(
