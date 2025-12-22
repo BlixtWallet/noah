@@ -56,11 +56,11 @@ fn emit_wide_event(handle: &WideEventHandle) {
         let json = serde_json::to_string(event).unwrap_or_else(|_| "{}".to_string());
 
         if event.is_server_error() {
-            tracing::error!(wide_event = %json, "request");
+            tracing::error!("{}", json);
         } else if event.is_error() || event.is_slow() {
-            tracing::warn!(wide_event = %json, "request");
+            tracing::warn!("{}", json);
         } else {
-            tracing::info!(wide_event = %json, "request");
+            tracing::info!("{}", json);
         }
     });
 }

@@ -101,7 +101,7 @@ impl WideEvent {
 }
 
 #[derive(Clone, Default)]
-pub struct WideEventHandle(pub Arc<Mutex<WideEvent>>);
+pub struct WideEventHandle(Arc<Mutex<WideEvent>>);
 
 impl WideEventHandle {
     pub fn new() -> Self {
@@ -112,7 +112,7 @@ impl WideEventHandle {
     where
         F: FnOnce(&mut WideEvent) -> R,
     {
-        let mut event = self.0.lock().unwrap();
+        let mut event = self.0.lock().unwrap_or_else(|e| e.into_inner());
         f(&mut event)
     }
 

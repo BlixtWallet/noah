@@ -9,13 +9,16 @@ use crate::{
 };
 use expo_push_notification_client::Priority;
 use tokio_cron_scheduler::{Job, JobScheduler};
-use tracing::info;
 
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
     let backup_repo = BackupRepository::new(&app_state.db_pool);
 
     let pubkeys = backup_repo.find_pubkeys_with_backup_enabled().await?;
-    info!("Pubkeys registered for backup {:?}", pubkeys);
+    tracing::info!(
+        job = "backup",
+        user_count = pubkeys.len(),
+        "starting backup notifications"
+    );
 
     let coordinator = NotificationCoordinator::new(app_state.clone());
 
@@ -27,11 +30,11 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
         let request = NotificationRequest {
             priority: Priority::Normal,
             data: notification_data,
-            target_pubkey: Some(pubkey),
+            target_pubkey: Some(pubkey.clone()),
         };
 
         if let Err(e) = coordinator.send_notification(request).await {
-            tracing::error!("Failed to send backup notification: {}", e);
+            tracing::error!(job = "backup", pubkey = %pubkey, error = %e, "notification failed");
         }
     }
 
@@ -43,8 +46,9 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
 
     let active_users = heartbeat_repo.get_active_users().await?;
     tracing::info!(
-        "Sending heartbeat notifications to {} active users",
-        active_users.len()
+        job = "heartbeat",
+        user_count = active_users.len(),
+        "starting heartbeat notifications"
     );
 
     let coordinator = NotificationCoordinator::new(app_state.clone());
@@ -64,14 +68,10 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
         };
 
         if let Err(e) = coordinator.send_notification(request).await {
-            tracing::error!("Failed to send heartbeat notification to {}: {}", pubkey, e);
+            tracing::error!(job = "heartbeat", pubkey = %pubkey, error = %e, "notification failed");
             // Rollback the created notification record
             if let Err(delete_err) = heartbeat_repo.delete_notification(&notification_id).await {
-                tracing::error!(
-                    "Failed to delete orphaned heartbeat notification {}: {}",
-                    notification_id,
-                    delete_err
-                );
+                tracing::error!(job = "heartbeat", notification_id = %notification_id, error = %delete_err, "failed to delete orphaned notification");
             }
         }
     }
@@ -91,45 +91,37 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
         return Ok(());
     }
 
-    tracing::info!("Deregistering {} inactive users", users_to_deregister.len());
+    tracing::info!(
+        job = "deregister_inactive",
+        user_count = users_to_deregister.len(),
+        "starting"
+    );
 
     for pubkey in users_to_deregister {
-        tracing::info!("Deregistering inactive user: {}", pubkey);
+        tracing::debug!(job = "deregister_inactive", pubkey = %pubkey, "processing user");
 
         // Use a transaction to ensure all or nothing is deleted
         let mut tx = app_state.db_pool.begin().await?;
 
         if let Err(e) = PushTokenRepository::delete_by_pubkey(&mut tx, &pubkey).await {
-            tracing::error!("Failed to delete push token for {}: {}", pubkey, e);
+            tracing::error!(job = "deregister_inactive", pubkey = %pubkey, step = "push_token", error = %e, "delete failed");
             continue;
         }
 
         if let Err(e) = OffboardingRepository::delete_by_pubkey(&mut tx, &pubkey).await {
-            tracing::error!(
-                "Failed to delete offboarding requests for {}: {}",
-                pubkey,
-                e
-            );
+            tracing::error!(job = "deregister_inactive", pubkey = %pubkey, step = "offboarding", error = %e, "delete failed");
             continue;
         }
 
         if let Err(e) = HeartbeatRepository::delete_by_pubkey_tx(&mut tx, &pubkey).await {
-            tracing::error!(
-                "Failed to delete heartbeat notifications for {}: {}",
-                pubkey,
-                e
-            );
+            tracing::error!(job = "deregister_inactive", pubkey = %pubkey, step = "heartbeat", error = %e, "delete failed");
             continue;
         }
 
         if let Err(e) = tx.commit().await {
-            tracing::error!(
-                "Failed to commit deregistration transaction for {}: {}",
-                pubkey,
-                e
-            );
+            tracing::error!(job = "deregister_inactive", pubkey = %pubkey, step = "commit", error = %e, "transaction failed");
         } else {
-            tracing::info!("Successfully deregistered inactive user: {}", pubkey);
+            tracing::info!(job = "deregister_inactive", pubkey = %pubkey, "user deregistered");
         }
     }
 
@@ -144,14 +136,14 @@ pub async fn cron_scheduler(
 ) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
 
-    info!("Backup cron: {}", backup_cron);
+    tracing::info!(service = "cron", backup_schedule = %backup_cron, heartbeat_schedule = %heartbeat_cron, deregister_schedule = %deregister_cron, "scheduler initialized");
 
     let backup_app_state = app_state.clone();
     let backup_job = Job::new_async(&backup_cron, move |_, _| {
         let app_state = backup_app_state.clone();
         Box::pin(async move {
             if let Err(e) = send_backup_notifications(app_state).await {
-                tracing::error!("Failed to send backup notifications: {}", e);
+                tracing::error!(job = "backup", error = %e, "job failed");
             }
         })
     })?;
@@ -163,7 +155,7 @@ pub async fn cron_scheduler(
         let app_state = heartbeat_app_state.clone();
         Box::pin(async move {
             if let Err(e) = send_heartbeat_notifications(app_state).await {
-                tracing::error!("Failed to send heartbeat notifications: {}", e);
+                tracing::error!(job = "heartbeat", error = %e, "job failed");
             }
         })
     })?;
@@ -175,7 +167,7 @@ pub async fn cron_scheduler(
         let app_state = inactive_check_app_state.clone();
         Box::pin(async move {
             if let Err(e) = check_and_deregister_inactive_users(app_state).await {
-                tracing::error!("Failed to check and deregister inactive users: {}", e);
+                tracing::error!(job = "deregister_inactive", error = %e, "job failed");
             }
         })
     })?;

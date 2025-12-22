@@ -29,18 +29,23 @@ pub async fn connect_to_ark_server(
     loop {
         match establish_connection_and_process(&app_state, &ark_server_url).await {
             Ok(_) => {
-                // Connection was successful but ended (stream closed)
-                tracing::warn!("Ark server connection ended, attempting to reconnect...");
-                retry_delay = INITIAL_RETRY_DELAY; // Reset delay on successful connection
+                tracing::warn!(
+                    service = "ark_client",
+                    event = "connection_ended",
+                    "reconnecting"
+                );
+                retry_delay = INITIAL_RETRY_DELAY;
             }
             Err(e) => {
-                tracing::warn!("Failed to connect to Ark server: {}", e);
+                tracing::warn!(service = "ark_client", event = "connection_failed", error = %e, "failed to connect");
             }
         }
 
         tracing::info!(
-            "Retrying connection ark server in {} seconds...",
-            retry_delay.as_secs()
+            service = "ark_client",
+            event = "retry_scheduled",
+            delay_secs = retry_delay.as_secs(),
+            "retrying"
         );
         tokio::time::sleep(retry_delay).await;
 
@@ -64,20 +69,25 @@ async fn establish_connection_and_process(
     .map_err(|_| anyhow::anyhow!("Connection timed out after {}s", TIMEOUT_DURATION.as_secs()))?
     .map_err(|e| anyhow::anyhow!("Failed to connect: {}", e))?;
 
-    tracing::info!("Successfully connected to Ark server");
+    tracing::info!(
+        service = "ark_client",
+        event = "connected",
+        "connected to ark server"
+    );
 
     let response = client
         .handshake(HandshakeRequest { bark_version: None })
         .await?;
 
-    tracing::info!("Handshake response: {:?}", response);
+    tracing::debug!(service = "ark_client", event = "handshake", response = ?response, "handshake complete");
 
     let info = client.get_ark_info(Empty {}).await?.into_inner();
 
     tracing::info!(
-        "Ark Server Public Key: {}, Ark Server Info: {:?}",
-        info.server_pubkey.to_lower_hex_string(),
-        info
+        service = "ark_client",
+        event = "ark_info",
+        server_pubkey = %info.server_pubkey.to_lower_hex_string(),
+        "received ark server info"
     );
 
     let mut stream = client.subscribe_rounds(Empty {}).await?.into_inner();
@@ -85,7 +95,11 @@ async fn establish_connection_and_process(
     let maintenance_interval_rounds = app_state.config.maintenance_interval_rounds;
     let mut round_counter = 0;
 
-    tracing::info!("Starting round subscription");
+    tracing::info!(
+        service = "ark_client",
+        event = "subscribed",
+        "listening for rounds"
+    );
     while let Some(item) = stream.next().await {
         match item {
             Ok(round_event) => {
@@ -101,9 +115,11 @@ async fn establish_connection_and_process(
                     // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
                     if round_counter >= maintenance_interval_rounds {
                         tracing::info!(
-                            "Round started, triggering maintenance task for round_seq: {}, offboard_feerate: {}",
-                            event.round_seq,
-                            event.offboard_feerate_sat_vkb
+                            service = "ark_client",
+                            event = "maintenance_triggered",
+                            round_seq = event.round_seq,
+                            offboard_feerate = event.offboard_feerate_sat_vkb,
+                            "triggering maintenance"
                         );
                         let app_state_clone = app_state.clone();
                         tokio::spawn(async move {
@@ -137,7 +153,7 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     };
 
     if let Err(e) = coordinator.send_notification(request).await {
-        tracing::error!("Failed to send push notification for maintenance: {}", e);
+        tracing::error!(service = "ark_client", job = "maintenance", error = %e, "notification failed");
     }
 
     Ok(())
@@ -154,9 +170,11 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
 
     for request in pending_requests {
         tracing::info!(
-            "Processing offboarding request {} for pubkey: {}",
-            request.request_id,
-            request.pubkey
+            service = "ark_client",
+            job = "offboarding",
+            request_id = %request.request_id,
+            pubkey = %request.pubkey,
+            "processing request"
         );
 
         // Update status to processing
@@ -179,7 +197,7 @@ pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<
         };
 
         if let Err(e) = coordinator.send_notification(notification_request).await {
-            tracing::error!("Failed to send push notification for offboarding: {}", e);
+            tracing::error!(service = "ark_client", job = "offboarding", request_id = %request.request_id, error = %e, "notification failed");
             // Reset status to pending if failed
             offboarding_repo
                 .update_status(&request.request_id, OffboardingStatus::Pending)
