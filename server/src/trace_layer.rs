@@ -62,6 +62,9 @@ fn emit_wide_event(handle: &WideEventHandle) {
 
         if event.is_server_error() {
             tracing::error!("{}", json);
+        } else if event.status_code == Some(401) {
+            // 401 Unauthorized is common from bot traffic, log at debug to reduce noise
+            tracing::debug!("{}", json);
         } else if event.is_error() || event.is_slow() {
             tracing::warn!("{}", json);
         } else {
