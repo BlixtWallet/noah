@@ -5,8 +5,12 @@ use axum::{
 };
 
 use crate::{
-    AppState, db::user_repo::UserRepository, errors::ApiError, types::AuthPayload,
-    utils::verify_auth, utils::verify_user_exists,
+    AppState,
+    db::user_repo::UserRepository,
+    errors::ApiError,
+    types::AuthPayload,
+    utils::{verify_auth, verify_user_exists},
+    wide_event::WideEventHandle,
 };
 use std::time::SystemTime;
 
@@ -139,12 +143,11 @@ pub async fn auth_middleware(
         return Err(ApiError::InvalidSignature.into_response());
     }
 
-    // Authentication successful
-    tracing::debug!(
-        uri = %uri_path,
-        key = %payload.key,
-        "Auth successful: User authenticated"
-    );
+    if let Some(event) = request.extensions().get::<WideEventHandle>() {
+        event.set_user(&payload.key);
+    }
+
+    tracing::debug!(key = %payload.key, "Auth successful");
 
     // Remove the k1 value to prevent reuse
     if let Err(e) = state.k1_cache.remove(&payload.k1).await {
@@ -197,12 +200,6 @@ pub async fn user_exists_middleware(
         return Err(ApiError::UserNotFound.into_response());
     }
 
-    tracing::debug!(
-        uri = %uri_path,
-        public_key = %auth_payload.key,
-        "User existence check passed"
-    );
-
     Ok(next.run(request).await)
 }
 
@@ -221,38 +218,28 @@ pub async fn email_verified_middleware(
         }
     };
 
-    let uri_path = request.uri().path().to_string();
-
     let user_repo = UserRepository::new(&state.db_pool);
     let is_verified = user_repo
         .is_email_verified(&auth_payload.key)
         .await
         .map_err(|e| {
-            tracing::error!(
-                uri = %uri_path,
-                key = %auth_payload.key,
-                error = %e,
-                "Email verification check failed: Error checking email verification status"
-            );
+            tracing::error!(error = %e, "Email verification check failed");
             ApiError::ServerErr("Failed to check email verification status".to_string())
                 .into_response()
         })?;
 
+    if let Some(event) = request.extensions().get::<WideEventHandle>() {
+        event.set_email_verified(is_verified);
+    }
+
     if !is_verified {
         // TODO: Temporarily just logging instead of blocking - re-enable blocking later
         tracing::warn!(
-            uri = %uri_path,
-            key = %auth_payload.key,
+            path = %request.uri().path(),
             "Email not verified (allowing request temporarily)"
         );
         // return Err(ApiError::InvalidArgument("Email not verified".to_string()).into_response());
     }
-
-    tracing::debug!(
-        uri = %uri_path,
-        public_key = %auth_payload.key,
-        "Email verification check passed"
-    );
 
     Ok(next.run(request).await)
 }
