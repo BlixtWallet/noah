@@ -22,14 +22,10 @@ pub struct WideEvent {
     #[serde(skip_serializing_if = "HashMap::is_empty")]
     pub context: HashMap<String, serde_json::Value>,
 
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub timings: HashMap<String, u128>,
-
     #[serde(skip)]
     pub start_time: Option<Instant>,
 }
 
-#[allow(dead_code)]
 impl WideEvent {
     pub fn new() -> Self {
         Self {
@@ -78,10 +74,6 @@ impl WideEvent {
         }
     }
 
-    pub fn record_timing(&mut self, name: &str, duration_ms: u128) {
-        self.timings.insert(name.to_string(), duration_ms);
-    }
-
     pub fn finalize(&mut self) {
         if let Some(start) = self.start_time {
             self.duration_ms = Some(start.elapsed().as_millis());
@@ -111,7 +103,6 @@ impl WideEvent {
 #[derive(Clone, Default)]
 pub struct WideEventHandle(pub Arc<Mutex<WideEvent>>);
 
-#[allow(dead_code)]
 impl WideEventHandle {
     pub fn new() -> Self {
         Self(Arc::new(Mutex::new(WideEvent::new())))
@@ -139,10 +130,6 @@ impl WideEventHandle {
 
     pub fn add_context<V: Serialize>(&self, key: &str, value: V) {
         self.with(|e| e.add_context(key, value));
-    }
-
-    pub fn record_timing(&self, name: &str, duration_ms: u128) {
-        self.with(|e| e.record_timing(name, duration_ms));
     }
 
     pub fn set_error(&self, error_type: &str, message: &str) {
