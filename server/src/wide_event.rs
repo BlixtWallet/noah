@@ -11,6 +11,10 @@ pub struct WideEvent {
     pub status_code: Option<u16>,
     pub duration_ms: Option<u128>,
 
+    pub user_agent: Option<String>,
+    pub app_version: Option<String>,
+    pub network: Option<String>,
+
     pub public_key: Option<String>,
     pub ln_address: Option<String>,
     pub email_verified: Option<bool>,
@@ -35,9 +39,12 @@ impl WideEvent {
         }
     }
 
-    pub fn set_request_info(&mut self, method: &str, path: &str) {
+    pub fn set_request_info(&mut self, method: &str, path: &str, user_agent: Option<&str>) {
         self.method = Some(method.to_string());
         self.path = Some(path.to_string());
+        self.user_agent = user_agent.map(|s| s.to_string());
+        self.network = std::env::var("SERVER_NETWORK").ok();
+        self.app_version = user_agent.and_then(parse_app_version);
     }
 
     pub fn set_user(&mut self, public_key: &str) {
@@ -98,6 +105,22 @@ impl WideEvent {
     pub fn is_server_error(&self) -> bool {
         self.status_code.map(|s| s >= 500).unwrap_or(false)
     }
+}
+
+fn parse_app_version(user_agent: &str) -> Option<String> {
+    // Expected format: "Noah/1.2.3" or "Noah/1.2.3 (iOS 17.0)" etc.
+    if let Some(start) = user_agent.find("Noah/") {
+        let version_start = start + 5;
+        let rest = &user_agent[version_start..];
+        let version_end = rest
+            .find(|c: char| !c.is_ascii_digit() && c != '.')
+            .unwrap_or(rest.len());
+        let version = &rest[..version_end];
+        if !version.is_empty() {
+            return Some(version.to_string());
+        }
+    }
+    None
 }
 
 #[derive(Clone, Default)]

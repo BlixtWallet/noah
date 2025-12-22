@@ -8,8 +8,13 @@ use crate::wide_event::{WideEvent, WideEventHandle};
 pub async fn trace_middleware(mut req: Request, next: Next) -> impl IntoResponse {
     let event_handle = WideEventHandle::new();
 
+    let user_agent = req
+        .headers()
+        .get("user-agent")
+        .and_then(|v| v.to_str().ok());
+
     event_handle.with(|e| {
-        e.set_request_info(req.method().as_str(), req.uri().path());
+        e.set_request_info(req.method().as_str(), req.uri().path(), user_agent);
     });
 
     req.extensions_mut().insert(event_handle.clone());
