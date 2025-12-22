@@ -53,6 +53,7 @@ mod s3_client;
 mod tests;
 mod trace_layer;
 mod utils;
+mod wide_event;
 
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;

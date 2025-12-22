@@ -28,6 +28,7 @@ use crate::{
         SendEmailVerificationPayload, VerifyEmailPayload,
     },
     utils::make_k1,
+    wide_event::WideEventHandle,
 };
 
 /// Represents the response for a `k1` request, used in LNURL-auth.
@@ -112,11 +113,17 @@ pub async fn lnurlp_request(
     State(state): State<AppState>,
     Path(username): Path<String>,
     Query(query): Query<LnurlpRequestQuery>,
+    event: Option<Extension<WideEventHandle>>,
 ) -> anyhow::Result<axum::response::Json<serde_json::Value>, ApiError> {
     let lnurl_domain = &state.lnurl_domain;
     let lightning_address = format!("{}@{}", username, lnurl_domain);
 
-    tracing::debug!("Lightning address is {}", lightning_address);
+    if let Some(Extension(event)) = &event {
+        event.add_context("ln_address", &lightning_address);
+        if let Some(amount) = query.amount {
+            event.add_context("amount_msats", amount);
+        }
+    }
 
     let user_repo = UserRepository::new(&state.db_pool);
     let user = user_repo
@@ -180,6 +187,11 @@ pub async fn lnurlp_request(
 
     // Generate a unique transaction ID for this payment request
     let transaction_id = Uuid::new_v4().to_string();
+
+    if let Some(Extension(event)) = &event {
+        event.add_context("transaction_id", &transaction_id);
+        event.add_context("has_ark_address", user.ark_address.is_some());
+    }
 
     // Generate a k1 for authentication optimization (avoids extra network call)
     let k1 = match make_k1(&state.k1_cache).await {
@@ -269,6 +281,7 @@ pub async fn lnurlp_request(
 pub async fn register(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<RegisterResponse>, ApiError> {
     if payload.ln_address.is_some()
@@ -280,14 +293,11 @@ pub async fn register(
 
     let user_repo = UserRepository::new(&state.db_pool);
 
-    tracing::debug!(
-        "Registering user with pubkey: {} and k1: {}",
-        auth_payload.key,
-        auth_payload.k1,
-    );
-
     if let Some(user) = user_repo.find_by_pubkey(&auth_payload.key).await? {
-        tracing::debug!("User with pubkey: {} already registered", auth_payload.key);
+        if let Some(Extension(event)) = &event {
+            event.add_context("is_new_user", false);
+            event.set_ln_address(user.lightning_address.as_deref().unwrap_or(""));
+        }
 
         if let Some(ark_address) = &payload.ark_address
             && let Err(e) = user_repo
@@ -325,6 +335,13 @@ pub async fn register(
         let random_word = random_word::get(random_word::Lang::En);
         format!("{}{}@{}", random_word, number, state.lnurl_domain)
     });
+
+    if let Some(Extension(event)) = &event {
+        event.add_context("is_new_user", true);
+        event.set_ln_address(&ln_address);
+        event.add_context("has_ark_address", payload.ark_address.is_some());
+        event.add_context("has_device_info", payload.device_info.is_some());
+    }
 
     if !ln_address.validate_email() {
         return Err(ApiError::InvalidArgument(
@@ -406,8 +423,13 @@ pub async fn check_app_version(
 pub async fn send_verification_email(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<SendEmailVerificationPayload>,
 ) -> anyhow::Result<Json<EmailVerificationResponse>, ApiError> {
+    if let Some(Extension(event)) = &event {
+        let domain = payload.email.split('@').nth(1).unwrap_or("unknown");
+        event.add_context("email_domain", domain);
+    }
     if let Err(e) = payload.validate() {
         return Err(ApiError::InvalidArgument(e.to_string()));
     }
@@ -471,6 +493,7 @@ pub async fn send_verification_email(
 pub async fn verify_email(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<VerifyEmailPayload>,
 ) -> anyhow::Result<Json<EmailVerificationResponse>, ApiError> {
     let user_repo = UserRepository::new(&state.db_pool);
@@ -481,6 +504,9 @@ pub async fn verify_email(
         .ok_or_else(|| ApiError::UserNotFound)?;
 
     if user.is_email_verified {
+        if let Some(Extension(event)) = &event {
+            event.add_context("verification_result", "already_verified");
+        }
         return Ok(Json(EmailVerificationResponse {
             success: true,
             message: Some("Email already verified".to_string()),
@@ -498,6 +524,11 @@ pub async fn verify_email(
 
     match email {
         Some(verified_email) => {
+            if let Some(Extension(event)) = &event {
+                event.add_context("verification_result", "success");
+                let domain = verified_email.split('@').nth(1).unwrap_or("unknown");
+                event.add_context("email_domain", domain);
+            }
             if let Err(e) = user_repo
                 .update_email(&auth_payload.key, &verified_email)
                 .await
@@ -522,8 +553,13 @@ pub async fn verify_email(
                 message: Some("Email verified successfully".to_string()),
             }))
         }
-        None => Err(ApiError::InvalidArgument(
-            "Invalid or expired verification code".to_string(),
-        )),
+        None => {
+            if let Some(Extension(event)) = &event {
+                event.add_context("verification_result", "invalid_code");
+            }
+            Err(ApiError::InvalidArgument(
+                "Invalid or expired verification code".to_string(),
+            ))
+        }
     }
 }

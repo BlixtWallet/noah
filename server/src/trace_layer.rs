@@ -1,166 +1,92 @@
 use axum::{
-    body::Body,
-    extract::Request,
-    http::{Response, StatusCode},
-    middleware::Next,
-    response::IntoResponse,
+    body::Body, extract::Request, http::Response, middleware::Next, response::IntoResponse,
 };
 use http_body_util::BodyExt;
-use std::time::Instant;
-use tracing::{debug, error, info, warn};
 
-/// Custom trace middleware that logs meaningful request/response details
-pub async fn trace_middleware(req: Request, next: Next) -> impl IntoResponse {
-    let start = Instant::now();
-    let method = req.method().clone();
-    let uri = req.uri().clone();
-    let path = uri.path().to_string();
+use crate::wide_event::{WideEvent, WideEventHandle};
 
-    // Process the request
+pub async fn trace_middleware(mut req: Request, next: Next) -> impl IntoResponse {
+    let event_handle = WideEventHandle::new();
+
+    event_handle.with(|e| {
+        e.set_request_info(req.method().as_str(), req.uri().path());
+    });
+
+    req.extensions_mut().insert(event_handle.clone());
+
     let response = next.run(req).await;
 
-    // Calculate request duration
-    let duration = start.elapsed();
-    let duration_ms = duration.as_millis();
     let status = response.status();
 
-    // Define high-frequency endpoints that we don't want to spam logs with
-    let is_high_frequency =
-        path == "/v0/getk1" || path == "/health" || path.starts_with("/.well-known/");
+    event_handle.with(|e| {
+        e.set_status(status.as_u16());
+        e.finalize();
+    });
 
-    match status {
-        // Success cases
-        StatusCode::OK | StatusCode::CREATED | StatusCode::ACCEPTED | StatusCode::NO_CONTENT => {
-            // Only log slow requests or non-high-frequency endpoints
-            if duration_ms > 500 {
-                warn!(
-                    method = %method,
-                    path = %path,
-                    status = %status.as_u16(),
-                    duration_ms = %duration_ms,
-                    "Slow request"
-                );
-            } else if duration_ms > 100 && !is_high_frequency {
-                info!(
-                    method = %method,
-                    path = %path,
-                    status = %status.as_u16(),
-                    duration_ms = %duration_ms,
-                    "Request completed"
-                );
-            } else if !is_high_frequency {
-                debug!(
-                    method = %method,
-                    path = %path,
-                    status = %status.as_u16(),
-                    duration_ms = %duration_ms,
-                    "Request completed"
-                );
+    let needs_body = status.is_client_error() || status.is_server_error();
+
+    if needs_body {
+        let (parts, body) = response.into_parts();
+        let bytes = match body.collect().await {
+            Ok(collected) => collected.to_bytes(),
+            Err(_) => {
+                event_handle.set_error("body_read_error", "Failed to read response body");
+                emit_wide_event(&event_handle);
+                return Response::from_parts(parts, Body::empty()).into_response();
             }
-            // Don't log anything for fast, high-frequency successful requests
-            response
-        }
+        };
 
-        // Client errors - these are often expected, so log at info/warn level
-        StatusCode::BAD_REQUEST | StatusCode::FORBIDDEN | StatusCode::NOT_FOUND => {
-            let (parts, body) = response.into_parts();
-            let bytes = match body.collect().await {
-                Ok(collected) => collected.to_bytes(),
-                Err(_) => {
-                    warn!(
-                        method = %method,
-                        path = %path,
-                        status = %status.as_u16(),
-                        duration_ms = %duration_ms,
-                        "Client error (failed to read response body)"
-                    );
-                    return Response::from_parts(parts, Body::empty()).into_response();
-                }
-            };
+        let error_msg = extract_error_message(&bytes);
+        event_handle.set_error("api_error", &error_msg);
 
-            let error_msg = extract_error_message(&bytes);
-
-            warn!(
-                method = %method,
-                path = %path,
-                status = %status.as_u16(),
-                duration_ms = %duration_ms,
-                error = %error_msg,
-                "Client error"
-            );
-
-            Response::from_parts(parts, Body::from(bytes)).into_response()
-        }
-
-        // Unauthorized - very common, log at debug level to reduce noise
-        StatusCode::UNAUTHORIZED => {
-            debug!(
-                method = %method,
-                path = %path,
-                status = %status.as_u16(),
-                duration_ms = %duration_ms,
-                "Unauthorized request"
-            );
-            response
-        }
-
-        // Server errors and other unexpected status codes - always log these
-        _ => {
-            let (parts, body) = response.into_parts();
-            let bytes = match body.collect().await {
-                Ok(collected) => collected.to_bytes(),
-                Err(_) => {
-                    error!(
-                        method = %method,
-                        path = %path,
-                        status = %status.as_u16(),
-                        duration_ms = %duration_ms,
-                        "Server error (failed to read response body)"
-                    );
-                    return Response::from_parts(parts, Body::empty()).into_response();
-                }
-            };
-
-            let error_msg = extract_error_message(&bytes);
-
-            error!(
-                method = %method,
-                path = %path,
-                status = %status.as_u16(),
-                duration_ms = %duration_ms,
-                error = %error_msg,
-                "Server error"
-            );
-
-            Response::from_parts(parts, Body::from(bytes)).into_response()
-        }
+        emit_wide_event(&event_handle);
+        Response::from_parts(parts, Body::from(bytes)).into_response()
+    } else {
+        emit_wide_event(&event_handle);
+        response
     }
+}
+
+fn emit_wide_event(handle: &WideEventHandle) {
+    handle.with(|event| {
+        if should_skip_logging(event) {
+            return;
+        }
+
+        let json = serde_json::to_string(event).unwrap_or_else(|_| "{}".to_string());
+
+        if event.is_server_error() {
+            tracing::error!(wide_event = %json, "request");
+        } else if event.is_error() || event.is_slow() {
+            tracing::warn!(wide_event = %json, "request");
+        } else {
+            tracing::info!(wide_event = %json, "request");
+        }
+    });
+}
+
+fn should_skip_logging(event: &WideEvent) -> bool {
+    if event.is_high_frequency_endpoint() && !event.is_error() && !event.is_slow() {
+        return true;
+    }
+    false
 }
 
 fn extract_error_message(bytes: &[u8]) -> String {
     if let Ok(json_str) = std::str::from_utf8(bytes) {
         if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(json_str) {
-            json_value
+            return json_value
                 .get("reason")
+                .or_else(|| json_value.get("message"))
+                .or_else(|| json_value.get("error"))
                 .and_then(|v| v.as_str())
-                .unwrap_or_else(|| {
-                    // Try other common error field names
-                    json_value
-                        .get("message")
-                        .or_else(|| json_value.get("error"))
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("Unknown error")
-                })
-                .to_string()
-        } else {
-            // If it's not JSON, truncate long strings to avoid log spam
-            if json_str.len() > 200 {
-                format!("{}...", &json_str[..200])
-            } else {
-                json_str.to_string()
-            }
+                .unwrap_or("Unknown error")
+                .to_string();
         }
-    } else {
-        "Unable to parse error message".to_string()
+        if json_str.len() > 200 {
+            return format!("{}...", &json_str[..200]);
+        }
+        return json_str.to_string();
     }
+    "Unable to parse error message".to_string()
 }

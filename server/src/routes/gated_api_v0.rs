@@ -4,6 +4,7 @@ use crate::db::job_status_repo::JobStatusRepository;
 use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
+use crate::wide_event::WideEventHandle;
 // use crate::push::{PushNotificationData, send_push_notification};
 use crate::s3_client::S3BackupClient;
 use crate::types::{
@@ -31,12 +32,12 @@ use validator::Validate;
 pub async fn register_push_token(
     State(app_state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<RegisterPushToken>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    tracing::debug!(
-        "Received push registration request for public key: {}",
-        auth_payload.key
-    );
+    if let Some(Extension(event)) = event {
+        event.add_context("has_push_token", true);
+    }
 
     let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
     push_token_repo
@@ -71,14 +72,13 @@ pub async fn register_push_token(
 /// this endpoint receives it and forwards it to the waiting payer.
 pub async fn submit_invoice(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(_auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<SubmitInvoicePayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    tracing::info!(
-        "Received submit invoice request for pubkey: {} and transaction_id: {}",
-        auth_payload.key,
-        payload.transaction_id
-    );
+    if let Some(Extension(event)) = event {
+        event.add_context("transaction_id", &payload.transaction_id);
+    }
 
     state
         .invoice_store
@@ -146,8 +146,13 @@ pub async fn update_ln_address(
 pub async fn get_upload_url(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<GetUploadUrlPayload>,
 ) -> Result<Json<UploadUrlResponse>, ApiError> {
+    if let Some(Extension(event)) = event {
+        event.add_context("backup_version", payload.backup_version);
+    }
+
     let s3_client = S3BackupClient::new(state.config.s3_bucket_name.clone()).await?;
     let s3_key = format!(
         "{}/backup_v{}.db",
@@ -162,8 +167,14 @@ pub async fn get_upload_url(
 pub async fn complete_upload(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<CompleteUploadPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    if let Some(Extension(event)) = event {
+        event.add_context("backup_version", payload.backup_version);
+        event.add_context("backup_size_bytes", payload.backup_size);
+    }
+
     let backup_repo = BackupRepository::new(&state.db_pool);
     backup_repo
         .upsert_metadata(
@@ -189,8 +200,13 @@ pub async fn list_backups(
 pub async fn get_download_url(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<GetDownloadUrlPayload>,
 ) -> Result<Json<DownloadUrlResponse>, ApiError> {
+    if let Some(Extension(event)) = event {
+        event.add_context("backup_version", payload.backup_version);
+    }
+
     let backup_repo = BackupRepository::new(&state.db_pool);
 
     let (s3_key, backup_size) = if let Some(version) = payload.backup_version {
@@ -217,8 +233,13 @@ pub async fn get_download_url(
 pub async fn delete_backup(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<DeleteBackupPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    if let Some(Extension(event)) = event {
+        event.add_context("backup_version", payload.backup_version);
+    }
+
     let backup_repo = BackupRepository::new(&state.db_pool);
 
     let s3_key = backup_repo
@@ -239,15 +260,14 @@ pub async fn delete_backup(
 pub async fn report_job_status(
     State(app_state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    tracing::info!(
-        "Received job status report from pubkey: {}. Report type: {:?}, Status: {:?}, Error: {:?}",
-        auth_payload.key,
-        payload.report_type,
-        payload.status,
-        payload.error_message
-    );
+    if let Some(Extension(event)) = event {
+        event.add_context("report_type", format!("{:?}", payload.report_type));
+        event.add_context("job_status", format!("{:?}", payload.status));
+        event.add_context("has_error", payload.error_message.is_some());
+    }
 
     let mut tx = app_state.db_pool.begin().await?;
 
@@ -281,6 +301,7 @@ pub async fn update_backup_settings(
 pub async fn register_offboarding_request(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<RegisterOffboardingRequestPayload>,
 ) -> anyhow::Result<Json<RegisterOffboardingResponse>, ApiError> {
     if let Err(e) = payload.validate() {
@@ -293,13 +314,11 @@ pub async fn register_offboarding_request(
         ));
     }
 
-    tracing::info!(
-        "Received offboarding request for pubkey: {} with address: {}",
-        auth_payload.key,
-        payload.address
-    );
-
     let request_id = Uuid::new_v4().to_string();
+
+    if let Some(Extension(event)) = event {
+        event.add_context("offboarding_request_id", &request_id);
+    }
 
     let offboarding_repo = OffboardingRepository::new(&state.db_pool);
     offboarding_repo
@@ -320,10 +339,13 @@ pub async fn register_offboarding_request(
 pub async fn deregister(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    let pubkey = auth_payload.key;
+    if let Some(Extension(event)) = event {
+        event.add_context("action", "deregister");
+    }
 
-    tracing::info!("Deregistering user with pubkey: {}", pubkey);
+    let pubkey = auth_payload.key;
 
     // Use a transaction to ensure all or nothing is deleted
     let mut tx = state.db_pool.begin().await?;
@@ -339,14 +361,13 @@ pub async fn deregister(
 
 pub async fn heartbeat_response(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(_auth_payload): Extension<AuthPayload>,
+    event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<HeartbeatResponsePayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
-    tracing::debug!(
-        "Received heartbeat response from pubkey: {} for notification_id: {}",
-        auth_payload.key,
-        payload.notification_id
-    );
+    if let Some(Extension(event)) = event {
+        event.add_context("notification_id", &payload.notification_id);
+    }
 
     let heartbeat_repo = HeartbeatRepository::new(&state.db_pool);
 
