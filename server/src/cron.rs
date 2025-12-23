@@ -128,6 +128,11 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
     Ok(())
 }
 
+async fn redis_keepalive(app_state: AppState) -> anyhow::Result<()> {
+    app_state.k1_cache.contains("keepalive").await?;
+    Ok(())
+}
+
 pub async fn cron_scheduler(
     app_state: AppState,
     backup_cron: String,
@@ -172,6 +177,18 @@ pub async fn cron_scheduler(
         })
     })?;
     sched.add(inactive_check_job).await?;
+
+    // Redis keepalive to prevent Upstash idle connection timeout
+    let keepalive_app_state = app_state.clone();
+    let keepalive_job = Job::new_async("every 2 minutes", move |_, _| {
+        let app_state = keepalive_app_state.clone();
+        Box::pin(async move {
+            if let Err(e) = redis_keepalive(app_state).await {
+                tracing::warn!(job = "redis_keepalive", error = %e, "ping failed");
+            }
+        })
+    })?;
+    sched.add(keepalive_job).await?;
 
     Ok(sched)
 }
