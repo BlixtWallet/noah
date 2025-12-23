@@ -31,6 +31,7 @@ pub struct Config {
     pub s3_bucket_name: String,
     pub minimum_app_version: String,
     pub redis_url: String,
+    pub redis_pool_size: usize,
     pub ntfy_auth_token: String,
     pub ses_from_address: String,
 }
@@ -82,6 +83,10 @@ impl Config {
                 .unwrap_or_else(|_| "0.0.1".to_string()),
             redis_url: std::env::var("REDIS_URL")
                 .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
+            redis_pool_size: std::env::var("REDIS_POOL_SIZE")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(32),
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
             ses_from_address: std::env::var("SES_FROM_ADDRESS")
                 .unwrap_or_else(|_| "noreply@noahwallet.io".to_string()),
@@ -154,6 +159,7 @@ impl Config {
         tracing::debug!("S3 Bucket Name: {}", self.s3_bucket_name);
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
         tracing::debug!("Redis URL: {}", self.redis_url);
+        tracing::debug!("Redis Pool Size: {}", self.redis_pool_size);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
         tracing::debug!("SES From Address: {}", self.ses_from_address);
         tracing::debug!("============================");

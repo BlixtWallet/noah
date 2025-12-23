@@ -87,6 +87,7 @@ impl TestUser {
             minimum_app_version: "0.0.1".to_string(),
             redis_url: std::env::var("TEST_REDIS_URL")
                 .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
+            redis_pool_size: 32,
             ses_from_address: "test@noahwallet.com".to_string(),
         }
     }

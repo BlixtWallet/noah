@@ -147,7 +147,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     db::migrations::run_migrations(&db_pool).await?;
 
     tracing::info!("Checking Redis connection...");
-    let redis_client = RedisClient::new(&config.redis_url)?;
+    let redis_client = RedisClient::with_pool_size(&config.redis_url, config.redis_pool_size)?;
     redis_client
         .check_connection()
         .await
