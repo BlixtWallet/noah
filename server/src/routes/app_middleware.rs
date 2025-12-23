@@ -147,6 +147,13 @@ pub async fn auth_middleware(
         event.set_user(&payload.key);
     }
 
+    sentry::configure_scope(|scope| {
+        scope.set_user(Some(sentry::User {
+            id: Some(payload.key.clone()),
+            ..Default::default()
+        }));
+    });
+
     tracing::debug!(key = %payload.key, "Auth successful");
 
     // Remove the k1 value to prevent reuse
