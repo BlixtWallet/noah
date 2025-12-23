@@ -98,6 +98,22 @@ impl WideEvent {
         self.duration_ms.map(|d| d > 500).unwrap_or(false)
     }
 
+    pub fn is_bot_probe(&self) -> bool {
+        // 404 on paths that aren't part of our API (bots probing for robots.txt, .env, etc.)
+        if self.status_code != Some(404) {
+            return false;
+        }
+        self.path
+            .as_ref()
+            .map(|p| {
+                !p.starts_with("/v0/")
+                    && !p.starts_with("/.well-known/")
+                    && p != "/health"
+                    && p != "/"
+            })
+            .unwrap_or(false)
+    }
+
     pub fn is_error(&self) -> bool {
         self.status_code.map(|s| s >= 400).unwrap_or(false)
     }

@@ -77,6 +77,9 @@ fn should_skip_logging(event: &WideEvent) -> bool {
     if event.is_high_frequency_endpoint() && !event.is_error() && !event.is_slow() {
         return true;
     }
+    if event.is_bot_probe() {
+        return true;
+    }
     false
 }
 
