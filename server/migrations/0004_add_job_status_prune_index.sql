@@ -1,0 +1,1 @@
+CREATE INDEX idx_job_status_reports_pubkey_created_at ON job_status_reports(pubkey, created_at DESC, id DESC);
