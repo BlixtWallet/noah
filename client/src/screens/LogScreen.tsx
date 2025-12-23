@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -28,6 +28,7 @@ const LogScreen = () => {
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const isMountedRef = useRef(true);
+  const listRef = useRef<FlashList<string>>(null);
 
   useEffect(() => {
     return () => {
@@ -45,6 +46,11 @@ const LogScreen = () => {
       if (result.isOk()) {
         setLogs(result.value);
         setLastUpdatedAt(new Date());
+        setTimeout(() => {
+          if (result.value.length > 0) {
+            listRef.current?.scrollToIndex({ index: result.value.length - 1, animated: true });
+          }
+        }, 100);
       } else {
         setError(result.error.message || "Failed to fetch logs.");
       }
@@ -101,7 +107,7 @@ const LogScreen = () => {
       <Text
         selectable
         selectionColor={COLORS.BITCOIN_ORANGE}
-        className="text-sm text-white font-mono p-2"
+        className="text-sm text-foreground font-mono p-2"
       >
         {item}
       </Text>
@@ -146,11 +152,13 @@ const LogScreen = () => {
                   </Text>
                 ) : null}
                 <FlashList
+                  ref={listRef}
                   data={logs}
                   renderItem={renderLogLine}
                   keyExtractor={(_, index) => `log-${index}`}
                   showsVerticalScrollIndicator
                   contentContainerStyle={{ paddingBottom: bottomTabBarHeight }}
+                  estimatedItemSize={40}
                 />
               </>
             ) : (
