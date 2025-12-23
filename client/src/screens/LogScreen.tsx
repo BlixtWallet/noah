@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -15,7 +15,7 @@ import Share from "react-native-share";
 import { CACHES_DIRECTORY_PATH, PLATFORM } from "~/constants";
 import { Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, FlashListRef } from "@shopify/flash-list";
 
 const log = logger("LogScreen");
 
@@ -28,7 +28,7 @@ const LogScreen = () => {
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
   const bottomTabBarHeight = useBottomTabBarHeight();
   const isMountedRef = useRef(true);
-  const listRef = useRef<FlashList<string>>(null);
+  const listRef = useRef<FlashListRef<string>>(null);
 
   useEffect(() => {
     return () => {
@@ -158,7 +158,6 @@ const LogScreen = () => {
                   keyExtractor={(_, index) => `log-${index}`}
                   showsVerticalScrollIndicator
                   contentContainerStyle={{ paddingBottom: bottomTabBarHeight }}
-                  estimatedItemSize={40}
                 />
               </>
             ) : (
