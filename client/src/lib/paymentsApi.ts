@@ -6,6 +6,7 @@ import {
   sendArkoorPayment as sendArkoorPaymentNitro,
   payLightningAddress as payLightningAddressNitro,
   payLightningOffer as payLightningOfferNitro,
+  checkLightningPayment as checkLightningPaymentNitro,
   bolt11Invoice as bolt11InvoiceNitro,
   type ArkoorPaymentResult,
   type OnchainPaymentResult,
@@ -157,6 +158,21 @@ export const payLightningAddress = async (
   return ResultAsync.fromPromise(payLightningAddressNitro(addr, amountSat, comment), (error) => {
     const e = new Error(
       `Failed to send to lightning address: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+
+    return e;
+  });
+};
+
+export const checkLightningPayment = async (
+  paymentHash: string,
+  wait: boolean = false,
+): Promise<Result<string | null, Error>> => {
+  return ResultAsync.fromPromise(checkLightningPaymentNitro(paymentHash, wait), (error) => {
+    const e = new Error(
+      `Failed to check lightning payment: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

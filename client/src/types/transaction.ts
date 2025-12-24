@@ -1,4 +1,6 @@
-import type { MovementStatus, PaymentTypes } from "react-native-nitro-ark";
+import type { MovementStatus } from "react-native-nitro-ark";
+
+export type PaymentTypes = "Bolt11" | "Bolt12" | "Lnurl" | "Arkoor" | "Onchain";
 import type { MovementKind } from "./movement";
 
 export type Transaction = {
@@ -27,8 +29,6 @@ export type Transaction = {
   outputVtxos?: string[];
   exitedVtxos?: string[];
 };
-
-export type { PaymentTypes };
 
 export type MovementDestination = {
   destination: string;

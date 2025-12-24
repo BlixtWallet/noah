@@ -103,7 +103,7 @@ async fn establish_connection_and_process(
     while let Some(item) = stream.next().await {
         match item {
             Ok(round_event) => {
-                if let Some(round_event::Event::Start(event)) = round_event.event {
+                if let Some(round_event::Event::Attempt(event)) = round_event.event {
                     round_counter += 1;
 
                     // Handle offboarding requests for every round
@@ -118,7 +118,7 @@ async fn establish_connection_and_process(
                             service = "ark_client",
                             event = "maintenance_triggered",
                             round_seq = event.round_seq,
-                            offboard_feerate = event.offboard_feerate_sat_vkb,
+                            round_attempt_challenge = %event.round_attempt_challenge.to_lower_hex_string(),
                             "triggering maintenance"
                         );
                         let app_state_clone = app_state.clone();
