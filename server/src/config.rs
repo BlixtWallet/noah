@@ -34,6 +34,7 @@ pub struct Config {
     pub redis_pool_size: usize,
     pub ntfy_auth_token: String,
     pub ses_from_address: String,
+    pub email_dev_mode: bool,
 }
 
 impl Config {
@@ -90,6 +91,9 @@ impl Config {
             ntfy_auth_token: std::env::var("NTFY_AUTH_TOKEN").unwrap_or_default(),
             ses_from_address: std::env::var("SES_FROM_ADDRESS")
                 .unwrap_or_else(|_| "noreply@noahwallet.io".to_string()),
+            email_dev_mode: std::env::var("EMAIL_DEV_MODE")
+                .map(|v| v == "true" || v == "1")
+                .unwrap_or(false),
         };
 
         config.validate()?;
@@ -100,6 +104,9 @@ impl Config {
     fn validate(&self) -> Result<()> {
         if self.postgres_url.is_empty() {
             anyhow::bail!("POSTGRES_URL is required");
+        }
+        if self.redis_url.is_empty() {
+            anyhow::bail!("REDIS_URL is required");
         }
         if self.expo_access_token.is_empty() {
             anyhow::bail!("EXPO_ACCESS_TOKEN is required");

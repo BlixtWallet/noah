@@ -89,6 +89,7 @@ impl TestUser {
                 .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
             redis_pool_size: 32,
             ses_from_address: "test@noahwallet.com".to_string(),
+            email_dev_mode: true,
         }
     }
 
@@ -122,7 +123,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
     let email_verification_store = setup_test_email_verification_store().await;
-    let email_client = EmailClient::new("test@noahwallet.com".to_string())
+    let email_client = EmailClient::new("test@noahwallet.com".to_string(), true)
         .await
         .expect("Failed to create email client");
 
@@ -188,7 +189,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
     let email_verification_store = setup_test_email_verification_store().await;
-    let email_client = EmailClient::new("test@noahwallet.com".to_string())
+    let email_client = EmailClient::new("test@noahwallet.com".to_string(), true)
         .await
         .expect("Failed to create email client");
 

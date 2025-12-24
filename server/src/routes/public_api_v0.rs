@@ -515,7 +515,11 @@ pub async fn verify_email(
 
     let email = state
         .email_verification_store
-        .verify(&auth_payload.key, &payload.code)
+        .verify(
+            &auth_payload.key,
+            &payload.code,
+            state.config.email_dev_mode,
+        )
         .await
         .map_err(|e| {
             tracing::error!("Failed to verify code: {}", e);

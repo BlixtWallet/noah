@@ -16,6 +16,7 @@ import { NoahSafeAreaView } from "./NoahSafeAreaView";
 import { Text } from "./ui/text";
 import { X, ImagePlus, CheckCircle, AlertCircle } from "lucide-react-native";
 import Logger from "~/lib/log";
+import { useTheme } from "~/hooks/useTheme";
 
 const log = Logger("FeedbackModal");
 
@@ -27,6 +28,7 @@ interface FeedbackModalProps {
 type SubmitState = "idle" | "submitting" | "success" | "error";
 
 export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
+  const { isDark } = useTheme();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -123,11 +125,17 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
         onRequestClose={handleClose}
         presentationStyle="pageSheet"
       >
-        <NoahSafeAreaView className="flex-1 bg-zinc-950 items-center justify-center px-6">
+        <NoahSafeAreaView
+          className={`flex-1 items-center justify-center px-6 ${isDark ? "bg-zinc-950" : "bg-gray-50"}`}
+        >
           <View className="items-center">
             <CheckCircle size={64} color={COLORS.BITCOIN_ORANGE} />
-            <Text className="text-2xl font-bold text-white mt-6 mb-2">Thank You!</Text>
-            <Text className="text-base text-zinc-400 text-center">
+            <Text
+              className={`text-2xl font-bold mt-6 mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+            >
+              Thank You!
+            </Text>
+            <Text className={`text-base text-center ${isDark ? "text-zinc-400" : "text-gray-600"}`}>
               We received your feedback and will review it shortly.
             </Text>
           </View>
@@ -143,14 +151,18 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
       onRequestClose={handleClose}
       presentationStyle="pageSheet"
     >
-      <NoahSafeAreaView className="flex-1 bg-zinc-950">
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-zinc-800">
-          <Text className="text-2xl font-bold text-white">Send Feedback</Text>
+      <NoahSafeAreaView className={`flex-1 ${isDark ? "bg-zinc-950" : "bg-gray-50"}`}>
+        <View
+          className={`flex-row items-center justify-between px-5 py-4 border-b ${isDark ? "border-zinc-800" : "border-gray-200"}`}
+        >
+          <Text className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            Send Feedback
+          </Text>
           <Pressable
             onPress={handleClose}
-            className="w-10 h-10 items-center justify-center rounded-full bg-zinc-900"
+            className={`w-10 h-10 items-center justify-center rounded-full ${isDark ? "bg-zinc-900" : "bg-gray-200"}`}
           >
-            <X size={24} color="#fff" />
+            <X size={24} color={isDark ? "#fff" : "#374151"} />
           </Pressable>
         </View>
 
@@ -166,56 +178,64 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
             )}
 
             <View className="mb-6">
-              <Text className="text-sm font-medium text-zinc-400 mb-2 uppercase tracking-wide">
+              <Text
+                className={`text-sm font-medium mb-2 uppercase tracking-wide ${isDark ? "text-zinc-400" : "text-gray-500"}`}
+              >
                 Name (Optional)
               </Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Your name"
-                placeholderTextColor="#52525b"
-                className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 text-white text-base"
+                placeholderTextColor={isDark ? "#52525b" : "#9ca3af"}
+                className={`border rounded-xl px-4 py-4 text-base ${isDark ? "bg-zinc-900 border-zinc-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
                 editable={submitState === "idle"}
               />
             </View>
 
             <View className="mb-6">
-              <Text className="text-sm font-medium text-zinc-400 mb-2 uppercase tracking-wide">
+              <Text
+                className={`text-sm font-medium mb-2 uppercase tracking-wide ${isDark ? "text-zinc-400" : "text-gray-500"}`}
+              >
                 Email (Optional)
               </Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="your.email@example.com"
-                placeholderTextColor="#52525b"
+                placeholderTextColor={isDark ? "#52525b" : "#9ca3af"}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 text-white text-base"
+                className={`border rounded-xl px-4 py-4 text-base ${isDark ? "bg-zinc-900 border-zinc-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
                 editable={submitState === "idle"}
               />
             </View>
 
             <View className="mb-6">
-              <Text className="text-sm font-medium text-zinc-400 mb-2 uppercase tracking-wide">
+              <Text
+                className={`text-sm font-medium mb-2 uppercase tracking-wide ${isDark ? "text-zinc-400" : "text-gray-500"}`}
+              >
                 Message *
               </Text>
               <TextInput
                 value={message}
                 onChangeText={setMessage}
                 placeholder="Describe the bug or share your feedback..."
-                placeholderTextColor="#52525b"
+                placeholderTextColor={isDark ? "#52525b" : "#9ca3af"}
                 multiline
                 numberOfLines={6}
                 textAlignVertical="top"
-                className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-4 text-white text-base min-h-[140px]"
+                className={`border rounded-xl px-4 py-4 text-base min-h-[140px] ${isDark ? "bg-zinc-900 border-zinc-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
                 editable={submitState === "idle"}
               />
             </View>
 
             {screenshot ? (
               <View className="mb-6">
-                <Text className="text-sm font-medium text-zinc-400 mb-2 uppercase tracking-wide">
+                <Text
+                  className={`text-sm font-medium mb-2 uppercase tracking-wide ${isDark ? "text-zinc-400" : "text-gray-500"}`}
+                >
                   Screenshot
                 </Text>
                 <View className="relative">
@@ -226,7 +246,7 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
                   />
                   <Pressable
                     onPress={removeScreenshot}
-                    className="absolute top-2 right-2 w-8 h-8 bg-zinc-900/90 rounded-full items-center justify-center"
+                    className={`absolute top-2 right-2 w-8 h-8 rounded-full items-center justify-center ${isDark ? "bg-zinc-900/90" : "bg-gray-800/80"}`}
                   >
                     <X size={18} color="#fff" />
                   </Pressable>
@@ -235,7 +255,7 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
             ) : (
               <Pressable
                 onPress={handleAddScreenshot}
-                className="flex-row items-center justify-center bg-zinc-900 border border-zinc-700 rounded-xl py-4 mb-6"
+                className={`flex-row items-center justify-center border rounded-xl py-4 mb-6 ${isDark ? "bg-zinc-900 border-zinc-700" : "bg-white border-gray-300"}`}
                 disabled={submitState !== "idle"}
               >
                 <ImagePlus size={20} color={COLORS.BITCOIN_ORANGE} />
@@ -250,12 +270,16 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
           </View>
         </ScrollView>
 
-        <View className="px-5 py-4 border-t border-zinc-800">
+        <View className={`px-5 py-4 border-t ${isDark ? "border-zinc-800" : "border-gray-200"}`}>
           <Pressable
             onPress={handleSubmit}
             disabled={!message.trim() || submitState !== "idle"}
             className={`rounded-xl py-4 items-center mb-3 ${
-              !message.trim() || submitState !== "idle" ? "bg-zinc-800" : "bg-[#F7931A]"
+              !message.trim() || submitState !== "idle"
+                ? isDark
+                  ? "bg-zinc-800"
+                  : "bg-gray-200"
+                : "bg-[#F7931A]"
             }`}
             style={
               message.trim() && submitState === "idle"
@@ -274,7 +298,11 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
             ) : (
               <Text
                 className={`text-base font-bold ${
-                  !message.trim() || submitState !== "idle" ? "text-zinc-600" : "text-white"
+                  !message.trim() || submitState !== "idle"
+                    ? isDark
+                      ? "text-zinc-600"
+                      : "text-gray-400"
+                    : "text-white"
                 }`}
               >
                 Submit Feedback
@@ -285,9 +313,13 @@ export const FeedbackModal = ({ visible, onClose }: FeedbackModalProps) => {
           <Pressable
             onPress={handleClose}
             disabled={submitState === "submitting"}
-            className="bg-zinc-900 border border-zinc-700 rounded-xl py-4 items-center"
+            className={`border rounded-xl py-4 items-center ${isDark ? "bg-zinc-900 border-zinc-700" : "bg-white border-gray-300"}`}
           >
-            <Text className="text-base font-semibold text-zinc-300">Cancel</Text>
+            <Text
+              className={`text-base font-semibold ${isDark ? "text-zinc-300" : "text-gray-700"}`}
+            >
+              Cancel
+            </Text>
           </Pressable>
         </View>
       </NoahSafeAreaView>

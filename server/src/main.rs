@@ -158,7 +158,8 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let email_verification_store = EmailVerificationStore::new(redis_client);
 
     tracing::info!("Initializing email client...");
-    let email_client = EmailClient::new(config.ses_from_address.clone()).await?;
+    let email_client =
+        EmailClient::new(config.ses_from_address.clone(), config.email_dev_mode).await?;
     tracing::info!("Email client initialized");
 
     let app_state = Arc::new(AppStruct {

@@ -11,11 +11,7 @@ pub struct EmailClient {
 }
 
 impl EmailClient {
-    pub async fn new(from_address: String) -> Result<Self, anyhow::Error> {
-        let dev_mode = std::env::var("EMAIL_DEV_MODE")
-            .map(|v| v == "true" || v == "1")
-            .unwrap_or(false);
-
+    pub async fn new(from_address: String, dev_mode: bool) -> Result<Self, anyhow::Error> {
         if dev_mode {
             tracing::info!("Email client running in DEV MODE - emails will be logged, not sent");
         }
@@ -52,12 +48,12 @@ impl EmailClient {
             self.from_address
         );
         let subject = Content::builder()
-            .data("Verify your Noah wallet email")
+            .data("Verify your Noah Wallet email")
             .charset("UTF-8")
             .build()?;
 
         let body_text = format!(
-            "Your Noah wallet verification code is: {}\n\nThis code will expire in 10 minutes.\n\nIf you did not request this code, please ignore this email.",
+            "Your Noah Wallet verification code is: {}\n\nThis code will expire in 10 minutes.\n\nIf you did not request this code, please ignore this email.",
             verification_code
         );
 
@@ -113,7 +109,7 @@ impl EmailClient {
             .await
         {
             Ok(_) => {
-                tracing::info!("Verification email sent to {}", to_address);
+                tracing::debug!("Verification email sent to {}", to_address);
                 Ok(())
             }
             Err(e) => {
