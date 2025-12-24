@@ -9,6 +9,7 @@ import {
   sendArkoorPayment,
   payLightningInvoice,
   payLightningAddress,
+  payLightningOffer,
   type ArkoorPaymentResult,
   type LightningSendResult,
   type OnchainPaymentResult,
@@ -174,6 +175,8 @@ const mapDestinationToPaymentType = (destinationType: DestinationTypes): Payment
       return "Lnurl";
     case "onchain":
       return "Onchain";
+    case "offer":
+      return "Bolt12";
     default:
       return null;
   }
@@ -221,6 +224,9 @@ export function useSend(destinationType: DestinationTypes) {
           }
 
           result = await payLightningAddress(destination, amountSat, comment || "");
+          break;
+        case "offer":
+          result = await payLightningOffer(destination, amountSat);
           break;
         default:
           throw new Error("Invalid destination type");

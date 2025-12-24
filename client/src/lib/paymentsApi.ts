@@ -5,6 +5,7 @@ import {
   offboardAll as offboardAllNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   payLightningAddress as payLightningAddressNitro,
+  payLightningOffer as payLightningOfferNitro,
   bolt11Invoice as bolt11InvoiceNitro,
   type ArkoorPaymentResult,
   type OnchainPaymentResult,
@@ -115,6 +116,18 @@ export const payLightningInvoice = async (
   return ResultAsync.fromPromise(payLightningInvoiceNitro(destination, amountSat), (error) => {
     const e = new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return e;
+  });
+};
+
+export const payLightningOffer = async (
+  destination: string,
+  amountSat: number | undefined,
+): Promise<Result<LightningSendResult, Error>> => {
+  return ResultAsync.fromPromise(payLightningOfferNitro(destination, amountSat), (error) => {
+    const e = new Error(
+      `Failed to send bolt12 payment: ${error instanceof Error ? error.message : String(error)}`,
     );
     return e;
   });

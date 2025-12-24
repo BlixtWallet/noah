@@ -6,7 +6,7 @@ import { LightningIcon } from "~/lib/icons/Lightning";
 import { OnchainIcon } from "~/lib/icons/Onchain";
 import { cn } from "~/lib/utils";
 
-type PaymentMethod = "ark" | "lightning" | "onchain";
+type PaymentMethod = "ark" | "lightning" | "onchain" | "offer";
 
 type Bip321PickerProps = {
   bip321Data: ParsedBip321;
@@ -68,6 +68,15 @@ export const Bip321Picker = ({
           icon={<LightningIcon className="w-6 h-6 text-primary" />}
           label="Lightning"
           isSelected={selectedPaymentMethod === "lightning"}
+          onSelect={onSelect}
+        />
+      )}
+      {bip321Data.offer && (
+        <PaymentOption
+          method="offer"
+          icon={<LightningIcon className="w-6 h-6 text-primary" />}
+          label="Lightning Offer"
+          isSelected={selectedPaymentMethod === "offer"}
           onSelect={onSelect}
         />
       )}

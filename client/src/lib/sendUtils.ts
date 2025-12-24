@@ -12,12 +12,20 @@ import { isNetworkMatch } from "./utils";
 
 const log = logger("sendUtils");
 
-export type DestinationTypes = "onchain" | "lightning" | "ark" | "lnurl" | "bip321" | null;
+export type DestinationTypes =
+  | "onchain"
+  | "lightning"
+  | "ark"
+  | "lnurl"
+  | "bip321"
+  | "offer"
+  | null;
 
 export type ParsedBip321 = {
   onchainAddress?: string;
   arkAddress?: string;
   lightningInvoice?: string;
+  offer?: string;
 };
 
 export type ParsedDestination = {
@@ -105,6 +113,9 @@ export const parseBip321Uri = (uri: string): ParsedDestination => {
           break;
         case "lightning":
           bip321.lightningInvoice = method.value;
+          break;
+        case "offer":
+          bip321.offer = method.value;
           break;
       }
     }

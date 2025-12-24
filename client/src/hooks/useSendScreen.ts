@@ -47,7 +47,7 @@ export const useSendScreen = () => {
   const [parsedAmount, setParsedAmount] = useState<number | null>(null);
   const [bip321Data, setBip321Data] = useState<ParsedBip321 | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    "ark" | "lightning" | "onchain"
+    "ark" | "lightning" | "onchain" | "offer"
   >("onchain");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -89,6 +89,8 @@ export const useSendScreen = () => {
           setSelectedPaymentMethod("ark");
         } else if (bip321.lightningInvoice) {
           setSelectedPaymentMethod("lightning");
+        } else if (bip321.offer) {
+          setSelectedPaymentMethod("offer");
         } else {
           setSelectedPaymentMethod("onchain");
         }
@@ -146,60 +148,54 @@ export const useSendScreen = () => {
 
     let displayResult: DisplayResult | null = null;
 
-    const processResult = (res: PaymentResult) => {
-      switch (res.payment_type) {
-        case "Onchain": {
-          const onchainRes = res as OnchainPaymentResult;
-          return {
-            success: true,
-            amount_sat: onchainRes.amount_sat,
-            destination: onchainRes.destination_address,
-            txid: onchainRes.txid,
-            type: res.payment_type,
-          };
-        }
-        case "Arkoor": {
-          const arkoorRes = res as ArkoorPaymentResult;
-          return {
-            success: true,
-            amount_sat: arkoorRes.amount_sat,
-            destination: arkoorRes.destination_pubkey,
-            type: res.payment_type,
-          };
-        }
-        case "Lnurl": {
-          const lnurlRes = res as LightningSendResult;
-          return {
-            success: true,
-            amount_sat: amountSat,
-            destination: lnurlRes.lnurl,
-            preimage: lnurlRes.preimage,
-            type: res.payment_type,
-          };
-        }
-        case "Bolt11": {
-          const bolt11Res = res as LightningSendResult;
-          return {
-            success: true,
-            amount_sat: amountSat,
-            destination: bolt11Res.invoice,
-            preimage: bolt11Res.preimage,
-            type: res.payment_type,
-          };
-        }
-        default:
-          log.e("Could not process the transaction result. Unknown result type:", [result]);
-          showAlert({
-            title: "Error",
-            description: "Could not process the transaction result. Unknown result type.",
-          });
-          return {
-            success: false,
-            amount_sat: 0,
-            destination: "",
-            type: "error",
-          };
+    const processResult = (res: PaymentResult): DisplayResult => {
+      // Check for onchain payment (has txid and destination_address)
+      if ("txid" in res && "destination_address" in res) {
+        const onchainRes = res as OnchainPaymentResult;
+        return {
+          success: true,
+          amount_sat: onchainRes.amount_sat,
+          destination: onchainRes.destination_address,
+          txid: onchainRes.txid,
+          type: "Onchain",
+        };
       }
+
+      // Check for arkoor payment (has destination_pubkey)
+      if ("destination_pubkey" in res) {
+        const arkoorRes = res as ArkoorPaymentResult;
+        return {
+          success: true,
+          amount_sat: arkoorRes.amount_sat,
+          destination: arkoorRes.destination_pubkey,
+          type: "Arkoor",
+        };
+      }
+
+      // Check for lightning payment (has invoice)
+      if ("invoice" in res) {
+        const lightningRes = res as LightningSendResult;
+        return {
+          success: true,
+          amount_sat: lightningRes.amount,
+          destination: lightningRes.invoice,
+          preimage: lightningRes.preimage ?? undefined,
+          type: "Lightning",
+        };
+      }
+
+      // Unknown type
+      log.e("Could not process the transaction result. Unknown result type:", [result]);
+      showAlert({
+        title: "Error",
+        description: "Could not process the transaction result. Unknown result type.",
+      });
+      return {
+        success: false,
+        amount_sat: 0,
+        destination: "",
+        type: "error",
+      };
     };
 
     displayResult = processResult(result);
@@ -242,6 +238,9 @@ export const useSendScreen = () => {
       } else if (selectedPaymentMethod === "lightning" && bip321Data.lightningInvoice) {
         destinationToSend = bip321Data.lightningInvoice;
         newDestinationType = "lightning";
+      } else if (selectedPaymentMethod === "offer" && bip321Data.offer) {
+        destinationToSend = bip321Data.offer;
+        newDestinationType = "offer";
       } else if (selectedPaymentMethod === "onchain" && bip321Data.onchainAddress) {
         destinationToSend = bip321Data.onchainAddress;
         newDestinationType = "onchain";
@@ -257,7 +256,11 @@ export const useSendScreen = () => {
 
       send({
         destination: destinationToSend,
-        amountSat: newDestinationType === "lightning" && !isAmountEditable ? undefined : amountSat,
+        amountSat:
+          (newDestinationType === "lightning" || newDestinationType === "offer") &&
+          !isAmountEditable
+            ? undefined
+            : amountSat,
         resolvedAmountSat: amountSat,
         comment: comment || null,
         btcPrice,
