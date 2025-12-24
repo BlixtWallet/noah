@@ -8,13 +8,12 @@ import {
   bolt11Invoice as bolt11InvoiceNitro,
   type ArkoorPaymentResult,
   type OnchainPaymentResult,
-  type Bolt11PaymentResult,
-  type LnurlPaymentResult,
+  type LightningSendResult,
   newAddress as newAddressNitro,
   onchainAddress as onchainAddressNitro,
   payLightningInvoice as payLightningInvoiceNitro,
   onchainSend as onchainSendNitro,
-  movements as movementsNitro,
+  history as historyNitro,
   tryClaimAllLightningReceives as tryClaimAllLightningReceivesNitro,
   tryClaimLightningReceive as tryClaimLightningReceiveNitro,
   peakAddress as peakAddressNitro,
@@ -26,13 +25,9 @@ import {
 } from "react-native-nitro-ark";
 import { Result, ResultAsync } from "neverthrow";
 
-export type { ArkoorPaymentResult, OnchainPaymentResult, Bolt11PaymentResult, LnurlPaymentResult };
+export type { ArkoorPaymentResult, OnchainPaymentResult, LightningSendResult };
 
-export type PaymentResult =
-  | ArkoorPaymentResult
-  | OnchainPaymentResult
-  | Bolt11PaymentResult
-  | LnurlPaymentResult;
+export type PaymentResult = ArkoorPaymentResult | OnchainPaymentResult | LightningSendResult;
 
 export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => {
   return ResultAsync.fromPromise(
@@ -116,7 +111,7 @@ export const sendArkoorPayment = async (
 export const payLightningInvoice = async (
   destination: string,
   amountSat: number | undefined,
-): Promise<Result<Bolt11PaymentResult, Error>> => {
+): Promise<Result<LightningSendResult, Error>> => {
   return ResultAsync.fromPromise(payLightningInvoiceNitro(destination, amountSat), (error) => {
     const e = new Error(
       `Failed to send bolt11 payment: ${error instanceof Error ? error.message : String(error)}`,
@@ -145,7 +140,7 @@ export const payLightningAddress = async (
   addr: string,
   amountSat: number,
   comment: string,
-): Promise<Result<LnurlPaymentResult, Error>> => {
+): Promise<Result<LightningSendResult, Error>> => {
   return ResultAsync.fromPromise(payLightningAddressNitro(addr, amountSat, comment), (error) => {
     const e = new Error(
       `Failed to send to lightning address: ${
@@ -167,8 +162,8 @@ export const syncPendingBoards = async (): Promise<Result<void, Error>> => {
   });
 };
 
-export const movements = async (): Promise<Result<BarkMovement[], Error>> => {
-  return ResultAsync.fromPromise(movementsNitro(), (error) => {
+export const history = async (): Promise<Result<BarkMovement[], Error>> => {
+  return ResultAsync.fromPromise(historyNitro(), (error) => {
     const e = new Error(
       `Failed to get movements: ${error instanceof Error ? error.message : String(error)}`,
     );

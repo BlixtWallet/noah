@@ -11,8 +11,7 @@ import {
 import { useSend } from "./usePayments";
 import {
   type ArkoorPaymentResult,
-  type Bolt11PaymentResult,
-  type LnurlPaymentResult,
+  type LightningSendResult,
   type OnchainPaymentResult,
   type PaymentResult,
 } from "../lib/paymentsApi";
@@ -169,7 +168,7 @@ export const useSendScreen = () => {
           };
         }
         case "Lnurl": {
-          const lnurlRes = res as LnurlPaymentResult;
+          const lnurlRes = res as LightningSendResult;
           return {
             success: true,
             amount_sat: amountSat,
@@ -179,11 +178,11 @@ export const useSendScreen = () => {
           };
         }
         case "Bolt11": {
-          const bolt11Res = res as Bolt11PaymentResult;
+          const bolt11Res = res as LightningSendResult;
           return {
             success: true,
             amount_sat: amountSat,
-            destination: bolt11Res.bolt11_invoice,
+            destination: bolt11Res.invoice,
             preimage: bolt11Res.preimage,
             type: res.payment_type,
           };

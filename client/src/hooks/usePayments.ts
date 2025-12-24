@@ -10,8 +10,7 @@ import {
   payLightningInvoice,
   payLightningAddress,
   type ArkoorPaymentResult,
-  type Bolt11PaymentResult,
-  type LnurlPaymentResult,
+  type LightningSendResult,
   type OnchainPaymentResult,
   boardAllArk,
   offboardAllArk,
@@ -163,11 +162,7 @@ type SendVariables = {
   btcPrice?: number;
 };
 
-type SendResult =
-  | ArkoorPaymentResult
-  | Bolt11PaymentResult
-  | LnurlPaymentResult
-  | OnchainPaymentResult;
+type SendResult = ArkoorPaymentResult | LightningSendResult | OnchainPaymentResult;
 
 const mapDestinationToPaymentType = (destinationType: DestinationTypes): PaymentTypes | null => {
   switch (destinationType) {
@@ -302,7 +297,7 @@ async function handleNoahWalletPayment(
   destination: string,
   amountSat: number,
   comment: string | null,
-): Promise<Result<ArkoorPaymentResult | Bolt11PaymentResult, Error> | null> {
+): Promise<Result<ArkoorPaymentResult | LightningSendResult | OnchainPaymentResult, Error> | null> {
   try {
     const [user, domain] = destination.split("@");
     const lnurlEndpoint = `https://${domain}/.well-known/lnurlp/${user}`;

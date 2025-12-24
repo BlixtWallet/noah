@@ -4,7 +4,7 @@ import type { Transaction } from "../types/transaction";
 import uuid from "react-native-uuid";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import logger from "~/lib/log";
-import { movements } from "./paymentsApi";
+import { history } from "./paymentsApi";
 import type { BarkMovement as NitroBarkMovement, MovementStatus } from "react-native-nitro-ark";
 import type { MovementKind } from "~/types/movement";
 import { INCOMING_MOVEMENT_KINDS } from "~/types/movement";
@@ -27,7 +27,7 @@ const SUBSYSTEM_KIND_TO_MOVEMENT_KIND: Record<string, MovementKind> = {
 const INCOMING_MOVEMENT_KIND_SET = new Set<MovementKind>(INCOMING_MOVEMENT_KINDS);
 
 export const syncArkReceives = async () => {
-  const movementsResult = await movements();
+  const movementsResult = await history();
 
   if (movementsResult.isErr()) {
     log.e("Failed to fetch movements:", [movementsResult.error]);
