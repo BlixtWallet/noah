@@ -46,6 +46,15 @@ htlc_send_expiry_delta = 258
 # invoice generation with.
 max_user_invoice_cltv_delta = 250
 
+# The duration after which a generated invoice will expire.
+invoice_expiry = "10m"
+
+# The duration for which the server will hold inbound HTLC(s) while
+# waiting for a user to claim a lightning receive.
+# After this timeout the server will fail the HTLC(s) back to the sender and
+# also cancel the hold invoice.
+receive_htlc_forward_timeout = "30s"
+
 # Interval to retry connecting to disconnected CLN nodes
 cln_reconnect_interval = "10s"
 
@@ -63,9 +72,6 @@ invoice_check_max_delay = "10m"
 
 # FIXME
 invoice_poll_interval = "30s"
-
-# Timeout on the HTLC subscription RPC call
-htlc_subscription_timeout = "10m"
 
 ln_receive_anti_dos_required = false
 
