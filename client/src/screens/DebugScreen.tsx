@@ -203,9 +203,9 @@ const DebugScreen = () => {
         {resultMessage && (
           <Pressable
             onLongPress={handleCopyResult}
-            className="mb-6 p-4 bg-green-900/30 rounded-lg border border-green-700"
+            className="mb-6 p-4 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-700"
           >
-            <Text className="text-green-400">{resultMessage}</Text>
+            <Text className="text-green-700 dark:text-green-400">{resultMessage}</Text>
             <Text className="text-muted-foreground text-md mt-2">
               {copied ? "Copied!" : "Long press to copy"}
             </Text>

@@ -315,11 +315,11 @@ export function useCheckAndClaimLnReceive() {
 
         log.d("Claim result", [result]);
 
-        if (result.isOk()) {
+        if (result.isOk() && result.value && result.value.length > 0) {
           return { amountSat };
         }
 
-        log.d(`Attempt ${i + 1}/${maxAttempts} failed:`, [result.error.message]);
+        log.d(`Attempt ${i + 1}/${maxAttempts} failed:`, [result]);
 
         if (i < maxAttempts - 1) {
           await new Promise((resolve) => setTimeout(resolve, intervalMs));

@@ -148,7 +148,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
                   true,
                 );
 
-                if (claimResult.isOk()) {
+                if (claimResult.isOk() && claimResult.value && claimResult.value.length > 0) {
                   const sats = notificationData.amount / 1000;
                   await Notifications.scheduleNotificationAsync({
                     content: {
