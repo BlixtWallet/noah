@@ -31,7 +31,6 @@ export function calculateOffchainBalance(offchain: OffchainBalanceResult): numbe
   return (
     (offchain.pending_exit ?? 0) +
     (offchain.pending_lightning_send ?? 0) +
-    (offchain.pending_lightning_receive?.claimable ?? 0) +
     (offchain.pending_in_round ?? 0) +
     (offchain.spendable ?? 0) +
     (offchain.pending_board ?? 0)

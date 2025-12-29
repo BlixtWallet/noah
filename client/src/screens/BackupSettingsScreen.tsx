@@ -13,6 +13,7 @@ import { CheckCircle } from "lucide-react-native";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { NoahButton } from "~/components/ui/NoahButton";
 import * as Haptics from "expo-haptics";
+import { AlertCircle } from "lucide-react-native";
 
 export const BackupSettingsScreen = () => {
   const navigation = useNavigation();
@@ -29,6 +30,8 @@ export const BackupSettingsScreen = () => {
 
   const [showBackups, setShowBackups] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -56,6 +59,13 @@ export const BackupSettingsScreen = () => {
           </Alert>
         )}
 
+        {showErrorAlert && (
+          <Alert icon={AlertCircle} variant="destructive" className="mb-4">
+            <AlertTitle>Backup Failed</AlertTitle>
+            <AlertDescription>{errorMessage ?? "An unknown error occurred"}</AlertDescription>
+          </Alert>
+        )}
+
         <NoahButton
           onPress={async () => {
             const result = await triggerBackup();
@@ -65,6 +75,9 @@ export const BackupSettingsScreen = () => {
               setTimeout(() => setShowSuccessAlert(false), 3000);
             } else {
               await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              setErrorMessage(result.error.message);
+              setShowErrorAlert(true);
+              setTimeout(() => setShowErrorAlert(false), 5000);
             }
           }}
           className="mb-4"
@@ -80,6 +93,11 @@ export const BackupSettingsScreen = () => {
               const result = await listBackups();
               if (result.isOk()) {
                 setShowBackups(true);
+              } else {
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                setErrorMessage(result.error.message);
+                setShowErrorAlert(true);
+                setTimeout(() => setShowErrorAlert(false), 5000);
               }
             }}
             className="mb-8 border-border"

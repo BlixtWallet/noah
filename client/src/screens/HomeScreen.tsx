@@ -258,15 +258,6 @@ const HomeScreen = () => {
                               {formatBip177(balance?.offchain.pending_lightning_send ?? 0)}
                             </Text>
                           </View>
-                          <View className="flex-row justify-between">
-                            <Text className="text-muted-foreground">Pending Receive</Text>
-                            <Text>
-                              {formatBip177(
-                                balance?.offchain.pending_lightning_receive.claimable ?? 0,
-                              )}
-                            </Text>
-                          </View>
-
                           <View className="flex-row justify-between mb-2">
                             <Text className="text-muted-foreground">Pending In Round</Text>
                             <Text>{formatBip177(balance?.offchain.pending_in_round ?? 0)}</Text>

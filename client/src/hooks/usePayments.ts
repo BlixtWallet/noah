@@ -9,9 +9,10 @@ import {
   sendArkoorPayment,
   payLightningInvoice,
   payLightningAddress,
+  payLightningOffer,
+  checkLightningPayment,
   type ArkoorPaymentResult,
-  type Bolt11PaymentResult,
-  type LnurlPaymentResult,
+  type LightningSendResult,
   type OnchainPaymentResult,
   boardAllArk,
   offboardAllArk,
@@ -163,11 +164,22 @@ type SendVariables = {
   btcPrice?: number;
 };
 
-type SendResult =
-  | ArkoorPaymentResult
-  | Bolt11PaymentResult
-  | LnurlPaymentResult
-  | OnchainPaymentResult;
+type SendResult = ArkoorPaymentResult | LightningSendResult | OnchainPaymentResult;
+
+const awaitLightningPayment = async (
+  paymentPromise: Promise<Result<LightningSendResult, Error>>,
+): Promise<LightningSendResult> => {
+  const result = await paymentPromise;
+  if (result.isErr()) {
+    throw result.error;
+  }
+  const checkResult = await checkLightningPayment(result.value.payment_hash, true);
+  if (checkResult.isErr()) {
+    throw checkResult.error;
+  }
+  result.value.preimage = checkResult.value;
+  return result.value;
+};
 
 const mapDestinationToPaymentType = (destinationType: DestinationTypes): PaymentTypes | null => {
   switch (destinationType) {
@@ -179,6 +191,8 @@ const mapDestinationToPaymentType = (destinationType: DestinationTypes): Payment
       return "Lnurl";
     case "onchain":
       return "Onchain";
+    case "offer":
+      return "Bolt12";
     default:
       return null;
   }
@@ -210,9 +224,8 @@ export function useSend(destinationType: DestinationTypes) {
           result = await sendArkoorPayment(destination, amountSat);
           break;
         case "lightning":
-          result = await payLightningInvoice(destination, amountSat);
-          break;
-        case "lnurl":
+          return awaitLightningPayment(payLightningInvoice(destination, amountSat));
+        case "lnurl": {
           if (amountSat === undefined) {
             throw new Error("Amount is required for LNURL payments");
           }
@@ -220,13 +233,23 @@ export function useSend(destinationType: DestinationTypes) {
           if (destination.toLowerCase().endsWith(getLnurlDomain())) {
             const noahResult = await handleNoahWalletPayment(destination, amountSat, comment);
             if (noahResult) {
-              result = noahResult;
-              break;
+              if (noahResult.isErr()) {
+                throw noahResult.error;
+              }
+              const data = noahResult.value;
+              if ("payment_hash" in data) {
+                return awaitLightningPayment(
+                  Promise.resolve(noahResult as Result<LightningSendResult, Error>),
+                );
+              }
+              return data;
             }
           }
 
-          result = await payLightningAddress(destination, amountSat, comment || "");
-          break;
+          return awaitLightningPayment(payLightningAddress(destination, amountSat, comment || ""));
+        }
+        case "offer":
+          return awaitLightningPayment(payLightningOffer(destination, amountSat));
         default:
           throw new Error("Invalid destination type");
       }
@@ -276,11 +299,11 @@ export function useCheckAndClaimLnReceive() {
 
         log.d("Claim result", [result]);
 
-        if (result.isOk()) {
+        if (result.isOk() && result.value && result.value.length > 0) {
           return { amountSat };
         }
 
-        log.d(`Attempt ${i + 1}/${maxAttempts} failed:`, [result.error.message]);
+        log.d(`Attempt ${i + 1}/${maxAttempts} failed:`, [result]);
 
         if (i < maxAttempts - 1) {
           await new Promise((resolve) => setTimeout(resolve, intervalMs));
@@ -302,7 +325,7 @@ async function handleNoahWalletPayment(
   destination: string,
   amountSat: number,
   comment: string | null,
-): Promise<Result<ArkoorPaymentResult | Bolt11PaymentResult, Error> | null> {
+): Promise<Result<ArkoorPaymentResult | LightningSendResult | OnchainPaymentResult, Error> | null> {
   try {
     const [user, domain] = destination.split("@");
     const lnurlEndpoint = `https://${domain}/.well-known/lnurlp/${user}`;
@@ -323,7 +346,8 @@ async function handleNoahWalletPayment(
         return await sendArkoorPayment(callbackJson.ark, amountSat);
       } else if (callbackJson.pr) {
         log.d("Paying via Lightning Invoice from LNURL");
-        return await payLightningInvoice(callbackJson.pr, amountSat);
+        const lnResult = await payLightningInvoice(callbackJson.pr, amountSat);
+        return lnResult;
       } else {
         log.w(
           "Invalid LNURL callback response for optimized Noah payment, falling back to standard LNURL.",

@@ -13,7 +13,7 @@ interface SendConfirmationProps {
   comment?: string;
   btcPrice?: number;
   bip321Data?: ParsedBip321 | null;
-  selectedPaymentMethod?: "ark" | "lightning" | "onchain";
+  selectedPaymentMethod?: "ark" | "lightning" | "onchain" | "offer";
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
