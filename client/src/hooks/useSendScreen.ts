@@ -9,12 +9,7 @@ import {
   ParsedBip321,
 } from "../lib/sendUtils";
 import { useSend } from "./usePayments";
-import {
-  type ArkoorPaymentResult,
-  type LightningSendResult,
-  type OnchainPaymentResult,
-  type PaymentResult,
-} from "../lib/paymentsApi";
+import { type PaymentResult } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { useBtcToUsdRate } from "./useMarketData";
 import { satsToUsd, usdToSats } from "../lib/utils";
@@ -151,35 +146,32 @@ export const useSendScreen = () => {
     const processResult = (res: PaymentResult): DisplayResult => {
       // Check for onchain payment (has txid and destination_address)
       if ("txid" in res && "destination_address" in res) {
-        const onchainRes = res as OnchainPaymentResult;
         return {
           success: true,
-          amount_sat: onchainRes.amount_sat,
-          destination: onchainRes.destination_address,
-          txid: onchainRes.txid,
+          amount_sat: res.amount_sat,
+          destination: res.destination_address,
+          txid: res.txid,
           type: "Onchain",
         };
       }
 
       // Check for arkoor payment (has destination_pubkey)
       if ("destination_pubkey" in res) {
-        const arkoorRes = res as ArkoorPaymentResult;
         return {
           success: true,
-          amount_sat: arkoorRes.amount_sat,
-          destination: arkoorRes.destination_pubkey,
+          amount_sat: res.amount_sat,
+          destination: res.destination_pubkey,
           type: "Arkoor",
         };
       }
 
       // Check for lightning payment (has invoice)
       if ("invoice" in res) {
-        const lightningRes = res as LightningSendResult;
         return {
           success: true,
-          amount_sat: lightningRes.amount,
-          destination: lightningRes.invoice,
-          preimage: lightningRes.preimage ?? undefined,
+          amount_sat: res.amount,
+          destination: res.invoice,
+          preimage: res.preimage ?? undefined,
           type: "Lightning",
         };
       }
