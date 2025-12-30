@@ -24,7 +24,7 @@ import {
   Bolt11Invoice,
   BoardResult,
   RoundStatus,
-  BarkVtxo,
+  LightningReceive,
 } from "react-native-nitro-ark";
 import { Result, ResultAsync } from "neverthrow";
 
@@ -205,7 +205,7 @@ export const history = async (): Promise<Result<BarkMovement[], Error>> => {
 export const tryClaimLightningReceive = async (
   paymentHash: string,
   wait: boolean = false,
-): Promise<Result<BarkVtxo[], Error>> => {
+): Promise<Result<LightningReceive, Error>> => {
   return ResultAsync.fromPromise(tryClaimLightningReceiveNitro(paymentHash, wait), (error) => {
     const e = new Error(
       `Failed to check and claim lightning receive: ${error instanceof Error ? error.message : String(error)}`,

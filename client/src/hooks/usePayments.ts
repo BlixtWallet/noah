@@ -299,7 +299,7 @@ export function useCheckAndClaimLnReceive() {
 
         log.d("Claim result", [result]);
 
-        if (result.isOk() && result.value && result.value.length > 0) {
+        if (result.isOk() && result.value && result.value.finished_at) {
           return { amountSat };
         }
 
