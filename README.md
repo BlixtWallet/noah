@@ -130,7 +130,7 @@ For development and testing, you can run a complete local Ark stack using Docker
 - **lnd** - Lightning Network Daemon
 - **noah-server** - Noah backend server
 
-The [`scripts/ark-dev.sh`](just) script helps manage this environment.
+The [Dev helper script](scripts/ark-dev.sh) script helps manage this environment.
 
 **Prerequisites:**
 
@@ -255,7 +255,7 @@ just test               # Run server tests
 
 ## 📡 Running the server
 
-**Important note:** The server now uses PostgreSQL for all environments. Point `POSTGRES_URL` at the database for the current network (run separate DB instances per network).
+**Important note:** Like written above, `just setup-everything` will setup PostgreSQL and Redis instances for you but it also starts up the server, so if you are working on the server, simply stop the docker container of `noah-server` and run `just server` to start the server manually, this will compile the Rust code and start the server locally instead of using Docker.
 
 ### Configuration Setup
 
@@ -275,25 +275,22 @@ The server uses environment variables for configuration. For local development, 
    POSTGRES_URL=postgres://postgres:postgres@localhost:5432/noah
    POSTGRES_MAX_CONNECTIONS=10
    REDIS_URL=redis://127.0.0.1:6379
-   EXPO_ACCESS_TOKEN=your-expo-access-token
+   EXPO_ACCESS_TOKEN=your-expo-access-token # Can set junk value for local development
    ARK_SERVER_URL=http://localhost:3535
    SERVER_NETWORK=regtest
    BACKUP_CRON="every 2 hours"
-   S3_BUCKET_NAME=noah-regtest-backups
+   S3_BUCKET_NAME=noah-regtest-backups # Can set junk value for local development
    MINIMUM_APP_VERSION=0.0.1
 
    # AWS credentials for S3
-   AWS_ACCESS_KEY_ID=your-aws-access-key-id
+   # Can set junk value for local development
+   AWS_ACCESS_KEY_ID=your-aws-access-key-id 
    AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
    AWS_REGION=us-east-2
+    
+   # This needs to be true in local development 
    EMAIL_DEV_MODE=true
    ```
-
-**Required environment variables:**
-- `POSTGRES_URL` - PostgreSQL connection string
-- `EXPO_ACCESS_TOKEN` - Expo push notification token
-- `ARK_SERVER_URL` - Ark server endpoint
-- `S3_BUCKET_NAME` - S3 bucket for backups
 
 ### Running
 
