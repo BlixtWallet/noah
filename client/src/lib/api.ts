@@ -251,6 +251,8 @@ export const getDownloadUrlForRestore = async (payload: {
 
 export const deregister = () => post<object, DefaultSuccessPayload>("/deregister", {});
 
+export const reportLastLogin = () => post<object, DefaultSuccessPayload>("/report_last_login", {});
+
 export const checkAppVersion = async (
   clientVersion: string,
 ): Promise<Result<AppVersionInfo, Error>> => {

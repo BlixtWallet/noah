@@ -678,3 +678,147 @@ async fn test_update_ark_address_taken() {
         .unwrap();
     assert_eq!(current_user1.ark_address, ark_address1);
 }
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_last_login() {
+    let (app, app_state, _guard) = setup_test_app().await;
+
+    let user = TestUser::new();
+
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(
+        &mut tx,
+        &user.pubkey().to_string(),
+        "testuser@localhost",
+        None,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+
+    // Verify last_login_at is initially NULL
+    let initial_last_login: Option<chrono::DateTime<chrono::Utc>> =
+        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
+            .bind(&user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
+    assert!(initial_last_login.is_none());
+
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_last_login")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key)
+                .header("x-auth-sig", auth_payload.sig)
+                .header("x-auth-k1", auth_payload.k1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // Verify last_login_at is now set
+    let updated_last_login: Option<chrono::DateTime<chrono::Utc>> =
+        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
+            .bind(&user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
+    assert!(updated_last_login.is_some());
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_last_login_updates_timestamp() {
+    let (app, app_state, _guard) = setup_test_app().await;
+
+    let user = TestUser::new();
+
+    let mut tx = app_state.db_pool.begin().await.unwrap();
+    UserRepository::create(
+        &mut tx,
+        &user.pubkey().to_string(),
+        "testuser2@localhost",
+        None,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+
+    // First login
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_last_login")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", &auth_payload.key)
+                .header("x-auth-sig", &auth_payload.sig)
+                .header("x-auth-k1", &auth_payload.k1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let first_login: chrono::DateTime<chrono::Utc> =
+        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
+            .bind(&user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
+
+    // Small delay to ensure timestamp difference
+    tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+
+    // Second login
+    let k1_2 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload_2 = user.auth_payload(&k1_2);
+
+    let response2 = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_last_login")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload_2.key)
+                .header("x-auth-sig", auth_payload_2.sig)
+                .header("x-auth-k1", auth_payload_2.k1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response2.status(), StatusCode::OK);
+
+    let second_login: chrono::DateTime<chrono::Utc> =
+        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
+            .bind(&user.pubkey().to_string())
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
+
+    assert!(second_login > first_login);
+}

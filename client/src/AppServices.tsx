@@ -8,6 +8,7 @@ import { useBalance } from "~/hooks/useWallet";
 import { useBoardAllAmountArk } from "~/hooks/usePayments";
 import { useAlert } from "~/contexts/AlertProvider";
 import { addOnboardingRequest } from "~/lib/transactionsDb";
+import { reportLastLogin } from "~/lib/api";
 import logger from "~/lib/log";
 import { MIN_AUTO_BOARD_AMOUNT } from "./constants";
 
@@ -31,6 +32,16 @@ const AppServices = memo(() => {
     setIsReady(true);
     useTransactionStore.getState().loadTransactions();
   }, []);
+
+  useEffect(() => {
+    if (isReady) {
+      reportLastLogin().then((result) => {
+        if (result.isErr()) {
+          log.w("Failed to report last login", [result.error]);
+        }
+      });
+    }
+  }, [isReady]);
 
   // Auto-boarding logic
   useEffect(() => {

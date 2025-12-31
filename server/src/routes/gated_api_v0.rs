@@ -383,3 +383,13 @@ pub async fn heartbeat_response(
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
+
+pub async fn report_last_login(
+    State(state): State<AppState>,
+    Extension(auth_payload): Extension<AuthPayload>,
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    let user_repo = UserRepository::new(&state.db_pool);
+    user_repo.update_last_login(&auth_payload.key).await?;
+
+    Ok(Json(DefaultSuccessPayload { success: true }))
+}

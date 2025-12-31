@@ -234,6 +234,15 @@ impl<'a> UserRepository<'a> {
         .await?;
         Ok(exists)
     }
+
+    /// Updates the user's last login timestamp.
+    pub async fn update_last_login(&self, pubkey: &str) -> Result<()> {
+        sqlx::query("UPDATE users SET last_login_at = now(), updated_at = now() WHERE pubkey = $1")
+            .bind(pubkey)
+            .execute(self.pool)
+            .await?;
+        Ok(())
+    }
 }
 
 fn is_lightning_address_conflict(error: &sqlx::Error) -> bool {

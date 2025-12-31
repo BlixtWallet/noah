@@ -17,7 +17,8 @@ use crate::email_client::EmailClient;
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
     heartbeat_response, list_backups, register_offboarding_request, register_push_token,
-    report_job_status, submit_invoice, update_backup_settings, update_ln_address,
+    report_job_status, report_last_login, submit_invoice, update_backup_settings,
+    update_ln_address,
 };
 use crate::routes::public_api_v0::{
     check_app_version, get_k1, lnurlp_request, register, send_verification_email, verify_email,
@@ -167,6 +168,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         .route("/backup/settings", post(update_backup_settings))
         .route("/report_job_status", post(report_job_status))
         .route("/heartbeat_response", post(heartbeat_response))
+        .route("/report_last_login", post(report_last_login))
         .layer(user_exists_layer);
 
     // Routes that need auth but user may not exist (like registration)

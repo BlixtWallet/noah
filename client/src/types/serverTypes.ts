@@ -49,8 +49,6 @@ export type MaintenanceNotification = { k1: string, };
 
 export type NotificationData = { "notification_type": "maintenance" } & MaintenanceNotification | { "notification_type": "lightning_invoice_request" } & LightningInvoiceRequestNotification | { "notification_type": "backup_trigger" } & BackupTriggerNotification | { "notification_type": "offboarding" } & OffboardingNotification | { "notification_type": "heartbeat" } & HeartbeatNotification;
 
-export type NotificationTypes = "maintenance" | "lightning_invoice_request" | "backup_trigger" | "offboarding" | "heartbeat";
-
 export type OffboardingNotification = { k1: string, offboarding_request_id: string, address: string, address_signature: string, };
 
 export type RegisterOffboardingRequestPayload = { address: string, address_signature: string, };

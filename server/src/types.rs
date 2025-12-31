@@ -321,18 +321,6 @@ impl NotificationData {
     }
 }
 
-// Legacy support - keeping the old structure for backward compatibility if needed
-#[derive(Debug, Serialize, Deserialize, TS, Clone)]
-#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-#[serde(rename_all = "snake_case")]
-pub enum NotificationTypes {
-    Maintenance,
-    LightningInvoiceRequest,
-    BackupTrigger,
-    Offboarding,
-    Heartbeat,
-}
-
 #[derive(Debug, Deserialize, Validate, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct HeartbeatResponsePayload {
