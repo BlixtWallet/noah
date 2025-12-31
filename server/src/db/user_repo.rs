@@ -243,6 +243,18 @@ impl<'a> UserRepository<'a> {
             .await?;
         Ok(())
     }
+
+    #[cfg(test)]
+    pub async fn get_last_login_at(
+        &self,
+        pubkey: &str,
+    ) -> Result<Option<chrono::DateTime<chrono::Utc>>> {
+        let last_login = sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
+            .bind(pubkey)
+            .fetch_one(self.pool)
+            .await?;
+        Ok(last_login)
+    }
 }
 
 fn is_lightning_address_conflict(error: &sqlx::Error) -> bool {

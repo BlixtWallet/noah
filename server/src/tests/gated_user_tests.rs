@@ -698,12 +698,11 @@ async fn test_report_last_login() {
     tx.commit().await.unwrap();
 
     // Verify last_login_at is initially NULL
-    let initial_last_login: Option<chrono::DateTime<chrono::Utc>> =
-        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
-            .bind(&user.pubkey().to_string())
-            .fetch_one(&app_state.db_pool)
-            .await
-            .unwrap();
+    let user_repo = UserRepository::new(&app_state.db_pool);
+    let initial_last_login = user_repo
+        .get_last_login_at(&user.pubkey().to_string())
+        .await
+        .unwrap();
     assert!(initial_last_login.is_none());
 
     let k1 = make_k1(&app_state.k1_cache)
@@ -729,12 +728,10 @@ async fn test_report_last_login() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Verify last_login_at is now set
-    let updated_last_login: Option<chrono::DateTime<chrono::Utc>> =
-        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
-            .bind(&user.pubkey().to_string())
-            .fetch_one(&app_state.db_pool)
-            .await
-            .unwrap();
+    let updated_last_login = user_repo
+        .get_last_login_at(&user.pubkey().to_string())
+        .await
+        .unwrap();
     assert!(updated_last_login.is_some());
 }
 
@@ -780,12 +777,12 @@ async fn test_report_last_login_updates_timestamp() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let first_login: chrono::DateTime<chrono::Utc> =
-        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
-            .bind(&user.pubkey().to_string())
-            .fetch_one(&app_state.db_pool)
-            .await
-            .unwrap();
+    let user_repo = UserRepository::new(&app_state.db_pool);
+    let first_login = user_repo
+        .get_last_login_at(&user.pubkey().to_string())
+        .await
+        .unwrap()
+        .unwrap();
 
     // Small delay to ensure timestamp difference
     tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
@@ -813,12 +810,11 @@ async fn test_report_last_login_updates_timestamp() {
 
     assert_eq!(response2.status(), StatusCode::OK);
 
-    let second_login: chrono::DateTime<chrono::Utc> =
-        sqlx::query_scalar("SELECT last_login_at FROM users WHERE pubkey = $1")
-            .bind(&user.pubkey().to_string())
-            .fetch_one(&app_state.db_pool)
-            .await
-            .unwrap();
+    let second_login = user_repo
+        .get_last_login_at(&user.pubkey().to_string())
+        .await
+        .unwrap()
+        .unwrap();
 
     assert!(second_login > first_login);
 }
