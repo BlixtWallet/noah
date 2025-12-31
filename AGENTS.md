@@ -12,6 +12,8 @@
 - `/client`: React Native code for the mobile wallet.
 - `/client/nitromodules`: Nitro-modules for writing any native code.
 - `/server`: Rust code for the backend.
+- `/fly`: Fly.io configuration for deploying the backend.
+- `/docs`: Documentation for the project.
 - The project is built in a monorepo style.
 - You can run `cargo` and `bun` commands from the root of the project.
 
@@ -19,6 +21,7 @@
 
 - React native with expo
 - Runtime: Bun
+- Package Manager: Bun
 - Styling: Nativewind
 - State management: Zustand
 - Routing: React navigation
@@ -30,11 +33,12 @@
 
 - Rust
 - Http server: Axum
-- Logging: Tracing
+- Logging: Tracing (exported to Sentry in production)
 - Database: Postgres
 - Cache: Redis-compatible (Dragonfly in dev) for LNURL-auth state with 10 minute TTL
 - Runtime: Tokio
 - Background jobs: Tokio cron scheduler
+- Backups are stored in AWS S3
 
 ## Handling project dependencies
 
@@ -56,6 +60,7 @@
 - Always use `neverthrow` for error handling.
 - Avoid use of `try` and `catch` blocks and use `neverthrow` instead.
 - Whenever a component needs to call a method of `react-native-nitro-ark` library, use our hooks in the hooks directory that wrap the API methods.
+- There is end to end typesafety, the types from the server exported to the client will be present inside `client/src/types/serverTypes.ts`.
 - Using `console.log, info, warn, error` are now allowed in the repo.
 - Logging should be done like this:
 ```typescript
@@ -74,6 +79,8 @@ log.e("The error log message", [any params]);
 - Use `tracing` for logging.
 - All database related code should be in the `db` directory separated into repo files based on the type of data being dealt with.
 - Every API endpoint should have a test case.
+- No direct SQL code should be written inside test files, always use the `db` directory and feature gate with `#[cfg(test)]` for the functions if those queries are only used in tests and not in production.
+- All server types that will also be exported to the client using ts-rs will be inside `server/src/types.rs` file. When you run `cargo test`, the types will be exported to the client directory (`client/src/types/serverTypes.ts`). This is how we are doing end to end type safety.
 
 ## Security considerations
 
