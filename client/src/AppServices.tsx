@@ -30,7 +30,6 @@ const AppServices = memo(() => {
 
   useEffect(() => {
     setIsReady(true);
-    useTransactionStore.getState().loadTransactions();
   }, []);
 
   useEffect(() => {

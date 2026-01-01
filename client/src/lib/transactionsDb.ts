@@ -1,6 +1,5 @@
 import * as SQLite from "expo-sqlite";
 import { ResultAsync } from "neverthrow";
-import { Transaction } from "~/types/transaction";
 import logger from "./log";
 import { ARK_DATA_PATH } from "~/constants";
 import { runMigrations } from "./migrations";
@@ -22,134 +21,6 @@ export const openDatabase = async () => {
   return db;
 };
 
-export const addTransaction = async (transaction: Transaction) => {
-  const db = await openDatabase();
-  return ResultAsync.fromPromise(
-    db.runAsync(
-      `INSERT INTO transactions (
-        id,
-        txid,
-        type,
-        direction,
-        amount,
-        date,
-        description,
-        destination,
-        btcPrice,
-        preimage,
-        movementId,
-        movementStatus,
-        movementKind,
-        subsystemName,
-        subsystemKind,
-        metadataJson,
-        intendedBalanceSat,
-        effectiveBalanceSat,
-        offchainFeeSat,
-        sentTo,
-        receivedOn,
-        inputVtxos,
-        outputVtxos,
-        exitedVtxos
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      transaction.id,
-      transaction.txid || null,
-      transaction.type,
-      transaction.direction,
-      transaction.amount,
-      transaction.date,
-      transaction.description || null,
-      transaction.destination || null,
-      transaction.btcPrice || null,
-      transaction.preimage || null,
-      transaction.movementId ?? null,
-      transaction.movementStatus ?? null,
-      transaction.movementKind ?? null,
-      transaction.subsystemName ?? null,
-      transaction.subsystemKind ?? null,
-      transaction.metadataJson ?? null,
-      transaction.intendedBalanceSat ?? null,
-      transaction.effectiveBalanceSat ?? null,
-      transaction.offchainFeeSat ?? null,
-      serializeJson(transaction.sentTo),
-      serializeJson(transaction.receivedOn),
-      serializeJson(transaction.inputVtxos),
-      serializeJson(transaction.outputVtxos),
-      serializeJson(transaction.exitedVtxos),
-    ),
-    (e) => {
-      log.e("Failed to add transaction", [e]);
-      return e as Error;
-    },
-  );
-};
-
-export const getTransactions = async (): Promise<ResultAsync<Transaction[], Error>> => {
-  const db = await openDatabase();
-  return ResultAsync.fromPromise(
-    db.getAllAsync<TransactionRow>("SELECT * FROM transactions ORDER BY date DESC;"),
-    (e) => {
-      log.e("Failed to get transactions", [e]);
-      return e as Error;
-    },
-  ).map((rows) => rows.map(deserializeTransactionRow));
-};
-
-export const removeTransaction = async (id: string) => {
-  const db = await openDatabase();
-  return ResultAsync.fromPromise(db.runAsync("DELETE FROM transactions WHERE id = ?;", id), (e) => {
-    log.e("Failed to remove transaction", [e]);
-    return e as Error;
-  });
-};
-
-type TransactionRow = Omit<Transaction, "sentTo" | "receivedOn" | "inputVtxos" | "outputVtxos" | "exitedVtxos"> & {
-  sentTo: string | null;
-  receivedOn: string | null;
-  inputVtxos: string | null;
-  outputVtxos: string | null;
-  exitedVtxos: string | null;
-};
-
-const serializeJson = (value: unknown): string | null => {
-  if (value === undefined || value === null) {
-    return null;
-  }
-
-  try {
-    return JSON.stringify(value);
-  } catch (error) {
-    log.w("Failed to serialize JSON for transactions DB", [error, value]);
-    return null;
-  }
-};
-
-const deserializeJson = <T>(value: string | null): T | undefined => {
-  if (!value) {
-    return undefined;
-  }
-
-  try {
-    return JSON.parse(value) as T;
-  } catch (error) {
-    log.w("Failed to deserialize JSON from transactions DB", [error, value]);
-    return undefined;
-  }
-};
-
-const deserializeTransactionRow = (row: TransactionRow): Transaction => {
-  return {
-    ...row,
-    sentTo: deserializeJson<Transaction["sentTo"]>(row.sentTo),
-    receivedOn: deserializeJson<Transaction["receivedOn"]>(row.receivedOn),
-    inputVtxos: deserializeJson<Transaction["inputVtxos"]>(row.inputVtxos),
-    outputVtxos: deserializeJson<Transaction["outputVtxos"]>(row.outputVtxos),
-    exitedVtxos: deserializeJson<Transaction["exitedVtxos"]>(row.exitedVtxos),
-  };
-};
-
-// Offboarding request functions
 export type OffboardingRequest = {
   request_id: string;
   date: string;
@@ -157,7 +28,6 @@ export type OffboardingRequest = {
   onchain_txid?: string;
 };
 
-// Onboarding request functions
 export type OnboardingRequest = {
   request_id: string;
   date: string;

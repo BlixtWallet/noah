@@ -19,11 +19,8 @@ import {
   tryClaimLightningReceive,
 } from "../lib/paymentsApi";
 import { queryClient } from "~/queryClient";
-import { Transaction, PaymentTypes } from "~/types/transaction";
-import uuid from "react-native-uuid";
 import { DestinationTypes } from "~/lib/sendUtils";
 import logger from "~/lib/log";
-import { useTransactionStore } from "~/store/transactionStore";
 import ky from "ky";
 import { Result } from "neverthrow";
 import { getLnurlDomain } from "~/constants";
@@ -181,26 +178,8 @@ const awaitLightningPayment = async (
   return result.value;
 };
 
-const mapDestinationToPaymentType = (destinationType: DestinationTypes): PaymentTypes | null => {
-  switch (destinationType) {
-    case "ark":
-      return "Arkoor";
-    case "lightning":
-      return "Bolt11";
-    case "lnurl":
-      return "Lnurl";
-    case "onchain":
-      return "Onchain";
-    case "offer":
-      return "Bolt12";
-    default:
-      return null;
-  }
-};
-
 export function useSend(destinationType: DestinationTypes) {
   const { showAlert } = useAlert();
-  const addTransaction = useTransactionStore((state) => state.addTransaction);
 
   return useMutation<SendResult, Error, SendVariables>({
     mutationFn: async (variables) => {
@@ -259,28 +238,9 @@ export function useSend(destinationType: DestinationTypes) {
       }
       return result.value;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
-      const paymentType = mapDestinationToPaymentType(destinationType);
-
-      if (paymentType) {
-        const { destination, amountSat, resolvedAmountSat, comment, btcPrice } = variables;
-        const transaction: Transaction = {
-          id: uuid.v4().toString(),
-          txid: "txid" in data ? (data.txid as string) : undefined,
-          type: paymentType,
-          direction: "outgoing",
-          amount: amountSat ?? resolvedAmountSat,
-          date: new Date().toISOString(),
-          destination: destination,
-          preimage: "preimage" in data ? (data.preimage as string) : undefined,
-          description: comment || undefined,
-          btcPrice,
-        };
-        addTransaction(transaction).catch((error) => {
-          log.w("Failed to persist transaction to store", [error]);
-        });
-      }
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
     onError: (error: Error) => {
       showAlert({ title: "Send Failed", description: error.message });
@@ -297,13 +257,11 @@ export function useCheckAndClaimLnReceive() {
       for (let i = 0; i < maxAttempts; i++) {
         const result = await tryClaimLightningReceive(paymentHash, false);
 
-        log.d("Claim result", [result]);
-
         if (result.isOk() && result.value && result.value.finished_at) {
           return { amountSat };
         }
 
-        log.d(`Attempt ${i + 1}/${maxAttempts} failed:`, [result]);
+        log.d(`Attempt ${i + 1}/${maxAttempts} failed`);
 
         if (i < maxAttempts - 1) {
           await new Promise((resolve) => setTimeout(resolve, intervalMs));

@@ -90,3 +90,7 @@ log.e("The error log message", [any params]);
 - The `private_` endpoints are accessible only by the server.
 - We use cryptography for authentication and authorization. The middleware checks for signature if it a message is signed by a known public key of the client.
 - LNURL k1 challenges are issued via Redis and expire automatically after 10 minutes to prevent replay across restarts.
+
+### Useful commands
+- `just test` to run all rust server tests.
+- `just check` to check eslint and typescript type checking.

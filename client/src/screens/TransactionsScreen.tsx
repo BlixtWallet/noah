@@ -1,8 +1,6 @@
-import { View, Pressable } from "react-native";
+import { View, Pressable, ActivityIndicator } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Share from "react-native-share";
-import { ConfirmationDialog } from "~/components/ConfirmationDialog";
-import { useTransactionStore } from "../store/transactionStore";
 import { useState } from "react";
 import { FlashList } from "@shopify/flash-list";
 import { Text } from "../components/ui/text";
@@ -19,29 +17,22 @@ import { CACHES_DIRECTORY_PATH } from "~/constants";
 import RNFSTurbo from "react-native-fs-turbo";
 import logger from "~/lib/log";
 import { formatBip177 } from "~/lib/utils";
+import { useTransactions } from "~/hooks/useTransactions";
 
 const log = logger("TransactionsScreen");
 
 const TransactionsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const iconColor = useIconColor();
-  const { transactions, removeTransaction } = useTransactionStore();
+  const { data: transactions = [], isLoading, isError, refetch } = useTransactions();
   const [filter, setFilter] = useState<PaymentTypes | "all" | "Lightning">("all");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
 
-  const handleDeleteRequest = (id: string) => {
-    setSelectedTransactionId(id);
-    setDialogOpen(true);
-  };
-
-  const deleteTransaction = async () => {
-    if (selectedTransactionId) {
-      await removeTransaction(selectedTransactionId);
-      setSelectedTransactionId(null);
-      setDialogOpen(false);
-    }
-  };
+  const filteredTransactions =
+    filter === "all"
+      ? transactions
+      : filter === "Lightning"
+        ? transactions.filter((t) => t.type === "Bolt11" || t.type === "Lnurl")
+        : transactions.filter((t) => t.type === filter);
 
   const exportToCSV = async () => {
     const csvHeader =
@@ -106,18 +97,6 @@ const TransactionsScreen = () => {
     )();
   };
 
-  const onCancelDelete = () => {
-    setDialogOpen(false);
-    setSelectedTransactionId(null);
-  };
-
-  const filteredTransactions =
-    filter === "all"
-      ? transactions
-      : filter === "Lightning"
-        ? transactions.filter((t) => t.type === "Bolt11" || t.type === "Lnurl")
-        : transactions.filter((t) => t.type === filter);
-
   const getIconForType = (type: Transaction["type"]) => {
     switch (type) {
       case "Bolt11":
@@ -135,15 +114,6 @@ const TransactionsScreen = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NoahSafeAreaView className="flex-1 bg-background">
-        <ConfirmationDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          title="Delete Transaction"
-          description="Are you sure you want to delete this transaction? This action cannot be undone."
-          onConfirm={deleteTransaction}
-          onCancel={onCancelDelete}
-          confirmText="Delete"
-        />
         <View className="p-4 flex-1">
           <View className="flex-row items-center justify-between mb-8">
             <View className="flex-row items-center">
@@ -179,55 +149,73 @@ const TransactionsScreen = () => {
               </Pressable>
             ))}
           </View>
-          <FlashList
-            data={filteredTransactions}
-            renderItem={({ item }: { item: Transaction }) => {
-              return (
-                <View style={{ marginBottom: 8 }}>
-                  <Pressable
-                    onPress={() => navigation.navigate("TransactionDetail", { transaction: item })}
-                    onLongPress={() => handleDeleteRequest(item.id)}
-                  >
-                    <View className="flex-row items-center p-4 bg-card rounded-lg">
-                      <View className="mr-4">
-                        <Icon
-                          name={getIconForType(item.type)}
-                          size={24}
-                          color={item.direction === "outgoing" ? "red" : "green"}
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <View className="flex-row justify-between gap-4">
-                          <View className="flex-1">
-                            <Label className="text-foreground text-base">
-                              {item.type === "Bolt11" || item.type === "Lnurl"
-                                ? "Lightning"
-                                : item.type}
-                            </Label>
-                          </View>
-                          <View className="items-end">
-                            <Text
-                              className={`text-base font-bold ${
-                                item.direction === "outgoing" ? "text-red-500" : "text-green-500"
-                              }`}
-                            >
-                              {`${item.direction === "outgoing" ? "-" : "+"}${formatBip177(item.amount)}`}
-                            </Text>
-                          </View>
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" />
+            </View>
+          ) : isError ? (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-muted-foreground mb-4">Failed to load transactions</Text>
+              <Pressable onPress={() => refetch()} className="px-4 py-2 bg-primary rounded-lg">
+                <Text className="text-primary-foreground">Retry</Text>
+              </Pressable>
+            </View>
+          ) : filteredTransactions.length === 0 ? (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-muted-foreground">No transactions yet</Text>
+            </View>
+          ) : (
+            <FlashList
+              data={filteredTransactions}
+              renderItem={({ item }: { item: Transaction }) => {
+                return (
+                  <View style={{ marginBottom: 8 }}>
+                    <Pressable
+                      onPress={() =>
+                        navigation.navigate("TransactionDetail", { transaction: item })
+                      }
+                    >
+                      <View className="flex-row items-center p-4 bg-card rounded-lg">
+                        <View className="mr-4">
+                          <Icon
+                            name={getIconForType(item.type)}
+                            size={24}
+                            color={item.direction === "outgoing" ? "red" : "green"}
+                          />
                         </View>
-                        <Text className="text-muted-foreground text-sm mt-1">
-                          {new Date(item.date).toLocaleString()}
-                        </Text>
+                        <View className="flex-1">
+                          <View className="flex-row justify-between gap-4">
+                            <View className="flex-1">
+                              <Label className="text-foreground text-base">
+                                {item.type === "Bolt11" || item.type === "Lnurl"
+                                  ? "Lightning"
+                                  : item.type}
+                              </Label>
+                            </View>
+                            <View className="items-end">
+                              <Text
+                                className={`text-base font-bold ${
+                                  item.direction === "outgoing" ? "text-red-500" : "text-green-500"
+                                }`}
+                              >
+                                {`${item.direction === "outgoing" ? "-" : "+"}${formatBip177(item.amount)}`}
+                              </Text>
+                            </View>
+                          </View>
+                          <Text className="text-muted-foreground text-sm mt-1">
+                            {new Date(item.date).toLocaleString()}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  </Pressable>
-                </View>
-              );
-            }}
-            keyExtractor={(item: Transaction) => item.id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 50 }}
-          />
+                    </Pressable>
+                  </View>
+                );
+              }}
+              keyExtractor={(item: Transaction) => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 50 }}
+            />
+          )}
         </View>
       </NoahSafeAreaView>
     </GestureHandlerRootView>

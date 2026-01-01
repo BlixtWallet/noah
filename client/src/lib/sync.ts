@@ -1,7 +1,6 @@
 import { queryClient } from "~/queryClient";
 import { useWalletStore } from "~/store/walletStore";
 import { onchainSync, sync } from "~/lib/walletApi";
-import { syncArkReceives } from "~/lib/syncTransactions";
 import logger from "~/lib/log";
 import { tryClaimAllLightningReceives } from "./paymentsApi";
 
@@ -27,6 +26,7 @@ export const syncWallet = async () => {
       log.e("background sync failed:", [result.reason]);
     }
   });
-  await syncArkReceives();
+
   await queryClient.invalidateQueries({ queryKey: ["balance"] });
+  await queryClient.invalidateQueries({ queryKey: ["transactions"] });
 };
