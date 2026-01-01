@@ -197,6 +197,18 @@ const transformMovementToTransaction = async (movement: BarkMovement): Promise<T
   };
 };
 
+const shouldIncludeMovement = (movement: BarkMovement): boolean => {
+  if (movement.status === "failed") {
+    return false;
+  }
+
+  const hasAmount =
+    (movement.intended_balance_sat !== undefined && movement.intended_balance_sat !== 0) ||
+    (movement.effective_balance_sat !== undefined && movement.effective_balance_sat !== 0);
+
+  return hasAmount;
+};
+
 const fetchAndTransformTransactions = async (): Promise<Transaction[]> => {
   const movementsResult = await history();
 
@@ -205,7 +217,7 @@ const fetchAndTransformTransactions = async (): Promise<Transaction[]> => {
     throw movementsResult.error;
   }
 
-  const movements = movementsResult.value;
+  const movements = movementsResult.value.filter(shouldIncludeMovement);
 
   if (movements.length === 0) {
     return [];
