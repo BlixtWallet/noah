@@ -34,6 +34,7 @@ import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from ".
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 import { storeNativeMnemonic } from "noah-tools";
+import { useWalletStore } from "~/store/walletStore";
 
 const log = logger("walletApi");
 
@@ -147,6 +148,12 @@ const loadWalletFromStorage = async (): Promise<Result<boolean, Error>> => {
 };
 
 export const loadWalletIfNeeded = async (): Promise<Result<boolean, Error>> => {
+  const isWalletSuspended = useWalletStore.getState().isWalletSuspended;
+  if (isWalletSuspended) {
+    log.d("Wallet is suspended, skipping load");
+    return ok(false);
+  }
+
   const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
   if (isLoadedResult.isErr()) {
     return err(isLoadedResult.error);

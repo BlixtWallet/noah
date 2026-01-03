@@ -33,6 +33,7 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useBtcToUsdRate } from "~/hooks/useMarketData";
 import { useWalletStore } from "~/store/walletStore";
+import { PauseCircle } from "lucide-react-native";
 import { updateWidget, useWidget } from "~/hooks/useWidget";
 import { formatBip177 } from "~/lib/utils";
 import { calculateBalances } from "~/lib/balanceUtils";
@@ -42,7 +43,7 @@ const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const isFocused = useIsFocused();
   const iconColor = useIconColor();
-  const { walletError } = useWalletStore();
+  const { walletError, isWalletSuspended } = useWalletStore();
   const { safelyExecuteWhenReady, isBackgroundJobRunning } = useBackgroundJobCoordination();
   const { data: balance, refetch, error, isLoading: isBalanceLoading } = useBalance();
   const { isPending: isSyncPending } = useWalletSync();
@@ -110,6 +111,34 @@ const HomeScreen = () => {
 
   if (showCamera) {
     return <QRCodeScanner codeScanner={codeScanner} onClose={() => setShowCamera(false)} />;
+  }
+
+  if (isWalletSuspended) {
+    return (
+      <NoahSafeAreaView
+        className="flex-1 bg-background"
+        style={{
+          paddingBottom: PLATFORM === "ios" ? bottomTabBarHeight : 0,
+        }}
+      >
+        <View className="flex-1 items-center justify-center p-8">
+          <View className="bg-card rounded-2xl p-8 items-center max-w-[320px] border border-border">
+            <View className="w-20 h-20 rounded-full bg-destructive/10 items-center justify-center mb-6">
+              <PauseCircle size={48} color="#dc2626" />
+            </View>
+            <Text className="text-2xl font-bold text-foreground mb-3 text-center">
+              Wallet Suspended
+            </Text>
+            <Text className="text-base text-muted-foreground text-center leading-6">
+              Your wallet is currently suspended. All wallet operations are disabled.
+            </Text>
+            <Text className="text-sm text-muted-foreground text-center mt-4">
+              Go to Settings → Danger Zone to resume your wallet.
+            </Text>
+          </View>
+        </View>
+      </NoahSafeAreaView>
+    );
   }
 
   return (

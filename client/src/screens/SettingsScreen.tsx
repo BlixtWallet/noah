@@ -15,7 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import { useDeleteWallet } from "../hooks/useWallet";
+import { useDeleteWallet, useSuspendWallet } from "../hooks/useWallet";
 import { useExportDatabase } from "../hooks/useExportDatabase";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { copyToClipboard } from "../lib/clipboardUtils";
@@ -91,7 +91,9 @@ const SettingsScreen = () => {
     setBiometricsEnabled,
     isDebugModeEnabled,
     setDebugModeEnabled,
+    isWalletSuspended,
   } = useWalletStore();
+  const suspendWalletMutation = useSuspendWallet();
   const [versionTapCount, setVersionTapCount] = useState(0);
   const { lightningAddress, resetRegistration } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
@@ -491,6 +493,23 @@ const SettingsScreen = () => {
         {isInitialized && (
           <View className="mb-6">
             <Text className="text-lg font-bold text-destructive mb-2">Danger Zone</Text>
+
+            <View className="p-4 border-b border-border bg-card rounded-lg mb-4 flex-row justify-between items-center">
+              <View className="flex-1">
+                <Label className="text-foreground text-lg">Suspend Wallet</Label>
+                <Text className="text-base mt-1 text-muted-foreground">
+                  Disable all wallet operations. The wallet will be closed and won't load until
+                  re-enabled.
+                </Text>
+              </View>
+              <Switch
+                value={isWalletSuspended}
+                onValueChange={(value) => suspendWalletMutation.mutate(value)}
+                disabled={suspendWalletMutation.isPending}
+                trackColor={{ false: "#767577", true: "#dc2626" }}
+                thumbColor={isWalletSuspended ? "#ffffff" : "#f4f3f4"}
+              />
+            </View>
 
             <ConfirmationDialog
               trigger={

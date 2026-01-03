@@ -243,3 +243,38 @@ export function useRestoreWallet() {
     },
   });
 }
+
+export function useSuspendWallet() {
+  const { showAlert } = useAlert();
+  const { setWalletSuspended, setWalletLoaded } = useWalletStore();
+
+  return useMutation({
+    mutationFn: async (suspend: boolean) => {
+      if (suspend) {
+        const closeResult = await closeWalletIfLoaded();
+        if (closeResult.isErr()) {
+          throw closeResult.error;
+        }
+        setWalletSuspended(true);
+      } else {
+        setWalletSuspended(false);
+        const loadResult = await loadWalletAction();
+        if (loadResult.isErr()) {
+          throw loadResult.error;
+        }
+        if (loadResult.value) {
+          setWalletLoaded();
+        }
+      }
+    },
+    onError: (error: Error, suspend) => {
+      if (suspend) {
+        setWalletSuspended(false);
+      }
+      showAlert({
+        title: suspend ? "Failed to suspend wallet" : "Failed to resume wallet",
+        description: error.message,
+      });
+    },
+  });
+}

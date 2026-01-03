@@ -23,7 +23,7 @@ interface WalletLoaderProps {
  * `AppServices`.
  */
 const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
-  const { isInitialized, isWalletLoaded, walletError } = useWalletStore();
+  const { isInitialized, isWalletLoaded, walletError, isWalletSuspended } = useWalletStore();
   const { mutate: loadWallet, isPending: isWalletLoading } = useLoadWallet();
   const { mutate: closeWallet } = useCloseWallet();
   const { safelyExecuteWhenReady } = useBackgroundJobCoordination();
@@ -33,6 +33,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
   useEffect(() => {
     const checkAndLoadWallet = async () => {
       if (!isInitialized) return;
+      if (isWalletSuspended) return;
 
       await safelyExecuteWhenReady(async () => {
         const actuallyLoaded = await isWalletLoadedNitro();
@@ -56,7 +57,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     };
 
     checkAndLoadWallet();
-  }, [isInitialized, isWalletLoaded, loadWallet, safelyExecuteWhenReady]);
+  }, [isInitialized, isWalletLoaded, isWalletSuspended, loadWallet, safelyExecuteWhenReady]);
 
   // Additional effect to handle app initialization and wallet existence check
   useEffect(() => {
@@ -94,7 +95,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     };
   }, [closeWallet]);
 
-  if ((isWalletLoading || !isWalletLoaded) && !walletError) {
+  if ((isWalletLoading || !isWalletLoaded) && !walletError && !isWalletSuspended) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <NoahActivityIndicator size="large" />
