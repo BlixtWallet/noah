@@ -1,7 +1,7 @@
 import { Pressable, ScrollView, View, Switch, Image } from "react-native";
 import Constants from "expo-constants";
-import * as LocalAuthentication from "expo-local-authentication";
 import { useWalletStore } from "../store/walletStore";
+import { useBiometrics } from "../hooks/useBiometrics";
 import { ACTIVE_WALLET_CONFIG, PLATFORM, hasGooglePlayServices } from "../constants";
 import { useServerStore } from "../store/serverStore";
 import { useTransactionStore } from "../store/transactionStore";
@@ -87,12 +87,12 @@ const SettingsScreen = () => {
   const [copiedLightningAddress, setCopiedLightningAddress] = useState(false);
   const {
     isInitialized,
-    isBiometricsEnabled,
     setBiometricsEnabled,
     isDebugModeEnabled,
     setDebugModeEnabled,
     isWalletSuspended,
   } = useWalletStore();
+  const { authenticate, checkAvailability, isBiometricsEnabled } = useBiometrics();
   const suspendWalletMutation = useSuspendWallet();
   const [versionTapCount, setVersionTapCount] = useState(0);
   const { lightningAddress, resetRegistration } = useServerStore();
@@ -111,13 +111,12 @@ const SettingsScreen = () => {
     useNavigation<NativeStackNavigationProp<SettingsStackParamList & OnboardingStackParamList>>();
 
   useEffect(() => {
-    const checkBiometrics = async () => {
-      const compatible = await LocalAuthentication.hasHardwareAsync();
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-      setIsBiometricsAvailable(compatible && enrolled);
+    const check = async () => {
+      const { available } = await checkAvailability();
+      setIsBiometricsAvailable(available);
     };
-    checkBiometrics();
-  }, []);
+    check();
+  }, [checkAvailability]);
 
   const versionTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -142,16 +141,12 @@ const SettingsScreen = () => {
   };
 
   const handleBiometricsToggle = async (value: boolean) => {
-    if (value) {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Authenticate to enable biometrics",
-        disableDeviceFallback: false,
-      });
-      if (result.success) {
-        setBiometricsEnabled(true);
-      }
-    } else {
-      setBiometricsEnabled(false);
+    const promptMessage = value
+      ? "Authenticate to enable biometrics"
+      : "Authenticate to disable biometrics";
+    const result = await authenticate(promptMessage);
+    if (result.isOk()) {
+      setBiometricsEnabled(value);
     }
   };
 
@@ -464,7 +459,7 @@ const SettingsScreen = () => {
                 <View className="flex-1">
                   <Label className="text-foreground text-lg">Biometric Authentication</Label>
                   <Text className="text-base mt-1 text-muted-foreground">
-                    Require biometric authentication to view seed phrase
+                    Require biometric authentication to unlock your wallet
                   </Text>
                 </View>
                 <Switch

@@ -7,6 +7,7 @@ import { isWalletLoaded as isWalletLoadedNitro } from "react-native-nitro-ark";
 import { getMnemonic } from "../lib/crypto";
 import { NoahActivityIndicator } from "./ui/NoahActivityIndicator";
 import { useBackgroundJobCoordination } from "~/hooks/useBackgroundJobCoordination";
+import BiometricGate from "./BiometricGate";
 import logger from "../lib/log";
 
 const log = logger("WalletLoader");
@@ -104,7 +105,7 @@ const WalletLoader: React.FC<WalletLoaderProps> = ({ children }) => {
     );
   }
 
-  return <>{children}</>;
+  return <BiometricGate>{children}</BiometricGate>;
 };
 
 export default WalletLoader;

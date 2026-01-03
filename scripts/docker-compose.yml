@@ -119,6 +119,29 @@ services:
       bitcoind:
         condition: service_healthy
 
+  electrs:
+    image: mempool/electrs:latest
+    environment:
+      - RUST_BACKTRACE=1
+    command:
+      [
+        "--network=regtest",
+        "--daemon-rpc-addr=bitcoind:18443",
+        "--cookie=second:ark",
+        "--http-addr=0.0.0.0:3002",
+        "--electrum-rpc-addr=0.0.0.0:50001",
+        "--cors=*",
+        "-vvvv",
+      ]
+    volumes:
+      - bitcoind:/root/.bitcoin
+    ports:
+      - "3002:3002"
+      - "50001:50001"
+    depends_on:
+      bitcoind:
+        condition: service_healthy
+
   noah-server:
     build:
       context: ../

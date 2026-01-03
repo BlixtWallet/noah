@@ -12,8 +12,7 @@ import { Button } from "../components/ui/button";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useAlert } from "~/contexts/AlertProvider";
-import * as LocalAuthentication from "expo-local-authentication";
-import { useWalletStore } from "../store/walletStore";
+import { useBiometrics } from "../hooks/useBiometrics";
 
 import type { OnboardingStackParamList, SettingsStackParamList } from "../Navigators";
 import { Card, CardContent } from "../components/ui/card";
@@ -34,17 +33,13 @@ const MnemonicScreen = () => {
   const [mnemonic, setMnemonic] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { showAlert } = useAlert();
-  const { isBiometricsEnabled } = useWalletStore();
+  const { authenticateIfEnabled } = useBiometrics();
 
   useEffect(() => {
     const authenticate = async () => {
-      if (!fromOnboarding && isBiometricsEnabled) {
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: "Authenticate to view your seed phrase",
-          disableDeviceFallback: false,
-        });
-
-        if (!result.success) {
+      if (!fromOnboarding) {
+        const result = await authenticateIfEnabled("Authenticate to view your seed phrase");
+        if (result.isErr()) {
           showAlert({
             title: "Authentication Failed",
             description: "You must authenticate to view your seed phrase.",
@@ -57,7 +52,7 @@ const MnemonicScreen = () => {
       setIsAuthenticated(true);
     };
     authenticate();
-  }, [showAlert, navigation, fromOnboarding, isBiometricsEnabled]);
+  }, [showAlert, navigation, fromOnboarding, authenticateIfEnabled]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
