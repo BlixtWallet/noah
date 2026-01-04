@@ -262,7 +262,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.81.5)
   - hermes-engine/Pre-built (0.81.5)
   - MMKVCore (2.2.4)
-  - NitroArk (0.0.83):
+  - NitroArk (0.0.84):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -310,7 +310,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.31.10):
+  - NitroModules (0.32.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2976,9 +2976,9 @@ SPEC CHECKSUMS:
   FBLazyVector: e95a291ad2dadb88e42b06e0c5fb8262de53ec12
   hermes-engine: 8bb0bdb1bf49c3bbc17cf4c2d02dcc2f706ab555
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
-  NitroArk: 7ac0dc1f81791a60f06b2963be90418c1f599a5e
+  NitroArk: 94bc5e26cc5c5afa5f59db286e91b1616c48dd2b
   NitroMmkv: a7f267ea1359e25072960fc17f8b2c2e023d7bac
-  NitroModules: b7b51ba7f49acf5c4c13a56f2b0037b5f7bf55a7
+  NitroModules: 3eeda02fa77dc58a24b674283237c327d17e5050
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: 943572d4be82d480a48f4884f670135ae30bf990
   RCTRequired: 8f3cfc90cc25cf6e420ddb3e7caaaabc57df6043
