@@ -8,6 +8,9 @@
     "type": "modules",
     "jsSrcsDir": "src"
   },
+  "scripts": {
+    "nitrogen": "rm -rf nitrogen && bunx nitrogen"
+  },
   "author": " <> ()",
   "license": "UNLICENSED",
   "homepage": "#readme",

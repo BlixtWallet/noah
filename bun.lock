@@ -65,8 +65,8 @@
         "react-native-gesture-handler": "~2.28.0",
         "react-native-keychain": "^10.0.0",
         "react-native-mmkv": "^4.1.0",
-        "react-native-nitro-ark": "^0.0.83",
-        "react-native-nitro-modules": "^0.31.10",
+        "react-native-nitro-ark": "^0.0.84",
+        "react-native-nitro-modules": "^0.32.0",
         "react-native-qrcode-svg": "^6.3.21",
         "react-native-reanimated": "~4.1.6",
         "react-native-safe-area-context": "~5.6.2",
@@ -1728,9 +1728,9 @@
 
     "react-native-mmkv": ["react-native-mmkv@4.1.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-ia76WnU6dkLZxFkSSflxqFgHT2pIaML763aucEu7nMglF41oEWTdTtBu0o8a1cxbhZOaONk6KF8RQp5fLvPitA=="],
 
-    "react-native-nitro-ark": ["react-native-nitro-ark@0.0.83", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.31.10" } }, "sha512-IKWqnR6rI1Y36WEN5Nd6HxAAGF10sIB3Cz7INAbc5pca32VTxG8eW3j2MTYYhOWHdHeqc5M/rerQSZSudR4uZg=="],
+    "react-native-nitro-ark": ["react-native-nitro-ark@0.0.84", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.32.0" } }, "sha512-B6uveNp7djti8oaLO2BiES0pki8aQx59nGQzA5D7cwE8D3Ta7Hb+OxH0Fajpdy6BaXLE8gxcarwyZI/x+dU4Yg=="],
 
-    "react-native-nitro-modules": ["react-native-nitro-modules@0.31.10", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-hcvjTu9YJE9fMmnAUvhG8CxvYLpOuMQ/2eyi/S6GyrecezF6Rmk/uRQEL6v09BRFWA/xRVZNQVulQPS+2HS3mQ=="],
+    "react-native-nitro-modules": ["react-native-nitro-modules@0.32.0", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-nLDsmi/H9/cLcYxArYxcTDL641JiWnAH3u2LmsFETgyqSEHvukswDTdmX6AHBRIAwXu/iUDppZyjsaRpTG6WMg=="],
 
     "react-native-qrcode-svg": ["react-native-qrcode-svg@6.3.21", "", { "dependencies": { "prop-types": "^15.8.0", "qrcode": "^1.5.4", "text-encoding": "^0.7.0" }, "peerDependencies": { "react": "*", "react-native": ">=0.63.4", "react-native-svg": ">=14.0.0" } }, "sha512-6vcj4rcdpWedvphDR+NSJcudJykNuLgNGFwm2p4xYjR8RdyTzlrELKI5LkO4ANS9cQUbqsfkpippPv64Q2tUtA=="],
 
