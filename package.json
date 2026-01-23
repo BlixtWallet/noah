@@ -16,5 +16,8 @@
     "postinstall": "bun scripts/download_ark_binaries.js",
     "prepare": "husky",
     "check": "bun client check"
+  },
+  "patchedDependencies": {
+    "react-native-worklets-core@1.6.2": "patches/react-native-worklets-core@1.6.2.patch"
   }
 }
