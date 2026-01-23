@@ -7,7 +7,6 @@ const config: { expo: ExpoConfig } = {
     version: "0.0.5",
     orientation: "portrait",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
     experiments: {
       reactCompiler: true,
     },
