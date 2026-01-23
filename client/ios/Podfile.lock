@@ -384,7 +384,7 @@ PODS:
     - React-utils
     - ReactNativeDependencies
     - Yoga
-  - React-Core-prebuilt (0.81.5):
+  - React-Core-prebuilt (0.83.1):
     - ReactNativeDependencies
   - React-Core/CoreModulesHeaders (0.83.1):
     - hermes-engine
@@ -2696,9 +2696,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - SDWebImage (5.21.3):
-    - SDWebImage/Core (= 5.21.3)
-  - SDWebImage/Core (5.21.3)
+  - SDWebImage (5.21.5):
+    - SDWebImage/Core (= 5.21.5)
+  - SDWebImage/Core (5.21.5)
   - SDWebImageSVGCoder (1.8.0):
     - SDWebImage/Core (~> 5.6)
   - Sentry/HybridSDK (8.56.1)
@@ -3145,7 +3145,7 @@ SPEC CHECKSUMS:
   React: 4bc1f928568ad4bcfd147260f907b4ea5873a03b
   React-callinvoker: 8dd44c31888a314694efd0ef5f19ab7e0e855ef8
   React-Core: 0c1f3042e1204c0512b2e4263062c66550d7e6a3
-  React-Core-prebuilt: de0946cae6f691ce28922b0b3fe3926ef1985204
+  React-Core-prebuilt: 6a4f4185ae7c41008de6e026731e76100a4b39a3
   React-CoreModules: f6a626221d52f21b5eb8df2d79780b96f20240e5
   React-cxxreact: 2e3990595049d43dd1d59ccd6cb35545f0dc6f03
   React-debug: 60be0767f5672afc81bfd6a50d996507430f7906
@@ -3223,7 +3223,7 @@ SPEC CHECKSUMS:
   RNShare: 64e1957532c18a255341849f940fa684ace767da
   RNSVG: 81c64c70e69ce2a1180a2f7355cada5f8aee001c
   RNWorklets: 339959ef7522bca12b4dcbd4997619370cfe5cd5
-  SDWebImage: 16309af6d214ba3f77a7c6f6fdda888cb313a50a
+  SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
   Sentry: b3ec44d01708fce73f99b544beb57e890eca4406
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
