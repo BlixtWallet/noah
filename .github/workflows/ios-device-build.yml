@@ -42,7 +42,7 @@ jobs:
           echo "ipa_filename=noah-signet.ipa" >> $GITHUB_OUTPUT
 
       - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.set_outputs.outputs.artifact_name }}
           path: client/ios/build/ipa/noah-signet.ipa

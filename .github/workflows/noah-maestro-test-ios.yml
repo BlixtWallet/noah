@@ -139,7 +139,7 @@ jobs:
 
       - name: 📤 Store debug output if failed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: maestro-debug-output-ios
           path: client/maestro-debug-output/**/*

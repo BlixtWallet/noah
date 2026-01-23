@@ -129,7 +129,7 @@ jobs:
           fi
 
       - name: 📤 Upload Android APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.rename_apk.outputs.artifact_name }}
           path: ${{ steps.rename_apk.outputs.new_path }}
@@ -137,7 +137,7 @@ jobs:
 
       - name: 📤 Upload Android AAB
         if: ${{ inputs.build_aab && steps.aab_meta.outputs.new_path != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.aab_meta.outputs.aab_filename }}
           path: ${{ steps.aab_meta.outputs.new_path }}

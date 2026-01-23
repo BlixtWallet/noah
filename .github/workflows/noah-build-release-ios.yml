@@ -42,7 +42,7 @@ jobs:
           rm -rf ios-release.app
 
       - name: 📤 Upload iOS app artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.set_outputs.outputs.artifact_name }}
           path: ios-release-build/ios-release.zip
