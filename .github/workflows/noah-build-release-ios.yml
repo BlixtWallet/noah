@@ -35,8 +35,14 @@ jobs:
           echo "artifact_name=ios-release-app" >> $GITHUB_OUTPUT
           echo "app_filename=ios-release.app" >> $GITHUB_OUTPUT
 
+      - name: 🗜️ Compress iOS app
+        run: |
+          cd ios-release-build
+          zip -r -y ios-release.zip ios-release.app
+          rm -rf ios-release.app
+
       - name: 📤 Upload iOS app artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.set_outputs.outputs.artifact_name }}
-          path: ios-release-build/
+          path: ios-release-build/ios-release.zip

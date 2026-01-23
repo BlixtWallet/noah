@@ -36,6 +36,12 @@ jobs:
           name: ios-release-app
           path: ios-release-build/
 
+      - name: 🗜️ Decompress iOS app
+        run: |
+          cd ios-release-build
+          unzip ios-release.zip
+          rm ios-release.zip
+
       - name: 📦 Install Maestro
         run: |
           MAESTRO_VERSION=1.38.1
