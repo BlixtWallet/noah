@@ -246,7 +246,7 @@ PODS:
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
   - MMKVCore (2.2.4)
-  - NitroArk (0.0.84):
+  - NitroArk (0.0.85):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -269,7 +269,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroMmkv (4.1.0):
+  - NitroMmkv (4.1.1):
     - hermes-engine
     - MMKVCore (= 2.2.4)
     - NitroModules
@@ -294,7 +294,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.32.0):
+  - NitroModules (0.33.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1851,7 +1851,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-slider (5.1.1):
+  - react-native-slider (5.1.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1863,7 +1863,7 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-slider/common (= 5.1.1)
+    - react-native-slider/common (= 5.1.2)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -1874,7 +1874,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-slider/common (5.1.1):
+  - react-native-slider/common (5.1.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2625,7 +2625,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.7.1):
+  - RNWorklets (0.7.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2647,9 +2647,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets (= 0.7.1)
+    - RNWorklets/worklets (= 0.7.2)
     - Yoga
-  - RNWorklets/worklets (0.7.1):
+  - RNWorklets/worklets (0.7.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2671,9 +2671,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/worklets/apple (= 0.7.1)
+    - RNWorklets/worklets/apple (= 0.7.2)
     - Yoga
-  - RNWorklets/worklets/apple (0.7.1):
+  - RNWorklets/worklets/apple (0.7.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2749,7 +2749,6 @@ DEPENDENCIES:
   - EXUpdatesInterface (from `../../node_modules/expo-updates-interface/ios`)
   - FBLazyVector (from `../../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - MMKVCore
   - NitroArk (from `../../node_modules/react-native-nitro-ark`)
   - NitroMmkv (from `../../node_modules/react-native-mmkv`)
   - NitroModules (from `../../node_modules/react-native-nitro-modules`)
@@ -3134,9 +3133,9 @@ SPEC CHECKSUMS:
   FBLazyVector: 3a7ea85f6009224ad89f7daeda516f189e6b5759
   hermes-engine: 0e8d862b9f12a4a9030425abd44e790531070d40
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
-  NitroArk: 94bc5e26cc5c5afa5f59db286e91b1616c48dd2b
-  NitroMmkv: a7f267ea1359e25072960fc17f8b2c2e023d7bac
-  NitroModules: 3eeda02fa77dc58a24b674283237c327d17e5050
+  NitroArk: 3ba91e8a1641962d19af6d0c3613e9e79b01a272
+  NitroMmkv: 05ab95790c49b82d49ae1fbc737461c25d200968
+  NitroModules: 61a246a8e9ef0c478d6d97f0d95c6f5dcdfcca71
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: a93fe21ed2fd99e13bf3b011390d1e9769c83d23
   RCTRequired: 176145d35686c966863f268c0f938f58ae23dc78
@@ -3176,7 +3175,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 0294038bd92e2eb132975258e6ddc0a578a880ca
   react-native-bottom-tabs: 484fe90c49d4d7d547d15ae78f4de75492a395fa
   react-native-safe-area-context: 53f796cb6c814661bbe99fbdfd0585d07b996cdd
-  react-native-slider: 7814a1258f438c043f370eb82110ef036793e95a
+  react-native-slider: a4bbed2fba298dbcd09225b5f4a1e9baf2d04268
   react-native-vector-icons: f068b165e45f94b4e643b01512c363453fbd3b34
   react-native-vector-icons-ionicons: ad07e944a092a5cf71b8b569d8f5ce2bf674c415
   react-native-worklets-core: 5357708fd3915bf1c870a03ff969578c69bd3909
@@ -3223,7 +3222,7 @@ SPEC CHECKSUMS:
   RNSentry: bf366a415176cb6971a5adac37bbe66dfea272f3
   RNShare: 64e1957532c18a255341849f940fa684ace767da
   RNSVG: 81c64c70e69ce2a1180a2f7355cada5f8aee001c
-  RNWorklets: a889acf710533736ae821c4ba75fba40ce01b566
+  RNWorklets: 339959ef7522bca12b4dcbd4997619370cfe5cd5
   SDWebImage: 16309af6d214ba3f77a7c6f6fdda888cb313a50a
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
   Sentry: b3ec44d01708fce73f99b544beb57e890eca4406
@@ -3233,6 +3232,6 @@ SPEC CHECKSUMS:
   Yoga: 35d573dff66536d48493acb65a519482f8219fe8
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: eb465d6980cc5651168e87617e868fa9e2682313
+PODFILE CHECKSUM: 8db4febbec4310a47851c28950d99c5dc774a0ef
 
 COCOAPODS: 1.16.2
