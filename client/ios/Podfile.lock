@@ -294,7 +294,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.33.2):
+  - NitroModules (0.32.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2534,7 +2534,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSentry (7.2.0):
+  - RNSentry (7.10.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2556,7 +2556,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - Sentry/HybridSDK (= 8.56.1)
+    - Sentry/HybridSDK (= 8.58.0)
     - Yoga
   - RNShare (12.2.1):
     - hermes-engine
@@ -2701,7 +2701,7 @@ PODS:
   - SDWebImage/Core (5.21.5)
   - SDWebImageSVGCoder (1.8.0):
     - SDWebImage/Core (~> 5.6)
-  - Sentry/HybridSDK (8.56.1)
+  - Sentry/HybridSDK (8.58.0)
   - SwiftUIIntrospect (1.3.0)
   - UMAppLoader (55.0.1)
   - VisionCamera (4.7.3):
@@ -3135,7 +3135,7 @@ SPEC CHECKSUMS:
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   NitroArk: 3ba91e8a1641962d19af6d0c3613e9e79b01a272
   NitroMmkv: 05ab95790c49b82d49ae1fbc737461c25d200968
-  NitroModules: 61a246a8e9ef0c478d6d97f0d95c6f5dcdfcca71
+  NitroModules: 643c8b945d80bf572ca682069167bf9ce75ca24d
   NoahTools: efea1336628719c3ab4a565f3c03d2deeadd3d14
   RCTDeprecation: a93fe21ed2fd99e13bf3b011390d1e9769c83d23
   RCTRequired: 176145d35686c966863f268c0f938f58ae23dc78
@@ -3219,13 +3219,13 @@ SPEC CHECKSUMS:
   RNKeychain: 91be81cd32b30c7d4c2569dcad29b472d9b93982
   RNReanimated: bf781fa0ddb2c4321f5f4102d91defb9968f49de
   RNScreens: dea74a9106daf3cbed39de1f5ce7ff4f96c5c722
-  RNSentry: bf366a415176cb6971a5adac37bbe66dfea272f3
+  RNSentry: 8641e700117dd544813e90f7906ee7648b062aec
   RNShare: 64e1957532c18a255341849f940fa684ace767da
   RNSVG: 81c64c70e69ce2a1180a2f7355cada5f8aee001c
   RNWorklets: 339959ef7522bca12b4dcbd4997619370cfe5cd5
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   SDWebImageSVGCoder: 8e10c8f6cc879c7dfb317b284e13dd589379f01c
-  Sentry: b3ec44d01708fce73f99b544beb57e890eca4406
+  Sentry: d587a8fe91ca13503ecd69a1905f3e8a0fcf61be
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   UMAppLoader: 01ab0169ee43f5ca88f94b62b86c854e8bab85c5
   VisionCamera: 47f10351a1b6a8d251b90986ae72ca5f52331954
