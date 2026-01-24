@@ -26,6 +26,9 @@ on:
       aab_filename:
         description: "The filename of the AAB"
         value: ${{ jobs.android_build.outputs.aab_filename }}
+      run_id:
+        description: "The run ID for S3 artifact path"
+        value: ${{ jobs.android_build.outputs.run_id }}
 
 jobs:
   lint:
@@ -50,6 +53,7 @@ jobs:
       artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
       apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
       aab_filename: ${{ steps.aab_meta.outputs.aab_filename }}
+      run_id: ${{ github.run_id }}
     steps:
       - name: 🏗 Checkout code
         uses: actions/checkout@v4
@@ -128,20 +132,19 @@ jobs:
             echo "aab_filename=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: 📤 Upload Android APK
-        uses: actions/upload-artifact@v6
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: ${{ steps.rename_apk.outputs.artifact_name }}
-          path: ${{ steps.rename_apk.outputs.new_path }}
-          if-no-files-found: error
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
 
-      - name: 📤 Upload Android AAB
+      - name: 📤 Upload Android APK to S3
+        run: aws s3 cp ${{ steps.rename_apk.outputs.new_path }} s3://${{ secrets.AWS_S3_BUCKET }}/ci-artifacts/${{ github.run_id }}/${{ steps.rename_apk.outputs.apk_filename }}
+
+      - name: 📤 Upload Android AAB to S3
         if: ${{ inputs.build_aab && steps.aab_meta.outputs.new_path != '' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ steps.aab_meta.outputs.aab_filename }}
-          path: ${{ steps.aab_meta.outputs.new_path }}
-          if-no-files-found: error
+        run: aws s3 cp ${{ steps.aab_meta.outputs.new_path }} s3://${{ secrets.AWS_S3_BUCKET }}/ci-artifacts/${{ github.run_id }}/${{ steps.aab_meta.outputs.aab_filename }}
 
   client_gate:
     runs-on: ubuntu-latest
