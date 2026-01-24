@@ -17,4 +17,7 @@ config.resolver.extraNodeModules = {
   "~": projectRoot,
 };
 
+// Prevent "Nitro linked twice" error in monorepo by excluding duplicate copies
+config.resolver.blockList = [/node_modules\/.*\/node_modules\/react-native-nitro-modules\/.*/];
+
 module.exports = withNativeWind(config, { input: "./global.css" });

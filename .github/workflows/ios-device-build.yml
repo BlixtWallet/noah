@@ -9,6 +9,9 @@ on:
       ipa_filename:
         description: "The filename of the iOS IPA"
         value: ${{ jobs.build-device-ios.outputs.ipa_filename }}
+      run_id:
+        description: "The run ID for S3 artifact path"
+        value: ${{ jobs.build-device-ios.outputs.run_id }}
 
 jobs:
   build-device-ios:
@@ -17,6 +20,7 @@ jobs:
     outputs:
       artifact_name: ${{ steps.set_outputs.outputs.artifact_name }}
       ipa_filename: ${{ steps.set_outputs.outputs.ipa_filename }}
+      run_id: ${{ github.run_id }}
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -41,11 +45,15 @@ jobs:
           echo "artifact_name=ios-signet-ipa" >> $GITHUB_OUTPUT
           echo "ipa_filename=noah-signet.ipa" >> $GITHUB_OUTPUT
 
-      - name: 📤 Upload IPA artifact
-        uses: actions/upload-artifact@v4
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: ${{ steps.set_outputs.outputs.artifact_name }}
-          path: client/ios/build/ipa/noah-signet.ipa
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: 📤 Upload IPA to S3
+        run: aws s3 cp client/ios/build/ipa/noah-signet.ipa s3://${{ secrets.AWS_S3_BUCKET }}/ci-artifacts/${{ github.run_id }}/noah-signet.ipa
 
       - name: 🧹 Clean up build artifacts
         if: always()
