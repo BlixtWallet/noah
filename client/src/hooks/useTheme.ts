@@ -1,4 +1,4 @@
-import { useColorScheme } from "react-native";
+import { useUniwind } from "uniwind";
 
 export type ColorScheme = "light" | "dark";
 
@@ -27,8 +27,8 @@ const darkColors = {
 export type ThemeColors = typeof lightColors;
 
 export function useTheme() {
-  const systemColorScheme = useColorScheme();
-  const colorScheme: ColorScheme = systemColorScheme === "dark" ? "dark" : "light";
+  const { theme } = useUniwind();
+  const colorScheme: ColorScheme = theme === "dark" ? "dark" : "light";
   const isDark = colorScheme === "dark";
 
   const colors: ThemeColors = isDark ? darkColors : lightColors;

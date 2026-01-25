@@ -2,11 +2,12 @@ import "./global.css";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import React from "react";
+import React, { useEffect } from "react";
 import { AlertProvider } from "~/contexts/AlertProvider";
 import AppNavigation from "~/Navigators";
 import * as Sentry from "@sentry/react-native";
-import { useColorScheme, View } from "react-native";
+import { View } from "react-native";
+import { Uniwind } from "uniwind";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "~/queryClient";
@@ -29,11 +30,13 @@ if (!isDebugModeOrRegtest) {
 }
 
 const AppContent = () => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  useEffect(() => {
+    // Let Uniwind manage theme based on system preference
+    Uniwind.setTheme("system");
+  }, []);
 
   return (
-    <View className={`flex-1 ${isDark ? "dark" : ""}`}>
+    <View className="flex-1">
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
