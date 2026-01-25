@@ -4,9 +4,11 @@
     "strict": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
     }
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "uniwind-env.d.ts"]
 }

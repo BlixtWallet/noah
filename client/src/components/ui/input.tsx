@@ -1,14 +1,16 @@
 import * as React from "react";
 import { TextInput, type TextInputProps } from "react-native";
 import { cn } from "~/lib/utils";
+import { useCSSVariable } from "uniwind";
 
 function Input({
   className,
-  placeholderClassName,
   ...props
 }: TextInputProps & {
   ref?: React.RefObject<TextInput>;
 }) {
+  const mutedForeground = useCSSVariable("--color-muted-foreground");
+
   return (
     <TextInput
       className={cn(
@@ -16,7 +18,7 @@ function Input({
         props.editable === false && "opacity-50 web:cursor-not-allowed",
         className,
       )}
-      placeholderClassName={cn("text-muted-foreground", placeholderClassName)}
+      placeholderTextColor={mutedForeground as string}
       {...props}
     />
   );
