@@ -136,7 +136,7 @@
     "typescript-eslint": "^8.50.0"
   },
   "overrides": {
-      "react-native-worklets": "0.8.0-nightly-20260122-45349f895"
+    "react-native-worklets": "0.8.0-nightly-20260122-45349f895"
   },
   "private": true
 }
