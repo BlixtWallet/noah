@@ -22,5 +22,8 @@ config.resolver.blockList = [/node_modules\/.*\/node_modules\/react-native-nitro
 
 module.exports = withUniwindConfig(config, {
   cssEntryFile: "./global.css",
-  dtsFile: "./uniwind-env.d.ts"
+  dtsFile: "./uniwind-env.d.ts",
+  polyfills: {
+    rem: 14, // Match NativeWind's native default
+  },
 });
