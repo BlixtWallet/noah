@@ -1,10 +1,7 @@
 use crate::{
     AppState,
-    db::offboarding_repo::OffboardingRepository,
     notification_coordinator::{NotificationCoordinator, NotificationRequest},
-    types::{
-        MaintenanceNotification, NotificationData, OffboardingNotification, OffboardingStatus,
-    },
+    types::{MaintenanceNotification, NotificationData},
 };
 
 use bitcoin::hex::DisplayHex;
@@ -106,12 +103,6 @@ async fn establish_connection_and_process(
                 if let Some(round_event::Event::Attempt(event)) = round_event.event {
                     round_counter += 1;
 
-                    // Handle offboarding requests for every round
-                    let app_state_clone = app_state.clone();
-                    tokio::spawn(async move {
-                        let _ = handle_offboarding_requests(app_state_clone).await;
-                    });
-
                     // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
                     if round_counter >= maintenance_interval_rounds {
                         tracing::info!(
@@ -156,58 +147,5 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
         tracing::error!(service = "ark_client", job = "maintenance", error = %e, "notification failed");
     }
 
-    Ok(())
-}
-
-pub async fn handle_offboarding_requests(app_state: AppState) -> anyhow::Result<()> {
-    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
-
-    // Find all pending offboarding requests
-    let pending_requests = offboarding_repo.find_all_pending().await?;
-
-    // Create coordinator once for all offboarding requests
-    let coordinator = NotificationCoordinator::new(app_state.clone());
-
-    for request in pending_requests {
-        tracing::info!(
-            service = "ark_client",
-            job = "offboarding",
-            request_id = %request.request_id,
-            pubkey = %request.pubkey,
-            "processing request"
-        );
-
-        // Update status to processing
-        offboarding_repo
-            .update_status(&request.request_id, OffboardingStatus::Processing)
-            .await?;
-
-        // Send push notification for offboarding
-        let notification_data = NotificationData::Offboarding(OffboardingNotification {
-            k1: String::new(), // Will be replaced with unique k1 per device
-            offboarding_request_id: request.request_id.clone(),
-            address: request.address.clone(),
-            address_signature: request.address_signature.clone(),
-        });
-
-        let notification_request = NotificationRequest {
-            priority: Priority::High,
-            data: notification_data,
-            target_pubkey: Some(request.pubkey.clone()),
-        };
-
-        if let Err(e) = coordinator.send_notification(notification_request).await {
-            tracing::error!(service = "ark_client", job = "offboarding", request_id = %request.request_id, error = %e, "notification failed");
-            // Reset status to pending if failed
-            offboarding_repo
-                .update_status(&request.request_id, OffboardingStatus::Pending)
-                .await?;
-        } else {
-            // Mark as sent
-            offboarding_repo
-                .update_status(&request.request_id, OffboardingStatus::Sent)
-                .await?;
-        }
-    }
     Ok(())
 }

@@ -6,11 +6,10 @@ use tower::ServiceExt;
 
 use crate::db::backup_repo::BackupRepository;
 use crate::db::heartbeat_repo::HeartbeatRepository;
-use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
-use crate::types::{RegisterOffboardingResponse, UserInfoResponse};
+use crate::types::UserInfoResponse;
 use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
@@ -121,95 +120,6 @@ async fn test_update_ln_address() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
-async fn test_register_offboarding_request() {
-    let (app, app_state, _guard) = setup_test_app().await;
-    let user = TestUser::new();
-    create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .method(http::Method::POST)
-                .uri("/register_offboarding_request")
-                .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
-                .body(Body::from(
-                    json!({
-                        "address": "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
-                        "address_signature": "mock_signature_for_testing"
-                    })
-                    .to_string(),
-                ))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let res: RegisterOffboardingResponse = serde_json::from_slice(&body).unwrap();
-
-    assert!(res.success);
-    assert!(!res.request_id.is_empty());
-
-    // Verify the offboarding request was stored in the database
-    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
-    let request = offboarding_repo
-        .find_by_pubkey(&user.pubkey().to_string())
-        .await
-        .unwrap()
-        .unwrap();
-
-    assert_eq!(request.request_id, res.request_id);
-    assert_eq!(request.pubkey, user.pubkey().to_string());
-    assert_eq!(request.status, crate::types::OffboardingStatus::Pending);
-    assert_eq!(
-        request.address,
-        "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx"
-    );
-}
-
-#[tracing_test::traced_test]
-#[tokio::test]
-async fn test_register_offboarding_request_invalid_auth() {
-    let (app, app_state, _guard) = setup_test_app().await;
-    let user = TestUser::new();
-    create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let mut auth_payload = user.auth_payload(&k1);
-    auth_payload.sig = "invalid_signature".to_string();
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .method(http::Method::POST)
-                .uri("/register_offboarding_request")
-                .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-}
-
-#[tracing_test::traced_test]
-#[tokio::test]
 async fn test_deregister_user() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
@@ -233,17 +143,6 @@ async fn test_deregister_user() {
         .unwrap();
     backup_repo
         .upsert_settings(&user.pubkey().to_string(), true)
-        .await
-        .unwrap();
-
-    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
-    offboarding_repo
-        .create_request(
-            "test_request_id",
-            &user.pubkey().to_string(),
-            "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
-            "mock_signature_for_testing",
-        )
         .await
         .unwrap();
 
@@ -283,13 +182,6 @@ async fn test_deregister_user() {
         .await
         .unwrap();
     assert!(token.is_none(), "Push token should be deleted");
-
-    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
-    let request = offboarding_repo
-        .find_by_pubkey(&user.pubkey().to_string())
-        .await
-        .unwrap();
-    assert!(request.is_none(), "Offboarding request should be deleted");
 
     // 4. Verify data is NOT deleted from other tables
     let user_repo = UserRepository::new(&app_state.db_pool);

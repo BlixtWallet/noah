@@ -5,7 +5,7 @@ import * as TaskManager from "expo-task-manager";
 import Constants from "expo-constants";
 import logger from "~/lib/log";
 import { captureException } from "@sentry/react-native";
-import { offboardTask, submitInvoiceTask, triggerBackupTask, maintenanceTask } from "./tasks";
+import { submitInvoiceTask, triggerBackupTask, maintenanceTask } from "./tasks";
 import { registerPushToken, reportJobStatus, heartbeatResponse } from "~/lib/api";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import { NotificationData, ReportType } from "~/types/serverTypes";
@@ -170,17 +170,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               const result = await triggerBackupTask();
               await handleTaskCompletion("backup", result, notificationData.k1);
               log.d("Backup task completed");
-              break;
-            }
-
-            case "offboarding": {
-              const result = await offboardTask(
-                notificationData.offboarding_request_id,
-                notificationData.address,
-                notificationData.address_signature,
-              );
-              await handleTaskCompletion("offboarding", result, notificationData.k1);
-              log.d("Offboarding task completed");
               break;
             }
 

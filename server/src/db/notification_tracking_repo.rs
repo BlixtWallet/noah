@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::types::{NotificationData, OffboardingStatus};
+use crate::types::NotificationData;
 
 /// Repository for tracking when notifications were sent to users.
 ///
@@ -132,21 +132,5 @@ impl<'a> NotificationTrackingRepository<'a> {
         .flatten();
 
         Ok(last_sent)
-    }
-
-    /// Check if a user is currently in offboarding status (has pending or processing offboarding)
-    pub async fn is_user_offboarding(&self, pubkey: &str) -> Result<bool> {
-        let count = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) as count
-             FROM offboarding_requests
-             WHERE pubkey = $1 AND status IN ($2, $3)",
-        )
-        .bind(pubkey)
-        .bind(OffboardingStatus::Pending.to_string())
-        .bind(OffboardingStatus::Processing.to_string())
-        .fetch_one(self.pool)
-        .await?;
-
-        Ok(count > 0)
     }
 }

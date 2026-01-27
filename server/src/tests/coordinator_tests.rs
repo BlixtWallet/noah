@@ -1,11 +1,9 @@
 use crate::db::notification_tracking_repo::NotificationTrackingRepository;
-use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::user_repo::UserRepository;
 use crate::notification_coordinator::{NotificationCoordinator, NotificationRequest};
 use crate::tests::common::{TestUser, setup_test_app};
 use crate::types::{
     BackupTriggerNotification, HeartbeatNotification, MaintenanceNotification, NotificationData,
-    OffboardingStatus,
 };
 use chrono::{Duration, Utc};
 use expo_push_notification_client::Priority;
@@ -116,54 +114,6 @@ async fn test_critical_priority_bypasses_spacing() {
     assert!(
         last_time.is_some(),
         "Critical notification should be tracked"
-    );
-}
-
-#[tracing_test::traced_test]
-#[tokio::test]
-async fn test_offboarding_skips_maintenance() {
-    let (_, app_state, _guard) = setup_test_app().await;
-    let user = TestUser::new();
-    let pubkey = user.pubkey().to_string();
-
-    // Register user
-    let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, "user3@test.com", None)
-        .await
-        .unwrap();
-    tx.commit().await.unwrap();
-
-    // Create pending offboarding request
-    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
-    offboarding_repo
-        .create_request("test-request-id", &pubkey, "bc1qtest", "test-signature")
-        .await
-        .unwrap();
-
-    // Try to send maintenance notification
-    let coordinator = NotificationCoordinator::new(app_state.clone());
-    let notification_data =
-        NotificationData::Maintenance(MaintenanceNotification { k1: String::new() });
-
-    let request = NotificationRequest {
-        priority: Priority::High,
-        data: notification_data.clone(),
-        target_pubkey: Some(pubkey.clone()),
-    };
-
-    // Should succeed (no error) but not send to offboarding user
-    let result = coordinator.send_notification(request).await;
-    assert!(result.is_ok());
-
-    // Verify maintenance was NOT tracked for offboarding user
-    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
-    let last_time = tracking_repo
-        .get_last_notification_time_by_type(&pubkey, &notification_data)
-        .await
-        .unwrap();
-    assert!(
-        last_time.is_none(),
-        "Maintenance should not be sent to offboarding users"
     );
 }
 
@@ -407,66 +357,4 @@ async fn test_spacing_configuration_from_config() {
         .await
         .unwrap();
     assert!(can_send, "Should be able to send at 45 minute boundary");
-}
-
-#[tracing_test::traced_test]
-#[tokio::test]
-async fn test_offboarding_with_processing_status_skips_maintenance() {
-    let (_, app_state, _guard) = setup_test_app().await;
-    let user = TestUser::new();
-    let pubkey = user.pubkey().to_string();
-
-    // Register user
-    let mut tx = app_state.db_pool.begin().await.unwrap();
-    UserRepository::create(&mut tx, &pubkey, "user11@test.com", None)
-        .await
-        .unwrap();
-    tx.commit().await.unwrap();
-
-    // Create offboarding request in "processing" state
-    let offboarding_repo = OffboardingRepository::new(&app_state.db_pool);
-    offboarding_repo
-        .create_request(
-            "processing-request-id",
-            &pubkey,
-            "bc1qtest",
-            "test-signature",
-        )
-        .await
-        .unwrap();
-    offboarding_repo
-        .update_status("processing-request-id", OffboardingStatus::Processing)
-        .await
-        .unwrap();
-
-    // Verify user is considered offboarding
-    let tracking_repo = NotificationTrackingRepository::new(&app_state.db_pool);
-    let is_offboarding = tracking_repo.is_user_offboarding(&pubkey).await.unwrap();
-    assert!(
-        is_offboarding,
-        "User with processing status should be offboarding"
-    );
-
-    // Try to send maintenance notification
-    let coordinator = NotificationCoordinator::new(app_state.clone());
-    let notification_data =
-        NotificationData::Maintenance(MaintenanceNotification { k1: String::new() });
-
-    let request = NotificationRequest {
-        priority: Priority::High,
-        data: notification_data.clone(),
-        target_pubkey: Some(pubkey.clone()),
-    };
-
-    coordinator.send_notification(request).await.unwrap();
-
-    // Verify maintenance was NOT sent
-    let last_time = tracking_repo
-        .get_last_notification_time_by_type(&pubkey, &notification_data)
-        .await
-        .unwrap();
-    assert!(
-        last_time.is_none(),
-        "Maintenance should not be sent to processing offboarding users"
-    );
 }

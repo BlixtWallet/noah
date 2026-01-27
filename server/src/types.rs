@@ -156,7 +156,6 @@ pub struct BackupSettingsPayload {
 pub enum ReportType {
     Maintenance,
     Backup,
-    Offboarding,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -165,36 +164,6 @@ pub enum ReportType {
 pub enum ReportStatus {
     Success,
     Failure,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OffboardingStatus {
-    Pending,
-    Processing,
-    Sent,
-}
-
-impl std::fmt::Display for OffboardingStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            OffboardingStatus::Pending => write!(f, "pending"),
-            OffboardingStatus::Processing => write!(f, "processing"),
-            OffboardingStatus::Sent => write!(f, "sent"),
-        }
-    }
-}
-
-impl std::str::FromStr for OffboardingStatus {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "pending" => Ok(OffboardingStatus::Pending),
-            "processing" => Ok(OffboardingStatus::Processing),
-            "sent" => Ok(OffboardingStatus::Sent),
-            _ => Err(anyhow::anyhow!("Invalid offboarding status: {}", s)),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -247,15 +216,6 @@ pub struct BackupTriggerNotification {
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct OffboardingNotification {
-    pub k1: String,
-    pub offboarding_request_id: String,
-    pub address: String,
-    pub address_signature: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, TS, Clone)]
-#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct HeartbeatNotification {
     pub k1: String,
     pub notification_id: String,
@@ -269,7 +229,6 @@ pub enum NotificationData {
     Maintenance(MaintenanceNotification),
     LightningInvoiceRequest(LightningInvoiceRequestNotification),
     BackupTrigger(BackupTriggerNotification),
-    Offboarding(OffboardingNotification),
     Heartbeat(HeartbeatNotification),
 }
 
@@ -293,7 +252,6 @@ impl NotificationData {
             NotificationData::Maintenance(_) => "maintenance",
             NotificationData::LightningInvoiceRequest(_) => "lightning_invoice_request",
             NotificationData::BackupTrigger(_) => "backup_trigger",
-            NotificationData::Offboarding(_) => "offboarding",
             NotificationData::Heartbeat(_) => "heartbeat",
         }
     }
@@ -304,7 +262,6 @@ impl NotificationData {
             self,
             NotificationData::Maintenance(_)
                 | NotificationData::BackupTrigger(_)
-                | NotificationData::Offboarding(_)
                 | NotificationData::Heartbeat(_)
         )
     }
@@ -314,7 +271,6 @@ impl NotificationData {
         match self {
             NotificationData::Maintenance(n) => n.k1 = k1,
             NotificationData::BackupTrigger(n) => n.k1 = k1,
-            NotificationData::Offboarding(n) => n.k1 = k1,
             NotificationData::Heartbeat(n) => n.k1 = k1,
             NotificationData::LightningInvoiceRequest(n) => n.k1 = k1,
         }
@@ -339,20 +295,6 @@ pub struct ReportJobStatusPayload {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct DefaultSuccessPayload {
     pub success: bool,
-}
-
-#[derive(Serialize, Deserialize, TS, Validate)]
-#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct RegisterOffboardingRequestPayload {
-    pub address: String,
-    pub address_signature: String,
-}
-
-#[derive(Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct RegisterOffboardingResponse {
-    pub success: bool,
-    pub request_id: String,
 }
 
 #[derive(Serialize, Deserialize, TS)]

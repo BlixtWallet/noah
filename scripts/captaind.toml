@@ -1,13 +1,20 @@
+
 data_dir = "/data/captaind"
 network = "regtest"
 vtxo_lifetime = 480
 min_board_amount = "20000 sat"
 vtxo_exit_delta = 12
+# The maximum number of outputs per input of an arkoor tx
+max_arkoor_fanout = 4
+
 max_arkoor_depth = 5
 required_board_confirmations = 1
 round_tx_untrusted_input_confirmations = 2
 rpc_rich_errors = true
 txindex_check_interval = "30s"
+# The interval at which the SyncManager polls for new blocks
+sync_manager_block_poll_interval = "100ms"
+
 forfeit_watcher_min_balance = "1 btc"
 transaction_rebroadcast_interval = "1m"
 otel_deployment_name = "my_regtest"
@@ -30,8 +37,25 @@ round_sign_time = "2s"
 # This effectively caps the maximum number of leaf VTXOs in a round.
 nb_round_nonces = 64
 
-# The feerate we set for round funding transactions
-round_tx_feerate = "2500sat/kwu"
+# The duration after which to drop forfeit nonces
+round_forfeit_nonces_timeout = "30s"
+
+
+#############
+# OFFBOARDS #
+#############
+
+# The feerate we set for offboard transactions
+offboard_feerate = "7sat/vb"
+
+# The number of bytes we charge fixed for each offboard
+#
+# This is multiplied with the offboard feerate.
+# A single 2-in-2-out taproot keyspend tx is 846 or 212 vb.
+offboard_fixed_fee_vb = 212
+
+# The time after which we drop offboard sessions and release locked VTXOs
+offboard_session_timeout = "30s"
 
 #############
 # LIGHTNING #
@@ -114,10 +138,10 @@ priority = 1
 server_cert_path = "/data/cln/regtest/ca.pem"
 client_cert_path = "/data/cln/regtest/client.pem"
 client_key_path = "/data/cln/regtest/client-key.pem"
-hodl_invoice.uri = "https://cln:9988"
-hodl_invoice.server_cert_path = "/data/cln/regtest/hold/ca.pem"
-hodl_invoice.client_cert_path = "/data/cln/regtest/hold/client.pem"
-hodl_invoice.client_key_path = "/data/cln/regtest/hold/client-key.pem"
+hold_invoice.uri = "https://cln:9988"
+hold_invoice.server_cert_path = "/data/cln/regtest/hold/ca.pem"
+hold_invoice.client_cert_path = "/data/cln/regtest/hold/client.pem"
+hold_invoice.client_key_path = "/data/cln/regtest/hold/client-key.pem"
 
 [forfeit_watcher]
 enabled = true
@@ -129,7 +153,7 @@ wake_interval = "1m"
 [vtxopool]
 # The target set of VTXOs to maintain in the pool
 # Format: "<amount>:<count>", f.e. "1000sat:50"
-vtxo_targets = [ "1000sat:10", "10000sat:10" ]
+vtxo_targets = ["1000sat:10", "10000sat:10"]
 # At what % of the target should new VTXOs be issued
 #
 # Once one of the target amounts falls below target, all amounts
@@ -145,3 +169,17 @@ vtxo_max_arkoor_depth = 3
 issue_tx_fallback_feerate = "250sat/kwu"
 # The interval at which to check if an issuance should be made
 issue_interval = "1m"
+
+#################
+# FEE ESTIMATOR #
+#################
+
+[fee_estimator]
+# Interval to update fee estimates from bitcoind
+update_interval = "1m"
+# Fallback feerate for fast confirmation (1 block target)
+fallback_fee_rate_fast = "25sat/vb"
+# Fallback feerate for regular confirmation (3 block target)
+fallback_fee_rate_regular = "10sat/vb"
+# Fallback feerate for slow confirmation (6 block target)
+fallback_fee_rate_slow = "4sat/vb"

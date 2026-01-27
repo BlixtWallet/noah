@@ -2,7 +2,7 @@ use crate::{
     AppState,
     db::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
-        offboarding_repo::OffboardingRepository, push_token_repo::PushTokenRepository,
+        push_token_repo::PushTokenRepository,
     },
     notification_coordinator::{NotificationCoordinator, NotificationRequest},
     types::{BackupTriggerNotification, HeartbeatNotification, NotificationData},
@@ -105,11 +105,6 @@ pub async fn check_and_deregister_inactive_users(app_state: AppState) -> anyhow:
 
         if let Err(e) = PushTokenRepository::delete_by_pubkey(&mut tx, &pubkey).await {
             tracing::error!(job = "deregister_inactive", pubkey = %pubkey, step = "push_token", error = %e, "delete failed");
-            continue;
-        }
-
-        if let Err(e) = OffboardingRepository::delete_by_pubkey(&mut tx, &pubkey).await {
-            tracing::error!(job = "deregister_inactive", pubkey = %pubkey, step = "offboarding", error = %e, "delete failed");
             continue;
         }
 
