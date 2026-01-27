@@ -47,13 +47,7 @@ export type LightningInvoiceRequestNotification = { k1: string, transaction_id: 
 
 export type MaintenanceNotification = { k1: string, };
 
-export type NotificationData = { "notification_type": "maintenance" } & MaintenanceNotification | { "notification_type": "lightning_invoice_request" } & LightningInvoiceRequestNotification | { "notification_type": "backup_trigger" } & BackupTriggerNotification | { "notification_type": "offboarding" } & OffboardingNotification | { "notification_type": "heartbeat" } & HeartbeatNotification;
-
-export type OffboardingNotification = { k1: string, offboarding_request_id: string, address: string, address_signature: string, };
-
-export type RegisterOffboardingRequestPayload = { address: string, address_signature: string, };
-
-export type RegisterOffboardingResponse = { success: boolean, request_id: string, };
+export type NotificationData = { "notification_type": "maintenance" } & MaintenanceNotification | { "notification_type": "lightning_invoice_request" } & LightningInvoiceRequestNotification | { "notification_type": "backup_trigger" } & BackupTriggerNotification | { "notification_type": "heartbeat" } & HeartbeatNotification;
 
 /**
  * Defines the payload for a user registration request.
@@ -110,7 +104,7 @@ export type ReportJobStatusPayload = { report_type: ReportType, status: ReportSt
 
 export type ReportStatus = "success" | "failure";
 
-export type ReportType = "maintenance" | "backup" | "offboarding";
+export type ReportType = "maintenance" | "backup";
 
 /**
  * Defines the payload for requesting an email verification code.

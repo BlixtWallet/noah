@@ -94,7 +94,7 @@ impl NotificationCoordinator {
         tracking_repo: &NotificationTrackingRepository<'_>,
     ) -> Result<()> {
         let eligible_users = if request.priority == Priority::High {
-            // `Priority::High` is used for critical notifications that can go to all users (but still respect offboarding rules)
+            // `Priority::High` is used for critical notifications that go to all users
             self.get_all_users().await?
         } else {
             // Normal notifications respect spacing
@@ -122,7 +122,7 @@ impl NotificationCoordinator {
 
         for pubkey in eligible_users {
             // For Normal priority, users are already filtered by get_eligible_users()
-            // For Critical priority, we still need to check offboarding status
+            // For High priority, we need to check individually (e.g., spacing rules)
             let should_send = if request.priority == Priority::High {
                 self.should_send_to_user(&pubkey, request, tracking_repo)
                     .await?
@@ -171,19 +171,7 @@ impl NotificationCoordinator {
         request: &NotificationRequest,
         tracking_repo: &NotificationTrackingRepository<'_>,
     ) -> Result<bool> {
-        // Check if user is offboarding
-        let is_offboarding = tracking_repo.is_user_offboarding(pubkey).await?;
-
-        // Special rule: Don't send maintenance to offboarding users
-        if is_offboarding && request.data.notification_type() == "maintenance" {
-            debug!(
-                "Skipping maintenance notification for offboarding user: {}",
-                pubkey
-            );
-            return Ok(false);
-        }
-
-        // `Priority::High` notifications bypass spacing checks (except maintenance for offboarding)
+        // `Priority::High` notifications bypass spacing checks
         if request.priority == Priority::High {
             return Ok(true);
         }

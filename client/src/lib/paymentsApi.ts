@@ -23,7 +23,6 @@ import {
   BarkMovement,
   Bolt11Invoice,
   BoardResult,
-  RoundStatus,
   LightningReceive,
 } from "react-native-nitro-ark";
 import { Result, ResultAsync } from "neverthrow";
@@ -90,7 +89,7 @@ export const boardAllArk = async (): Promise<Result<BoardResult, Error>> => {
   });
 };
 
-export const offboardAllArk = async (address: string): Promise<Result<RoundStatus, Error>> => {
+export const offboardAllArk = async (address: string): Promise<Result<string, Error>> => {
   return ResultAsync.fromPromise(offboardAllNitro(address), (error) => {
     const e = new Error(
       `Failed to offboard funds: ${error instanceof Error ? error.message : String(error)}`,

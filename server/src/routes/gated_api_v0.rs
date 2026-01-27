@@ -1,7 +1,6 @@
 use crate::db::backup_repo::BackupRepository;
 use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::db::job_status_repo::JobStatusRepository;
-use crate::db::offboarding_repo::OffboardingRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
 use crate::wide_event::WideEventHandle;
@@ -10,8 +9,7 @@ use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
     DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, HeartbeatResponsePayload,
-    RegisterOffboardingRequestPayload, RegisterOffboardingResponse, ReportJobStatusPayload,
-    SubmitInvoicePayload, UserInfoResponse,
+    ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -22,7 +20,6 @@ use crate::{
     },
 };
 use axum::{Extension, Json, extract::State};
-use uuid::Uuid;
 use validator::Validate;
 
 /// Registers a push notification token for a user.
@@ -298,44 +295,6 @@ pub async fn update_backup_settings(
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
 
-pub async fn register_offboarding_request(
-    State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
-    event: Option<Extension<WideEventHandle>>,
-    Json(payload): Json<RegisterOffboardingRequestPayload>,
-) -> anyhow::Result<Json<RegisterOffboardingResponse>, ApiError> {
-    if let Err(e) = payload.validate() {
-        return Err(ApiError::InvalidArgument(e.to_string()));
-    }
-
-    if payload.address.is_empty() {
-        return Err(ApiError::InvalidArgument(
-            "Address cannot be empty".to_string(),
-        ));
-    }
-
-    let request_id = Uuid::new_v4().to_string();
-
-    if let Some(Extension(event)) = event {
-        event.add_context("offboarding_request_id", &request_id);
-    }
-
-    let offboarding_repo = OffboardingRepository::new(&state.db_pool);
-    offboarding_repo
-        .create_request(
-            &request_id,
-            &auth_payload.key,
-            &payload.address,
-            &payload.address_signature,
-        )
-        .await?;
-
-    Ok(Json(RegisterOffboardingResponse {
-        success: true,
-        request_id,
-    }))
-}
-
 pub async fn deregister(
     State(state): State<AppState>,
     Extension(auth_payload): Extension<AuthPayload>,
@@ -351,7 +310,6 @@ pub async fn deregister(
     let mut tx = state.db_pool.begin().await?;
 
     PushTokenRepository::delete_by_pubkey(&mut tx, &pubkey).await?;
-    OffboardingRepository::delete_by_pubkey(&mut tx, &pubkey).await?;
     HeartbeatRepository::delete_by_pubkey_tx(&mut tx, &pubkey).await?;
 
     tx.commit().await?;

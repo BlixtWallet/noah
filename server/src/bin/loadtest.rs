@@ -59,12 +59,6 @@ struct ReportJobStatusPayload {
     error_message: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct RegisterOffboardingPayload {
-    address: String,
-    address_signature: String,
-}
-
 struct TestUser {
     keypair: bitcoin::key::Keypair,
     secp: bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All>,
@@ -404,45 +398,6 @@ async fn loadtest_report_job_status(user: &mut GooseUser) -> TransactionResult {
     Ok(())
 }
 
-// Register + register offboarding request (DB write + write)
-async fn loadtest_register_offboarding(user: &mut GooseUser) -> TransactionResult {
-    let test_user = TestUser::new_random();
-
-    if register_test_user(user, &test_user, "offboard")
-        .await
-        .is_none()
-    {
-        return Ok(());
-    }
-
-    let (k1, sig) = match get_k1_and_sign(user, &test_user, "offboard_register").await {
-        Some(v) => v,
-        None => return Ok(()),
-    };
-
-    let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
-    let payload = RegisterOffboardingPayload {
-        address: format!("bc1qloadtest{}", user_num),
-        address_signature: format!("sig_{}", user_num),
-    };
-
-    let request_builder = user
-        .get_request_builder(&GooseMethod::Post, "/v0/register_offboarding_request")?
-        .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1)
-        .body(serde_json::to_string(&payload).unwrap());
-
-    let goose_request = GooseRequest::builder()
-        .set_request_builder(request_builder)
-        .name("register_offboarding")
-        .build();
-
-    let _response = user.request(goose_request).await?;
-    Ok(())
-}
-
 fn build_public_scenario() -> Scenario {
     scenario!("Public Endpoints")
         .register_transaction(transaction!(loadtest_get_k1).set_weight(3).unwrap())
@@ -492,11 +447,6 @@ fn build_db_stress_scenario() -> Scenario {
         .register_transaction(
             transaction!(loadtest_report_job_status)
                 .set_weight(2)
-                .unwrap(),
-        )
-        .register_transaction(
-            transaction!(loadtest_register_offboarding)
-                .set_weight(1)
                 .unwrap(),
         )
         .register_transaction(transaction!(loadtest_lnurlp_request).set_weight(3).unwrap())
