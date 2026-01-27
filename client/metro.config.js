@@ -1,5 +1,5 @@
 const path = require("path");
-const { withNativeWind } = require("nativewind/metro");
+const { withUniwindConfig } = require("uniwind/metro");
 const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 
 const projectRoot = __dirname;
@@ -20,4 +20,10 @@ config.resolver.extraNodeModules = {
 // Prevent "Nitro linked twice" error in monorepo by excluding duplicate copies
 config.resolver.blockList = [/node_modules\/.*\/node_modules\/react-native-nitro-modules\/.*/];
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = withUniwindConfig(config, {
+  cssEntryFile: "./global.css",
+  dtsFile: "./uniwind-env.d.ts",
+  polyfills: {
+    rem: 14, // Match NativeWind's native default
+  },
+});

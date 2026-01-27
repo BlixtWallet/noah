@@ -71,10 +71,10 @@ ios-prebuild:
     bun run ios:prebuild
 
 # Clean commands
-clean-android:
+android-clean:
     bun run android:clean
 
-clean-ios:
+ios-clean:
     bun run ios:clean
 
 clean-all:

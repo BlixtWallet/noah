@@ -8,8 +8,9 @@ import {
 import { createNativeBottomTabNavigator } from "@bottom-tabs/react-navigation";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Icon from "@react-native-vector-icons/ionicons";
-import { Platform, View, Text, AppState, ImageSourcePropType, useColorScheme } from "react-native";
+import { Platform, View, Text, AppState, ImageSourcePropType } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useUniwind } from "uniwind";
 import { NoahActivityIndicator } from "~/components/ui/NoahActivityIndicator";
 
 import HomeScreen from "~/screens/HomeScreen";
@@ -402,8 +403,8 @@ const AppNavigation = () => {
   const iconsPreloadedRef = useRef(false);
   const log = logger("AppNavigation");
   const themedColors = useThemeColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { theme } = useUniwind();
+  const isDark = theme === "dark";
   const navigationTheme = isDark ? DarkTheme : DefaultTheme;
   const statusBarStyle = isDark ? "light" : "dark";
 

@@ -1,0 +1,58 @@
+diff --git a/build/platforms/apple/apple.js b/build/platforms/apple/apple.js
+--- a/build/platforms/apple/apple.js
++++ b/build/platforms/apple/apple.js
+@@ -116,7 +116,7 @@
+  * but only these that are written in Swift and use the new API for creating Expo modules.
+  */
+ 
+-@_implementationOnly import ExpoModulesCore
++internal import ExpoModulesCore
+ ${generateCommonImportList(swiftModules)}
+ ${generateDebugOnlyImportList(debugOnlySwiftModules)}
+ @objc(${className})
+@@ -140,13 +140,13 @@
+ `;
+ }
+ function generateCommonImportList(swiftModules) {
+-    return swiftModules.map((moduleName) => `@_implementationOnly import ${moduleName}`).join('\n');
++    return swiftModules.map((moduleName) => `internal import ${moduleName}`).join('\n');
+ }
+ function generateDebugOnlyImportList(swiftModules) {
+     if (!swiftModules.length) {
+         return '';
+     }
+-    return (wrapInDebugConfigurationCheck(0, swiftModules.map((moduleName) => `@_implementationOnly import ${moduleName}`).join('\n')) + '\n');
++    return (wrapInDebugConfigurationCheck(0, swiftModules.map((moduleName) => `internal import ${moduleName}`).join('\n')) + '\n');
+ }
+ function generateModuleClasses(modules, debugOnlyModules) {
+     const commonClassNames = formatArrayOfModuleTuples(modules);
+diff --git a/src/platforms/apple/apple.ts b/src/platforms/apple/apple.ts
+--- a/src/platforms/apple/apple.ts
++++ b/src/platforms/apple/apple.ts
+@@ -167,7 +167,7 @@
+  * but only these that are written in Swift and use the new API for creating Expo modules.
+  */
+ 
+-@_implementationOnly import ExpoModulesCore
++internal import ExpoModulesCore
+ ${generateCommonImportList(swiftModules)}
+ ${generateDebugOnlyImportList(debugOnlySwiftModules)}
+ @objc(${className})
+@@ -192,7 +192,7 @@
+ }
+ 
+ function generateCommonImportList(swiftModules: string[]): string {
+-  return swiftModules.map((moduleName) => `@_implementationOnly import ${moduleName}`).join('\n');
++  return swiftModules.map((moduleName) => `internal import ${moduleName}`).join('\n');
+ }
+ 
+ function generateDebugOnlyImportList(swiftModules: string[]): string {
+@@ -203,7 +203,7 @@
+   return (
+     wrapInDebugConfigurationCheck(
+       0,
+-      swiftModules.map((moduleName) => `@_implementationOnly import ${moduleName}`).join('\n')
++      swiftModules.map((moduleName) => `internal import ${moduleName}`).join('\n')
+     ) + '\n'
+   );
+ }
