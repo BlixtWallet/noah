@@ -2558,7 +2558,7 @@ PODS:
     - ReactNativeDependencies
     - Sentry/HybridSDK (= 8.58.0)
     - Yoga
-  - RNShare (12.2.1):
+  - RNShare (12.2.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3220,7 +3220,7 @@ SPEC CHECKSUMS:
   RNReanimated: bf781fa0ddb2c4321f5f4102d91defb9968f49de
   RNScreens: dea74a9106daf3cbed39de1f5ce7ff4f96c5c722
   RNSentry: 8641e700117dd544813e90f7906ee7648b062aec
-  RNShare: 64e1957532c18a255341849f940fa684ace767da
+  RNShare: a7c655ac541bdee567832880e187eb4a974234a2
   RNSVG: 81c64c70e69ce2a1180a2f7355cada5f8aee001c
   RNWorklets: 339959ef7522bca12b4dcbd4997619370cfe5cd5
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
