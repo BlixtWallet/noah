@@ -183,10 +183,6 @@ class NoahPushService : PushService() {
                     handleLightningInvoiceRequest(this, clazz, nativeInstance, json, server, k1)
                 }
 
-                "offboarding" -> {
-                    handleOffboarding(this, clazz, nativeInstance, json, server, k1)
-                }
-
                 "heartbeat" -> {
                     handleHeartbeat(clazz, nativeInstance, json, server, k1)
                 }
@@ -357,55 +353,6 @@ class NoahPushService : PushService() {
                 "NoahPushService",
                 "Failed to handle lightning invoice request: ${e.message}"
             )
-        }
-    }
-
-    private fun handleOffboarding(
-        context: Context,
-        clazz: Class<*>,
-        instance: Any,
-        json: JSONObject,
-        server: String?,
-        k1: String?
-    ) {
-        try {
-            ensureWalletLoaded(clazz, instance, context)
-
-            val address = json.optString("address")
-            val signature = json.optString("address_signature")
-            val requestId = json.optString("offboarding_request_id")
-
-            // Verify signature with wallet pubkey
-            val peakKeyPair = clazz.getMethod("peakKeyPair", Integer.TYPE)
-            val keyPair = peakKeyPair.invoke(instance, 0)
-            val pubKey = keyPair?.javaClass?.getMethod("getPublicKey")?.invoke(keyPair) as? String
-
-            if (pubKey.isNullOrEmpty()) {
-                throw Exception("Public key unavailable for verification")
-            }
-
-            val verifyMessage = clazz.getMethod(
-                "verifyMessage",
-                String::class.java,
-                String::class.java,
-                String::class.java
-            )
-            val verified = verifyMessage.invoke(instance, address, signature, pubKey) as? Boolean ?: false
-            if (!verified) {
-                throw Exception("Address signature verification failed")
-            }
-
-            val offboardAll = clazz.getMethod("offboardAll", String::class.java)
-            offboardAll.invoke(instance, address) // result ignored; server already owns state
-
-            if (server != null) {
-                reportJobStatus(clazz, instance, server, "offboarding", "success", null, k1)
-            }
-        } catch (e: Exception) {
-            NoahToolsLogging.performNativeLog("error", "NoahPushService", "Offboarding failed: ${e.message}")
-            if (server != null) {
-                reportJobStatus(clazz, instance, server, "offboarding", "failure", e.message, k1)
-            }
         }
     }
 
