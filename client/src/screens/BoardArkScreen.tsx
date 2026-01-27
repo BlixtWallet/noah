@@ -21,7 +21,7 @@ import { NoahButton } from "../components/ui/NoahButton";
 import { NoahActivityIndicator } from "../components/ui/NoahActivityIndicator";
 import { useBalance } from "../hooks/useWallet";
 import { useBoardAllAmountArk, useBoardArk, useOffboardAllArk } from "../hooks/usePayments";
-import { addOnboardingRequest } from "../lib/transactionsDb";
+import { addOffboardingRequest, addOnboardingRequest } from "../lib/transactionsDb";
 import { copyToClipboard } from "../lib/clipboardUtils";
 import { cn, formatBip177, isNetworkMatch } from "../lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -308,6 +308,30 @@ const BoardArkScreen = () => {
 
     storeOnboardingRequest();
   }, [parsedData, flow]);
+
+  // Store offboarding transaction in database when successful
+  useEffect(() => {
+    const storeOffboardingRequest = async () => {
+      if (offboardResult) {
+        const offboardingRequestId = uuid.v4();
+
+        const addResult = await addOffboardingRequest({
+          request_id: offboardingRequestId,
+          date: new Date().toISOString(),
+          status: "completed",
+          onchain_txid: offboardResult,
+        });
+
+        if (addResult.isErr()) {
+          log.e("Failed to store offboarding request in database", [addResult.error]);
+        } else {
+          log.d("Successfully stored offboarding request", [offboardingRequestId]);
+        }
+      }
+    };
+
+    storeOffboardingRequest();
+  }, [offboardResult]);
 
   const onchainBalance = balance?.onchain.confirmed ?? 0;
   const onchainPendingBalance =
