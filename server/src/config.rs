@@ -174,9 +174,9 @@ impl Config {
             "Maintenance Notification Advance Secs: {}",
             self.maintenance_notification_advance_secs
         );
-        tracing::debug!("S3 Bucket Name: {}", self.s3_bucket_name);
+        tracing::debug!("S3 Bucket Name: [REDACTED]");
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);
-        tracing::debug!("Redis URL: {}", self.redis_url);
+        tracing::debug!("Redis URL: [REDACTED]");
         tracing::debug!("Redis Pool Size: {}", self.redis_pool_size);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
         tracing::debug!("SES From Address: {}", self.ses_from_address);
