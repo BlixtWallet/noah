@@ -64,7 +64,7 @@
         "react-native-gesture-handler": "~2.30.0",
         "react-native-keychain": "^10.0.0",
         "react-native-mmkv": "^4.1.1",
-        "react-native-nitro-ark": "^0.0.86",
+        "react-native-nitro-ark": "^0.0.87",
         "react-native-nitro-modules": "^0.32.1",
         "react-native-qrcode-svg": "^6.3.21",
         "react-native-reanimated": "~4.2.1",
@@ -77,7 +77,7 @@
         "react-native-worklets": "0.7.2",
         "react-native-worklets-core": "^1.6.2",
         "tailwind-merge": "^3.4.0",
-        "uniwind": "^1.2.6",
+        "uniwind": "^1.2.7",
         "zustand": "^5.0.10",
       },
       "devDependencies": {
@@ -100,7 +100,6 @@
     },
   },
   "patchedDependencies": {
-    "uniwind@1.2.6": "patches/uniwind@1.2.6.patch",
     "react-native-worklets-core@1.6.2": "patches/react-native-worklets-core@1.6.2.patch",
     "expo-modules-autolinking@55.0.2": "patches/expo-modules-autolinking@55.0.2.patch",
   },
@@ -1739,7 +1738,7 @@
 
     "react-native-mmkv": ["react-native-mmkv@4.1.1", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-nYFjM27l7zVhIiyAqWEFRagGASecb13JMIlzAuOeakRRz9GMJ49hCQntUBE2aeuZRE4u4ehSqTOomB0mTF56Ew=="],
 
-    "react-native-nitro-ark": ["react-native-nitro-ark@0.0.86", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.32.1" } }, "sha512-FTyzprK/UlzJ98Psutq3WYSTaj6FzTv2qnEyLOkkG4883UFJOtjUXHEyEfCKUZZ+Liv6KXJ10IB2aLPIZIzVSQ=="],
+    "react-native-nitro-ark": ["react-native-nitro-ark@0.0.87", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "^0.32.1" } }, "sha512-6/GDEOUeuqE7N98qQXEnd9ODXgCy+FfLFjwodIUKKYWAH7LjXf8+YIZPMqmGBhra+3XLoeA92ZeW9CTvMd0POg=="],
 
     "react-native-nitro-modules": ["react-native-nitro-modules@0.32.2", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-N1F0EgoKEQJDs0clAGZTauXauxBYUN8y8QLEyeBy3WJhXUlzuldllah4CqRu0WVxZGA+5pTcxXsPeXAHDa6Wag=="],
 
@@ -2019,7 +2018,7 @@
 
     "unimodules-app-loader": ["unimodules-app-loader@55.0.2", "", {}, "sha512-SarK/0fxceV3mpP26+0mlwDbHOn98OkHEMAifrRU0+uhAnAuZkEJKNPL/QKBFhwNCaeQGiL9s3XAQ9ZMtkJ47g=="],
 
-    "uniwind": ["uniwind@1.2.6", "", { "dependencies": { "@tailwindcss/node": "4.1.17", "@tailwindcss/oxide": "4.1.17", "culori": "4.0.2", "lightningcss": "1.30.2" }, "peerDependencies": { "react": ">=19.0.0", "react-native": ">=0.81.0", "tailwindcss": ">=4" } }, "sha512-DWzKsIzhI6fDmwtpewm71T6y8Wxq/P95VzmfThFearPuwyLeoLaR82OAAW2fXM75olRyE96zRo6IWydKMxErug=="],
+    "uniwind": ["uniwind@1.2.7", "", { "dependencies": { "@tailwindcss/node": "4.1.17", "@tailwindcss/oxide": "4.1.17", "culori": "4.0.2", "lightningcss": "1.30.2" }, "peerDependencies": { "react": ">=19.0.0", "react-native": ">=0.81.0", "tailwindcss": ">=4" } }, "sha512-4aclu1rpqh9XSSyw8/3buNud7BAw7sPadX70WYXYp+9csgTGTqt9o/QaPPfpliULUSaG8ONDY1+gC4ylz+coyg=="],
 
     "unpipe": ["unpipe@1.0.0", "", {}, "sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ=="],
 

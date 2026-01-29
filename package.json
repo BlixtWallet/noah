@@ -19,7 +19,6 @@
   },
   "patchedDependencies": {
     "react-native-worklets-core@1.6.2": "patches/react-native-worklets-core@1.6.2.patch",
-    "uniwind@1.2.6": "patches/uniwind@1.2.6.patch",
     "expo-modules-autolinking@55.0.2": "patches/expo-modules-autolinking@55.0.2.patch"
   }
 }

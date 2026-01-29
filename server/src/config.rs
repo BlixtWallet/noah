@@ -25,6 +25,7 @@ pub struct Config {
     pub sentry_url: Option<String>,
     pub backup_cron: String,
     pub maintenance_interval_rounds: u16,
+    pub maintenance_notification_advance_secs: u64,
     pub heartbeat_cron: String,
     pub deregister_cron: String,
     pub notification_spacing_minutes: i64,
@@ -71,6 +72,12 @@ impl Config {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(1),
+            maintenance_notification_advance_secs: std::env::var(
+                "MAINTENANCE_NOTIFICATION_ADVANCE_SECS",
+            )
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(20),
             heartbeat_cron: std::env::var("HEARTBEAT_CRON")
                 .unwrap_or_else(|_| "every 48 hours".to_string()),
             deregister_cron: std::env::var("DEREGISTER_CRON")
@@ -162,6 +169,10 @@ impl Config {
         tracing::debug!(
             "Maintenance Interval Rounds: {}",
             self.maintenance_interval_rounds
+        );
+        tracing::debug!(
+            "Maintenance Notification Advance Secs: {}",
+            self.maintenance_notification_advance_secs
         );
         tracing::debug!("S3 Bucket Name: {}", self.s3_bucket_name);
         tracing::debug!("Minimum App Version: {}", self.minimum_app_version);

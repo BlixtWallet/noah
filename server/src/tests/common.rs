@@ -81,6 +81,7 @@ impl TestUser {
             sentry_url: Some("http://localhost:8082".to_string()),
             backup_cron: "0 0 * * *".to_string(),
             maintenance_interval_rounds: 10,
+            maintenance_notification_advance_secs: 30,
             heartbeat_cron: "0 0 * * *".to_string(),
             deregister_cron: "0 0 * * *".to_string(),
             notification_spacing_minutes: 45,

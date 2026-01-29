@@ -12,6 +12,8 @@ import {
   maintenance as maintenanceNitro,
   maintenanceRefresh as maintenanceRefreshNitro,
   maintenanceWithOnchain as maintenanceWithOnchainNitro,
+  maintenanceDelegated as maintenanceDelegatedNitro,
+  maintenanceWithOnchainDelegated as maintenanceWithOnchainDelegatedNitro,
   signMesssageWithMnemonic as signMessageWithMnemonicNitro,
   deriveKeypairFromMnemonic as deriveKeypairFromMnemonicNitro,
   vtxos as vtxosNitro,
@@ -243,6 +245,14 @@ export const maintenanceRefresh = async (): Promise<Result<void, Error>> => {
 
 export const maintenanceWithOnchain = async (): Promise<Result<void, Error>> => {
   return ResultAsync.fromPromise(maintenanceWithOnchainNitro(), (e) => e as Error);
+};
+
+export const maintenanceDelegated = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(maintenanceDelegatedNitro(), (e) => e as Error);
+};
+
+export const maintenanceWithOnchainDelegated = async (): Promise<Result<void, Error>> => {
+  return ResultAsync.fromPromise(maintenanceWithOnchainDelegatedNitro(), (e) => e as Error);
 };
 
 export const deleteWallet = async (): Promise<Result<void, Error>> => {

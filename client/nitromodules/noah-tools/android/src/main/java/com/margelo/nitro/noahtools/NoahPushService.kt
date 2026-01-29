@@ -225,14 +225,12 @@ class NoahPushService : PushService() {
     ) {
         try {
             ensureWalletLoaded(clazz, instance, context)
-            clazz.getMethod("maintenance").invoke(instance)
-            // Follow JS logic: run sync after maintenance
-            try {
-                clazz.getMethod("sync").invoke(instance)
-            } catch (e: Exception) {
-                NoahToolsLogging.performNativeLog("warn", "NoahPushService", "sync() unavailable: ${e.message}")
-            }
-            NoahToolsLogging.performNativeLog("info", "NoahPushService", "maintenance() completed")
+            clazz.getMethod("maintenanceWithOnchainDelegated").invoke(instance)
+            NoahToolsLogging.performNativeLog(
+                "info",
+                "NoahPushService",
+                "maintenanceWithOnchainDelegated() completed"
+            )
             if (server != null) {
                 reportJobStatus(clazz, instance, server, "maintenance", "success", null, k1)
             }

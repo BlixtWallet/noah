@@ -1,4 +1,4 @@
-import { loadWalletIfNeeded, maintanance, sync } from "./walletApi";
+import { loadWalletIfNeeded, maintenanceWithOnchainDelegated, sync } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
@@ -16,19 +16,12 @@ export async function maintenanceTask(): Promise<Result<void, Error>> {
     return err(e);
   }
 
-  const maintenanceResult = await maintanance();
+  const maintenanceResult = await maintenanceWithOnchainDelegated();
   if (maintenanceResult.isErr()) {
     log.e("Maintenance failed", [maintenanceResult.error]);
     return err(maintenanceResult.error);
   }
   log.d("[Maintenance Job] completed");
-
-  const syncResult = await sync();
-  // It's alright if sync fails
-  // We can simply log the error and continue
-  if (syncResult.isErr()) {
-    log.e("Sync failed", [syncResult.error]);
-  }
 
   return ok(undefined);
 }

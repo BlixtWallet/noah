@@ -31,7 +31,7 @@ import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
 
-const minAmount = 330;
+const minAmount = 1;
 
 const truncateAddress = (addr: string) => {
   if (addr.length <= 40) {
