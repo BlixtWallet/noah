@@ -108,59 +108,118 @@ async fn establish_connection_and_process(
             .maintenance_store
             .get_last_round_timestamp()
             .await?;
+        let counter = app_state.maintenance_store.get_round_counter().await?;
+        let advance_secs = app_state.config.maintenance_notification_advance_secs;
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
 
-        // Detect round change
-        if last_ts == Some(next_round_ts) {
-            continue;
-        }
-
-        app_state
-            .maintenance_store
-            .set_last_round_timestamp(next_round_ts)
-            .await?;
-        let counter = app_state
-            .maintenance_store
-            .increment_round_counter()
-            .await?;
-
-        tracing::info!(
-            service = "ark_client",
-            event = "round_detected",
-            next_round_ts = next_round_ts,
-            counter = counter,
-            "new round detected"
+        let action = evaluate_maintenance(
+            next_round_ts,
+            last_ts,
+            counter,
+            maintenance_interval_rounds,
+            advance_secs,
+            now,
         );
 
-        if counter >= maintenance_interval_rounds {
-            let advance_secs = app_state.config.maintenance_notification_advance_secs;
-            let now = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map(|d| d.as_secs())
-                .unwrap_or(0);
+        match action {
+            MaintenanceAction::NoChange => continue,
+            MaintenanceAction::RoundDetected => {
+                app_state
+                    .maintenance_store
+                    .set_last_round_timestamp(next_round_ts)
+                    .await?;
+                let counter = app_state
+                    .maintenance_store
+                    .increment_round_counter()
+                    .await?;
+                tracing::info!(
+                    service = "ark_client",
+                    event = "round_detected",
+                    next_round_ts = next_round_ts,
+                    counter = counter,
+                    "new round detected"
+                );
+            }
+            MaintenanceAction::TooClose => {
+                app_state
+                    .maintenance_store
+                    .set_last_round_timestamp(next_round_ts)
+                    .await?;
+                app_state
+                    .maintenance_store
+                    .increment_round_counter()
+                    .await?;
+                tracing::info!(
+                    service = "ark_client",
+                    event = "maintenance_skipped",
+                    next_round_ts = next_round_ts,
+                    advance_secs = advance_secs,
+                    "next round too close, skipping to next one"
+                );
+            }
+            MaintenanceAction::Send => {
+                app_state
+                    .maintenance_store
+                    .set_last_round_timestamp(next_round_ts)
+                    .await?;
+                tracing::info!(
+                    service = "ark_client",
+                    event = "maintenance_triggered",
+                    next_round_ts = next_round_ts,
+                    secs_until_round = next_round_ts.saturating_sub(now),
+                    "sending maintenance notification"
+                );
 
-            let notification_time = next_round_ts.saturating_sub(advance_secs);
+                let app_state_clone = app_state.clone();
+                tokio::spawn(async move {
+                    let _ = maintenance(app_state_clone).await;
+                });
 
-            tracing::info!(
-                service = "ark_client",
-                event = "maintenance_scheduled",
-                next_round_ts = next_round_ts,
-                notification_time = notification_time,
-                advance_secs = advance_secs,
-                "scheduling maintenance notification"
-            );
-
-            let app_state_clone = app_state.clone();
-            tokio::spawn(async move {
-                if notification_time > now {
-                    let sleep_duration = Duration::from_secs(notification_time - now);
-                    tokio::time::sleep(sleep_duration).await;
-                }
-                let _ = maintenance(app_state_clone).await;
-            });
-
-            app_state.maintenance_store.reset_round_counter().await?;
+                app_state.maintenance_store.reset_round_counter().await?;
+            }
         }
     }
+}
+
+#[derive(Debug, PartialEq)]
+enum MaintenanceAction {
+    /// Round timestamp unchanged, nothing to do
+    NoChange,
+    /// New round detected but counter hasn't reached the threshold yet
+    RoundDetected,
+    /// Counter reached threshold but the round is too close to notify in time
+    TooClose,
+    /// Counter reached threshold and there's enough advance time — send notification
+    Send,
+}
+
+fn evaluate_maintenance(
+    next_round_ts: u64,
+    last_round_ts: Option<u64>,
+    counter: u16,
+    maintenance_interval_rounds: u16,
+    advance_secs: u64,
+    now: u64,
+) -> MaintenanceAction {
+    if last_round_ts == Some(next_round_ts) {
+        return MaintenanceAction::NoChange;
+    }
+
+    // counter should reflect the value *after* incrementing for this new round
+    let counter = counter + 1;
+
+    if counter < maintenance_interval_rounds {
+        return MaintenanceAction::RoundDetected;
+    }
+
+    if now + advance_secs > next_round_ts {
+        return MaintenanceAction::TooClose;
+    }
+
+    MaintenanceAction::Send
 }
 
 pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
@@ -181,4 +240,106 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const INTERVAL: u16 = 10;
+    const ADVANCE: u64 = 30;
+
+    #[test]
+    fn no_change_when_timestamp_unchanged() {
+        let action = evaluate_maintenance(
+            1000,       // next_round_ts
+            Some(1000), // last_round_ts (same)
+            5,          // counter
+            INTERVAL,
+            ADVANCE,
+            900, // now
+        );
+        assert_eq!(action, MaintenanceAction::NoChange);
+    }
+
+    #[test]
+    fn round_detected_but_counter_below_threshold() {
+        let action = evaluate_maintenance(
+            1000,      // next_round_ts
+            Some(900), // last_round_ts (different)
+            3,         // counter (3+1=4, below 10)
+            INTERVAL,
+            ADVANCE,
+            800, // now
+        );
+        assert_eq!(action, MaintenanceAction::RoundDetected);
+    }
+
+    #[test]
+    fn first_poll_with_no_prior_state() {
+        let action = evaluate_maintenance(
+            1000, // next_round_ts
+            None, // last_round_ts (first time)
+            0,    // counter
+            INTERVAL, ADVANCE, 800, // now
+        );
+        assert_eq!(action, MaintenanceAction::RoundDetected);
+    }
+
+    #[test]
+    fn too_close_when_round_within_advance_window() {
+        // now=970, advance=30, next_round=990 → 970+30=1000 > 990
+        let action = evaluate_maintenance(
+            990,       // next_round_ts
+            Some(900), // last_round_ts (different)
+            9,         // counter (9+1=10, meets threshold)
+            INTERVAL,
+            ADVANCE,
+            970, // now
+        );
+        assert_eq!(action, MaintenanceAction::TooClose);
+    }
+
+    #[test]
+    fn too_close_when_round_exactly_at_advance_boundary() {
+        // now=960, advance=30, next_round=990 → 960+30=990, not > 990
+        // This is exactly at the boundary — should be Send, not TooClose
+        let action = evaluate_maintenance(990, Some(900), 9, INTERVAL, ADVANCE, 960);
+        assert_eq!(action, MaintenanceAction::Send);
+    }
+
+    #[test]
+    fn send_when_enough_advance_time() {
+        // now=900, advance=30, next_round=1000 → 900+30=930 < 1000
+        let action = evaluate_maintenance(
+            1000,
+            Some(900),
+            9, // counter (9+1=10, meets threshold)
+            INTERVAL,
+            ADVANCE,
+            900,
+        );
+        assert_eq!(action, MaintenanceAction::Send);
+    }
+
+    #[test]
+    fn too_close_when_round_already_passed() {
+        // now=1010, advance=30, next_round=1000 → 1010+30=1040 > 1000
+        let action = evaluate_maintenance(1000, Some(900), 9, INTERVAL, ADVANCE, 1010);
+        assert_eq!(action, MaintenanceAction::TooClose);
+    }
+
+    #[test]
+    fn counter_exactly_at_threshold_with_enough_time() {
+        // counter=9, threshold=10 → 9+1=10 >= 10
+        let action = evaluate_maintenance(2000, Some(1000), 9, INTERVAL, ADVANCE, 1500);
+        assert_eq!(action, MaintenanceAction::Send);
+    }
+
+    #[test]
+    fn counter_above_threshold_still_sends() {
+        // counter=15, threshold=10 → 15+1=16 >= 10 (skipped reset somehow)
+        let action = evaluate_maintenance(2000, Some(1000), 15, INTERVAL, ADVANCE, 1500);
+        assert_eq!(action, MaintenanceAction::Send);
+    }
 }
