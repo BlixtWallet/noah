@@ -10,7 +10,7 @@ use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
 use crate::cache::{
     email_verification_store::EmailVerificationStore, invoice_store::InvoiceStore,
-    k1_store::K1Store, redis_client::RedisClient,
+    k1_store::K1Store, maintenance_store::MaintenanceStore, redis_client::RedisClient,
 };
 use crate::config::Config;
 use crate::email_client::EmailClient;
@@ -128,6 +128,8 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         .await
         .expect("Failed to create email client");
 
+    let maintenance_store = setup_test_maintenance_store().await;
+
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
@@ -135,6 +137,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         invoice_store,
         email_verification_store,
         email_client,
+        maintenance_store,
         config: Arc::new(TestUser::get_config()),
     });
 
@@ -191,6 +194,8 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
         .await
         .expect("Failed to create email client");
 
+    let maintenance_store = setup_test_maintenance_store().await;
+
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
         db_pool: db_pool.clone(),
@@ -198,6 +203,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
         invoice_store,
         email_verification_store,
         email_client,
+        maintenance_store,
         config: Arc::new(TestUser::get_config()),
     });
 
@@ -268,6 +274,13 @@ async fn setup_test_email_verification_store() -> EmailVerificationStore {
         std::env::var("TEST_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
     let redis_client = RedisClient::new(&redis_url).expect("Failed to create Redis client");
     EmailVerificationStore::new(redis_client)
+}
+
+async fn setup_test_maintenance_store() -> MaintenanceStore {
+    let redis_url =
+        std::env::var("TEST_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+    let redis_client = RedisClient::new(&redis_url).expect("Failed to create Redis client");
+    MaintenanceStore::new(redis_client)
 }
 
 async fn reset_database(pool: &PgPool) -> sqlx::Result<()> {

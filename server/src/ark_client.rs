@@ -6,13 +6,14 @@ use crate::{
 
 use bitcoin::hex::DisplayHex;
 use expo_push_notification_client::Priority;
-use futures_util::stream::StreamExt;
 use server_rpc::{
     ArkServiceClient,
-    protos::{Empty, HandshakeRequest, round_event},
+    protos::{Empty, HandshakeRequest},
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time::timeout;
+
+const POLL_INTERVAL: Duration = Duration::from_secs(30);
 
 pub async fn connect_to_ark_server(
     app_state: AppState,
@@ -87,90 +88,79 @@ async fn establish_connection_and_process(
         "received ark server info"
     );
 
-    let mut stream = client.subscribe_rounds(Empty {}).await?.into_inner();
-
     let maintenance_interval_rounds = app_state.config.maintenance_interval_rounds;
-    let mut round_counter = 0;
 
     tracing::info!(
         service = "ark_client",
-        event = "subscribed",
-        "listening for rounds"
+        event = "polling_started",
+        poll_interval_secs = POLL_INTERVAL.as_secs(),
+        maintenance_interval_rounds = maintenance_interval_rounds,
+        "polling for next round time"
     );
-    while let Some(item) = stream.next().await {
-        match item {
-            Ok(round_event) => {
-                if let Some(round_event::Event::Attempt(event)) = round_event.event {
-                    round_counter += 1;
 
-                    // Send maintenance notification every MAINTENANCE_INTERVAL_ROUNDS
-                    if round_counter >= maintenance_interval_rounds {
-                        tracing::info!(
-                            service = "ark_client",
-                            event = "maintenance_triggered",
-                            round_seq = event.round_seq,
-                            round_attempt_challenge = %event.round_attempt_challenge.to_lower_hex_string(),
-                            "triggering maintenance"
-                        );
+    loop {
+        tokio::time::sleep(POLL_INTERVAL).await;
 
-                        // Get the next round time and schedule notification in advance
-                        let advance_secs = app_state.config.maintenance_notification_advance_secs;
-                        match client.next_round_time(Empty {}).await {
-                            Ok(response) => {
-                                let next_round_timestamp = response.into_inner().timestamp;
-                                let now = SystemTime::now()
-                                    .duration_since(UNIX_EPOCH)
-                                    .map(|d| d.as_secs())
-                                    .unwrap_or(0);
+        let response = client.next_round_time(Empty {}).await?;
+        let next_round_ts = response.into_inner().timestamp;
 
-                                let notification_time =
-                                    next_round_timestamp.saturating_sub(advance_secs);
+        let last_ts = app_state
+            .maintenance_store
+            .get_last_round_timestamp()
+            .await?;
 
-                                tracing::info!(
-                                    service = "ark_client",
-                                    event = "maintenance_scheduled",
-                                    next_round_timestamp = next_round_timestamp,
-                                    notification_time = notification_time,
-                                    advance_secs = advance_secs,
-                                    "scheduling maintenance notification"
-                                );
+        // Detect round change
+        if last_ts == Some(next_round_ts) {
+            continue;
+        }
 
-                                let app_state_clone = app_state.clone();
-                                tokio::spawn(async move {
-                                    if notification_time > now {
-                                        let sleep_duration =
-                                            Duration::from_secs(notification_time - now);
-                                        tokio::time::sleep(sleep_duration).await;
-                                    }
-                                    let _ = maintenance(app_state_clone).await;
-                                });
-                            }
-                            Err(e) => {
-                                tracing::warn!(
-                                    service = "ark_client",
-                                    event = "next_round_time_failed",
-                                    error = %e,
-                                    "failed to get next round time, sending notification immediately"
-                                );
-                                let app_state_clone = app_state.clone();
-                                tokio::spawn(async move {
-                                    let _ = maintenance(app_state_clone).await;
-                                });
-                            }
-                        }
+        app_state
+            .maintenance_store
+            .set_last_round_timestamp(next_round_ts)
+            .await?;
+        let counter = app_state
+            .maintenance_store
+            .increment_round_counter()
+            .await?;
 
-                        round_counter = 0;
-                    }
+        tracing::info!(
+            service = "ark_client",
+            event = "round_detected",
+            next_round_ts = next_round_ts,
+            counter = counter,
+            "new round detected"
+        );
+
+        if counter >= maintenance_interval_rounds {
+            let advance_secs = app_state.config.maintenance_notification_advance_secs;
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+
+            let notification_time = next_round_ts.saturating_sub(advance_secs);
+
+            tracing::info!(
+                service = "ark_client",
+                event = "maintenance_scheduled",
+                next_round_ts = next_round_ts,
+                notification_time = notification_time,
+                advance_secs = advance_secs,
+                "scheduling maintenance notification"
+            );
+
+            let app_state_clone = app_state.clone();
+            tokio::spawn(async move {
+                if notification_time > now {
+                    let sleep_duration = Duration::from_secs(notification_time - now);
+                    tokio::time::sleep(sleep_duration).await;
                 }
-            }
-            Err(e) => {
-                return Err(anyhow::anyhow!("Stream error: {}", e));
-            }
+                let _ = maintenance(app_state_clone).await;
+            });
+
+            app_state.maintenance_store.reset_round_counter().await?;
         }
     }
-
-    // Stream ended
-    Ok(())
 }
 
 pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {

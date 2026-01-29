@@ -77,7 +77,7 @@ impl Config {
             )
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(20),
+            .unwrap_or(60),
             heartbeat_cron: std::env::var("HEARTBEAT_CRON")
                 .unwrap_or_else(|_| "every 48 hours".to_string()),
             deregister_cron: std::env::var("DEREGISTER_CRON")

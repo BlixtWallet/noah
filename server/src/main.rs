@@ -20,7 +20,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::{
     cache::{
         email_verification_store::EmailVerificationStore, invoice_store::InvoiceStore,
-        k1_store::K1Store, redis_client::RedisClient,
+        k1_store::K1Store, maintenance_store::MaintenanceStore, redis_client::RedisClient,
     },
     config::Config,
     cron::cron_scheduler,
@@ -70,6 +70,7 @@ pub struct AppStruct {
     pub invoice_store: InvoiceStore,
     pub email_verification_store: EmailVerificationStore,
     pub email_client: EmailClient,
+    pub maintenance_store: MaintenanceStore,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -155,6 +156,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     tracing::info!("Redis connection established");
     let k1_cache = K1Store::new(redis_client.clone(), K1_TTL_SECONDS);
     let invoice_store = InvoiceStore::new(redis_client.clone());
+    let maintenance_store = MaintenanceStore::new(redis_client.clone());
     let email_verification_store = EmailVerificationStore::new(redis_client);
 
     tracing::info!("Initializing email client...");
@@ -170,6 +172,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         invoice_store,
         email_verification_store,
         email_client,
+        maintenance_store,
     });
 
     config.log_config();
