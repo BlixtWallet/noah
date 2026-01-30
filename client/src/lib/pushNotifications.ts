@@ -97,7 +97,19 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
       const notificationDataResult = Result.fromThrowable(
         () => {
-          const rawBody = (data as { data?: { body?: unknown } })?.data?.body;
+          const typedData = data as {
+            data?: {
+              body?: unknown;
+              // iOS cold-launch wraps the notification payload under this key
+              // due to a bug in expo-task-manager's EXTaskService.m which passes
+              // the entire launchOptions dictionary instead of extracting the
+              // notification userInfo.
+              UIApplicationLaunchOptionsRemoteNotificationKey?: { body?: unknown };
+            };
+          };
+          const rawBody =
+            typedData?.data?.body ??
+            typedData?.data?.UIApplicationLaunchOptionsRemoteNotificationKey?.body;
           if (typeof rawBody === "string") {
             return JSON.parse(rawBody) as NotificationData;
           }
