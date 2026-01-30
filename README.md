@@ -4,7 +4,7 @@
 
 <h1 align="center">Noah's Ark</h1>
 
-<p align="center">Noah is a modern, self-custodial mobile wallet for Ark, a Bitcoin Layer 2 protocol. It is built with React Native and Expo.</p>
+<p align="center">Noah is a modern, trust-minimized wallet for Ark, a Bitcoin Layer 2 protocol. It is built with React Native and Expo.</p>
 
 <p align="center">
   ⚠️ <strong>WARNING</strong>: This project is in rapid development phase and is extremely alpha. DO NOT use with real funds.
@@ -146,6 +146,7 @@ just setup-everything
 ```
 
 This single command will:
+
 - Start all Docker services (bitcoind, captaind, postgres, dragonfly db, cln, lnd, bark, noah-server)
 - Create and fund a Bitcoin Core wallet
 - Generate 150 blocks
@@ -164,6 +165,7 @@ This single command will:
     ```
 
 2.  **Create and fund wallets**
+
     ```bash
     # Create a Bitcoin Core wallet
     just create-wallet
@@ -262,11 +264,13 @@ just test               # Run server tests
 The server uses environment variables for configuration. For local development, create a `.env` file in the project root.
 
 1. **Create a `.env` file in the project root:**
+
    ```bash
    cp .env.example .env
    ```
 
 2. **Edit `.env` with your values:**
+
    ```bash
    HOST=0.0.0.0
    PORT=3000
@@ -284,11 +288,11 @@ The server uses environment variables for configuration. For local development, 
 
    # AWS credentials for S3
    # Can set junk value for local development
-   AWS_ACCESS_KEY_ID=your-aws-access-key-id 
+   AWS_ACCESS_KEY_ID=your-aws-access-key-id
    AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
    AWS_REGION=us-east-2
-    
-   # This needs to be true in local development 
+
+   # This needs to be true in local development
    EMAIL_DEV_MODE=true
    ```
 
