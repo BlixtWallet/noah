@@ -73,7 +73,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "eslint-plugin-react-compiler": "^19.1.0-rc.2",
-    "expo": "~55.0.0-preview.6",
+    "expo": "~55.0.0-preview.9",
     "expo-asset": "~55.0.2",
     "expo-build-properties": "~55.0.3",
     "expo-clipboard": "~55.0.2",

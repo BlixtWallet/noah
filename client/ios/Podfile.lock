@@ -1,12 +1,12 @@
 PODS:
   - EXApplication (55.0.2):
     - ExpoModulesCore
-  - EXConstants (55.0.2):
+  - EXConstants (55.0.3):
     - ExpoModulesCore
   - EXJSONUtils (55.0.0)
   - EXManifests (55.0.2):
     - ExpoModulesCore
-  - Expo (55.0.0-preview.6):
+  - Expo (55.0.0-preview.9):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -179,7 +179,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (55.0.2):
+  - ExpoAsset (55.0.3):
     - ExpoModulesCore
   - ExpoClipboard (55.0.2):
     - ExpoModulesCore
@@ -187,9 +187,9 @@ PODS:
     - ExpoModulesCore
   - ExpoDomWebView (55.0.2):
     - ExpoModulesCore
-  - ExpoFileSystem (55.0.2):
+  - ExpoFileSystem (55.0.4):
     - ExpoModulesCore
-  - ExpoFont (55.0.2):
+  - ExpoFont (55.0.3):
     - ExpoModulesCore
   - ExpoHaptics (55.0.2):
     - ExpoModulesCore
@@ -199,9 +199,9 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalAuthentication (55.0.2):
     - ExpoModulesCore
-  - ExpoLogBox (55.0.2):
+  - ExpoLogBox (55.0.5):
     - React-Core
-  - ExpoModulesCore (55.0.4):
+  - ExpoModulesCore (55.0.7):
     - ExpoModulesJSI
     - hermes-engine
     - RCTRequired
@@ -226,7 +226,7 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
-  - ExpoModulesJSI (55.0.4):
+  - ExpoModulesJSI (55.0.7):
     - hermes-engine
     - React-Core
     - ReactCommon
@@ -2732,7 +2732,7 @@ DEPENDENCIES:
   - ExpoAsset (from `../../node_modules/expo-asset/ios`)
   - ExpoClipboard (from `../../node_modules/expo-clipboard/ios`)
   - ExpoDevice (from `../../node_modules/expo-device/ios`)
-  - "ExpoDomWebView (from `../../node_modules/@expo/log-box/node_modules/@expo/dom-webview/ios`)"
+  - "ExpoDomWebView (from `../../node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../../node_modules/expo-font/ios`)
   - ExpoHaptics (from `../../node_modules/expo-haptics/ios`)
@@ -2881,7 +2881,7 @@ EXTERNAL SOURCES:
   ExpoDevice:
     :path: "../../node_modules/expo-device/ios"
   ExpoDomWebView:
-    :path: "../../node_modules/@expo/log-box/node_modules/@expo/dom-webview/ios"
+    :path: "../../node_modules/@expo/dom-webview/ios"
   ExpoFileSystem:
     :path: "../../node_modules/expo-file-system/ios"
   ExpoFont:
@@ -3104,34 +3104,34 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   EXApplication: af60a925517839a51a165ce30fb86826c540450b
-  EXConstants: 24884af8d52408773d50379b5339ce14a0022b39
+  EXConstants: f1806fa0b1c512b88083d0031242eeb496eca244
   EXJSONUtils: 0080c14b673cfa9a6be5e3fe429768ffe3d42dfb
   EXManifests: 1b9083d32e5eebf630032a6b5614c1ddd61f80be
-  Expo: cdce82cf7f6e33a4d9009e739c30182771dc7669
+  Expo: 6cd4a4e45264ce76ebedac7859894d12de536757
   expo-dev-client: fc6d3ada6edf2345dae8b7e22364d4c28404fd94
   expo-dev-launcher: e91434022a25bc936bf84dd39342d5ba8e6bfc0d
   expo-dev-menu: e64e249be205352855d6bfbfc8ff93d4043bb9e8
   expo-dev-menu-interface: a98021861ad111a46dc6c9f816b55be01ea03c63
-  ExpoAsset: 540045d6438f5e0f41f63943b9cba82efbd9829c
+  ExpoAsset: 0220499c42b1e3d973d379862a54b102504d32b5
   ExpoClipboard: 3833c46eb00785c6c6cb7465b231796e335add40
   ExpoDevice: b0e531d239977a6d9fff44bfe8dac4af092ff5ea
   ExpoDomWebView: 2cb9e9bed46799fa8f36b6284ce7799f1dbff297
-  ExpoFileSystem: 75daa7694f58907d05f4300b7cde7cb58a64671b
-  ExpoFont: 64370ca422faa7be5af3d12bf5aefdbb32eea859
+  ExpoFileSystem: 060c840182e3424df82a137974a45bf845e5ebd9
+  ExpoFont: 4e2967170d6ee7316c5efd62dd06aabd7b4593d2
   ExpoHaptics: 4cb72bce3149e6c14ca6425e2ddb54a12ea49795
   ExpoImagePicker: c6a149a7606a103128461d0ea858b75c3f983a0f
   ExpoKeepAwake: fa30695ff813ea45747d5ef78b75d6c9b4b73faa
   ExpoLocalAuthentication: d8d3570d437e3865b8d425f19988437e5298a5cb
-  ExpoLogBox: 0fadd8a94d97e2253e99f4d9e279bca6e4a550cb
-  ExpoModulesCore: f7739f1e6d67826bb6441c266dcaf54b443d6a61
-  ExpoModulesJSI: f6a9de2d81cad0b378888d5fa2562cc2eae63044
+  ExpoLogBox: f382ea273f1ac0cacb13e976758a02bdfb3fee91
+  ExpoModulesCore: ae1821badf7368b4793d748c25ab8f8469a6a570
+  ExpoModulesJSI: e0daca70b42ae5f0fb4b93c0b6cfe8865b590c36
   ExpoNotifications: 88792aad3ab0f4c111c7fe40a0028daf6e5f4e64
   ExpoSQLite: f88b942f891ed296058236efadebb9e227da49e0
   ExpoSystemUI: af01d32742926e6d57f25fca03c7d5dbf735591d
   ExpoTaskManager: b5d2e8653f98639504d68e91b5745930a9b9a3f4
   EXUpdatesInterface: 48272cb8995e613f0843fe531347e2f783e1df5f
   FBLazyVector: 3a7ea85f6009224ad89f7daeda516f189e6b5759
-  hermes-engine: 0e8d862b9f12a4a9030425abd44e790531070d40
+  hermes-engine: ad8e3766df47d43f695fa4ec3f26da0eed0024b5
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   NitroArk: 2486d9c02935d2bdb0da86bcf365e97e6fe5b3cf
   NitroMmkv: 05ab95790c49b82d49ae1fbc737461c25d200968
@@ -3145,7 +3145,7 @@ SPEC CHECKSUMS:
   React: 4bc1f928568ad4bcfd147260f907b4ea5873a03b
   React-callinvoker: 8dd44c31888a314694efd0ef5f19ab7e0e855ef8
   React-Core: 0c1f3042e1204c0512b2e4263062c66550d7e6a3
-  React-Core-prebuilt: 6a4f4185ae7c41008de6e026731e76100a4b39a3
+  React-Core-prebuilt: 506df918176c2ae14f0c03e218f55b03ab2e48ef
   React-CoreModules: f6a626221d52f21b5eb8df2d79780b96f20240e5
   React-cxxreact: 2e3990595049d43dd1d59ccd6cb35545f0dc6f03
   React-debug: 60be0767f5672afc81bfd6a50d996507430f7906
@@ -3212,7 +3212,7 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: bfb12ead469222b022a2024f32aba47ce50de512
   ReactCodegen: e569ae2b9ad6cebf3905e2444f29fad43a83522f
   ReactCommon: 0084791d25c4deae3d8b77efd4440fb2d5c38746
-  ReactNativeDependencies: b01c97d2af88b8bf0556a4ab421ef65aad52ac92
+  ReactNativeDependencies: 23a4057b0d0b0c3961462df9cca2fd583e6cce67
   RNCClipboard: 398455e1ad6a44a94d679452b951ffb788e8599b
   RNFSTurbo: 48c7fabc69584f5befe95fb37edf6b33a07df568
   RNGestureHandler: 8e4a9372425d4caa9e3da5072a8dda7a54ed1097
@@ -3229,7 +3229,7 @@ SPEC CHECKSUMS:
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
   UMAppLoader: 71b50bcc31d86495e52c0b4cd17e2708bf297be3
   VisionCamera: 47f10351a1b6a8d251b90986ae72ca5f52331954
-  Yoga: 35d573dff66536d48493acb65a519482f8219fe8
+  Yoga: 5321a86e1f3b4f0cfdf5b1f06f8f4afe86ab09ce
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
 PODFILE CHECKSUM: 23609a015b2972ec82755ea109bd56be4a80a614
