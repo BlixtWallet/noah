@@ -4,7 +4,6 @@ const config: { expo: ExpoConfig } = {
   expo: {
     name: "Noah",
     slug: "noahs-ark-wallet",
-    version: "0.0.5",
     orientation: "portrait",
     userInterfaceStyle: "automatic",
     experiments: {
@@ -72,7 +71,6 @@ const config: { expo: ExpoConfig } = {
       "./plugins/withNoahIosPrebuildFix.js",
     ],
     ios: {
-      buildNumber: "8",
       supportsTablet: true,
       bundleIdentifier: "com.noahwallet.mainnet",
       scheme: "Noah-Signet",
@@ -91,13 +89,11 @@ const config: { expo: ExpoConfig } = {
       },
     },
     android: {
-      versionCode: 7,
       adaptiveIcon: {
         foregroundImage:
           "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",
         backgroundColor: "#000000",
       },
-      edgeToEdgeEnabled: true,
       package: "com.noahwallet",
       splash: {
         image: "./assets/All_Files/splash_screens/splash_screen_android.png",
@@ -116,5 +112,10 @@ const config: { expo: ExpoConfig } = {
     },
   },
 };
+
+// To be changed for new releases
+config.expo.version = "0.0.6";
+config.expo.android!.versionCode = 8;
+config.expo.ios!.buildNumber = "8";
 
 export default config;
