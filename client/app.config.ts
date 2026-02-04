@@ -69,6 +69,7 @@ const config: { expo: ExpoConfig } = {
         },
       ],
       "expo-notifications",
+      "./plugins/withNoahIosPrebuildFix.js",
     ],
     ios: {
       buildNumber: "8",
