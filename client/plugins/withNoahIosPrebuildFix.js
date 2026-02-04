@@ -1,12 +1,9 @@
-const {
-  withInfoPlist,
-  withXcodeProject,
-} = require("@expo/config-plugins");
+const { withInfoPlist, withXcodeProject } = require("@expo/config-plugins");
 
 const MAINNET_BUNDLE_ID = "com.noahwallet.mainnet";
 const APP_SCHEME_PLACEHOLDER = "$(APP_SCHEME)";
 const PRODUCT_NAME_PLACEHOLDER = "$(PRODUCT_NAME)";
-const TARGET_NAME_PLACEHOLDER = "\"$(TARGET_NAME)\"";
+const TARGET_NAME_PLACEHOLDER = '"$(TARGET_NAME)"';
 
 function isRecord(value) {
   return typeof value === "object" && value !== null;
@@ -14,7 +11,7 @@ function isRecord(value) {
 
 function stripQuotes(value) {
   if (typeof value !== "string") return value;
-  if (value.length >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
+  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
     return value.slice(1, -1);
   }
   return value;
@@ -32,7 +29,7 @@ function enforceDisplayNamePlaceholders(infoPlist) {
   infoPlist.CFBundleName = PRODUCT_NAME_PLACEHOLDER;
 }
 
-function sanitizeUrlSchemes(infoPlist) {
+function sanitizeUrlSchemes(infoPlist, { iosScheme }) {
   // Ensure URL schemes stay variant-driven via $(APP_SCHEME), while preserving extras.
   const existingUrlTypes = Array.isArray(infoPlist.CFBundleURLTypes)
     ? infoPlist.CFBundleURLTypes
@@ -44,7 +41,7 @@ function sanitizeUrlSchemes(infoPlist) {
     if (!Array.isArray(schemes)) continue;
     for (const scheme of schemes) {
       if (scheme === APP_SCHEME_PLACEHOLDER) continue;
-      if (scheme === "Noah-Signet") continue;
+      if (iosScheme && scheme === iosScheme) continue;
       if (scheme === MAINNET_BUNDLE_ID) continue;
       extraSchemes.add(scheme);
     }
@@ -62,7 +59,7 @@ function sanitizeUrlSchemes(infoPlist) {
   infoPlist.CFBundleURLTypes = urlTypes;
 }
 
-function fixMainnetProductName(project) {
+function fixMainnetProductName(project, { appName }) {
   // Undo Expo's hardcoded mainnet PRODUCT_NAME in the pbxproj.
   const section = project.pbxXCBuildConfigurationSection();
   for (const [, entry] of Object.entries(section)) {
@@ -72,22 +69,25 @@ function fixMainnetProductName(project) {
     const bundleId = stripQuotes(buildSettings.PRODUCT_BUNDLE_IDENTIFIER);
     const productName = stripQuotes(buildSettings.PRODUCT_NAME);
 
-    if (bundleId === MAINNET_BUNDLE_ID && productName === "Noah") {
+    if (appName && bundleId === MAINNET_BUNDLE_ID && productName === appName) {
       buildSettings.PRODUCT_NAME = TARGET_NAME_PLACEHOLDER;
     }
   }
 }
 
 function withNoahIosPrebuildFix(config) {
+  const appName = config.name;
+  const iosScheme = config.ios?.scheme;
+
   config = withInfoPlist(config, (modConfig) => {
     const infoPlist = modConfig.modResults;
     enforceDisplayNamePlaceholders(infoPlist);
-    sanitizeUrlSchemes(infoPlist);
+    sanitizeUrlSchemes(infoPlist, { iosScheme });
     return modConfig;
   });
 
   config = withXcodeProject(config, (modConfig) => {
-    fixMainnetProductName(modConfig.modResults);
+    fixMainnetProductName(modConfig.modResults, { appName });
     return modConfig;
   });
 
