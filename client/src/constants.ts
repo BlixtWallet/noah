@@ -16,6 +16,7 @@ export const MIN_AUTO_BOARD_AMOUNT = 10_000;
 export const AUTO_BACKUP_FRESHNESS_MS = 24 * 60 * 60 * 1000; // 24 hours
 export const AUTO_BACKUP_MIN_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 export const AUTO_BACKUP_SUCCESS_BANNER_MS = 5 * 1000; // 5 seconds
+export const AUTO_BACKUP_IN_PROGRESS_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 export const KEYCHAIN_USERNAME = "noah";
