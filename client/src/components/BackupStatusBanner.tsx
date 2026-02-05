@@ -108,14 +108,19 @@ export const BackupStatusBanner: React.FC = () => {
     return null;
   }
 
-  const handleBackupNow = async () => {
+  const handleBackupNow = () => {
     setIsRetrying(true);
     const backupService = new BackupService();
-    const result = await backupService.performBackup();
-    if (result.isErr()) {
-      log.w("Manual backup failed", [redactSensitiveErrorMessage(result.error)]);
-    }
-    setIsRetrying(false);
+    void backupService
+      .performBackup()
+      .then((result) => {
+        if (result.isErr()) {
+          log.w("Manual backup failed", [redactSensitiveErrorMessage(result.error)]);
+        }
+      })
+      .finally(() => {
+        setIsRetrying(false);
+      });
   };
 
   return (
