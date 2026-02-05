@@ -20,6 +20,7 @@ import { BITCOIN_FACTS, PLATFORM } from "~/constants";
 import { useAppVersionCheck } from "~/hooks/useAppVersionCheck";
 import { UpdateWarningBanner } from "~/components/UpdateWarningBanner";
 import { EmailVerificationBanner } from "~/components/EmailVerificationBanner";
+import { BackupStatusBanner } from "~/components/BackupStatusBanner";
 import { useBackgroundJobCoordination } from "~/hooks/useBackgroundJobCoordination";
 import { useServerStore } from "~/store/serverStore";
 
@@ -186,6 +187,7 @@ const HomeScreen = () => {
           />
         )}
         {!isEmailVerified && <EmailVerificationBanner onPress={handleEmailVerificationPress} />}
+        <BackupStatusBanner />
         {isBackgroundJobRunning && (
           <View className="px-4 py-2 bg-blue-500/20 border-b border-blue-500/40">
             <View className="flex-row items-center justify-center space-x-2">

@@ -19,6 +19,7 @@ import { restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
 import { queryClient } from "~/queryClient";
 import { useTransactionStore } from "../store/transactionStore";
+import { useBackupStore } from "~/store/backupStore";
 import { ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 
@@ -212,6 +213,7 @@ export function useDeleteWallet() {
       useTransactionStore.getState().reset();
       useWalletStore.getState().reset();
       useServerStore.getState().resetRegistration();
+      useBackupStore.getState().reset();
 
       // Clear query cache
       queryClient.clear();

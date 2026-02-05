@@ -12,6 +12,10 @@ const isOnion = (n: string): boolean => /.onion$/.test(n);
 const isUsername = (n: string): boolean => /^[a-z0-9_.]*$/.test(n);
 const parseEmail = (email: string): string[] => email.split("@");
 export const MIN_AUTO_BOARD_AMOUNT = 10_000;
+// Auto-backup timing controls
+export const AUTO_BACKUP_FRESHNESS_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const AUTO_BACKUP_MIN_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+export const AUTO_BACKUP_SUCCESS_BANNER_MS = 10 * 1000; // 10 seconds
 
 export const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 export const KEYCHAIN_USERNAME = "noah";
