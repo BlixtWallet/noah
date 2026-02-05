@@ -1,5 +1,6 @@
 use axum::body::Body;
 use axum::http::{self, Request, StatusCode};
+use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
 
@@ -59,6 +60,63 @@ async fn test_backup_endpoints_invalid_auth() {
             endpoint
         );
     }
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_error_payload_shape_invalid_auth() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let mut auth_payload = user.auth_payload(&k1);
+    auth_payload.sig = "invalid_signature".to_string();
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/backup/list")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
+                .body(Body::from("{}"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+    let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let json_body: serde_json::Value =
+        serde_json::from_slice(&body_bytes).expect("failed to parse error response");
+
+    assert_eq!(
+        json_body.get("status").and_then(|v| v.as_str()),
+        Some("ERROR")
+    );
+    let code = json_body
+        .get("code")
+        .and_then(|v| v.as_str())
+        .expect("missing error code");
+    let message = json_body
+        .get("message")
+        .and_then(|v| v.as_str())
+        .expect("missing error message");
+    let reason = json_body
+        .get("reason")
+        .and_then(|v| v.as_str())
+        .expect("missing error reason");
+
+    assert_eq!(code, "INVALID_SIGNATURE");
+    assert!(!message.is_empty());
+    assert!(!reason.is_empty());
 }
 
 #[tracing_test::traced_test]

@@ -262,7 +262,7 @@ async fn send_unified_notification(
     let response = request
         .send()
         .await
-        .map_err(|e| ApiError::ServerErr(e.to_string()))?;
+        .map_err(|_| ApiError::ServerErr("Failed to send push notification".to_string()))?;
 
     if !response.status().is_success() {
         let status = response.status();
