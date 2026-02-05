@@ -18,6 +18,7 @@ import {
   loadWalletIfNeeded,
 } from "./walletApi";
 import { useWalletStore } from "~/store/walletStore";
+import { useBackupStore } from "~/store/backupStore";
 import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 import ky from "ky";
@@ -38,14 +39,17 @@ export class BackupService {
     }
   }
 
-  async performBackup() {
+  async performBackup(): Promise<Result<void, Error>> {
+    const backupStore = useBackupStore.getState();
     // Get mnemonic for encryption
     const mnemonicResult = await getMnemonic();
     if (mnemonicResult.isErr()) {
-      return mnemonicResult;
+      backupStore.setBackupFailed(mnemonicResult.error.message);
+      return err(mnemonicResult.error);
     }
 
     log.d("Performing backup");
+    backupStore.setBackupInProgress();
 
     // Create and encrypt the backup file natively
     const encryptedDataResult = await ResultAsync.fromPromise(
@@ -54,7 +58,8 @@ export class BackupService {
     );
 
     if (encryptedDataResult.isErr()) {
-      return encryptedDataResult;
+      backupStore.setBackupFailed(encryptedDataResult.error.message);
+      return err(encryptedDataResult.error);
     }
 
     const backup_size = encryptedDataResult.value.length;
@@ -66,7 +71,8 @@ export class BackupService {
     });
 
     if (uploadUrlResult.isErr()) {
-      return uploadUrlResult;
+      backupStore.setBackupFailed(uploadUrlResult.error.message);
+      return err(uploadUrlResult.error);
     }
 
     const { upload_url, s3_key } = uploadUrlResult.value;
@@ -83,7 +89,8 @@ export class BackupService {
     );
 
     if (uploadResult.isErr()) {
-      return uploadResult;
+      backupStore.setBackupFailed(uploadResult.error.message);
+      return err(uploadResult.error);
     }
 
     // Complete the upload process
@@ -94,10 +101,12 @@ export class BackupService {
     });
 
     if (completeUploadResult.isErr()) {
-      return completeUploadResult;
+      backupStore.setBackupFailed(completeUploadResult.error.message);
+      return err(completeUploadResult.error);
     }
 
     log.d("completeUploadResult", [completeUploadResult.value]);
+    backupStore.setBackupSuccess();
 
     return ok(undefined);
   }

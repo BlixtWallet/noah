@@ -3,6 +3,7 @@ import uuid from "react-native-uuid";
 import { useSyncManager } from "~/hooks/useSyncManager";
 import { useServerRegistration } from "~/hooks/useServerRegistration";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
+import { useAutoBackup } from "~/hooks/useAutoBackup";
 import { useTransactionStore } from "~/store/transactionStore";
 import { useBalance } from "~/hooks/useWallet";
 import { useBoardAllAmountArk } from "~/hooks/usePayments";
@@ -27,6 +28,7 @@ const AppServices = memo(() => {
   useSyncManager(60_000);
   useServerRegistration(isReady);
   usePushNotifications(isReady);
+  useAutoBackup(isReady);
 
   useEffect(() => {
     setIsReady(true);

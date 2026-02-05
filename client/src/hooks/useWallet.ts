@@ -15,17 +15,20 @@ import {
   closeWalletIfLoaded,
   sync,
 } from "../lib/walletApi";
-import { restoreWallet as restoreWalletAction } from "../lib/backupService";
+import { BackupService, restoreWallet as restoreWalletAction } from "../lib/backupService";
 import { deregister } from "../lib/api";
 import { queryClient } from "~/queryClient";
 import { useTransactionStore } from "../store/transactionStore";
+import { useBackupStore } from "~/store/backupStore";
 import { ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
+import { useBackgroundJobCoordination } from "~/hooks/useBackgroundJobCoordination";
 
 const log = logger("useWallet");
 
 export function useCreateWallet() {
   const { showAlert } = useAlert();
+  const { safelyExecuteWhenReady } = useBackgroundJobCoordination();
 
   return useMutation({
     mutationFn: async () => {
@@ -33,6 +36,15 @@ export function useCreateWallet() {
       if (result.isErr()) {
         throw result.error;
       }
+    },
+    onSuccess: () => {
+      void safelyExecuteWhenReady(async () => {
+        const backupService = new BackupService();
+        const backupResult = await backupService.performBackup();
+        if (backupResult.isErr()) {
+          log.w("Immediate backup failed after wallet creation", [backupResult.error]);
+        }
+      });
     },
     onError: async (error: Error) => {
       await deleteWalletAction();
@@ -212,6 +224,7 @@ export function useDeleteWallet() {
       useTransactionStore.getState().reset();
       useWalletStore.getState().reset();
       useServerStore.getState().resetRegistration();
+      useBackupStore.getState().reset();
 
       // Clear query cache
       queryClient.clear();

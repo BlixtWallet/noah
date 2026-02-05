@@ -1,4 +1,4 @@
-import { loadWalletIfNeeded, maintenanceWithOnchainDelegated, sync } from "./walletApi";
+import { loadWalletIfNeeded, maintenanceWithOnchainDelegated } from "./walletApi";
 import logger from "~/lib/log";
 import { bolt11Invoice } from "./paymentsApi";
 import { err, ok, Result } from "neverthrow";
