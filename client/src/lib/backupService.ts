@@ -23,12 +23,18 @@ import logger from "~/lib/log";
 import { APP_VARIANT } from "~/config";
 import ky from "ky";
 import { hasGooglePlayServices } from "~/constants";
+import { redactSensitiveErrorMessage } from "~/lib/errorUtils";
 
 const updateProgress = (step: string, progress: number) => {
   useWalletStore.getState().setRestoreProgress({ step, progress });
 };
 
 const log = logger("backupService");
+
+const reportBackupFailure = (message: string, error: Error) => {
+  useBackupStore.getState().setBackupFailed(message);
+  log.w("Backup failed", [message, redactSensitiveErrorMessage(error)]);
+};
 
 export class BackupService {
   // This is only for registering backups on startup with the server
@@ -40,16 +46,15 @@ export class BackupService {
   }
 
   async performBackup(): Promise<Result<void, Error>> {
-    const backupStore = useBackupStore.getState();
     // Get mnemonic for encryption
     const mnemonicResult = await getMnemonic();
     if (mnemonicResult.isErr()) {
-      backupStore.setBackupFailed(mnemonicResult.error.message);
+      reportBackupFailure("Unable to access recovery phrase.", mnemonicResult.error);
       return err(mnemonicResult.error);
     }
 
     log.d("Performing backup");
-    backupStore.setBackupInProgress();
+    useBackupStore.getState().setBackupInProgress();
 
     // Create and encrypt the backup file natively
     const encryptedDataResult = await ResultAsync.fromPromise(
@@ -58,7 +63,7 @@ export class BackupService {
     );
 
     if (encryptedDataResult.isErr()) {
-      backupStore.setBackupFailed(encryptedDataResult.error.message);
+      reportBackupFailure("Failed to create backup file.", encryptedDataResult.error);
       return err(encryptedDataResult.error);
     }
 
@@ -71,7 +76,7 @@ export class BackupService {
     });
 
     if (uploadUrlResult.isErr()) {
-      backupStore.setBackupFailed(uploadUrlResult.error.message);
+      reportBackupFailure("Failed to prepare backup upload.", uploadUrlResult.error);
       return err(uploadUrlResult.error);
     }
 
@@ -89,7 +94,7 @@ export class BackupService {
     );
 
     if (uploadResult.isErr()) {
-      backupStore.setBackupFailed(uploadResult.error.message);
+      reportBackupFailure("Failed to upload backup to server.", uploadResult.error);
       return err(uploadResult.error);
     }
 
@@ -101,12 +106,12 @@ export class BackupService {
     });
 
     if (completeUploadResult.isErr()) {
-      backupStore.setBackupFailed(completeUploadResult.error.message);
+      reportBackupFailure("Failed to finalize backup upload.", completeUploadResult.error);
       return err(completeUploadResult.error);
     }
 
     log.d("completeUploadResult", [completeUploadResult.value]);
-    backupStore.setBackupSuccess();
+    useBackupStore.getState().setBackupSuccess();
 
     return ok(undefined);
   }

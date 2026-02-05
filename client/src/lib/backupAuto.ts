@@ -1,6 +1,7 @@
 import { ok, Result } from "neverthrow";
 import { BackupService } from "~/lib/backupService";
 import logger from "~/lib/log";
+import { redactSensitiveErrorMessage } from "~/lib/errorUtils";
 import { useBackupStore } from "~/store/backupStore";
 import { useServerStore } from "~/store/serverStore";
 import { useWalletStore } from "~/store/walletStore";
@@ -68,7 +69,7 @@ export const triggerAutoBackup = async (
     const backupService = new BackupService();
     const result = await backupService.performBackup();
     if (result.isErr()) {
-      log.w("Auto-backup failed", [reason, result.error]);
+      log.w("Auto-backup failed", [reason, redactSensitiveErrorMessage(result.error)]);
     } else {
       log.d("Auto-backup completed", [reason]);
     }

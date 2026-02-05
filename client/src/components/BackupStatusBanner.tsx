@@ -12,6 +12,7 @@ import {
 } from "~/constants";
 import { BackupService } from "~/lib/backupService";
 import logger from "~/lib/log";
+import { redactSensitiveErrorMessage } from "~/lib/errorUtils";
 
 const log = logger("BackupStatusBanner");
 
@@ -85,7 +86,7 @@ export const BackupStatusBanner: React.FC = () => {
       const backupService = new BackupService();
       const result = await backupService.performBackup();
       if (result.isErr()) {
-        log.w("Manual backup failed", [result.error]);
+        log.w("Manual backup failed", [redactSensitiveErrorMessage(result.error)]);
       }
     } finally {
       setIsRetrying(false);
