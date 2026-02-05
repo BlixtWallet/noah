@@ -4,6 +4,7 @@ import { getServerEndpoint } from "~/constants";
 import { peakKeyPair, signMessage } from "./crypto";
 import { loadWalletIfNeeded } from "./walletApi";
 import {
+  ApiErrorResponse,
   AppVersionCheckPayload,
   AppVersionInfo,
   BackupInfo,
@@ -27,12 +28,56 @@ import {
   EmailVerificationResponse,
 } from "~/types/serverTypes";
 import logger from "~/lib/log";
-import ky from "ky";
 import { nativeGet, nativePost } from "noah-tools";
 
 const log = logger("serverApi");
 
 const API_URL = getServerEndpoint();
+
+class ApiError extends Error {
+  status: number;
+  code: string;
+  reason: string;
+
+  constructor(message: string, status: number, code: string, reason: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.reason = reason;
+  }
+}
+
+const isApiErrorResponse = (value: unknown): value is ApiErrorResponse => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const obj = value as Record<string, unknown>;
+  return (
+    typeof obj.status === "string" &&
+    typeof obj.code === "string" &&
+    typeof obj.message === "string" &&
+    typeof obj.reason === "string"
+  );
+};
+
+const buildApiError = (status: number, body?: string | null): Error => {
+  if (!body) {
+    return new Error(`HTTP ${status}: Empty response body`);
+  }
+
+  const parseResult = Result.fromThrowable(
+    () => JSON.parse(body) as unknown,
+    (e) => e as Error,
+  )();
+
+  if (parseResult.isOk() && isApiErrorResponse(parseResult.value)) {
+    const parsed = parseResult.value;
+    return new ApiError(parsed.message, status, parsed.code, parsed.reason);
+  }
+
+  return new Error(`HTTP ${status}: ${body}`);
+};
 
 async function post<T, U>(
   endpoint: string,
@@ -117,7 +162,7 @@ async function post<T, U>(
 
       return ok(responseJson.value);
     } else {
-      return err(new Error(`HTTP ${response.status}: ${response.body}`));
+      return err(buildApiError(response.status, response.body));
     }
   } catch (e) {
     return err(e as Error);
@@ -194,7 +239,7 @@ export const getK1 = async (): Promise<Result<string, Error>> => {
   const response = responseResult.value;
 
   if (response.status < 200 || response.status >= 300) {
-    return err(new Error(`HTTP ${response.status}: ${response.body}`));
+    return err(buildApiError(response.status, response.body));
   }
 
   if (!response.body) {
@@ -228,14 +273,36 @@ export const getDownloadUrlForRestore = async (payload: {
       "x-auth-key": key,
     };
 
-    const response = await ky
-      .post(`${API_URL}/v0/backup/download_url`, {
-        headers,
-        json: restPayload,
-      })
-      .json<DownloadUrlResponse>();
+    const body = JSON.stringify(restPayload);
+    const responseResult = await ResultAsync.fromPromise(
+      nativePost(`${API_URL}/v0/backup/download_url`, body, headers, 30),
+      (e) => e as Error,
+    );
 
-    return ok(response);
+    if (responseResult.isErr()) {
+      return err(responseResult.error);
+    }
+
+    const response = responseResult.value;
+
+    if (response.status < 200 || response.status >= 300) {
+      return err(buildApiError(response.status, response.body));
+    }
+
+    if (!response.body) {
+      return err(new Error("Empty response body from backup download_url"));
+    }
+
+    const parseResult = Result.fromThrowable(
+      () => JSON.parse(response.body) as DownloadUrlResponse,
+      (e) => new Error(`Failed to parse JSON response: ${(e as Error).message}`),
+    )();
+
+    if (parseResult.isErr()) {
+      return err(parseResult.error);
+    }
+
+    return ok(parseResult.value);
   } catch (e) {
     return err(e as Error);
   }
@@ -271,7 +338,7 @@ export const checkAppVersion = async (
   const response = responseResult.value;
 
   if (response.status < 200 || response.status >= 300) {
-    return err(new Error(`HTTP ${response.status}: ${response.body}`));
+    return err(buildApiError(response.status, response.body));
   }
 
   if (!response.body) {

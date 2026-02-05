@@ -10,6 +10,20 @@ pub struct AuthPayload {
     pub k1: String,
 }
 
+/// Represents a structured API error response.
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct ApiErrorResponse {
+    /// Always "ERROR" for error responses.
+    pub status: String,
+    /// Stable machine-readable error code.
+    pub code: String,
+    /// User-facing error message.
+    pub message: String,
+    /// Safe error reason for compatibility.
+    pub reason: String,
+}
+
 /// Represents events that can occur during LNURL-auth.
 #[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "UPPERCASE")]

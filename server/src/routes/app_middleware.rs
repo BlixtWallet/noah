@@ -179,7 +179,7 @@ pub async fn user_exists_middleware(
         Some(payload) => payload,
         None => {
             return Err(ApiError::ServerErr(
-                "Auth payload not found in request extensions".to_string(),
+                "Authentication failed. Please try again.".to_string(),
             )
             .into_response());
         }
@@ -219,7 +219,7 @@ pub async fn email_verified_middleware(
         Some(payload) => payload,
         None => {
             return Err(ApiError::ServerErr(
-                "Auth payload not found in request extensions".to_string(),
+                "Authentication failed. Please try again.".to_string(),
             )
             .into_response());
         }
