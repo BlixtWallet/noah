@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { AlertCircle, CheckCircle, CloudUpload } from "lucide-react-native";
 import { Text } from "~/components/ui/text";
@@ -20,6 +20,40 @@ export const BackupStatusBanner: React.FC = () => {
   const { isBackupEnabled } = useServerStore();
   const { lastBackupAt, lastBackupStatus, lastBackupError } = useBackupStore();
   const [isRetrying, setIsRetrying] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!lastBackupAt) {
+      return undefined;
+    }
+
+    const now = Date.now();
+    const successExpiresAt =
+      lastBackupStatus === "success"
+        ? lastBackupAt + AUTO_BACKUP_SUCCESS_BANNER_MS
+        : null;
+    const staleAt = lastBackupAt + AUTO_BACKUP_FRESHNESS_MS;
+
+    let nextAt: number | null = null;
+    if (successExpiresAt !== null && now < successExpiresAt) {
+      nextAt = successExpiresAt;
+    }
+
+    if (now < staleAt) {
+      nextAt = nextAt === null ? staleAt : Math.min(nextAt, staleAt);
+    }
+
+    if (nextAt === null) {
+      return undefined;
+    }
+
+    const delayMs = Math.max(0, nextAt - now);
+    const timeoutId = setTimeout(() => {
+      setTick((value) => value + 1);
+    }, delayMs);
+
+    return () => clearTimeout(timeoutId);
+  }, [lastBackupAt, lastBackupStatus, tick]);
 
   const now = Date.now();
   const isStale = !lastBackupAt || now - lastBackupAt > AUTO_BACKUP_FRESHNESS_MS;
@@ -31,15 +65,7 @@ export const BackupStatusBanner: React.FC = () => {
   const showFailed = lastBackupStatus === "failed";
   const showStale = !showInProgress && !showFailed && isStale;
 
-  if (!isBackupEnabled && lastBackupStatus === "idle" && !lastBackupAt) {
-    return null;
-  }
-
-  if (!showSuccess && !showInProgress && !showFailed && !showStale) {
-    return null;
-  }
-
-  const { title, message, icon } = useMemo(() => {
+  const { title, message, icon } = (() => {
     if (showInProgress) {
       return {
         title: "Backing up your wallet",
@@ -72,25 +98,24 @@ export const BackupStatusBanner: React.FC = () => {
         : "Your last backup is older than our freshness window.",
       icon: <CloudUpload size={20} color="#60a5fa" />,
     };
-  }, [
-    lastBackupAt,
-    lastBackupError,
-    showFailed,
-    showInProgress,
-    showSuccess,
-  ]);
+  })();
+
+  if (!isBackupEnabled && lastBackupStatus === "idle" && !lastBackupAt) {
+    return null;
+  }
+
+  if (!showSuccess && !showInProgress && !showFailed && !showStale) {
+    return null;
+  }
 
   const handleBackupNow = async () => {
     setIsRetrying(true);
-    try {
-      const backupService = new BackupService();
-      const result = await backupService.performBackup();
-      if (result.isErr()) {
-        log.w("Manual backup failed", [redactSensitiveErrorMessage(result.error)]);
-      }
-    } finally {
-      setIsRetrying(false);
+    const backupService = new BackupService();
+    const result = await backupService.performBackup();
+    if (result.isErr()) {
+      log.w("Manual backup failed", [redactSensitiveErrorMessage(result.error)]);
     }
+    setIsRetrying(false);
   };
 
   return (
