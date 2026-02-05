@@ -82,23 +82,11 @@ impl ApiError {
             | ApiError::Secp256k1(_) => GENERIC_SERVER_MESSAGE.to_string(),
         }
     }
-
-    fn reason(&self) -> String {
-        match self {
-            ApiError::SerializeErr(_)
-            | ApiError::Database(_)
-            | ApiError::Expo(_)
-            | ApiError::Anyhow(_)
-            | ApiError::Secp256k1(_) => GENERIC_SERVER_MESSAGE.to_string(),
-            _ => self.user_message(),
-        }
-    }
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let status = self.status_code();
-        let reason = self.reason();
         let message = self.user_message();
         let code = self.error_code();
 
@@ -108,7 +96,7 @@ impl IntoResponse for ApiError {
                 tracing::warn!(
                     error_type = ?self,
                     status = %status.as_u16(),
-                    reason = %reason,
+                    reason = %message,
                     "API error (client error)"
                 );
             }
@@ -116,7 +104,7 @@ impl IntoResponse for ApiError {
                 tracing::error!(
                     error_type = ?self,
                     status = %status.as_u16(),
-                    reason = %reason,
+                    reason = %message,
                     "API error (server error)"
                 );
             }
@@ -125,8 +113,8 @@ impl IntoResponse for ApiError {
         let body = Json(ApiErrorResponse {
             status: "ERROR".to_string(),
             code: code.to_string(),
-            message,
-            reason,
+            message: message.clone(),
+            reason: message,
         });
 
         (status, body).into_response()

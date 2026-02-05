@@ -49,17 +49,15 @@ class ApiError extends Error {
 }
 
 const isApiErrorResponse = (value: unknown): value is ApiErrorResponse => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const obj = value as Record<string, unknown>;
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "status" in value &&
-    "code" in value &&
-    "message" in value &&
-    "reason" in value &&
-    typeof (value as ApiErrorResponse).status === "string" &&
-    typeof (value as ApiErrorResponse).code === "string" &&
-    typeof (value as ApiErrorResponse).message === "string" &&
-    typeof (value as ApiErrorResponse).reason === "string"
+    typeof obj.status === "string" &&
+    typeof obj.code === "string" &&
+    typeof obj.message === "string" &&
+    typeof obj.reason === "string"
   );
 };
 
