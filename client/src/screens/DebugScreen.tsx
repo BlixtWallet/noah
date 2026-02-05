@@ -9,7 +9,12 @@ import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
 import { Text } from "~/components/ui/text";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
-import { maintanance, maintenanceRefresh } from "~/lib/walletApi";
+import {
+  maintanance,
+  maintenanceRefresh,
+  maintenanceDelegated,
+  maintenanceWithOnchainDelegated,
+} from "~/lib/walletApi";
 import { offboardAllArk } from "~/lib/paymentsApi";
 import { useAlert } from "~/contexts/AlertProvider";
 import logger from "~/lib/log";
@@ -26,7 +31,12 @@ import {
 
 const log = logger("DebugScreen");
 
-type DebugAction = "maintenance" | "maintenanceRefresh" | "offboardAll";
+type DebugAction =
+  | "maintenance"
+  | "maintenanceRefresh"
+  | "maintenanceDelegated"
+  | "maintenanceWithOnchainDelegated"
+  | "offboardAll";
 
 interface ActionOption {
   id: DebugAction;
@@ -46,6 +56,16 @@ const DEBUG_ACTIONS: ActionOption[] = [
     id: "maintenanceRefresh",
     title: "Maintenance Refresh",
     description: "Run maintenance refresh operation",
+  },
+  {
+    id: "maintenanceDelegated",
+    title: "Maintenance Delegated",
+    description: "Run delegated maintenance operation",
+  },
+  {
+    id: "maintenanceWithOnchainDelegated",
+    title: "Maintenance With Onchain Delegated",
+    description: "Run delegated maintenance with onchain operation",
   },
   {
     id: "offboardAll",
@@ -88,6 +108,25 @@ const DebugScreen = () => {
           return { success: false, error: result.error.message };
         }
         return { success: true, message: "Maintenance refresh completed successfully" };
+      }
+      case "maintenanceDelegated": {
+        log.d("Executing maintenance delegated");
+        const result = await maintenanceDelegated();
+        if (result.isErr()) {
+          return { success: false, error: result.error.message };
+        }
+        return { success: true, message: "Maintenance delegated completed successfully" };
+      }
+      case "maintenanceWithOnchainDelegated": {
+        log.d("Executing maintenance with onchain delegated");
+        const result = await maintenanceWithOnchainDelegated();
+        if (result.isErr()) {
+          return { success: false, error: result.error.message };
+        }
+        return {
+          success: true,
+          message: "Maintenance with onchain delegated completed successfully",
+        };
       }
       case "offboardAll": {
         log.d("Executing offboard all to address:", [input]);
