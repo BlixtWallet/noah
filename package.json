@@ -14,6 +14,7 @@
     "android:clean": "bun client android:clean",
     "ios:clean": "bun client ios:clean",
     "postinstall": "bun scripts/download_ark_binaries.js",
+    "prepare": "husky",
     "check": "bun client check"
   },
   "patchedDependencies": {
