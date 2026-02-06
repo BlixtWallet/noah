@@ -2,7 +2,15 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
-const nitroPackageJson = require("react-native-nitro-ark/package.json");
+
+// Cross-platform support: try standard Bun hoisting first (macOS/Linux), fallback to workspace path (Windows)
+const nitroPackageJson = (() => {
+  try {
+    return require("react-native-nitro-ark/package.json");
+  } catch {
+    return require("../client/node_modules/react-native-nitro-ark/package.json");
+  }
+})();
 
 const NITRO_ARK_VERSION = `v${nitroPackageJson.version}`;
 
@@ -12,11 +20,13 @@ const XC_FRAMEWORK_CXX_BRIDGE_URL = `https://github.com/BlixtWallet/react-native
 const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
 
 const projectRoot = process.cwd();
-const nitroArkPath = path.resolve(
-  projectRoot,
-  "node_modules",
-  "react-native-nitro-ark",
-);
+const nitroArkPath = (() => {
+  const rootPath = path.resolve(projectRoot, "node_modules", "react-native-nitro-ark");
+  if (fs.existsSync(rootPath)) {
+    return rootPath;
+  }
+  return path.resolve(projectRoot, "client", "node_modules", "react-native-nitro-ark");
+})();
 const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
 
 // iOS paths
