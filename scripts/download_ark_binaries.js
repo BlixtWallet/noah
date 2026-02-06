@@ -2,7 +2,22 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 const { execSync } = require("child_process");
-const nitroPackageJson = require("react-native-nitro-ark/package.json");
+
+const projectRoot = process.cwd();
+
+// Find the path to react-native-nitro-ark in expected locations
+// Should really be in the root of the project, but Bun Windows works differently.
+const nitroArkPath = [
+  path.resolve(projectRoot, "node_modules", "react-native-nitro-ark"),
+  path.resolve(projectRoot, "client", "node_modules", "react-native-nitro-ark"),
+].find(p => fs.existsSync(p));
+
+if (!nitroArkPath) {
+  throw new Error("react-native-nitro-ark not found in node_modules or client/node_modules");
+}
+
+// Define other constants conditionally. The script already handles the case where nitroArkPath is null.
+const nitroPackageJson = require(path.join(nitroArkPath, "package.json"));
 
 const NITRO_ARK_VERSION = `v${nitroPackageJson.version}`;
 
@@ -11,12 +26,6 @@ const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/
 const XC_FRAMEWORK_CXX_BRIDGE_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/ArkCxxBridge.xcframework.zip`;
 const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
 
-const projectRoot = process.cwd();
-const nitroArkPath = path.resolve(
-  projectRoot,
-  "node_modules",
-  "react-native-nitro-ark",
-);
 const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
 
 // iOS paths
