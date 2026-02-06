@@ -1208,7 +1208,7 @@
 
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 
-    "fetch-nodeshim": ["fetch-nodeshim@0.4.4", "", {}, "sha512-LyNa+cxfzsMvf4NyGw4DZpHJlLif9BodSkrjtFCgB2+5zM1iRI6+EcZVOIDeuggNiK4ieff9abWOeDCQQLDWyA=="],
+    "fetch-nodeshim": ["fetch-nodeshim@0.4.5", "", {}, "sha512-n6dRDiC+/TlluvZxGDBnyNYqPftkDFjJIvXluekSSGildXSXvMWXXo+1/yK363BOZlOI2Q+PitrcLcF5CSolEA=="],
 
     "file-entry-cache": ["file-entry-cache@8.0.0", "", { "dependencies": { "flat-cache": "^4.0.0" } }, "sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ=="],
 
