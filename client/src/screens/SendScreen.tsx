@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  Pressable,
 } from "react-native";
 
 import Icon from "@react-native-vector-icons/ionicons";
@@ -83,14 +84,14 @@ const SendScreen = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View className="flex-1">
           <View className="flex-row items-center p-4">
-            <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-              <Icon name="arrow-back" size={28} color={iconColor} />
-            </TouchableOpacity>
+            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Icon name="arrow-back-outline" size={24} color={iconColor} />
+            </Pressable>
             <Text className="text-2xl font-bold text-foreground">Send</Text>
             <View className="flex-1 items-end">
-              <TouchableOpacity onPress={handleScanPress}>
+              <Pressable onPress={handleScanPress}>
                 <Icon name="scan" size={28} color={iconColor} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
           <View className="flex-1">
