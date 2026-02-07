@@ -22,7 +22,7 @@ import { copyToClipboard } from "../lib/clipboardUtils";
 import { ConfirmationDialog, DangerZoneRow } from "../components/ConfirmationDialog";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { AlertTriangle, CheckCircle } from "lucide-react-native";
-import { usePeakKeyPair } from "~/hooks/useCrypto";
+import { useDeriveKeyPairFromMnemonic } from "~/hooks/useCrypto";
 import logoImageDark from "../../assets/1024_no_background.png";
 import logoImageLight from "../../assets/All_Files/light_dark_tinted/icon_clear_tinted_ios.png";
 import { COLORS } from "~/lib/styleConstants";
@@ -103,7 +103,7 @@ const SettingsScreen = () => {
   const deleteWalletMutation = useDeleteWallet();
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
     useExportDatabase();
-  const { data: peakKeyPair } = usePeakKeyPair();
+  const { data: derivedKeyPair } = useDeriveKeyPairFromMnemonic();
   const tabBarHeight = useBottomTabBarHeight();
   const { bottom: safeBottomInset } = useSafeAreaInsets();
 
@@ -176,11 +176,11 @@ const SettingsScreen = () => {
   const walletData: Setting[] = [];
   const debugData: Setting[] = [];
 
-  if (isInitialized && peakKeyPair?.public_key) {
+  if (isInitialized && derivedKeyPair?.public_key) {
     infoData.push({
       id: "staticVtxoPubkey",
       title: "Public Key",
-      value: peakKeyPair.public_key,
+      value: derivedKeyPair.public_key,
       isPressable: false,
     });
   }

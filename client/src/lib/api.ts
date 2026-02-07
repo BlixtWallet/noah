@@ -1,8 +1,9 @@
 /// <reference lib="dom" />
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import { getServerEndpoint } from "~/constants";
-import { peakKeyPair, signMessage } from "./crypto";
-import { loadWalletIfNeeded } from "./walletApi";
+import { getMnemonic } from "./crypto";
+import { deriveKeypairFromMnemonic, signMesssageWithMnemonic } from "./walletApi";
+import { APP_VARIANT } from "~/config";
 import {
   ApiErrorResponse,
   AppVersionCheckPayload,
@@ -33,6 +34,7 @@ import { nativeGet, nativePost } from "noah-tools";
 const log = logger("serverApi");
 
 const API_URL = getServerEndpoint();
+const SERVER_AUTH_KEY_INDEX = 0;
 
 class ApiError extends Error {
   status: number;
@@ -90,26 +92,38 @@ async function post<T, U>(
     };
 
     if (authenticated) {
-      const walletResult = await loadWalletIfNeeded();
-      if (walletResult.isErr()) {
-        return err(walletResult.error);
-      }
-
       const k1 = payload.k1 ?? (await getK1()).unwrapOr(undefined);
 
       if (!k1) {
         return err(new Error("Failed to get k1 for authentication"));
       }
 
-      const peakResult = await peakKeyPair(0);
-
-      if (peakResult.isErr()) {
-        log.w("Failed to derive public key for authentication", [peakResult.error]);
-        return err(peakResult.error);
+      const mnemonicResult = await getMnemonic();
+      if (mnemonicResult.isErr()) {
+        log.w("Failed to read mnemonic for server authentication", [mnemonicResult.error]);
+        return err(mnemonicResult.error);
       }
-      const { public_key: key } = peakResult.value;
 
-      const signatureResult = await signMessage(k1, 0);
+      const mnemonic = mnemonicResult.value;
+
+      const keypairResult = await deriveKeypairFromMnemonic(
+        mnemonic,
+        APP_VARIANT,
+        SERVER_AUTH_KEY_INDEX,
+      );
+
+      if (keypairResult.isErr()) {
+        log.w("Failed to derive public key for authentication", [keypairResult.error]);
+        return err(keypairResult.error);
+      }
+      const { public_key: key } = keypairResult.value;
+
+      const signatureResult = await signMesssageWithMnemonic(
+        k1,
+        mnemonic,
+        APP_VARIANT,
+        SERVER_AUTH_KEY_INDEX,
+      );
 
       if (signatureResult.isErr()) {
         log.w("Failed to sign message for authentication", [signatureResult.error]);

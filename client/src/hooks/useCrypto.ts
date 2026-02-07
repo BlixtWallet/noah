@@ -1,24 +1,36 @@
 import { useQuery } from "@tanstack/react-query";
-import { peakKeyPair } from "~/lib/crypto";
+import { getMnemonic } from "~/lib/crypto";
+import { deriveKeypairFromMnemonic } from "~/lib/walletApi";
 import { useWalletStore } from "~/store/walletStore";
+import { APP_VARIANT } from "~/config";
 
-export function usePeakKeyPair() {
+export function useDeriveKeyPairFromMnemonic() {
   return useQuery({
     queryKey: ["peakKeyPair"],
     queryFn: async () => {
-      const pubkey = useWalletStore.getState().staticVtxoPubkey;
-      if (pubkey) {
-        return { public_key: pubkey };
+      const cachedKey = useWalletStore.getState().staticVtxoPubkey;
+      if (cachedKey) {
+        return { public_key: cachedKey };
       }
 
-      const result = await peakKeyPair(0);
-      if (result.isErr()) {
-        throw result.error;
+      const mnemonicResult = await getMnemonic();
+      if (mnemonicResult.isErr()) {
+        throw mnemonicResult.error;
       }
 
-      useWalletStore.getState().setStaticVtxoPubkey(result.value.public_key);
+      const derivedKeyResult = await deriveKeypairFromMnemonic(
+        mnemonicResult.value,
+        APP_VARIANT,
+        0,
+      );
+      if (derivedKeyResult.isErr()) {
+        throw derivedKeyResult.error;
+      }
 
-      return { public_key: result.value.public_key };
+      const derivedKey = derivedKeyResult.value.public_key;
+      useWalletStore.getState().setStaticVtxoPubkey(derivedKey);
+
+      return { public_key: derivedKey };
     },
   });
 }
