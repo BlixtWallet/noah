@@ -4,10 +4,15 @@ import { deriveKeypairFromMnemonic } from "~/lib/walletApi";
 import { useWalletStore } from "~/store/walletStore";
 import { APP_VARIANT } from "~/config";
 
-export function usePeakKeyPair() {
+export function useDeriveKeyPairFromMnemonic() {
   return useQuery({
     queryKey: ["peakKeyPair"],
     queryFn: async () => {
+      const cachedKey = useWalletStore.getState().staticVtxoPubkey;
+      if (cachedKey) {
+        return { public_key: cachedKey };
+      }
+
       const mnemonicResult = await getMnemonic();
       if (mnemonicResult.isErr()) {
         throw mnemonicResult.error;
@@ -23,10 +28,7 @@ export function usePeakKeyPair() {
       }
 
       const derivedKey = derivedKeyResult.value.public_key;
-      const cachedKey = useWalletStore.getState().staticVtxoPubkey;
-      if (cachedKey !== derivedKey) {
-        useWalletStore.getState().setStaticVtxoPubkey(derivedKey);
-      }
+      useWalletStore.getState().setStaticVtxoPubkey(derivedKey);
 
       return { public_key: derivedKey };
     },
