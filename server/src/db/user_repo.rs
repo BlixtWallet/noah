@@ -23,17 +23,6 @@ impl std::fmt::Display for DuplicateArkAddressError {
 
 impl std::error::Error for DuplicateArkAddressError {}
 
-#[derive(Debug, Clone)]
-pub struct DuplicateEmailError;
-
-impl std::fmt::Display for DuplicateEmailError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Email address already in use")
-    }
-}
-
-impl std::error::Error for DuplicateEmailError {}
-
 // This struct represents a user record from the database.
 // It's a good practice to have a model struct for each of your database tables.
 #[derive(Debug, sqlx::FromRow)]
@@ -177,23 +166,15 @@ impl<'a> UserRepository<'a> {
 
     /// Updates a user's email address. Empty strings are converted to NULL.
     pub async fn update_email(&self, pubkey: &str, email: &str) -> Result<()> {
-        // Treat empty strings as NULL to avoid unique constraint issues
+        // Treat empty strings as NULL to keep semantics stable and avoid storing "".
         let email_value: Option<&str> = if email.is_empty() { None } else { Some(email) };
 
-        match sqlx::query("UPDATE users SET email = $1, updated_at = now() WHERE pubkey = $2")
+        sqlx::query("UPDATE users SET email = $1, updated_at = now() WHERE pubkey = $2")
             .bind(email_value)
             .bind(pubkey)
             .execute(self.pool)
-            .await
-        {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                if is_email_conflict(&e) {
-                    return Err(DuplicateEmailError.into());
-                }
-                Err(e.into())
-            }
-        }
+            .await?;
+        Ok(())
     }
 
     /// Marks a user's email as verified.
@@ -215,24 +196,6 @@ impl<'a> UserRepository<'a> {
                 .fetch_optional(self.pool)
                 .await?;
         Ok(verified.unwrap_or(false))
-    }
-
-    /// Checks if an email address is already in use by another user.
-    /// Returns false for empty emails since those are stored as NULL.
-    pub async fn email_exists(&self, email: &str, exclude_pubkey: &str) -> Result<bool> {
-        // Empty emails are stored as NULL, so they can't conflict
-        if email.is_empty() {
-            return Ok(false);
-        }
-
-        let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1 AND pubkey != $2 AND email IS NOT NULL AND email != '')",
-        )
-        .bind(email)
-        .bind(exclude_pubkey)
-        .fetch_one(self.pool)
-        .await?;
-        Ok(exists)
     }
 
     /// Updates the user's last login timestamp.
@@ -270,18 +233,6 @@ fn is_ark_address_conflict(error: &sqlx::Error) -> bool {
     if let sqlx::Error::Database(db_err) = error {
         return db_err.code().as_deref() == Some("23505")
             && db_err.constraint() == Some("users_ark_address_key");
-    }
-
-    false
-}
-
-fn is_email_conflict(error: &sqlx::Error) -> bool {
-    if let sqlx::Error::Database(db_err) = error {
-        // Check for both possible constraint names
-        let constraint = db_err.constraint();
-        return db_err.code().as_deref() == Some("23505")
-            && (constraint == Some("users_email_key")
-                || constraint == Some("idx_users_email_unique"));
     }
 
     false
