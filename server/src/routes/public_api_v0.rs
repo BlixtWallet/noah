@@ -16,10 +16,7 @@ use validator::{Validate, ValidateEmail};
 use crate::{
     AppState,
     cache::email_verification_store::EmailVerificationStore,
-    db::{
-        device_repo::DeviceRepository,
-        user_repo::{DuplicateEmailError, UserRepository},
-    },
+    db::{device_repo::DeviceRepository, user_repo::UserRepository},
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
@@ -447,16 +444,6 @@ pub async fn send_verification_email(
         }));
     }
 
-    // Check if email is already in use by another user
-    if user_repo
-        .email_exists(&payload.email, &auth_payload.key)
-        .await?
-    {
-        return Err(ApiError::InvalidArgument(
-            "This email address is already in use by another account".to_string(),
-        ));
-    }
-
     let code = EmailVerificationStore::generate_code();
 
     state
@@ -533,17 +520,9 @@ pub async fn verify_email(
                 let domain = verified_email.split('@').nth(1).unwrap_or("unknown");
                 event.add_context("email_domain", domain);
             }
-            if let Err(e) = user_repo
+            user_repo
                 .update_email(&auth_payload.key, &verified_email)
-                .await
-            {
-                if e.is::<DuplicateEmailError>() {
-                    return Err(ApiError::InvalidArgument(
-                        "This email address is already in use by another account".to_string(),
-                    ));
-                }
-                return Err(e.into());
-            }
+                .await?;
             user_repo.set_email_verified(&auth_payload.key).await?;
 
             tracing::info!(

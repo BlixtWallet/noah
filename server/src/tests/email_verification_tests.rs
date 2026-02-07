@@ -141,7 +141,7 @@ async fn test_send_verification_email_already_verified() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
-async fn test_send_verification_email_already_in_use() {
+async fn test_send_verification_email_duplicate_email_allowed() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     // Create first user with verified email
@@ -186,7 +186,13 @@ async fn test_send_verification_email_already_in_use() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let res: EmailVerificationResponse = serde_json::from_slice(&body).unwrap();
+
+    assert!(res.success);
+    assert_eq!(res.message, Some("Verification code sent".to_string()));
 }
 
 #[tracing_test::traced_test]
@@ -388,7 +394,7 @@ async fn test_verify_email_already_verified() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
-async fn test_verify_email_duplicate_email() {
+async fn test_verify_email_duplicate_email_allowed() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     // Create first user with verified email
@@ -421,7 +427,7 @@ async fn test_verify_email_duplicate_email() {
         .await
         .unwrap();
 
-    // Try to verify - should fail because email is already taken
+    // Verify - should succeed even though another user already uses this email
     let response = app
         .oneshot(
             Request::builder()
@@ -442,8 +448,24 @@ async fn test_verify_email_duplicate_email() {
         .await
         .unwrap();
 
-    // Should return BAD_REQUEST because email is already in use
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let res: EmailVerificationResponse = serde_json::from_slice(&body).unwrap();
+
+    assert!(res.success);
+    assert_eq!(res.message, Some("Email verified successfully".to_string()));
+
+    let user_record = sqlx::query_as::<_, (Option<String>, bool)>(
+        "SELECT email, is_email_verified FROM users WHERE pubkey = $1",
+    )
+    .bind(user.pubkey().to_string())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
+
+    assert_eq!(user_record.0, Some("taken@example.com".to_string()));
+    assert!(user_record.1);
 }
 
 #[tracing_test::traced_test]
