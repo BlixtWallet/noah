@@ -18,6 +18,10 @@ install:
 start:
     bun start
 
+# Bump client version numbers
+bump *args:
+    bun scripts/bump_client_version.ts {{ args }}
+
 # Android builds (regtest)
 android:
     bun run android:regtest:debug
