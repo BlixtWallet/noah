@@ -114,8 +114,8 @@ const config: { expo: ExpoConfig } = {
 };
 
 // To be changed for new releases
-config.expo.version = "0.0.6";
-config.expo.android!.versionCode = 8;
-config.expo.ios!.buildNumber = "8";
+config.expo.version = "0.0.7";
+config.expo.android!.versionCode = 9;
+config.expo.ios!.buildNumber = "9";
 
 export default config;
