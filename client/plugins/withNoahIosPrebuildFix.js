@@ -86,65 +86,73 @@ function fixAppIconName(project) {
   }
 }
 
-function removeStandaloneIconFromPbxproj(project) {
+function addIconToAllTargets(project) {
   const iconFileName = `${ICON_NAME}.icon`;
 
-  // Find the PBXFileReference UUID for the standalone noah.icon
+  // Find the noah.icon PBXFileReference UUID
   const fileRefSection = project.pbxFileReferenceSection();
   let iconFileRefId = null;
   for (const [id, entry] of Object.entries(fileRefSection)) {
     if (typeof entry === "string") continue;
     if (!isRecord(entry)) continue;
     const name = stripQuotes(entry.name);
-    const entryPath = stripQuotes(entry.path);
-    if (name === iconFileName || entryPath === iconFileName) {
+    if (name === iconFileName) {
       iconFileRefId = id;
       break;
     }
   }
   if (!iconFileRefId) return;
 
-  // Remove PBXBuildFile entries that reference this file
+  // Collect existing PBXBuildFile UUIDs that reference noah.icon
   const buildFileSection = project.pbxBuildFileSection();
-  const buildFileIdsToRemove = new Set();
+  const existingBuildFileIds = new Set();
   for (const [id, entry] of Object.entries(buildFileSection)) {
     if (typeof entry === "string") continue;
     if (isRecord(entry) && entry.fileRef === iconFileRefId) {
-      buildFileIdsToRemove.add(id);
+      existingBuildFileIds.add(id);
     }
   }
-  for (const id of buildFileIdsToRemove) {
-    delete buildFileSection[id];
-    delete buildFileSection[`${id}_comment`];
+
+  // Find all Resources build phase IDs used by app targets
+  const nativeTargets = project.pbxNativeTargetSection();
+  const appResourcesPhaseIds = new Set();
+  for (const [, target] of Object.entries(nativeTargets)) {
+    if (typeof target === "string") continue;
+    if (!isRecord(target)) continue;
+    if (stripQuotes(target.productType) !== "com.apple.product-type.application") continue;
+    for (const phase of target.buildPhases || []) {
+      const phaseId = phase.value || phase;
+      appResourcesPhaseIds.add(phaseId);
+    }
   }
 
-  // Remove from all PBXResourcesBuildPhase file lists
+  // Add noah.icon to each app target's Resources phase that doesn't have it
   const resourcesSection = project.hash.project.objects["PBXResourcesBuildPhase"];
-  if (resourcesSection) {
-    for (const [, phase] of Object.entries(resourcesSection)) {
-      if (!isRecord(phase) || !Array.isArray(phase.files)) continue;
-      phase.files = phase.files.filter((f) => {
-        const fId = f.value || f;
-        return !buildFileIdsToRemove.has(fId);
-      });
-    }
-  }
+  if (!resourcesSection) return;
 
-  // Remove from PBXGroup children
-  const groupSection = project.hash.project.objects["PBXGroup"];
-  if (groupSection) {
-    for (const [, group] of Object.entries(groupSection)) {
-      if (!isRecord(group) || !Array.isArray(group.children)) continue;
-      group.children = group.children.filter((child) => {
-        const childId = child.value || child;
-        return childId !== iconFileRefId;
-      });
-    }
-  }
+  for (const [phaseId, phase] of Object.entries(resourcesSection)) {
+    if (typeof phase === "string") continue;
+    if (!isRecord(phase)) continue;
+    if (!appResourcesPhaseIds.has(phaseId)) continue;
 
-  // Remove the PBXFileReference itself
-  delete fileRefSection[iconFileRefId];
-  delete fileRefSection[`${iconFileRefId}_comment`];
+    const files = phase.files || [];
+    const alreadyHasIcon = files.some((f) => existingBuildFileIds.has(f.value || f));
+    if (alreadyHasIcon) continue;
+
+    const newId = project.generateUuid();
+    buildFileSection[newId] = {
+      isa: "PBXBuildFile",
+      fileRef: iconFileRefId,
+      fileRef_comment: iconFileName,
+    };
+    buildFileSection[`${newId}_comment`] = `${iconFileName} in Resources`;
+    existingBuildFileIds.add(newId);
+
+    phase.files.push({
+      value: newId,
+      comment: `${iconFileName} in Resources`,
+    });
+  }
 }
 
 function findSourceDir(iosDir) {
@@ -155,18 +163,14 @@ function findSourceDir(iosDir) {
   return null;
 }
 
-function moveIconIntoAssetCatalog(iosDir) {
+function ensureAppiconset(iosDir) {
   const sourceDir = findSourceDir(iosDir);
   if (!sourceDir) return;
 
-  const standaloneIcon = path.join(sourceDir, `${ICON_NAME}.icon`);
   const assetCatalog = path.join(sourceDir, "Images.xcassets");
-  const assetCatalogIcon = path.join(assetCatalog, `${ICON_NAME}.icon`);
-
-  if (!fs.existsSync(standaloneIcon)) return;
   if (!fs.existsSync(assetCatalog)) return;
 
-  // Ensure asset catalog has a root Contents.json
+  // Ensure root Contents.json
   const rootContents = path.join(assetCatalog, "Contents.json");
   if (!fs.existsSync(rootContents)) {
     fs.writeFileSync(
@@ -175,12 +179,39 @@ function moveIconIntoAssetCatalog(iosDir) {
     );
   }
 
-  // Move .icon into asset catalog
-  if (fs.existsSync(assetCatalogIcon)) {
-    fs.rmSync(assetCatalogIcon, { recursive: true });
+  // Remove .icon from asset catalog if a previous plugin version put it there
+  const staleIcon = path.join(assetCatalog, `${ICON_NAME}.icon`);
+  if (fs.existsSync(staleIcon)) {
+    fs.rmSync(staleIcon, { recursive: true });
   }
-  fs.cpSync(standaloneIcon, assetCatalogIcon, { recursive: true });
-  fs.rmSync(standaloneIcon, { recursive: true });
+
+  // Rename AppIcon.appiconset → noah.appiconset so it matches ASSETCATALOG_COMPILER_APPICON_NAME
+  const defaultAppiconset = path.join(assetCatalog, "AppIcon.appiconset");
+  const targetAppiconset = path.join(assetCatalog, `${ICON_NAME}.appiconset`);
+
+  if (fs.existsSync(defaultAppiconset) && !fs.existsSync(targetAppiconset)) {
+    fs.renameSync(defaultAppiconset, targetAppiconset);
+  }
+
+  // Ensure the appiconset directory exists with a valid Contents.json
+  if (!fs.existsSync(targetAppiconset)) {
+    fs.mkdirSync(targetAppiconset, { recursive: true });
+  }
+
+  const contentsPath = path.join(targetAppiconset, "Contents.json");
+  if (!fs.existsSync(contentsPath)) {
+    fs.writeFileSync(
+      contentsPath,
+      JSON.stringify(
+        {
+          images: [{ idiom: "universal", platform: "ios", size: "1024x1024" }],
+          info: { author: "xcode", version: 1 },
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  }
 }
 
 function withNoahIosPrebuildFix(config) {
@@ -198,7 +229,7 @@ function withNoahIosPrebuildFix(config) {
     const project = modConfig.modResults;
     fixMainnetProductName(project, { appName });
     fixAppIconName(project);
-    removeStandaloneIconFromPbxproj(project);
+    addIconToAllTargets(project);
     return modConfig;
   });
 
@@ -206,7 +237,7 @@ function withNoahIosPrebuildFix(config) {
     "ios",
     async (modConfig) => {
       const iosDir = modConfig.modRequest.platformProjectRoot;
-      moveIconIntoAssetCatalog(iosDir);
+      ensureAppiconset(iosDir);
       return modConfig;
     },
   ]);

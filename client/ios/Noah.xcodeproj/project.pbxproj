@@ -55,6 +55,9 @@
 		CA8E7DBCEC9E6E009AE73E55 /* libPods-noah-common-Noah-Regtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15E9565EA1DE87BD39B4B5F6 /* libPods-noah-common-Noah-Regtest.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 85BF3676FE0AADD8774596BB /* PrivacyInfo.xcprivacy */; };
+		A29D6E062D7F45109FBD3DBF /* noah.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4750FC36FC574FD6949E1B64 /* noah.icon */; };
+		E81A2591A16B4F638AE6A01C /* noah.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4750FC36FC574FD6949E1B64 /* noah.icon */; };
+		D3D633A1D9AE43648FFAF40A /* noah.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4750FC36FC574FD6949E1B64 /* noah.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -162,6 +165,8 @@
 		F063A0268003AC078FBB106F /* libPods-noah-common-Noah.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-noah-common-Noah.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = noah/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* noah-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "noah-Bridging-Header.h"; path = "noah/noah-Bridging-Header.h"; sourceTree = "<group>"; };
+		4750FC36FC574FD6949E1B64 /* noah.icon */ = {isa = PBXFileReference; name = "noah.icon"; path = "Noah/noah.icon"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		CFB4A0F3A3F14D5CA3EF5E63 /* SplashScreen.storyboard */ = {isa = PBXFileReference; name = "SplashScreen.storyboard"; path = "Noah/SplashScreen.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -363,6 +368,8 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				7A5841958A4C7C1392179C75 /* Pods */,
 				5276B0E7D8228B54CDF1A5BE /* ExpoModulesProviders */,
+				4750FC36FC574FD6949E1B64 /* noah.icon */,
+				CFB4A0F3A3F14D5CA3EF5E63 /* SplashScreen.storyboard */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -611,6 +618,8 @@
 				C39DD7492E0C9DF1000CB6A9 /* Release.xcconfig in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				F15172581494608E186E1FD8 /* PrivacyInfo.xcprivacy in Resources */,
+				A29D6E062D7F45109FBD3DBF /* noah.icon in Resources */,
+				920CD0F0E1FF4F6CAF661869 /* SplashScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -627,6 +636,7 @@
 				C39DD74E2E0C9DF1000CB6A9 /* Release.xcconfig in Resources */,
 				C39DD70D2E0C95AF000CB6A9 /* SplashScreen.storyboard in Resources */,
 				C39DD70E2E0C95AF000CB6A9 /* PrivacyInfo.xcprivacy in Resources */,
+				E81A2591A16B4F638AE6A01C /* noah.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -643,6 +653,7 @@
 				C39DD7532E0C9DF1000CB6A9 /* Release.xcconfig in Resources */,
 				C39DD7222E0C973E000CB6A9 /* SplashScreen.storyboard in Resources */,
 				C39DD7232E0C973E000CB6A9 /* PrivacyInfo.xcprivacy in Resources */,
+				D3D633A1D9AE43648FFAF40A /* noah.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1051,7 +1062,7 @@
 			baseConfigurationReference = 4D0B0F63003860B7A3AD0D58 /* Pods-noah-common-Noah.debug.xcconfig */;
 			buildSettings = {
 				APP_VARIANT = mainnet;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = noah;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1089,7 +1100,7 @@
 			baseConfigurationReference = D26065DD04338ECF8AB23EB3 /* Pods-noah-common-Noah.release.xcconfig */;
 			buildSettings = {
 				APP_VARIANT = mainnet;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = noah;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1251,7 +1262,7 @@
 			baseConfigurationReference = 4E07CF47789E44CB2CEDF091 /* Pods-noah-common-Noah-Signet.debug.xcconfig */;
 			buildSettings = {
 				APP_VARIANT = signet;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = noah;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
 				CURRENT_PROJECT_VERSION = 8;
@@ -1289,7 +1300,7 @@
 			baseConfigurationReference = D7439A6C6C0CE490F2B8C022 /* Pods-noah-common-Noah-Signet.release.xcconfig */;
 			buildSettings = {
 				APP_VARIANT = signet;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = noah;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
 				CURRENT_PROJECT_VERSION = 8;
@@ -1322,7 +1333,7 @@
 			baseConfigurationReference = E9866157C0A7235063C7E870 /* Pods-noah-common-Noah-Regtest.debug.xcconfig */;
 			buildSettings = {
 				APP_VARIANT = regtest;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = noah;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1360,7 +1371,7 @@
 			baseConfigurationReference = 75115EA1F17F1C43B2D907F1 /* Pods-noah-common-Noah-Regtest.release.xcconfig */;
 			buildSettings = {
 				APP_VARIANT = regtest;
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = noah;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = noah/noah.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
