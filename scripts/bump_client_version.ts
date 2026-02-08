@@ -21,6 +21,10 @@ if (args.includes("-h") || args.includes("--help")) {
   process.exit(0);
 }
 
+if (args.length > 1) {
+  throw new Error(`Too many arguments.\n${usage}`);
+}
+
 const isSemver = (value: string) => /^\d+\.\d+\.\d+$/.test(value);
 
 let mode: "patch" | "minor" | "major" = "patch";
@@ -29,22 +33,14 @@ let explicitVersion: string | null = null;
 if (args.length > 0) {
   const first = args[0].toLowerCase();
   if (["patch", "minor", "major"].includes(first)) {
-    if (args.length > 1) {
-      throw new Error(`Too many arguments. ${usage}`);
-    }
     mode = first as "patch" | "minor" | "major";
   } else if (isSemver(first)) {
-    if (args.length > 1) {
-      throw new Error(`Too many arguments. ${usage}`);
-    }
     explicitVersion = first;
   } else {
-    throw new Error(`Unknown argument "${args[0]}". ${usage}`);
+    throw new Error(
+      `Invalid argument "${args[0]}". Expected "patch", "minor", "major", or a version like 1.2.3.\n${usage}`
+    );
   }
-}
-
-if (explicitVersion && !isSemver(explicitVersion)) {
-  throw new Error(`Unsupported version format: ${explicitVersion}`);
 }
 
 const packageVersionRegex = /^  "version"\s*:\s*"(\d+\.\d+\.\d+)"/m;
