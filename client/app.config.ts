@@ -82,11 +82,7 @@ const config: { expo: ExpoConfig } = {
         resizeMode: "contain",
         backgroundColor: "#000000",
       },
-      icon: {
-        dark: "./assets/All_Files/light_dark_tinted/icon_dark_mode_ios.png",
-        light: "./assets/All_Files/light_dark_tinted/icon_light_mode_ios.png",
-        tinted: "./assets/All_Files/light_dark_tinted/icon_clear_tinted_ios.png",
-      },
+      icon: "./assets/noah.icon",
     },
     android: {
       adaptiveIcon: {
