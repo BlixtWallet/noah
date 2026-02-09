@@ -63,7 +63,7 @@ export const isValidDestination = (dest: string): boolean => {
     return true;
   }
 
-  // Check Lightning address (LNURL)
+  // Check Lightning Address (LNURL LUD-16)
   if (isValidLightningAddress(cleanedDest)) {
     return true;
   }
