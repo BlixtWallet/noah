@@ -98,7 +98,7 @@ const LightningAddressScreen = () => {
                 value={username}
                 onChangeText={setUsername}
                 className="rounded-2xl border border-border bg-background/90 px-4 py-4 text-lg text-foreground"
-                placeholder="lukedashjr"
+                placeholder="fiatjaf"
                 autoCapitalize="none"
                 autoCorrect={false}
               />
