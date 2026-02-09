@@ -1,6 +1,42 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 use ts_rs::TS;
-use validator::Validate;
+use validator::{Validate, ValidationError};
+
+fn ln_username_regex() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^[a-z0-9_.-]+$").expect("valid ln username regex"))
+}
+
+fn is_valid_ln_username(username: &str) -> bool {
+    ln_username_regex().is_match(username)
+}
+
+pub(crate) fn is_valid_lightning_address(value: &str) -> bool {
+    let (username, domain) = match value.split_once('@') {
+        Some(parts) => parts,
+        None => return false,
+    };
+
+    if username.is_empty() || domain.is_empty() {
+        return false;
+    }
+
+    if domain.contains('@') {
+        return false;
+    }
+
+    is_valid_ln_username(username)
+}
+
+fn validate_lightning_address(value: &str) -> Result<(), ValidationError> {
+    if is_valid_lightning_address(value) {
+        Ok(())
+    } else {
+        Err(ValidationError::new("lightning_address"))
+    }
+}
 
 #[derive(Deserialize, Debug, Clone, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
@@ -65,7 +101,7 @@ pub struct DeviceInfo {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct RegisterPayload {
     /// User chosen lightning address
-    #[validate(email)]
+    #[validate(custom(function = "validate_lightning_address"))]
     pub ln_address: Option<String>,
     /// Optional device information.
     pub device_info: Option<DeviceInfo>,
@@ -103,7 +139,7 @@ pub struct SubmitInvoicePayload {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct UpdateLnAddressPayload {
     /// The new lightning address for the user.
-    #[validate(email)]
+    #[validate(custom(function = "validate_lightning_address"))]
     pub ln_address: String,
 }
 

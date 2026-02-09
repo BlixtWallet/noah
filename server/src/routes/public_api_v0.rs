@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
-use validator::{Validate, ValidateEmail};
+use validator::Validate;
 
 use crate::{
     AppState,
@@ -340,7 +340,7 @@ pub async fn register(
         event.add_context("has_device_info", payload.device_info.is_some());
     }
 
-    if !ln_address.validate_email() {
+    if !crate::types::is_valid_lightning_address(&ln_address) {
         return Err(ApiError::InvalidArgument(
             "Invalid lightning address".to_string(),
         ));
