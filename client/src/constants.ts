@@ -9,7 +9,7 @@ import * as Device from "expo-device";
 
 const isEmail = (n: string): boolean => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(n);
 const isOnion = (n: string): boolean => /.onion$/.test(n);
-const isUsername = (n: string): boolean => /^[a-z0-9_.]*$/.test(n);
+const isUsername = (n: string): boolean => /^[a-z0-9_.-]+$/.test(n);
 const parseEmail = (email: string): string[] => email.split("@");
 export const MIN_AUTO_BOARD_AMOUNT = 10_000;
 // Auto-backup timing controls
