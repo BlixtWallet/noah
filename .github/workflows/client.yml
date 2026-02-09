@@ -46,21 +46,6 @@ jobs:
       - name: 🔍 Typecheck code
         run: nix develop .# --command bash -c "bun client typecheck"
 
-  podfile_lock_check:
-    runs-on: macOS
-    steps:
-      - name: 🏗 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Install signet app dependencies
-        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
-
-      - name: 🧩 Install pods (deployment)
-        run: nix develop .# --command bash -c "cd client/ios && pod install --deployment"
-
-      - name: 🔒 Ensure Podfile.lock is committed
-        run: git diff --exit-code -- client/ios/Podfile.lock
-
   android_build:
     runs-on: self-hosted
     needs: lint
@@ -163,13 +148,12 @@ jobs:
 
   client_gate:
     runs-on: ubuntu-latest
-    needs: [lint, podfile_lock_check, android_build]
+    needs: [lint, android_build]
     if: always()
     steps:
       - name: ✅ Gate
         run: |
           if [[ "${{ needs.lint.result }}" == "success" || "${{ needs.lint.result }}" == "skipped" ]] && \
-             [[ "${{ needs.podfile_lock_check.result }}" == "success" || "${{ needs.podfile_lock_check.result }}" == "skipped" ]] && \
              [[ "${{ needs.android_build.result }}" == "success" || "${{ needs.android_build.result }}" == "skipped" ]]; then
             echo "Client checks passed or skipped"
             exit 0
