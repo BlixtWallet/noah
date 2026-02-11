@@ -75,7 +75,7 @@ const MnemonicScreen = () => {
   const handleCopy = async () => {
     await copyToClipboard(mnemonic, {
       onCopy: () => {
-        showAlert({ title: "Copied!", description: "Mnemonic phrase copied to clipboard." });
+        showAlert({ title: "Copied!", description: "Seed phrase copied to clipboard." });
       },
     });
   };
@@ -127,7 +127,7 @@ const MnemonicScreen = () => {
         {mnemonic && (
           <View className="mt-6">
             <Button onPress={handleCopy} variant="outline">
-              <Text>Copy Mnemonic</Text>
+              <Text>Copy Seed Phrase</Text>
             </Button>
           </View>
         )}
