@@ -20,7 +20,7 @@ export const useExportDatabase = () => {
 
     const mnemonicResult = await getMnemonic();
     if (mnemonicResult.isErr()) {
-      setExportError("Could not retrieve mnemonic to encrypt backup.");
+      setExportError("Could not retrieve seed phrase/password to encrypt backup.");
       setShowExportError(true);
       setIsExporting(false);
       return;
