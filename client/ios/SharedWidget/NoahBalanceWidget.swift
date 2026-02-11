@@ -120,8 +120,14 @@ struct NoahBalanceWidgetView: View {
         return entry.closestExpiryBlocks != -999
     }
 
+    private var shouldUseCompactSmallLayout: Bool {
+        // When pending and/or expiry rows are visible we tighten spacing
+        // so content stays comfortably within the small widget bounds.
+        return entry.pendingBalance > 0 || shouldShowExpiry
+    }
+
     private var smallWidgetLayout: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: shouldUseCompactSmallLayout ? 4 : 6) {
             HStack(alignment: .top) {
                 Text("Noah Wallet")
                     .font(.caption2)
@@ -140,9 +146,9 @@ struct NoahBalanceWidgetView: View {
                 }
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: shouldUseCompactSmallLayout ? 2 : 6)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: shouldUseCompactSmallLayout ? 2 : 3) {
                 Text("₿\u{00A0}\(formatSatsCompact(entry.totalBalance))")
                     .font(.title3)
                     .fontWeight(.bold)
@@ -155,6 +161,7 @@ struct NoahBalanceWidgetView: View {
                         .font(.caption2)
                         .foregroundColor(.yellow)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
 
                 // Expiry status - only show if VTXOs exist
@@ -167,13 +174,15 @@ struct NoahBalanceWidgetView: View {
                         Text("Expires: \(Int(entry.closestExpiryBlocks))b")
                             .font(.caption2)
                             .foregroundColor(expiryStatus.color)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                     }
                 }
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: shouldUseCompactSmallLayout ? 2 : 6)
 
-            HStack(spacing: 8) {
+            HStack(spacing: shouldUseCompactSmallLayout ? 6 : 8) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("On")
                         .font(.caption2)
@@ -201,7 +210,8 @@ struct NoahBalanceWidgetView: View {
                 }
             }
         }
-        .padding(12)
+        .padding(.horizontal, shouldUseCompactSmallLayout ? 10 : 12)
+        .padding(.vertical, shouldUseCompactSmallLayout ? 10 : 12)
     }
 
     private var mediumWidgetLayout: some View {
@@ -236,6 +246,8 @@ struct NoahBalanceWidgetView: View {
                     Text("Pending: ₿\u{00A0}\(formatSats(entry.pendingBalance))")
                         .font(.caption2)
                         .foregroundColor(.yellow)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
 
                 // Expiry status - only show if VTXOs exist
