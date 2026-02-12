@@ -347,3 +347,30 @@ async fn test_app_version_check_invalid_version() {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_ln_address_suggestions_blocked_prefix_returns_empty() {
+    let (app, _app_state, _guard) = setup_public_test_app().await;
+
+    let payload = LightningAddressSuggestionsPayload {
+        query: "bc1qexample".to_string(),
+    };
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/ln_address_suggestions")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .body(Body::from(serde_json::to_string(&payload).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let res: LightningAddressSuggestionsResponse = serde_json::from_slice(&body).unwrap();
+    assert!(res.suggestions.is_empty());
+}

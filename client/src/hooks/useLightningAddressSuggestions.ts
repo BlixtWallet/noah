@@ -9,7 +9,7 @@ const log = logger("useLightningAddressSuggestions");
 
 const MIN_USERNAME_LENGTH = 2;
 const MAX_BARE_USERNAME_LENGTH = 32;
-const SUGGESTION_DEBOUNCE_MS = 300;
+const SUGGESTION_DEBOUNCE_MS = 200;
 const USERNAME_PARTIAL_REGEX = /^[a-z0-9_.-]+$/;
 const DOMAIN_PARTIAL_REGEX = /^[a-z0-9.-]*$/;
 const BARE_USERNAME_START_REGEX = /^[a-z]/;

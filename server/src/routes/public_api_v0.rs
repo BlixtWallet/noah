@@ -46,6 +46,9 @@ const TIMEOUT: Duration = Duration::from_secs(30);
 const LN_SUGGESTIONS_MIN_USERNAME_LEN: usize = 2;
 const LN_SUGGESTIONS_MAX_QUERY_LEN: usize = 64;
 const LN_SUGGESTIONS_LIMIT: i64 = 8;
+const NON_LN_SUGGESTION_PREFIXES: [&str; 9] = [
+    "bc1", "tb1", "bcrt1", "lnbc", "lntb", "lnbcrt", "ark", "tark", "lno",
+];
 
 fn normalize_suggestions_query(query: &str) -> String {
     query
@@ -85,6 +88,12 @@ fn is_valid_partial_domain(domain: &str) -> bool {
     domain
         .chars()
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
+}
+
+fn has_blocked_suggestion_prefix(username: &str) -> bool {
+    NON_LN_SUGGESTION_PREFIXES
+        .iter()
+        .any(|prefix| username.starts_with(prefix))
 }
 
 /// Generates and returns a new `k1` value for an LNURL-auth flow.
@@ -163,6 +172,12 @@ pub async fn ln_address_suggestions(
     };
 
     if username.len() < LN_SUGGESTIONS_MIN_USERNAME_LEN || !is_valid_partial_username(&username) {
+        return Ok(Json(LightningAddressSuggestionsResponse {
+            suggestions: vec![],
+        }));
+    }
+
+    if domain_prefix.is_none() && has_blocked_suggestion_prefix(&username) {
         return Ok(Json(LightningAddressSuggestionsResponse {
             suggestions: vec![],
         }));
