@@ -35,3 +35,15 @@ pub fn create_auth_rate_limiter() -> RateLimiter {
 
     GovernorLayer::new(config)
 }
+
+/// Creates a dedicated rate limiting layer for public autocomplete suggestions.
+pub fn create_suggestions_rate_limiter() -> RateLimiter {
+    let config = GovernorConfigBuilder::default()
+        .per_second(2)
+        .burst_size(20)
+        .key_extractor(SmartIpKeyExtractor)
+        .finish()
+        .expect("Failed to create suggestions rate limiter config");
+
+    GovernorLayer::new(config)
+}

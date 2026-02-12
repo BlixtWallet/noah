@@ -33,6 +33,10 @@ const SendScreen = () => {
   const {
     destination,
     setDestination,
+    isDestinationFocused,
+    setIsDestinationFocused,
+    lightningAddressSuggestions,
+    handleSelectLightningAddressSuggestion,
     amount,
     setAmount,
     isAmountEditable,
@@ -158,11 +162,32 @@ const SendScreen = () => {
                     autoCapitalize="none"
                     value={destination}
                     onChangeText={setDestination}
+                    onFocus={() => setIsDestinationFocused(true)}
+                    onBlur={() => setIsDestinationFocused(false)}
                   />
                   <TouchableOpacity onPress={handlePaste} className="p-2">
                     <Text className="text-foreground font-semibold">Paste</Text>
                   </TouchableOpacity>
                 </View>
+
+                {isDestinationFocused && lightningAddressSuggestions.length > 0 && (
+                  <View className="border border-border bg-card rounded-lg mt-2 overflow-hidden">
+                    {lightningAddressSuggestions.map((suggestion, index) => (
+                      <Pressable
+                        key={suggestion}
+                        className={`px-4 py-3 ${
+                          index < lightningAddressSuggestions.length - 1
+                            ? "border-b border-border"
+                            : ""
+                        }`}
+                        onPressIn={() => handleSelectLightningAddressSuggestion(suggestion)}
+                      >
+                        <Text className="text-foreground">{suggestion}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+
                 <TextInput
                   className="border border-border bg-card p-4 rounded-lg text-foreground mt-4"
                   placeholder="Add a note (optional)"

@@ -13,6 +13,7 @@ use crate::cache::{
     k1_store::K1Store, maintenance_store::MaintenanceStore, redis_client::RedisClient,
 };
 use crate::config::Config;
+use crate::db::user_repo::UserRepository;
 use crate::email_client::EmailClient;
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
@@ -20,7 +21,8 @@ use crate::routes::gated_api_v0::{
     submit_invoice, update_backup_settings, update_ln_address,
 };
 use crate::routes::public_api_v0::{
-    check_app_version, get_k1, lnurlp_request, register, send_verification_email, verify_email,
+    check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
+    send_verification_email, verify_email,
 };
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
@@ -120,6 +122,9 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     }
 
     let db_pool = setup_test_database().await;
+    let has_pg_trgm = UserRepository::detect_pg_trgm(&db_pool)
+        .await
+        .unwrap_or(false);
 
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
@@ -132,6 +137,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
+        has_pg_trgm,
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
@@ -186,6 +192,9 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
     let guard = acquire_test_db_guard().await;
 
     let db_pool = setup_test_database().await;
+    let has_pg_trgm = UserRepository::detect_pg_trgm(&db_pool)
+        .await
+        .unwrap_or(false);
 
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
@@ -198,6 +207,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
+        has_pg_trgm,
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
@@ -209,6 +219,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app = Router::new()
         .route("/getk1", axum::routing::get(get_k1))
+        .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/app_version", post(check_app_version))
         .route(
             "/.well-known/lnurlp/{username}",

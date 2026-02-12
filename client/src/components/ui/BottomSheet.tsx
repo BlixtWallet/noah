@@ -28,6 +28,20 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const insets = useSafeAreaInsets();
   const height = useSharedValue(0);
   const progress = useDerivedValue(() => withTiming(isOpen ? 0 : 1, { duration }));
+  const [shouldRender, setShouldRender] = React.useState(isOpen);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setShouldRender(false);
+    }, duration);
+
+    return () => clearTimeout(timeout);
+  }, [duration, isOpen]);
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: progress.value * 2 * height.value }],
@@ -42,12 +56,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     scheduleOnRN(onClose);
   };
 
-  if (!isOpen && progress.value === 1) {
+  if (!shouldRender) {
     return null;
   }
+
   return (
     <>
       <Animated.View
+        pointerEvents={isOpen ? "auto" : "none"}
         style={[
           {
             position: "absolute",
@@ -63,6 +79,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         <Pressable className="flex-1" onPress={handleBackdropPress} />
       </Animated.View>
       <Animated.View
+        pointerEvents={isOpen ? "auto" : "none"}
         onLayout={(e) => {
           height.value = e.nativeEvent.layout.height;
         }}

@@ -143,6 +143,22 @@ pub struct UpdateLnAddressPayload {
     pub ln_address: String,
 }
 
+/// Defines the payload for querying lightning address suggestions.
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct LightningAddressSuggestionsPayload {
+    /// Partial lightning address typed in the send screen.
+    pub query: String,
+}
+
+/// Represents autocomplete suggestions for lightning addresses.
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct LightningAddressSuggestionsResponse {
+    /// Ordered suggestion list.
+    pub suggestions: Vec<String>,
+}
+
 #[derive(Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct GetUploadUrlPayload {

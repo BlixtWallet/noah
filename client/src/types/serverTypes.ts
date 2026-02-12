@@ -64,6 +64,24 @@ export type HeartbeatNotification = { k1: string, notification_id: string, };
 
 export type HeartbeatResponsePayload = { notification_id: string, };
 
+/**
+ * Defines the payload for querying lightning address suggestions.
+ */
+export type LightningAddressSuggestionsPayload = { 
+/**
+ * Partial lightning address typed in the send screen.
+ */
+query: string, };
+
+/**
+ * Represents autocomplete suggestions for lightning addresses.
+ */
+export type LightningAddressSuggestionsResponse = { 
+/**
+ * Ordered suggestion list.
+ */
+suggestions: Array<string>, };
+
 export type LightningInvoiceRequestNotification = { k1: string, transaction_id: string, amount: number, };
 
 export type MaintenanceNotification = { k1: string, };
