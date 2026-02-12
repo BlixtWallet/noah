@@ -85,55 +85,27 @@ impl<'a> UserRepository<'a> {
         Ok(user)
     }
 
-    /// Detects whether the pg_trgm extension is installed in this database.
-    pub async fn detect_pg_trgm(pool: &PgPool) -> Result<bool> {
-        let has_pg_trgm = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm')",
-        )
-        .fetch_one(pool)
-        .await?;
-
-        Ok(has_pg_trgm)
-    }
-
     /// Returns lightning address autocomplete suggestions scoped to a domain.
     pub async fn search_lightning_address_suggestions(
         &self,
         username_query: &str,
         lnurl_domain: &str,
         limit: i64,
-        has_pg_trgm: bool,
     ) -> Result<Vec<String>> {
         let normalized_username = username_query.to_lowercase();
         let normalized_domain = lnurl_domain.to_lowercase();
         let prefix_like = format!("{normalized_username}%");
 
-        if has_pg_trgm && normalized_username.len() >= 3 {
-            let fuzzy_result = sqlx::query_scalar::<_, String>(
-                "WITH candidates AS (
-                    SELECT
-                        lightning_address,
-                        split_part(lower(lightning_address), '@', 1) AS username,
-                        CASE
-                            WHEN split_part(lower(lightning_address), '@', 1) = $3 THEN 0
-                            WHEN split_part(lower(lightning_address), '@', 1) LIKE $2 THEN 1
-                            ELSE 2
-                        END AS rank_group,
-                        similarity(split_part(lower(lightning_address), '@', 1), $3) AS similarity_score
-                    FROM users
-                    WHERE lightning_address IS NOT NULL
-                      AND split_part(lower(lightning_address), '@', 2) = $1
-                      AND (
-                          split_part(lower(lightning_address), '@', 1) LIKE $2
-                          OR split_part(lower(lightning_address), '@', 1) % $3
-                      )
-                )
-                SELECT lightning_address
-                FROM candidates
+        if normalized_username.len() < 3 {
+            let addresses = sqlx::query_scalar::<_, String>(
+                "SELECT lightning_address
+                FROM users
+                WHERE lightning_address IS NOT NULL
+                  AND lightning_address_domain = $1
+                  AND lightning_address_username LIKE $2
                 ORDER BY
-                    rank_group ASC,
-                    CASE WHEN rank_group = 2 THEN similarity_score ELSE 0 END DESC,
-                    username ASC
+                  CASE WHEN lightning_address_username = $3 THEN 0 ELSE 1 END,
+                  lightning_address_username ASC
                 LIMIT $4",
             )
             .bind(&normalized_domain)
@@ -141,33 +113,41 @@ impl<'a> UserRepository<'a> {
             .bind(&normalized_username)
             .bind(limit)
             .fetch_all(self.pool)
-            .await;
+            .await?;
 
-            match fuzzy_result {
-                Ok(addresses) => return Ok(addresses),
-                Err(error) => {
-                    tracing::warn!(
-                        "Fuzzy lightning address suggestion query failed, falling back to prefix: {}",
-                        error
-                    );
-                }
-            }
+            return Ok(addresses);
         }
 
         let addresses = sqlx::query_scalar::<_, String>(
-            "SELECT lightning_address
-            FROM users
-            WHERE lightning_address IS NOT NULL
-              AND split_part(lower(lightning_address), '@', 2) = $1
-              AND split_part(lower(lightning_address), '@', 1) LIKE $2
+            "WITH candidates AS (
+                SELECT
+                    lightning_address,
+                    lightning_address_username AS username,
+                    CASE
+                        WHEN lightning_address_username = $3 THEN 0
+                        WHEN lightning_address_username LIKE $2 THEN 1
+                        ELSE 2
+                    END AS rank_group,
+                    similarity(lightning_address_username, $3) AS similarity_score
+                FROM users
+                WHERE lightning_address IS NOT NULL
+                  AND lightning_address_domain = $1
+                  AND (
+                      lightning_address_username LIKE $2
+                      OR lightning_address_username % $3
+                  )
+            )
+            SELECT lightning_address
+            FROM candidates
             ORDER BY
-              CASE WHEN split_part(lower(lightning_address), '@', 1) = $3 THEN 0 ELSE 1 END,
-              split_part(lower(lightning_address), '@', 1) ASC
+                rank_group ASC,
+                CASE WHEN rank_group = 2 THEN similarity_score ELSE 0 END DESC,
+                username ASC
             LIMIT $4",
         )
         .bind(&normalized_domain)
-        .bind(prefix_like)
-        .bind(normalized_username)
+        .bind(&prefix_like)
+        .bind(&normalized_username)
         .bind(limit)
         .fetch_all(self.pool)
         .await?;

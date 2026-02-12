@@ -8,13 +8,17 @@ import logger from "~/lib/log";
 const log = logger("useLightningAddressSuggestions");
 
 const MIN_USERNAME_LENGTH = 2;
+const MAX_BARE_USERNAME_LENGTH = 32;
 const SUGGESTION_DEBOUNCE_MS = 300;
 const USERNAME_PARTIAL_REGEX = /^[a-z0-9_.-]+$/;
 const DOMAIN_PARTIAL_REGEX = /^[a-z0-9.-]*$/;
+const BARE_USERNAME_START_REGEX = /^[a-z]/;
+const NON_LN_PREFIXES = ["bc1", "tb1", "bcrt1", "lnbc", "lntb", "lnbcrt"];
 const LNURL_DOMAIN = getLnurlDomain().toLowerCase();
 
 type UseLightningAddressSuggestionsParams = {
   destination: string;
+  isDestinationFocused: boolean;
 };
 
 const normalizeDestination = (destination: string): string => {
@@ -46,6 +50,20 @@ const getSuggestionQueryCandidate = (destination: string): string | null => {
     return null;
   }
 
+  if (domainPrefix === undefined) {
+    if (username.length > MAX_BARE_USERNAME_LENGTH) {
+      return null;
+    }
+
+    if (!BARE_USERNAME_START_REGEX.test(username)) {
+      return null;
+    }
+
+    if (NON_LN_PREFIXES.some((prefix) => username.startsWith(prefix))) {
+      return null;
+    }
+  }
+
   if (domainPrefix !== undefined) {
     if (!DOMAIN_PARTIAL_REGEX.test(domainPrefix)) {
       return null;
@@ -61,6 +79,7 @@ const getSuggestionQueryCandidate = (destination: string): string | null => {
 
 export const useLightningAddressSuggestions = ({
   destination,
+  isDestinationFocused,
 }: UseLightningAddressSuggestionsParams) => {
   const ownLightningAddress = useServerStore((state) => state.lightningAddress);
   const ownLightningAddressNormalized = ownLightningAddress?.toLowerCase() ?? null;
@@ -69,7 +88,7 @@ export const useLightningAddressSuggestions = ({
   const [debouncedQuery, setDebouncedQuery] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!queryCandidate) {
+    if (!isDestinationFocused || !queryCandidate) {
       setDebouncedQuery(null);
       return;
     }
@@ -81,7 +100,7 @@ export const useLightningAddressSuggestions = ({
     return () => {
       clearTimeout(timeout);
     };
-  }, [queryCandidate]);
+  }, [isDestinationFocused, queryCandidate]);
 
   const query = useQuery({
     queryKey: ["lnAddressSuggestions", debouncedQuery],
@@ -97,7 +116,7 @@ export const useLightningAddressSuggestions = ({
 
       return result.value.suggestions;
     },
-    enabled: debouncedQuery !== null,
+    enabled: isDestinationFocused && debouncedQuery !== null,
     staleTime: 30 * 1000,
     retry: false,
   });
@@ -111,6 +130,10 @@ export const useLightningAddressSuggestions = ({
   }, [query.error]);
 
   const suggestions = useMemo(() => {
+    if (!isDestinationFocused) {
+      return [];
+    }
+
     const values = query.data ?? [];
     if (!ownLightningAddressNormalized) {
       return values;
@@ -119,7 +142,7 @@ export const useLightningAddressSuggestions = ({
     return values.filter(
       (suggestion) => suggestion.toLowerCase() !== ownLightningAddressNormalized,
     );
-  }, [query.data, ownLightningAddressNormalized]);
+  }, [query.data, ownLightningAddressNormalized, isDestinationFocused]);
 
   return {
     suggestions,

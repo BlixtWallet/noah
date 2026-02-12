@@ -185,12 +185,7 @@ pub async fn ln_address_suggestions(
 
     let user_repo = UserRepository::new(&state.db_pool);
     let suggestions = user_repo
-        .search_lightning_address_suggestions(
-            &username,
-            &state.lnurl_domain,
-            LN_SUGGESTIONS_LIMIT,
-            state.has_pg_trgm,
-        )
+        .search_lightning_address_suggestions(&username, &state.lnurl_domain, LN_SUGGESTIONS_LIMIT)
         .await?;
 
     Ok(Json(LightningAddressSuggestionsResponse { suggestions }))

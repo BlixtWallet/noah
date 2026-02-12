@@ -65,7 +65,6 @@ const K1_TTL_SECONDS: usize = 600;
 pub struct AppStruct {
     pub config: Arc<Config>,
     pub lnurl_domain: String,
-    pub has_pg_trgm: bool,
     pub db_pool: PgPool,
     pub k1_cache: K1Store,
     pub invoice_store: InvoiceStore,
@@ -131,7 +130,6 @@ fn main() -> anyhow::Result<()> {
 
 async fn start_server(config: Config) -> anyhow::Result<()> {
     let host = config.host()?;
-    let server_network = config.network()?;
 
     tracing::info!("Checking Postgres connection...");
     let db_pool = PgPoolOptions::new()
@@ -147,24 +145,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     tracing::info!("Postgres connection established");
 
     db::migrations::run_migrations(&db_pool).await?;
-    let has_pg_trgm = db::user_repo::UserRepository::detect_pg_trgm(&db_pool)
-        .await
-        .unwrap_or(false);
-
-    if !has_pg_trgm {
-        if server_network == Network::Bitcoin || server_network == Network::Signet {
-            anyhow::bail!(
-                "pg_trgm extension is required for {:?} but not installed. \
-Please run CREATE EXTENSION IF NOT EXISTS pg_trgm; on the database before deploying.",
-                server_network
-            );
-        }
-
-        tracing::warn!(
-            "pg_trgm extension not installed; running without fuzzy autocomplete on {:?}",
-            server_network
-        );
-    }
 
     tracing::info!("Checking Redis connection...");
     let redis_client = RedisClient::with_pool_size(&config.redis_url, config.redis_pool_size)?;
@@ -186,7 +166,6 @@ Please run CREATE EXTENSION IF NOT EXISTS pg_trgm; on the database before deploy
     let app_state = Arc::new(AppStruct {
         config: Arc::new(config.clone()),
         lnurl_domain: config.lnurl_domain.clone(),
-        has_pg_trgm,
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,

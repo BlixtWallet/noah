@@ -116,6 +116,7 @@ export const useSendScreen = () => {
 
   const { suggestions: lightningAddressSuggestions } = useLightningAddressSuggestions({
     destination,
+    isDestinationFocused,
   });
 
   const amountSat = useMemo(() => {

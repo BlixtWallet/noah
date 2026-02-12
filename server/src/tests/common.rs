@@ -13,7 +13,6 @@ use crate::cache::{
     k1_store::K1Store, maintenance_store::MaintenanceStore, redis_client::RedisClient,
 };
 use crate::config::Config;
-use crate::db::user_repo::UserRepository;
 use crate::email_client::EmailClient;
 use crate::routes::gated_api_v0::{
     complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
@@ -122,9 +121,6 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     }
 
     let db_pool = setup_test_database().await;
-    let has_pg_trgm = UserRepository::detect_pg_trgm(&db_pool)
-        .await
-        .unwrap_or(false);
 
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
@@ -137,7 +133,6 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
-        has_pg_trgm,
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
@@ -192,9 +187,6 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
     let guard = acquire_test_db_guard().await;
 
     let db_pool = setup_test_database().await;
-    let has_pg_trgm = UserRepository::detect_pg_trgm(&db_pool)
-        .await
-        .unwrap_or(false);
 
     let k1_cache = setup_test_k1_store().await;
     let invoice_store = setup_test_invoice_store().await;
@@ -207,7 +199,6 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app_state = Arc::new(AppStruct {
         lnurl_domain: "localhost".to_string(),
-        has_pg_trgm,
         db_pool: db_pool.clone(),
         k1_cache: k1_cache.clone(),
         invoice_store,
