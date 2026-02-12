@@ -13,7 +13,7 @@ const SUGGESTION_DEBOUNCE_MS = 300;
 const USERNAME_PARTIAL_REGEX = /^[a-z0-9_.-]+$/;
 const DOMAIN_PARTIAL_REGEX = /^[a-z0-9.-]*$/;
 const BARE_USERNAME_START_REGEX = /^[a-z]/;
-const NON_LN_PREFIXES = ["bc1", "tb1", "bcrt1", "lnbc", "lntb", "lnbcrt"];
+const NON_LN_PREFIXES = ["bc1", "tb1", "bcrt1", "lnbc", "lntb", "lnbcrt", "ark", "tark", "lno"];
 const LNURL_DOMAIN = getLnurlDomain().toLowerCase();
 
 type UseLightningAddressSuggestionsParams = {
