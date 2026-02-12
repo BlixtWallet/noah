@@ -62,7 +62,7 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
         });
 
         let request = NotificationRequest {
-            priority: Priority::Normal,
+            priority: Priority::High,
             data: notification_data,
             target_pubkey: Some(pubkey.clone()),
         };
