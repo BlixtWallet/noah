@@ -34,8 +34,8 @@ use crate::{
             update_ln_address,
         },
         public_api_v0::{
-            check_app_version, get_k1, lnurlp_request, register, send_verification_email,
-            verify_email,
+            check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
+            send_verification_email, verify_email,
         },
     },
 };
@@ -130,7 +130,6 @@ fn main() -> anyhow::Result<()> {
 
 async fn start_server(config: Config) -> anyhow::Result<()> {
     let host = config.host()?;
-    let _server_network = config.network()?;
 
     tracing::info!("Checking Postgres connection...");
     let db_pool = PgPoolOptions::new()
@@ -217,6 +216,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     // Create rate limiters
     let public_rate_limiter = rate_limit::create_public_rate_limiter();
+    let suggestions_rate_limiter = rate_limit::create_suggestions_rate_limiter();
     let auth_rate_limiter = rate_limit::create_auth_rate_limiter();
 
     // Email verification routes - need auth and user to exist, but NOT email verification
@@ -256,6 +256,10 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     // Public routes with strict rate limiting on getk1
     let v0_router = Router::new()
         .route("/getk1", get(get_k1).layer(public_rate_limiter))
+        .route(
+            "/ln_address_suggestions",
+            post(ln_address_suggestions).layer(suggestions_rate_limiter),
+        )
         .route("/app_version", post(check_app_version))
         .merge(auth_router);
 

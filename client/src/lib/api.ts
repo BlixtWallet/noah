@@ -18,6 +18,8 @@ import {
   HeartbeatResponsePayload,
   RegisterResponse,
   RegisterPushToken,
+  LightningAddressSuggestionsPayload,
+  LightningAddressSuggestionsResponse,
   UpdateLnAddressPayload,
   UploadUrlResponse,
   ReportJobStatusPayload,
@@ -205,6 +207,13 @@ export const registerWithServer = (payload: RegisterPayload) =>
 
 export const updateLightningAddress = (payload: UpdateLnAddressPayload) =>
   post<UpdateLnAddressPayload, DefaultSuccessPayload>("/update_ln_address", payload);
+
+export const getLightningAddressSuggestions = (payload: LightningAddressSuggestionsPayload) =>
+  post<LightningAddressSuggestionsPayload, LightningAddressSuggestionsResponse>(
+    "/ln_address_suggestions",
+    payload,
+    false,
+  );
 
 export const registerPushToken = (payload: RegisterPushToken) =>
   post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);

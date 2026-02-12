@@ -20,7 +20,8 @@ use crate::routes::gated_api_v0::{
     submit_invoice, update_backup_settings, update_ln_address,
 };
 use crate::routes::public_api_v0::{
-    check_app_version, get_k1, lnurlp_request, register, send_verification_email, verify_email,
+    check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
+    send_verification_email, verify_email,
 };
 use crate::types::AuthPayload;
 use crate::{AppState, AppStruct};
@@ -209,6 +210,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app = Router::new()
         .route("/getk1", axum::routing::get(get_k1))
+        .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/app_version", post(check_app_version))
         .route(
             "/.well-known/lnurlp/{username}",

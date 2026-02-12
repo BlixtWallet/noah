@@ -12,6 +12,7 @@ import { useSend } from "./usePayments";
 import { type PaymentResult } from "../lib/paymentsApi";
 import { useQRCodeScanner } from "~/hooks/useQRCodeScanner";
 import { useBtcToUsdRate } from "./useMarketData";
+import { useLightningAddressSuggestions } from "./useLightningAddressSuggestions";
 import { satsToUsd, usdToSats } from "../lib/utils";
 import logger from "~/lib/log";
 
@@ -46,6 +47,7 @@ export const useSendScreen = () => {
   >("onchain");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isDestinationFocused, setIsDestinationFocused] = useState(false);
 
   useEffect(() => {
     if (route.params?.destination) {
@@ -111,6 +113,11 @@ export const useSendScreen = () => {
     error,
     reset,
   } = useSend(finalDestinationType);
+
+  const { suggestions: lightningAddressSuggestions } = useLightningAddressSuggestions({
+    destination,
+    isDestinationFocused,
+  });
 
   const amountSat = useMemo(() => {
     if (currency === "SATS") {
@@ -216,10 +223,12 @@ export const useSendScreen = () => {
     }
 
     // Show confirmation instead of sending immediately
+    setIsDestinationFocused(false);
     setShowConfirmation(true);
   };
 
   const handleConfirmSend = () => {
+    setIsDestinationFocused(false);
     if (destinationType === "bip321" && bip321Data) {
       let destinationToSend = null;
       let newDestinationType: DestinationTypes = "onchain";
@@ -289,6 +298,7 @@ export const useSendScreen = () => {
     setComment("");
     setShowConfirmation(false);
     setShowSuccess(false);
+    setIsDestinationFocused(false);
     handleCloseSuccess();
   };
 
@@ -298,7 +308,13 @@ export const useSendScreen = () => {
     setAmount("");
     setShowConfirmation(false);
     setShowSuccess(false);
+    setIsDestinationFocused(false);
   };
+
+  const handleSelectLightningAddressSuggestion = useCallback((suggestion: string) => {
+    setDestination(suggestion);
+    setIsDestinationFocused(false);
+  }, []);
 
   const { showCamera, setShowCamera, handleScanPress, codeScanner } = useQRCodeScanner({
     onScan: (value) => {
@@ -314,6 +330,10 @@ export const useSendScreen = () => {
   return {
     destination,
     setDestination,
+    isDestinationFocused,
+    setIsDestinationFocused,
+    lightningAddressSuggestions,
+    handleSelectLightningAddressSuggestion,
     amount,
     setAmount,
     isAmountEditable,

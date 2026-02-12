@@ -85,6 +85,76 @@ impl<'a> UserRepository<'a> {
         Ok(user)
     }
 
+    /// Returns lightning address autocomplete suggestions scoped to a domain.
+    pub async fn search_lightning_address_suggestions(
+        &self,
+        username_query: &str,
+        lnurl_domain: &str,
+        limit: i64,
+    ) -> Result<Vec<String>> {
+        let normalized_username = username_query.to_lowercase();
+        let normalized_domain = lnurl_domain.to_lowercase();
+        let prefix_like = format!("{normalized_username}%");
+
+        if normalized_username.len() < 3 {
+            let addresses = sqlx::query_scalar::<_, String>(
+                "SELECT lightning_address
+                FROM users
+                WHERE lightning_address IS NOT NULL
+                  AND lightning_address_domain = $1
+                  AND lightning_address_username LIKE $2
+                ORDER BY
+                  CASE WHEN lightning_address_username = $3 THEN 0 ELSE 1 END,
+                  lightning_address_username ASC
+                LIMIT $4",
+            )
+            .bind(&normalized_domain)
+            .bind(&prefix_like)
+            .bind(&normalized_username)
+            .bind(limit)
+            .fetch_all(self.pool)
+            .await?;
+
+            return Ok(addresses);
+        }
+
+        let addresses = sqlx::query_scalar::<_, String>(
+            "WITH candidates AS (
+                SELECT
+                    lightning_address,
+                    lightning_address_username AS username,
+                    CASE
+                        WHEN lightning_address_username = $3 THEN 0
+                        WHEN lightning_address_username LIKE $2 THEN 1
+                        ELSE 2
+                    END AS rank_group,
+                    similarity(lightning_address_username, $3) AS similarity_score
+                FROM users
+                WHERE lightning_address IS NOT NULL
+                  AND lightning_address_domain = $1
+                  AND (
+                      lightning_address_username LIKE $2
+                      OR lightning_address_username % $3
+                  )
+            )
+            SELECT lightning_address
+            FROM candidates
+            ORDER BY
+                rank_group ASC,
+                CASE WHEN rank_group = 2 THEN similarity_score ELSE 0 END DESC,
+                username ASC
+            LIMIT $4",
+        )
+        .bind(&normalized_domain)
+        .bind(&prefix_like)
+        .bind(&normalized_username)
+        .bind(limit)
+        .fetch_all(self.pool)
+        .await?;
+
+        Ok(addresses)
+    }
+
     /// Creates a new user within a transaction. This is a static method because
     // it operates on a transaction, not a connection owned by the repository instance.
     pub async fn create(

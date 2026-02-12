@@ -21,6 +21,7 @@ use crate::{
     push::{PushNotificationData, send_push_notification},
     types::{
         AppVersionCheckPayload, AppVersionInfo, AuthEvent, AuthPayload, EmailVerificationResponse,
+        LightningAddressSuggestionsPayload, LightningAddressSuggestionsResponse,
         LightningInvoiceRequestNotification, NotificationData, RegisterPayload, RegisterResponse,
         SendEmailVerificationPayload, VerifyEmailPayload,
     },
@@ -42,6 +43,58 @@ const LNURLP_MAX_SENDABLE: u64 = 100000000;
 const COMMENT_ALLOWED_SIZE: u16 = 280;
 const POLL_INTERVAL: Duration = Duration::from_millis(500);
 const TIMEOUT: Duration = Duration::from_secs(30);
+const LN_SUGGESTIONS_MIN_USERNAME_LEN: usize = 2;
+const LN_SUGGESTIONS_MAX_QUERY_LEN: usize = 64;
+const LN_SUGGESTIONS_LIMIT: i64 = 8;
+const NON_LN_SUGGESTION_PREFIXES: [&str; 9] = [
+    "bc1", "tb1", "bcrt1", "lnbc", "lntb", "lnbcrt", "ark", "tark", "lno",
+];
+
+fn normalize_suggestions_query(query: &str) -> String {
+    query
+        .trim()
+        .to_lowercase()
+        .trim_start_matches("lightning:")
+        .to_string()
+}
+
+fn parse_partial_lightning_address(query: &str) -> Option<(String, Option<String>)> {
+    if query.is_empty() {
+        return None;
+    }
+
+    if query.chars().filter(|c| *c == '@').count() > 1 {
+        return None;
+    }
+
+    if let Some((username, domain_prefix)) = query.split_once('@') {
+        if username.is_empty() {
+            return None;
+        }
+
+        return Some((username.to_string(), Some(domain_prefix.to_string())));
+    }
+
+    Some((query.to_string(), None))
+}
+
+fn is_valid_partial_username(username: &str) -> bool {
+    username
+        .chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-' || c == '.')
+}
+
+fn is_valid_partial_domain(domain: &str) -> bool {
+    domain
+        .chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
+}
+
+fn has_blocked_suggestion_prefix(username: &str) -> bool {
+    NON_LN_SUGGESTION_PREFIXES
+        .iter()
+        .any(|prefix| username.starts_with(prefix))
+}
 
 /// Generates and returns a new `k1` value for an LNURL-auth flow.
 ///
@@ -99,6 +152,58 @@ pub struct LnurlpRequestQuery {
     /// The amount of the payment in millisatoshis.
     amount: Option<u64>,
     wallet: Option<String>,
+}
+
+/// Returns autocomplete suggestions for a partial lightning address query.
+pub async fn ln_address_suggestions(
+    State(state): State<AppState>,
+    Json(payload): Json<LightningAddressSuggestionsPayload>,
+) -> anyhow::Result<Json<LightningAddressSuggestionsResponse>, ApiError> {
+    let normalized_query = normalize_suggestions_query(&payload.query);
+
+    if normalized_query.len() > LN_SUGGESTIONS_MAX_QUERY_LEN {
+        return Err(ApiError::InvalidArgument("Query too long".to_string()));
+    }
+
+    let Some((username, domain_prefix)) = parse_partial_lightning_address(&normalized_query) else {
+        return Ok(Json(LightningAddressSuggestionsResponse {
+            suggestions: vec![],
+        }));
+    };
+
+    if username.len() < LN_SUGGESTIONS_MIN_USERNAME_LEN || !is_valid_partial_username(&username) {
+        return Ok(Json(LightningAddressSuggestionsResponse {
+            suggestions: vec![],
+        }));
+    }
+
+    if domain_prefix.is_none() && has_blocked_suggestion_prefix(&username) {
+        return Ok(Json(LightningAddressSuggestionsResponse {
+            suggestions: vec![],
+        }));
+    }
+
+    if let Some(domain_prefix) = domain_prefix {
+        if !is_valid_partial_domain(&domain_prefix) {
+            return Ok(Json(LightningAddressSuggestionsResponse {
+                suggestions: vec![],
+            }));
+        }
+
+        let normalized_domain = state.lnurl_domain.to_lowercase();
+        if !normalized_domain.starts_with(&domain_prefix) {
+            return Ok(Json(LightningAddressSuggestionsResponse {
+                suggestions: vec![],
+            }));
+        }
+    }
+
+    let user_repo = UserRepository::new(&state.db_pool);
+    let suggestions = user_repo
+        .search_lightning_address_suggestions(&username, &state.lnurl_domain, LN_SUGGESTIONS_LIMIT)
+        .await?;
+
+    Ok(Json(LightningAddressSuggestionsResponse { suggestions }))
 }
 
 /// Handles LNURL-pay requests.
