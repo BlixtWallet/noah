@@ -231,6 +231,7 @@ pub enum ReportStatus {
     Pending,
     Success,
     Failure,
+    Timeout,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

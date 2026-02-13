@@ -84,6 +84,30 @@ impl JobStatusRepository {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Marks stale pending job reports as timeout after the given age threshold.
+    pub async fn mark_stale_pending_as_timeout(
+        pool: &sqlx::PgPool,
+        older_than_minutes: i64,
+        timeout_error_message: &str,
+    ) -> Result<u64> {
+        let result = sqlx::query(
+            "UPDATE job_status_reports
+             SET status = $1,
+                 error_message = COALESCE(error_message, $2),
+                 updated_at = now()
+             WHERE status = $3
+               AND created_at <= now() - ($4::bigint * interval '1 minute')",
+        )
+        .bind(format!("{:?}", ReportStatus::Timeout))
+        .bind(timeout_error_message)
+        .bind(format!("{:?}", ReportStatus::Pending))
+        .bind(older_than_minutes)
+        .execute(pool)
+        .await?;
+
+        Ok(result.rows_affected())
+    }
+
     /// [TEST ONLY] Counts the number of job status reports for a given user.
     #[cfg(test)]
     pub async fn count_by_pubkey(pool: &sqlx::PgPool, pubkey: &str) -> Result<i64> {
@@ -115,5 +139,53 @@ impl JobStatusRepository {
         .flatten()
         .collect();
         Ok(messages)
+    }
+
+    /// [TEST ONLY] Inserts a report with an explicit `created_at` timestamp.
+    #[cfg(test)]
+    pub async fn create_with_k1_and_created_at(
+        pool: &sqlx::PgPool,
+        pubkey: &str,
+        notification_k1: &str,
+        report_type: &ReportType,
+        status: &ReportStatus,
+        error_message: Option<String>,
+        created_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO job_status_reports (
+                 pubkey, notification_k1, report_type, status, error_message, created_at, updated_at
+             ) VALUES ($1, $2, $3, $4, $5, $6, $6)",
+        )
+        .bind(pubkey)
+        .bind(notification_k1)
+        .bind(format!("{:?}", report_type))
+        .bind(format!("{:?}", status))
+        .bind(error_message)
+        .bind(created_at)
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    /// [TEST ONLY] Reads status and error by `(pubkey, notification_k1)`.
+    #[cfg(test)]
+    pub async fn find_status_and_error_by_k1(
+        pool: &sqlx::PgPool,
+        pubkey: &str,
+        notification_k1: &str,
+    ) -> Result<Option<(String, Option<String>)>> {
+        let row = sqlx::query_as::<_, (String, Option<String>)>(
+            "SELECT status, error_message
+             FROM job_status_reports
+             WHERE pubkey = $1 AND notification_k1 = $2",
+        )
+        .bind(pubkey)
+        .bind(notification_k1)
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(row)
     }
 }

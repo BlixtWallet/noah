@@ -9,7 +9,7 @@ use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
     DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, HeartbeatResponsePayload,
-    ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
+    ReportJobStatusPayload, ReportStatus, SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -260,6 +260,16 @@ pub async fn report_job_status(
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    if !matches!(
+        payload.status,
+        ReportStatus::Success | ReportStatus::Failure
+    ) {
+        return Err(ApiError::InvalidArgument(
+            "report_job_status only accepts success or failure; pending/timeout are server-managed"
+                .to_string(),
+        ));
+    }
+
     if let Some(Extension(event)) = event {
         event.add_context("report_type", format!("{:?}", payload.report_type));
         event.add_context("job_status", format!("{:?}", payload.status));
