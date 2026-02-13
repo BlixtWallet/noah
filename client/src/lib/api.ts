@@ -185,11 +185,14 @@ async function post<T, U>(
   }
 }
 
-export const getUploadUrl = (payload: GetUploadUrlPayload) =>
-  post<GetUploadUrlPayload, UploadUrlResponse>("/backup/upload_url", payload);
+export const getUploadUrl = (payload: GetUploadUrlPayload & { k1: string }) =>
+  post<GetUploadUrlPayload & { k1: string }, UploadUrlResponse>("/backup/upload_url", payload);
 
-export const completeUpload = (payload: CompleteUploadPayload) =>
-  post("/backup/complete_upload", payload);
+export const completeUpload = (payload: CompleteUploadPayload & { k1: string }) =>
+  post<CompleteUploadPayload & { k1: string }, DefaultSuccessPayload>(
+    "/backup/complete_upload",
+    payload,
+  );
 
 export const listBackups = () => post<object, BackupInfo[]>("/backup/list", {});
 
@@ -224,19 +227,18 @@ type ReportJobCompletionPayload = Omit<ReportJobStatusPayload, "status"> & {
 };
 
 export const reportJobStatus = (payload: ReportJobCompletionPayload & { k1: string }) =>
-  post<ReportJobCompletionPayload & { k1: string }, DefaultSuccessPayload>(
-    "/report_job_status",
-    payload,
-  );
+  payload.k1
+    ? post<ReportJobCompletionPayload & { k1: string }, DefaultSuccessPayload>(
+        "/report_job_status",
+        payload,
+      )
+    : Promise.resolve(err(new Error("Missing notification k1 for report_job_status")));
 
-export const submitInvoice = (payload: SubmitInvoicePayload & { k1?: string }) =>
-  post<SubmitInvoicePayload & { k1?: string }, DefaultSuccessPayload>(
-    "/lnurlp/submit_invoice",
-    payload,
-  );
+export const submitInvoice = (payload: SubmitInvoicePayload & { k1: string }) =>
+  post<SubmitInvoicePayload & { k1: string }, DefaultSuccessPayload>("/lnurlp/submit_invoice", payload);
 
-export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1?: string }) =>
-  post<HeartbeatResponsePayload & { k1?: string }, DefaultSuccessPayload>(
+export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1: string }) =>
+  post<HeartbeatResponsePayload & { k1: string }, DefaultSuccessPayload>(
     "/heartbeat_response",
     payload,
   );

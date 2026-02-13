@@ -38,6 +38,14 @@ async function handleTaskCompletion(
   result: Result<void, Error>,
   k1: string,
 ) {
+  if (!k1) {
+    log.w(`Missing notification k1; cannot report ${report_type} status`);
+    if (result.isErr()) {
+      throw result.error;
+    }
+    return;
+  }
+
   if (result.isErr()) {
     log.w(`Failed to trigger ${report_type} task, reporting failure`);
     const jobStatusResult = await reportJobStatus({
@@ -146,6 +154,10 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
             case "lightning_invoice_request": {
               log.i("Received lightning invoice request", [notificationData]);
+              if (!notificationData.k1) {
+                log.w("Missing k1 in lightning invoice request notification");
+                return;
+              }
               const invoiceResult = await submitInvoiceTask(
                 notificationData.transaction_id,
                 notificationData.k1,
@@ -187,6 +199,10 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
             case "heartbeat": {
               log.i("Received heartbeat notification", [notificationData]);
+              if (!notificationData.k1) {
+                log.w("Missing k1 in heartbeat notification");
+                return;
+              }
               const heartbeatResult = await heartbeatResponse({
                 notification_id: notificationData.notification_id,
                 k1: notificationData.k1,
