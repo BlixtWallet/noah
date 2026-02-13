@@ -28,6 +28,18 @@ pub struct PushNotificationData {
     pub content_available: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct PushDispatchReceipt {
+    pub pubkey: String,
+    pub notification_k1: String,
+}
+
+#[derive(Debug, Clone)]
+struct PushTarget {
+    pubkey: String,
+    push_token: String,
+}
+
 pub async fn send_push_notification(
     app_state: AppState,
     data: PushNotificationData,
@@ -40,7 +52,7 @@ pub async fn send_push_notification_with_unique_k1(
     app_state: AppState,
     base_notification_data: NotificationData,
     pubkey: Option<String>,
-) -> anyhow::Result<(), ApiError> {
+) -> anyhow::Result<Vec<PushDispatchReceipt>, ApiError> {
     // For notifications that need unique k1 per device, we don't use the batching approach
     // Instead, we send individual notifications with unique k1 values
     let expo = Expo::new(ExpoClientOptions {
@@ -50,23 +62,27 @@ pub async fn send_push_notification_with_unique_k1(
 
     let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
 
-    let push_tokens = if let Some(pubkey) = pubkey {
-        // A single token might not be found, which is not an error, so we handle the Option.
+    let push_targets = if let Some(pubkey) = pubkey {
         match push_token_repo.find_by_pubkey(&pubkey).await? {
-            Some(token) => vec![token],
+            Some(push_token) => vec![PushTarget { pubkey, push_token }],
             None => vec![],
         }
     } else {
-        push_token_repo.find_all().await?
+        push_token_repo
+            .find_all_with_pubkeys()
+            .await?
+            .into_iter()
+            .map(|(pubkey, push_token)| PushTarget { pubkey, push_token })
+            .collect()
     };
 
-    if push_tokens.is_empty() {
-        return Ok(());
+    if push_targets.is_empty() {
+        return Ok(vec![]);
     }
 
     // Send individual notifications with unique k1 for each device
-    stream::iter(push_tokens.clone())
-        .for_each_concurrent(None, |push_token| {
+    let receipts = stream::iter(push_targets)
+        .filter_map(|target| {
             let expo_clone = expo.clone();
             let app_state_clone = app_state.clone();
             let base_data_clone = base_notification_data.clone();
@@ -75,28 +91,33 @@ pub async fn send_push_notification_with_unique_k1(
             async move {
                 // Create notification data with unique k1 if needed
                 let mut notification_data = base_data_clone;
-                if notification_data.needs_unique_k1() {
+                let notification_k1 = if notification_data.needs_unique_k1() {
                     match make_k1(&app_state_clone.k1_cache).await {
-                        Ok(unique_k1) => notification_data.set_k1(unique_k1),
+                        Ok(unique_k1) => {
+                            notification_data.set_k1(unique_k1.clone());
+                            unique_k1
+                        }
                         Err(e) => {
                             tracing::error!(
                                 "Failed to create unique k1 for push notification: {}",
                                 e
                             );
-                            return;
+                            return None;
                         }
                     }
-                }
+                } else {
+                    String::new()
+                };
 
                 let data_string = match serde_json::to_string(&notification_data) {
                     Ok(s) => s,
                     Err(e) => {
                         tracing::error!("Failed to serialize notification data: {}", e);
-                        return;
+                        return None;
                     }
                 };
 
-                if is_expo_token(&push_token) {
+                let send_result = if is_expo_token(&target.push_token) {
                     let push_data = PushNotificationData {
                         title: None,
                         body: None,
@@ -105,7 +126,7 @@ pub async fn send_push_notification_with_unique_k1(
                         content_available: true,
                     };
 
-                    let message = match ExpoPushMessage::builder(vec![push_token])
+                    let message = match ExpoPushMessage::builder(vec![target.push_token.clone()])
                         .data(&push_data.data)
                         .and_then(|b| {
                             b.priority(push_data.priority)
@@ -116,33 +137,46 @@ pub async fn send_push_notification_with_unique_k1(
                         Ok(msg) => msg,
                         Err(e) => {
                             tracing::error!("Failed to build push notification message: {}", e);
-                            return;
+                            return None;
                         }
                     };
 
-                    if let Err(e) = expo_clone.send_push_notifications(message).await {
-                        tracing::error!("Failed to send push notification: {}", e);
-                    }
-                } else if let Err(e) = send_unified_notification(
-                    &http_client_clone,
-                    &push_token,
-                    &data_string,
-                    &ntfy_auth,
-                )
-                .await
-                {
-                    tracing::error!("Failed to send unified push notification: {}", e);
+                    expo_clone
+                        .send_push_notifications(message)
+                        .await
+                        .map(|_| ())
+                        .map_err(|e| e.to_string())
+                } else {
+                    send_unified_notification(
+                        &http_client_clone,
+                        &target.push_token,
+                        &data_string,
+                        &ntfy_auth,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())
+                };
+
+                if let Err(e) = send_result {
+                    tracing::error!(pubkey = %target.pubkey, "Failed to send push notification: {}", e);
+                    return None;
                 }
+
+                Some(PushDispatchReceipt {
+                    pubkey: target.pubkey,
+                    notification_k1,
+                })
             }
         })
+        .collect::<Vec<_>>()
         .await;
 
     tracing::debug!(
-        "send_push_notification_with_unique_k1: Sending to {} tokens with unique k1s {:?}",
-        push_tokens.len(),
+        "send_push_notification_with_unique_k1: Sent {} notifications with unique k1s {:?}",
+        receipts.len(),
         base_notification_data
     );
-    Ok(())
+    Ok(receipts)
 }
 
 async fn send_push_notification_internal(

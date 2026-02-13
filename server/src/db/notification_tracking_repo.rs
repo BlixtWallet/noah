@@ -4,16 +4,11 @@ use sqlx::PgPool;
 
 use crate::types::NotificationData;
 
-/// Repository for tracking when notifications were sent to users.
+/// Repository for reading notification timing used by spacing rules.
 ///
-/// This enables notification coordination to prevent overlapping notifications
-/// that would cause mobile background job failures.
-///
-/// # Type Safety
-/// All methods accept `&NotificationData` instead of strings, ensuring:
-/// - Compile-time validation of notification types
-/// - Single source of truth (enum → string via `.notification_type()`)
-/// - No typos or invalid notification type strings
+/// Notification send time is now derived from:
+/// - `job_status_reports.created_at` for backup/maintenance dispatches
+/// - `heartbeat_notifications.sent_at` for heartbeat dispatches
 pub struct NotificationTrackingRepository<'a> {
     pool: &'a PgPool,
 }
@@ -30,16 +25,7 @@ impl<'a> NotificationTrackingRepository<'a> {
         pubkey: &str,
         min_spacing_minutes: i64,
     ) -> Result<bool> {
-        let last_sent = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
-            "SELECT MAX(last_sent_at) as last_sent
-             FROM notification_tracking
-             WHERE pubkey = $1",
-        )
-        .bind(pubkey)
-        .fetch_optional(self.pool)
-        .await?
-        .flatten();
-
+        let last_sent = self.get_last_notification_time(pubkey).await?;
         if let Some(last_sent) = last_sent {
             let min_time = Utc::now() - chrono::Duration::minutes(min_spacing_minutes);
             return Ok(last_sent < min_time);
@@ -51,45 +37,24 @@ impl<'a> NotificationTrackingRepository<'a> {
     /// Get the last time any notification was sent to this user
     pub async fn get_last_notification_time(&self, pubkey: &str) -> Result<Option<DateTime<Utc>>> {
         let last_sent = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
-            "SELECT MAX(last_sent_at) as last_sent
-             FROM notification_tracking
-             WHERE pubkey = $1",
+            "SELECT MAX(sent_at) FROM (
+                 SELECT created_at AS sent_at
+                 FROM job_status_reports
+                 WHERE pubkey = $1
+                 UNION ALL
+                 SELECT sent_at
+                 FROM heartbeat_notifications
+                 WHERE pubkey = $1
+             ) notifications",
         )
         .bind(pubkey)
-        .fetch_optional(self.pool)
-        .await?
-        .flatten();
+        .fetch_one(self.pool)
+        .await?;
 
         Ok(last_sent)
     }
 
-    /// Record that a notification was sent to a user.
-    ///
-    /// # Type Safety
-    /// Accepts `&NotificationData` instead of a string, ensuring the notification
-    /// type is valid and comes from the canonical enum.
-    ///
-    /// The notification type string is extracted via `.notification_type()` internally.
-    pub async fn record_notification_sent(
-        &self,
-        pubkey: &str,
-        notification_data: &NotificationData,
-    ) -> Result<()> {
-        sqlx::query(
-            "INSERT INTO notification_tracking (pubkey, notification_type, last_sent_at)
-             VALUES ($1, $2, now())
-             ON CONFLICT(pubkey, notification_type)
-             DO UPDATE SET last_sent_at = excluded.last_sent_at",
-        )
-        .bind(pubkey)
-        .bind(notification_data.notification_type())
-        .execute(self.pool)
-        .await?;
-
-        Ok(())
-    }
-
-    /// Get all users who are eligible for a notification type based on spacing requirements
+    /// Get all users who are eligible for a notification based on spacing requirements.
     /// Returns list of pubkeys that can receive the notification
     pub async fn get_eligible_users(&self, min_spacing_minutes: i64) -> Result<Vec<String>> {
         let min_time = Utc::now() - chrono::Duration::minutes(min_spacing_minutes);
@@ -98,9 +63,16 @@ impl<'a> NotificationTrackingRepository<'a> {
             "SELECT u.pubkey
              FROM users u
              WHERE NOT EXISTS (
-                 SELECT 1
-                 FROM notification_tracking nt
-                 WHERE nt.pubkey = u.pubkey AND nt.last_sent_at > $1
+                 SELECT 1 FROM (
+                     SELECT created_at AS sent_at
+                     FROM job_status_reports
+                     WHERE pubkey = u.pubkey
+                     UNION ALL
+                     SELECT sent_at
+                     FROM heartbeat_notifications
+                     WHERE pubkey = u.pubkey
+                 ) notifications
+                 WHERE notifications.sent_at > $1
              )",
         )
         .bind(min_time)
@@ -120,16 +92,39 @@ impl<'a> NotificationTrackingRepository<'a> {
         pubkey: &str,
         notification_data: &NotificationData,
     ) -> Result<Option<DateTime<Utc>>> {
-        let last_sent = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
-            "SELECT last_sent_at
-             FROM notification_tracking
-             WHERE pubkey = $1 AND notification_type = $2",
-        )
-        .bind(pubkey)
-        .bind(notification_data.notification_type())
-        .fetch_optional(self.pool)
-        .await?
-        .flatten();
+        let last_sent = match notification_data {
+            NotificationData::Maintenance(_) => {
+                sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
+                    "SELECT MAX(created_at)
+                     FROM job_status_reports
+                     WHERE pubkey = $1 AND report_type = 'Maintenance'",
+                )
+                .bind(pubkey)
+                .fetch_one(self.pool)
+                .await?
+            }
+            NotificationData::BackupTrigger(_) => {
+                sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
+                    "SELECT MAX(created_at)
+                     FROM job_status_reports
+                     WHERE pubkey = $1 AND report_type = 'Backup'",
+                )
+                .bind(pubkey)
+                .fetch_one(self.pool)
+                .await?
+            }
+            NotificationData::Heartbeat(_) => {
+                sqlx::query_scalar::<_, Option<DateTime<Utc>>>(
+                    "SELECT MAX(sent_at)
+                     FROM heartbeat_notifications
+                     WHERE pubkey = $1",
+                )
+                .bind(pubkey)
+                .fetch_one(self.pool)
+                .await?
+            }
+            NotificationData::LightningInvoiceRequest(_) => None,
+        };
 
         Ok(last_sent)
     }

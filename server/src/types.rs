@@ -228,6 +228,7 @@ pub enum ReportType {
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 #[serde(rename_all = "camelCase")]
 pub enum ReportStatus {
+    Pending,
     Success,
     Failure,
 }
@@ -304,8 +305,7 @@ impl NotificationData {
     /// This is the **single source of truth** for notification type strings.
     /// The same string is used for:
     /// - JSON serialization tag (`notification_type` field in client)
-    /// - Database tracking (`notification_tracking` table)
-    /// - Logging and debugging
+    /// - Logging, analytics, and background job coordination
     ///
     /// The strings match the serde `snake_case` variant names exactly.
     ///

@@ -306,6 +306,82 @@ async fn test_report_job_status_pruning() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
+async fn test_report_job_status_updates_existing_pending_entry() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    use crate::types::{ReportJobStatusPayload, ReportStatus, ReportType};
+
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload = user.auth_payload(&k1);
+
+    sqlx::query(
+        "INSERT INTO job_status_reports (pubkey, notification_k1, report_type, status, error_message)
+         VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(user.pubkey().to_string())
+    .bind(auth_payload.k1.clone())
+    .bind("Maintenance")
+    .bind("Pending")
+    .bind(Option::<String>::None)
+    .execute(&app_state.db_pool)
+    .await
+    .unwrap();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_job_status")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&ReportJobStatusPayload {
+                        report_type: ReportType::Maintenance,
+                        status: ReportStatus::Success,
+                        error_message: None,
+                    })
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*)
+         FROM job_status_reports
+         WHERE pubkey = $1 AND notification_k1 = $2",
+    )
+    .bind(user.pubkey().to_string())
+    .bind(auth_payload.k1.clone())
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(count, 1, "Expected update-in-place, not an extra row");
+
+    let status: String = sqlx::query_scalar(
+        "SELECT status
+         FROM job_status_reports
+         WHERE pubkey = $1 AND notification_k1 = $2",
+    )
+    .bind(user.pubkey().to_string())
+    .bind(auth_payload.k1)
+    .fetch_one(&app_state.db_pool)
+    .await
+    .unwrap();
+    assert_eq!(status, "Success");
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
 async fn test_register_new_user_with_ark_address() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();

@@ -264,18 +264,32 @@ pub async fn report_job_status(
         event.add_context("report_type", format!("{:?}", payload.report_type));
         event.add_context("job_status", format!("{:?}", payload.status));
         event.add_context("has_error", payload.error_message.is_some());
+        event.add_context("notification_k1", &auth_payload.k1);
     }
 
     let mut tx = app_state.db_pool.begin().await?;
 
-    JobStatusRepository::create_and_prune(
+    let updated = JobStatusRepository::update_by_k1(
         &mut tx,
         &auth_payload.key,
+        &auth_payload.k1,
         &payload.report_type,
         &payload.status,
-        payload.error_message,
+        payload.error_message.clone(),
     )
     .await?;
+
+    if !updated {
+        JobStatusRepository::create_with_k1_and_prune(
+            &mut tx,
+            &auth_payload.key,
+            &auth_payload.k1,
+            &payload.report_type,
+            &payload.status,
+            payload.error_message,
+        )
+        .await?;
+    }
 
     tx.commit().await?;
 
