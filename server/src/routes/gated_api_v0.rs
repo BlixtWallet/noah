@@ -275,20 +275,14 @@ pub async fn report_job_status(
         &auth_payload.k1,
         &payload.report_type,
         &payload.status,
-        payload.error_message.clone(),
+        payload.error_message,
     )
     .await?;
 
     if !updated {
-        JobStatusRepository::create_with_k1_and_prune(
-            &mut tx,
-            &auth_payload.key,
-            &auth_payload.k1,
-            &payload.report_type,
-            &payload.status,
-            payload.error_message,
-        )
-        .await?;
+        return Err(ApiError::NotFound(
+            "Pending job status report not found for this k1".to_string(),
+        ));
     }
 
     tx.commit().await?;

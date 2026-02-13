@@ -218,8 +218,8 @@ export const getLightningAddressSuggestions = (payload: LightningAddressSuggesti
 export const registerPushToken = (payload: RegisterPushToken) =>
   post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);
 
-export const reportJobStatus = (payload: ReportJobStatusPayload & { k1?: string }) =>
-  post<ReportJobStatusPayload & { k1?: string }, DefaultSuccessPayload>(
+export const reportJobStatus = (payload: ReportJobStatusPayload & { k1: string }) =>
+  post<ReportJobStatusPayload & { k1: string }, DefaultSuccessPayload>(
     "/report_job_status",
     payload,
   );

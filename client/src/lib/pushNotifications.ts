@@ -36,7 +36,7 @@ const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 async function handleTaskCompletion(
   report_type: ReportType,
   result: Result<void, Error>,
-  k1?: string,
+  k1: string,
 ) {
   if (result.isErr()) {
     log.w(`Failed to trigger ${report_type} task, reporting failure`);

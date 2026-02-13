@@ -220,56 +220,39 @@ async fn test_deregister_user() {
 #[tracing_test::traced_test]
 #[tokio::test]
 async fn test_report_job_status_pruning() {
-    let (app, app_state, _guard) = setup_test_app().await;
+    let (_app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
 
     use crate::db::job_status_repo::JobStatusRepository;
-    use crate::types::{ReportJobStatusPayload, ReportStatus, ReportType};
+    use crate::types::{ReportStatus, ReportType};
 
-    // Report job status 23 times
-    for i in 0..23 {
-        let k1 = make_k1(&app_state.k1_cache)
-            .await
-            .expect("failed to create k1");
-        let auth_payload = user.auth_payload(&k1);
-        let response = app
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .method(http::Method::POST)
-                    .uri("/report_job_status")
-                    .header(http::header::CONTENT_TYPE, "application/json")
-                    .header("x-auth-key", auth_payload.key.clone())
-                    .header("x-auth-sig", auth_payload.sig.clone())
-                    .header("x-auth-k1", auth_payload.k1.clone())
-                    .body(Body::from(
-                        serde_json::to_vec(&ReportJobStatusPayload {
-                            report_type: ReportType::Maintenance,
-                            status: ReportStatus::Failure,
-                            error_message: Some(format!("Report {}", i)),
-                        })
-                        .unwrap(),
-                    ))
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
+    // Insert enough rows through the dispatch path helper to trigger pruning.
+    for i in 0..53 {
+        let mut tx = app_state.db_pool.begin().await.unwrap();
+        JobStatusRepository::create_with_k1_and_prune(
+            &mut tx,
+            &user.pubkey().to_string(),
+            &format!("k1-{}", i),
+            &ReportType::Maintenance,
+            &ReportStatus::Failure,
+            Some(format!("Report {}", i)),
+        )
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
 
-        // Add small delay
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-
-        assert_eq!(response.status(), StatusCode::OK);
     }
 
-    // Verify that only 20 reports are stored in the database
+    // Verify that only the configured capped amount is stored.
     let count =
         JobStatusRepository::count_by_pubkey(&app_state.db_pool, &user.pubkey().to_string())
             .await
             .unwrap();
-    assert_eq!(count, 20);
+    assert_eq!(count, 50);
 
-    // Verify that the remaining reports are the last 20
+    // Verify that the remaining reports are the last 50.
     let messages = JobStatusRepository::find_error_messages_by_pubkey_ordered(
         &app_state.db_pool,
         &user.pubkey().to_string(),
@@ -299,7 +282,37 @@ async fn test_report_job_status_pruning() {
             "Report 19",
             "Report 20",
             "Report 21",
-            "Report 22"
+            "Report 22",
+            "Report 23",
+            "Report 24",
+            "Report 25",
+            "Report 26",
+            "Report 27",
+            "Report 28",
+            "Report 29",
+            "Report 30",
+            "Report 31",
+            "Report 32",
+            "Report 33",
+            "Report 34",
+            "Report 35",
+            "Report 36",
+            "Report 37",
+            "Report 38",
+            "Report 39",
+            "Report 40",
+            "Report 41",
+            "Report 42",
+            "Report 43",
+            "Report 44",
+            "Report 45",
+            "Report 46",
+            "Report 47",
+            "Report 48",
+            "Report 49",
+            "Report 50",
+            "Report 51",
+            "Report 52"
         ]
     );
 }
@@ -378,6 +391,45 @@ async fn test_report_job_status_updates_existing_pending_entry() {
     .await
     .unwrap();
     assert_eq!(status, "Success");
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_job_status_missing_pending_entry_returns_not_found() {
+    let (app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    use crate::types::{ReportJobStatusPayload, ReportStatus, ReportType};
+
+    let k1 = make_k1(&app_state.k1_cache)
+        .await
+        .expect("failed to create k1");
+    let auth_payload = user.auth_payload(&k1);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/report_job_status")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .header("x-auth-key", auth_payload.key.clone())
+                .header("x-auth-sig", auth_payload.sig.clone())
+                .header("x-auth-k1", auth_payload.k1.clone())
+                .body(Body::from(
+                    serde_json::to_vec(&ReportJobStatusPayload {
+                        report_type: ReportType::Maintenance,
+                        status: ReportStatus::Failure,
+                        error_message: Some("missing pending".to_string()),
+                    })
+                    .unwrap(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
 #[tracing_test::traced_test]

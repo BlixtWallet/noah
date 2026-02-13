@@ -55,30 +55,6 @@ impl JobStatusRepository {
         Ok(())
     }
 
-    /// Backward-compatible insert path for old flows that don't pass a correlation k1.
-    pub async fn create_and_prune(
-        tx: &mut Transaction<'_, Postgres>,
-        pubkey: &str,
-        report_type: &ReportType,
-        status: &ReportStatus,
-        error_message: Option<String>,
-    ) -> Result<()> {
-        sqlx::query(
-            "INSERT INTO job_status_reports (pubkey, report_type, status, error_message)
-             VALUES ($1, $2, $3, $4)",
-        )
-        .bind(pubkey)
-        .bind(format!("{:?}", report_type))
-        .bind(format!("{:?}", status))
-        .bind(error_message)
-        .execute(&mut **tx)
-        .await?;
-
-        Self::prune_by_pubkey(tx, pubkey).await?;
-
-        Ok(())
-    }
-
     /// Updates an existing report by `(pubkey, notification_k1)`.
     pub async fn update_by_k1(
         tx: &mut Transaction<'_, Postgres>,
