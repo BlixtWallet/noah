@@ -238,6 +238,7 @@ pub enum ReportStatus {
 pub enum HeartbeatStatus {
     Pending,
     Responded,
+    Timeout,
 }
 
 impl std::fmt::Display for HeartbeatStatus {
@@ -245,6 +246,7 @@ impl std::fmt::Display for HeartbeatStatus {
         match self {
             HeartbeatStatus::Pending => write!(f, "pending"),
             HeartbeatStatus::Responded => write!(f, "responded"),
+            HeartbeatStatus::Timeout => write!(f, "timeout"),
         }
     }
 }
@@ -256,6 +258,7 @@ impl std::str::FromStr for HeartbeatStatus {
         match s {
             "pending" => Ok(HeartbeatStatus::Pending),
             "responded" => Ok(HeartbeatStatus::Responded),
+            "timeout" => Ok(HeartbeatStatus::Timeout),
             _ => Err(anyhow::anyhow!("Invalid heartbeat status: {}", s)),
         }
     }
