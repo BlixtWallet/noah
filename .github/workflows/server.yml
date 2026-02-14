@@ -2,14 +2,6 @@ name: Server CI
 
 on:
   pull_request:
-    paths:
-      - "server/**"
-      - "scripts/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "!**/*.md"
-      - "!**/.github/workflows/*"
-
   push:
     branches:
       - master
@@ -21,7 +13,41 @@ on:
       - "!**/*.md"
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server_changed: ${{ steps.set_changed.outputs.server_changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔎 Detect server-related changes
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            server:
+              - 'server/**'
+              - 'scripts/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - '.github/workflows/server.yml'
+
+      - name: 🧭 Set server change output
+        id: set_changed
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          FILTER_SERVER: ${{ steps.filter.outputs.server }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            echo "server_changed=${FILTER_SERVER}" >> "$GITHUB_OUTPUT"
+          else
+            echo "server_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   server_build_and_test:
+    needs: changes
+    if: needs.changes.outputs.server_changed == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -61,13 +87,23 @@ jobs:
 
   server_gate:
     runs-on: ubuntu-latest
-    needs: server_build_and_test
+    needs: [changes, server_build_and_test]
     if: always()
     steps:
       - name: ✅ Gate
         run: |
-          if [[ "${{ needs.server_build_and_test.result }}" == "success" || "${{ needs.server_build_and_test.result }}" == "skipped" ]]; then
-            echo "Server checks passed or skipped"
+          if [[ "${{ needs.changes.result }}" != "success" ]]; then
+            echo "Server change detection failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.changes.outputs.server_changed }}" != "true" ]]; then
+            echo "No server-related changes; server checks not required"
+            exit 0
+          fi
+
+          if [[ "${{ needs.server_build_and_test.result }}" == "success" ]]; then
+            echo "Server checks passed"
             exit 0
           else
             echo "Server checks failed"
