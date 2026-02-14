@@ -74,11 +74,11 @@ It is intentionally operational: where code lives, how the runtime behaves, and 
 - Install deps: `just install` (or `bun install`).
 - Enter Nix shell (recommended): `direnv allow` or `nix develop`.
 
-### Client run commands
+### Mobile app execution policy for autonomous agents
 
-- Android regtest debug: `just android` or `just android-regtest`.
-- iOS regtest debug: `just ios` or `just ios-regtest`.
-- Signet/Mainnet variants: use `just android-signet`, `just ios-signet`, `just android-mainnet`, `just ios-mainnet`.
+- Do not start Android/iOS apps locally as part of autonomous workflow.
+- Do not run simulator/emulator commands like `just android`, `just ios`, or variant-specific equivalents.
+- Rely on GitHub Actions client pipelines for platform builds (Android and iOS).
 
 ### Server run commands
 
@@ -112,6 +112,9 @@ It is intentionally operational: where code lives, how the runtime behaves, and 
 - Husky pre-commit runs:
   - `bun client check`
   - `cargo fmt --check`
+- After opening a PR, monitor CI status checks:
+  - `gh pr checks --watch`
+  - or `gh pr view --json statusCheckRollup`
 
 ## Client architecture details
 

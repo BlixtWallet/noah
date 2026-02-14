@@ -16,16 +16,15 @@ Use this file as the first-step runbook for autonomous work in this repository.
 2. Optional Nix shell (recommended):
    - `nix develop`
 
-## 3) Pick the correct runtime path
+## 3) Pick the correct validation path
 
 - Client task:
-  - Start app: `just android` or `just ios`
-  - Validate: `just check`
+  - Do not start Android/iOS simulators or emulators locally.
+  - Validate with static checks: `just check`
 - Server task:
-  - Start backend: `just server`
-  - Validate: `cargo test` and `cargo fmt --check`
-- Full regtest/integration task:
-  - `just setup-everything`
+  - Validate with local checks: `cargo fmt --check` and `cargo test`
+- Integration/regtest task:
+  - Only run `just setup-everything` if explicitly requested by the user.
 
 ## 4) Safe implementation protocol
 
@@ -62,6 +61,8 @@ If server payload types changed, verify generated TS contract changes in:
    - why
    - validation commands run
    - any risks/follow-ups
+4. After opening PR, monitor status checks:
+   - `gh pr checks --watch`
 
 ## 7) Stop conditions
 
