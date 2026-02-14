@@ -224,15 +224,16 @@ type ReportJobCompletionPayload = Omit<ReportJobStatusPayload, "status"> & {
 };
 
 export const reportJobStatus = (payload: ReportJobCompletionPayload & { k1: string }) =>
-  payload.k1
-    ? post<ReportJobCompletionPayload & { k1: string }, DefaultSuccessPayload>(
-        "/report_job_status",
-        payload,
-      )
-    : Promise.resolve(err(new Error("Missing notification k1 for report_job_status")));
+  post<ReportJobCompletionPayload & { k1: string }, DefaultSuccessPayload>(
+    "/report_job_status",
+    payload,
+  );
 
 export const submitInvoice = (payload: SubmitInvoicePayload & { k1: string }) =>
-  post<SubmitInvoicePayload & { k1: string }, DefaultSuccessPayload>("/lnurlp/submit_invoice", payload);
+  post<SubmitInvoicePayload & { k1: string }, DefaultSuccessPayload>(
+    "/lnurlp/submit_invoice",
+    payload,
+  );
 
 export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1: string }) =>
   post<HeartbeatResponsePayload & { k1: string }, DefaultSuccessPayload>(
