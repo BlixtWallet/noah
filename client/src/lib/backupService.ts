@@ -70,17 +70,9 @@ export class BackupService {
     const backup_size = encryptedDataResult.value.length;
     log.d("backup_size", [backup_size]);
 
-    const uploadK1Result = await getK1();
-    if (uploadK1Result.isErr()) {
-      reportBackupFailure("Failed to authenticate backup upload request.", uploadK1Result.error);
-      return err(uploadK1Result.error);
-    }
-    const uploadK1 = uploadK1Result.value;
-
     // Get upload URL from server
     const uploadUrlResult = await getUploadUrl({
       backup_version: 1, // TODO: Implement proper version management
-      k1: uploadK1,
     });
 
     if (uploadUrlResult.isErr()) {
@@ -106,22 +98,11 @@ export class BackupService {
       return err(uploadResult.error);
     }
 
-    const completeK1Result = await getK1();
-    if (completeK1Result.isErr()) {
-      reportBackupFailure(
-        "Failed to authenticate backup completion request.",
-        completeK1Result.error,
-      );
-      return err(completeK1Result.error);
-    }
-    const completeK1 = completeK1Result.value;
-
     // Complete the upload process
     const completeUploadResult = await completeUpload({
       s3_key,
       backup_version: 1,
       backup_size,
-      k1: completeK1,
     });
 
     if (completeUploadResult.isErr()) {

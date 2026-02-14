@@ -185,14 +185,11 @@ async function post<T, U>(
   }
 }
 
-export const getUploadUrl = (payload: GetUploadUrlPayload & { k1: string }) =>
-  post<GetUploadUrlPayload & { k1: string }, UploadUrlResponse>("/backup/upload_url", payload);
+export const getUploadUrl = (payload: GetUploadUrlPayload) =>
+  post<GetUploadUrlPayload, UploadUrlResponse>("/backup/upload_url", payload);
 
-export const completeUpload = (payload: CompleteUploadPayload & { k1: string }) =>
-  post<CompleteUploadPayload & { k1: string }, DefaultSuccessPayload>(
-    "/backup/complete_upload",
-    payload,
-  );
+export const completeUpload = (payload: CompleteUploadPayload) =>
+  post<CompleteUploadPayload, DefaultSuccessPayload>("/backup/complete_upload", payload);
 
 export const listBackups = () => post<object, BackupInfo[]>("/backup/list", {});
 
