@@ -29,7 +29,13 @@ jobs:
         run: nix develop .# --command bash -c "bun install --frozen-lockfile"
 
       - name: 🛠️ Build for device
-        run: nix develop .# --command bash -c "bun client ios:prebuild && bun client build:ios:signet:device"
+        run: |
+          nix develop .# --command bash -c "
+            bun client ios:prebuild &&
+            (/usr/bin/git diff --exit-code -- client/ios/Podfile.lock ||
+              (echo '❌ Podfile.lock changed after prebuild — commit the updated lockfile' && exit 1)) &&
+            bun client build:ios:signet:device
+          "
 
       - name: 📦 Create IPA
         run: |
