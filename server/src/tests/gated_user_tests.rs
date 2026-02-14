@@ -247,14 +247,14 @@ async fn test_report_job_status_pruning() {
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
     }
 
-    // Verify that only the configured capped amount is stored.
+    // Verify that only 30 reports are kept for this report type.
     let count =
         JobStatusRepository::count_by_pubkey(&app_state.db_pool, &user.pubkey().to_string())
             .await
             .unwrap();
-    assert_eq!(count, 50);
+    assert_eq!(count, 30);
 
-    // Verify that the remaining reports are the last 50.
+    // Verify that the remaining reports are the last 30.
     let messages = JobStatusRepository::find_error_messages_by_pubkey_ordered(
         &app_state.db_pool,
         &user.pubkey().to_string(),
@@ -262,61 +262,129 @@ async fn test_report_job_status_pruning() {
     .await
     .unwrap();
 
-    assert_eq!(
-        messages,
-        vec![
-            "Report 3",
-            "Report 4",
-            "Report 5",
-            "Report 6",
-            "Report 7",
-            "Report 8",
-            "Report 9",
-            "Report 10",
-            "Report 11",
-            "Report 12",
-            "Report 13",
-            "Report 14",
-            "Report 15",
-            "Report 16",
-            "Report 17",
-            "Report 18",
-            "Report 19",
-            "Report 20",
-            "Report 21",
-            "Report 22",
-            "Report 23",
-            "Report 24",
-            "Report 25",
-            "Report 26",
-            "Report 27",
-            "Report 28",
-            "Report 29",
-            "Report 30",
-            "Report 31",
-            "Report 32",
-            "Report 33",
-            "Report 34",
-            "Report 35",
-            "Report 36",
-            "Report 37",
-            "Report 38",
-            "Report 39",
-            "Report 40",
-            "Report 41",
-            "Report 42",
-            "Report 43",
-            "Report 44",
-            "Report 45",
-            "Report 46",
-            "Report 47",
-            "Report 48",
-            "Report 49",
-            "Report 50",
-            "Report 51",
-            "Report 52"
-        ]
-    );
+    let expected: Vec<String> = (23..53).map(|i| format!("Report {}", i)).collect();
+    assert_eq!(messages, expected);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_job_status_pruning_keeps_30_per_report_type_with_mixed_statuses() {
+    let (_app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    use crate::db::job_status_repo::JobStatusRepository;
+    use crate::types::{ReportStatus, ReportType};
+
+    for i in 0..35 {
+        let mut tx = app_state.db_pool.begin().await.unwrap();
+        JobStatusRepository::create_with_k1_and_prune(
+            &mut tx,
+            &user.pubkey().to_string(),
+            &format!("k1-failure-{}", i),
+            &ReportType::Maintenance,
+            &ReportStatus::Failure,
+            Some(format!("Failure {}", i)),
+        )
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    for i in 0..35 {
+        let mut tx = app_state.db_pool.begin().await.unwrap();
+        JobStatusRepository::create_with_k1_and_prune(
+            &mut tx,
+            &user.pubkey().to_string(),
+            &format!("k1-success-{}", i),
+            &ReportType::Maintenance,
+            &ReportStatus::Success,
+            None,
+        )
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    let maintenance_count = JobStatusRepository::count_by_pubkey_and_report_type(
+        &app_state.db_pool,
+        &user.pubkey().to_string(),
+        &ReportType::Maintenance,
+    )
+    .await
+    .unwrap();
+    assert_eq!(maintenance_count, 30);
+
+    let total_count =
+        JobStatusRepository::count_by_pubkey(&app_state.db_pool, &user.pubkey().to_string())
+            .await
+            .unwrap();
+    assert_eq!(total_count, 30);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_report_job_status_pruning_keeps_30_per_report_type() {
+    let (_app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    use crate::db::job_status_repo::JobStatusRepository;
+    use crate::types::{ReportStatus, ReportType};
+
+    for i in 0..35 {
+        let mut tx = app_state.db_pool.begin().await.unwrap();
+        JobStatusRepository::create_with_k1_and_prune(
+            &mut tx,
+            &user.pubkey().to_string(),
+            &format!("k1-maintenance-failure-{}", i),
+            &ReportType::Maintenance,
+            &ReportStatus::Failure,
+            Some(format!("Maintenance failure {}", i)),
+        )
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    for i in 0..35 {
+        let mut tx = app_state.db_pool.begin().await.unwrap();
+        JobStatusRepository::create_with_k1_and_prune(
+            &mut tx,
+            &user.pubkey().to_string(),
+            &format!("k1-backup-failure-{}", i),
+            &ReportType::Backup,
+            &ReportStatus::Failure,
+            Some(format!("Backup failure {}", i)),
+        )
+        .await
+        .unwrap();
+        tx.commit().await.unwrap();
+    }
+
+    let maintenance_count = JobStatusRepository::count_by_pubkey_and_report_type(
+        &app_state.db_pool,
+        &user.pubkey().to_string(),
+        &ReportType::Maintenance,
+    )
+    .await
+    .unwrap();
+    assert_eq!(maintenance_count, 30);
+
+    let backup_count = JobStatusRepository::count_by_pubkey_and_report_type(
+        &app_state.db_pool,
+        &user.pubkey().to_string(),
+        &ReportType::Backup,
+    )
+    .await
+    .unwrap();
+    assert_eq!(backup_count, 30);
+
+    let total_count =
+        JobStatusRepository::count_by_pubkey(&app_state.db_pool, &user.pubkey().to_string())
+            .await
+            .unwrap();
+    assert_eq!(total_count, 60);
 }
 
 #[tracing_test::traced_test]

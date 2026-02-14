@@ -10,16 +10,20 @@ pub struct JobStatusRepository;
 
 impl JobStatusRepository {
     async fn prune_by_pubkey(tx: &mut Transaction<'_, Postgres>, pubkey: &str) -> Result<()> {
-        // Keep only the last 50 reports by deleting the oldest ones if the count exceeds 50.
-        // This is more efficient than counting first.
+        // Keep only the last 30 reports per report type for this user.
         sqlx::query(
             "DELETE FROM job_status_reports
-             WHERE pubkey = $1
-             AND id NOT IN (
-                 SELECT id FROM job_status_reports
-                 WHERE pubkey = $1
-                 ORDER BY created_at DESC, id DESC
-                 LIMIT 50
+             WHERE id IN (
+                 SELECT id FROM (
+                     SELECT id,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY report_type
+                                ORDER BY created_at DESC, id DESC
+                            ) AS rn
+                     FROM job_status_reports
+                     WHERE pubkey = $1
+                 ) ranked
+                 WHERE ranked.rn > 30
              )",
         )
         .bind(pubkey)
@@ -115,6 +119,25 @@ impl JobStatusRepository {
             "SELECT COUNT(*) FROM job_status_reports WHERE pubkey = $1",
         )
         .bind(pubkey)
+        .fetch_one(pool)
+        .await?;
+        Ok(count)
+    }
+
+    /// [TEST ONLY] Counts reports for a user filtered by report type.
+    #[cfg(test)]
+    pub async fn count_by_pubkey_and_report_type(
+        pool: &sqlx::PgPool,
+        pubkey: &str,
+        report_type: &ReportType,
+    ) -> Result<i64> {
+        let count = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*)
+             FROM job_status_reports
+             WHERE pubkey = $1 AND report_type = $2",
+        )
+        .bind(pubkey)
+        .bind(format!("{:?}", report_type))
         .fetch_one(pool)
         .await?;
         Ok(count)
