@@ -348,15 +348,14 @@ Gated handlers (`gated_api_v0.rs`) include:
 
 ## High-value files to read first for most tasks
 
-- `/Users/niteshchowdharybalusu/Documents/noah/client/src/Navigators.tsx`
-- `/Users/niteshchowdharybalusu/Documents/noah/client/src/AppServices.tsx`
-- `/Users/niteshchowdharybalusu/Documents/noah/client/src/lib/api.ts`
-- `/Users/niteshchowdharybalusu/Documents/noah/client/src/lib/walletApi.ts`
-- `/Users/niteshchowdharybalusu/Documents/noah/client/src/lib/pushNotifications.ts`
-- `/Users/niteshchowdharybalusu/Documents/noah/server/src/main.rs`
-- `/Users/niteshchowdharybalusu/Documents/noah/server/src/routes/public_api_v0.rs`
-- `/Users/niteshchowdharybalusu/Documents/noah/server/src/routes/gated_api_v0.rs`
-- `/Users/niteshchowdharybalusu/Documents/noah/server/src/routes/app_middleware.rs`
-- `/Users/niteshchowdharybalusu/Documents/noah/server/src/types.rs`
-- `/Users/niteshchowdharybalusu/Documents/noah/server/src/tests/common.rs`
-
+- `client/src/Navigators.tsx`
+- `client/src/AppServices.tsx`
+- `client/src/lib/api.ts`
+- `client/src/lib/walletApi.ts`
+- `client/src/lib/pushNotifications.ts`
+- `server/src/main.rs`
+- `server/src/routes/public_api_v0.rs`
+- `server/src/routes/gated_api_v0.rs`
+- `server/src/routes/app_middleware.rs`
+- `server/src/types.rs`
+- `server/src/tests/common.rs`

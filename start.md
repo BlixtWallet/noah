@@ -4,7 +4,7 @@ Use this file as the first-step runbook for autonomous work in this repository.
 
 ## 1) First orientation
 
-1. Read `/Users/niteshchowdharybalusu/Documents/noah/AGENTS.md` fully.
+1. Read `AGENTS.md` fully.
 2. Check current branch and working tree:
    - `git status --short --branch`
 3. If the tree is dirty, do not revert unrelated user changes.
@@ -51,7 +51,7 @@ Run the smallest valid check set for the changed surface:
 
 If server payload types changed, verify generated TS contract changes in:
 
-- `/Users/niteshchowdharybalusu/Documents/noah/client/src/types/serverTypes.ts`
+- `client/src/types/serverTypes.ts`
 
 ## 6) Commit and PR protocol
 
