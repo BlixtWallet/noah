@@ -13,6 +13,8 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 const STALE_PENDING_JOB_TIMEOUT_MINUTES: i64 = 60;
 const STALE_PENDING_JOB_SWEEP_SCHEDULE: &str = "every 10 minutes";
 const STALE_PENDING_JOB_ERROR_MESSAGE: &str = "Timed out after 1 hour waiting for client response";
+const STALE_PENDING_HEARTBEAT_TIMEOUT_MINUTES: i64 = 60;
+const STALE_PENDING_HEARTBEAT_SWEEP_SCHEDULE: &str = "every 10 minutes";
 
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
     let backup_repo = BackupRepository::new(&app_state.db_pool);
@@ -152,6 +154,25 @@ pub async fn timeout_stale_pending_job_reports(app_state: AppState) -> anyhow::R
     Ok(())
 }
 
+pub async fn timeout_stale_pending_heartbeats(app_state: AppState) -> anyhow::Result<()> {
+    let affected = HeartbeatRepository::mark_stale_pending_as_timeout(
+        &app_state.db_pool,
+        STALE_PENDING_HEARTBEAT_TIMEOUT_MINUTES,
+    )
+    .await?;
+
+    if affected > 0 {
+        tracing::info!(
+            job = "heartbeat_pending_timeout",
+            updated_count = affected,
+            timeout_minutes = STALE_PENDING_HEARTBEAT_TIMEOUT_MINUTES,
+            "marked stale pending heartbeat notifications as timeout"
+        );
+    }
+
+    Ok(())
+}
+
 pub async fn cron_scheduler(
     app_state: AppState,
     backup_cron: String,
@@ -167,6 +188,8 @@ pub async fn cron_scheduler(
         deregister_schedule = %deregister_cron,
         stale_pending_job_cleanup_schedule = %STALE_PENDING_JOB_SWEEP_SCHEDULE,
         stale_pending_job_timeout_minutes = STALE_PENDING_JOB_TIMEOUT_MINUTES,
+        stale_pending_heartbeat_cleanup_schedule = %STALE_PENDING_HEARTBEAT_SWEEP_SCHEDULE,
+        stale_pending_heartbeat_timeout_minutes = STALE_PENDING_HEARTBEAT_TIMEOUT_MINUTES,
         "scheduler initialized"
     );
 
@@ -217,6 +240,19 @@ pub async fn cron_scheduler(
             })
         })?;
     sched.add(stale_pending_job_cleanup).await?;
+
+    // Mark stale pending heartbeat notifications as timeout
+    let stale_pending_heartbeat_cleanup_state = app_state.clone();
+    let stale_pending_heartbeat_cleanup =
+        Job::new_async(STALE_PENDING_HEARTBEAT_SWEEP_SCHEDULE, move |_, _| {
+            let app_state = stale_pending_heartbeat_cleanup_state.clone();
+            Box::pin(async move {
+                if let Err(e) = timeout_stale_pending_heartbeats(app_state).await {
+                    tracing::error!(job = "heartbeat_pending_timeout", error = %e, "job failed");
+                }
+            })
+        })?;
+    sched.add(stale_pending_heartbeat_cleanup).await?;
 
     // Redis keepalive to prevent Upstash idle connection timeout
     let keepalive_app_state = app_state.clone();

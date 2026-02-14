@@ -292,6 +292,75 @@ async fn test_heartbeat_repo_count_consecutive_missed() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
+async fn test_heartbeat_repo_count_consecutive_missed_includes_timeout() {
+    let (_, app_state, _guard) = setup_test_app().await;
+
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
+    let pubkey = user.pubkey().to_string();
+    let now = Utc::now();
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        "mix-timeout-1",
+        HeartbeatStatus::Timeout,
+        now - Duration::seconds(10),
+    )
+    .await
+    .unwrap();
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        "mix-pending-1",
+        HeartbeatStatus::Pending,
+        now - Duration::seconds(20),
+    )
+    .await
+    .unwrap();
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        "mix-timeout-2",
+        HeartbeatStatus::Timeout,
+        now - Duration::seconds(30),
+    )
+    .await
+    .unwrap();
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        "mix-responded-stop",
+        HeartbeatStatus::Responded,
+        now - Duration::seconds(40),
+    )
+    .await
+    .unwrap();
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        "older-pending",
+        HeartbeatStatus::Pending,
+        now - Duration::seconds(50),
+    )
+    .await
+    .unwrap();
+
+    let consecutive_missed = heartbeat_repo
+        .count_consecutive_missed(&pubkey)
+        .await
+        .unwrap();
+    assert_eq!(consecutive_missed, 3);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
 async fn test_heartbeat_repo_get_users_to_deregister() {
     let (_, app_state, _guard) = setup_test_app().await;
 
@@ -337,6 +406,102 @@ async fn test_heartbeat_repo_get_users_to_deregister() {
 
     assert_eq!(users_to_deregister.len(), 1);
     assert_eq!(users_to_deregister[0], user1.pubkey().to_string());
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_heartbeat_repo_get_users_to_deregister_includes_timeout() {
+    let (_, app_state, _guard) = setup_test_app().await;
+
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
+    let pubkey = user.pubkey().to_string();
+
+    for i in 0..5 {
+        HeartbeatRepository::create_with_status_and_sent_at(
+            &app_state.db_pool,
+            &pubkey,
+            &format!("pending-{}", i),
+            HeartbeatStatus::Pending,
+            Utc::now() - Duration::minutes((20 - i) as i64),
+        )
+        .await
+        .unwrap();
+    }
+
+    for i in 0..5 {
+        HeartbeatRepository::create_with_status_and_sent_at(
+            &app_state.db_pool,
+            &pubkey,
+            &format!("timeout-{}", i),
+            HeartbeatStatus::Timeout,
+            Utc::now() - Duration::minutes((10 - i) as i64),
+        )
+        .await
+        .unwrap();
+    }
+
+    let users_to_deregister = heartbeat_repo.get_users_to_deregister().await.unwrap();
+
+    assert_eq!(users_to_deregister.len(), 1);
+    assert_eq!(users_to_deregister[0], pubkey);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_stale_pending_heartbeats_are_marked_timeout_after_one_hour() {
+    let (_app, app_state, _guard) = setup_test_app().await;
+
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+    let pubkey = user.pubkey().to_string();
+
+    let old_notification_id = "old-pending-heartbeat";
+    let fresh_notification_id = "fresh-pending-heartbeat";
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        old_notification_id,
+        HeartbeatStatus::Pending,
+        Utc::now() - Duration::minutes(61),
+    )
+    .await
+    .unwrap();
+
+    HeartbeatRepository::create_with_status_and_sent_at(
+        &app_state.db_pool,
+        &pubkey,
+        fresh_notification_id,
+        HeartbeatStatus::Pending,
+        Utc::now() - Duration::minutes(30),
+    )
+    .await
+    .unwrap();
+
+    crate::cron::timeout_stale_pending_heartbeats(app_state.clone())
+        .await
+        .unwrap();
+
+    let old_row =
+        HeartbeatRepository::find_status_and_responded_at(&app_state.db_pool, old_notification_id)
+            .await
+            .unwrap()
+            .unwrap();
+    assert_eq!(old_row.0, HeartbeatStatus::Timeout.to_string());
+    assert!(old_row.1.is_none());
+
+    let fresh_row = HeartbeatRepository::find_status_and_responded_at(
+        &app_state.db_pool,
+        fresh_notification_id,
+    )
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(fresh_row.0, HeartbeatStatus::Pending.to_string());
+    assert!(fresh_row.1.is_none());
 }
 
 #[tracing_test::traced_test]

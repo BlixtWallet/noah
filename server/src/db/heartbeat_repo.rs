@@ -48,6 +48,26 @@ impl<'a> HeartbeatRepository<'a> {
         Ok(result.rows_affected() > 0)
     }
 
+    /// Marks stale pending heartbeat notifications as timeout after the given age threshold.
+    pub async fn mark_stale_pending_as_timeout(
+        pool: &sqlx::PgPool,
+        older_than_minutes: i64,
+    ) -> Result<u64> {
+        let result = sqlx::query(
+            "UPDATE heartbeat_notifications
+             SET status = $1
+             WHERE status = $2
+               AND sent_at <= now() - ($3::bigint * interval '1 minute')",
+        )
+        .bind(HeartbeatStatus::Timeout.to_string())
+        .bind(HeartbeatStatus::Pending.to_string())
+        .bind(older_than_minutes)
+        .execute(pool)
+        .await?;
+
+        Ok(result.rows_affected())
+    }
+
     /// Deletes a heartbeat notification by its ID
     pub async fn delete_notification(&self, notification_id: &str) -> Result<()> {
         sqlx::query("DELETE FROM heartbeat_notifications WHERE notification_id = $1")
@@ -86,7 +106,7 @@ impl<'a> HeartbeatRepository<'a> {
         let mut consecutive_missed = 0;
         for status_str in rows {
             let status = HeartbeatStatus::from_str(&status_str)?;
-            if status == HeartbeatStatus::Pending {
+            if matches!(status, HeartbeatStatus::Pending | HeartbeatStatus::Timeout) {
                 consecutive_missed += 1;
             } else {
                 break;
@@ -139,16 +159,58 @@ impl<'a> HeartbeatRepository<'a> {
                 SELECT pubkey,
                        COUNT(*) as missed_count
                 FROM recent_heartbeats
-                WHERE rn <= 10 AND status = $1
+                WHERE rn <= 10 AND status IN ($1, $2)
                 GROUP BY pubkey
                 HAVING COUNT(*) >= 10
             )
             SELECT pubkey FROM consecutive_missed",
         )
         .bind(HeartbeatStatus::Pending.to_string())
+        .bind(HeartbeatStatus::Timeout.to_string())
         .fetch_all(self.pool)
         .await?;
 
         Ok(pubkeys)
+    }
+
+    /// [TEST ONLY] Inserts a heartbeat with explicit status and sent timestamp.
+    #[cfg(test)]
+    pub async fn create_with_status_and_sent_at(
+        pool: &sqlx::PgPool,
+        pubkey: &str,
+        notification_id: &str,
+        status: HeartbeatStatus,
+        sent_at: chrono::DateTime<chrono::Utc>,
+    ) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO heartbeat_notifications (pubkey, notification_id, status, sent_at)
+             VALUES ($1, $2, $3, $4)",
+        )
+        .bind(pubkey)
+        .bind(notification_id)
+        .bind(status.to_string())
+        .bind(sent_at)
+        .execute(pool)
+        .await?;
+
+        Ok(())
+    }
+
+    /// [TEST ONLY] Reads status and responded_at by notification id.
+    #[cfg(test)]
+    pub async fn find_status_and_responded_at(
+        pool: &sqlx::PgPool,
+        notification_id: &str,
+    ) -> Result<Option<(String, Option<chrono::DateTime<chrono::Utc>>)>> {
+        let row = sqlx::query_as::<_, (String, Option<chrono::DateTime<chrono::Utc>>)>(
+            "SELECT status, responded_at
+             FROM heartbeat_notifications
+             WHERE notification_id = $1",
+        )
+        .bind(notification_id)
+        .fetch_optional(pool)
+        .await?;
+
+        Ok(row)
     }
 }
