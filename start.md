@@ -63,6 +63,9 @@ If server payload types changed, verify generated TS contract changes in:
    - any risks/follow-ups
 4. After opening PR, monitor status checks:
    - `gh pr checks --watch`
+5. Once checks pass and PR is merged, sync local `master` immediately:
+   - `git checkout master`
+   - `git pull --ff-only origin master`
 
 ## 7) Stop conditions
 

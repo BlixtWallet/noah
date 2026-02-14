@@ -7,8 +7,8 @@ on:
       - "scripts/**"
       - "package.json"
       - "bun.lock"
+      - ".github/workflows/**"
       - "!**/*.md"
-      - "!**/.github/workflows/*"
 
 jobs:
   build-release-ios:

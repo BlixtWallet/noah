@@ -43,7 +43,7 @@ jobs:
               - 'scripts/**'
               - 'package.json'
               - 'bun.lock'
-              - '.github/workflows/client.yml'
+              - '.github/workflows/**'
 
       - name: 🧭 Set client change output
         id: set_changed
