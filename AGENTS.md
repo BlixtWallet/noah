@@ -115,6 +115,9 @@ It is intentionally operational: where code lives, how the runtime behaves, and 
 - After opening a PR, monitor CI status checks:
   - `gh pr checks --watch`
   - or `gh pr view --json statusCheckRollup`
+- After PR is merged, sync local `master` before continuing work:
+  - `git checkout master`
+  - `git pull --ff-only origin master`
 
 ## Client architecture details
 

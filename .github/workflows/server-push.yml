@@ -9,8 +9,8 @@ on:
       - "fly/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - ".github/workflows/**"
       - "!**/*.md"
-      - "!**/.github/workflows/*"
 
 jobs:
   server-build-and-push:
