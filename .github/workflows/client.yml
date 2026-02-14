@@ -2,13 +2,6 @@ name: CI
 
 on:
   pull_request:
-    paths:
-      - "client/**"
-      - "scripts/**"
-      - "package.json"
-      - "bun.lock"
-      - "!**/*.md"
-      - "!**/.github/workflows/*"
   workflow_call:
     inputs:
       build_aab:
@@ -31,8 +24,44 @@ on:
         value: ${{ jobs.android_build.outputs.run_id }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      client_changed: ${{ steps.set_changed.outputs.client_changed }}
+    steps:
+      - name: 🏗 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔎 Detect client-related changes
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - 'client/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'bun.lock'
+              - '.github/workflows/client.yml'
+
+      - name: 🧭 Set client change output
+        id: set_changed
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          FILTER_CLIENT: ${{ steps.filter.outputs.client }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            echo "client_changed=${FILTER_CLIENT}" >> "$GITHUB_OUTPUT"
+          else
+            # For workflow_call, always run client checks/build.
+            echo "client_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     runs-on: self-hosted
+    needs: changes
+    if: needs.changes.outputs.client_changed == 'true'
     steps:
       - name: 🏗 Checkout code
         uses: actions/checkout@v4
@@ -48,7 +77,8 @@ jobs:
 
   android_build:
     runs-on: self-hosted
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.client_changed == 'true'
     outputs:
       artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
       apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
@@ -148,14 +178,24 @@ jobs:
 
   client_gate:
     runs-on: ubuntu-latest
-    needs: [lint, android_build]
+    needs: [changes, lint, android_build]
     if: always()
     steps:
       - name: ✅ Gate
         run: |
-          if [[ "${{ needs.lint.result }}" == "success" || "${{ needs.lint.result }}" == "skipped" ]] && \
-             [[ "${{ needs.android_build.result }}" == "success" || "${{ needs.android_build.result }}" == "skipped" ]]; then
-            echo "Client checks passed or skipped"
+          if [[ "${{ needs.changes.result }}" != "success" ]]; then
+            echo "Client change detection failed"
+            exit 1
+          fi
+
+          if [[ "${{ needs.changes.outputs.client_changed }}" != "true" ]]; then
+            echo "No client-related changes; client checks not required"
+            exit 0
+          fi
+
+          if [[ "${{ needs.lint.result }}" == "success" ]] && \
+             [[ "${{ needs.android_build.result }}" == "success" ]]; then
+            echo "Client checks passed"
             exit 0
           else
             echo "Client checks failed"
