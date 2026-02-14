@@ -141,7 +141,7 @@ is_email_verified: boolean, };
 
 export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
 
-export type ReportStatus = "success" | "failure";
+export type ReportStatus = "pending" | "success" | "failure" | "timeout";
 
 export type ReportType = "maintenance" | "backup";
 

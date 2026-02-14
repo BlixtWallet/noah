@@ -46,6 +46,12 @@ export class BackupService {
   }
 
   async performBackup(): Promise<Result<void, Error>> {
+    // Safeguard against multiple backup requests in flight
+    if (useBackupStore.getState().lastBackupStatus === "in_progress") {
+      log.d("Backup already in progress");
+      return ok(undefined);
+    }
+
     // Get mnemonic for encryption
     const mnemonicResult = await getMnemonic();
     if (mnemonicResult.isErr()) {
@@ -55,12 +61,14 @@ export class BackupService {
 
     log.d("Performing backup");
     useBackupStore.getState().setBackupInProgress();
+    log.d("Backup in progress");
 
     // Create and encrypt the backup file natively
     const encryptedDataResult = await ResultAsync.fromPromise(
       createBackup(mnemonicResult.value),
       (e) => e as Error,
     );
+    log.d("Backup created");
 
     if (encryptedDataResult.isErr()) {
       reportBackupFailure("Failed to create backup file.", encryptedDataResult.error);

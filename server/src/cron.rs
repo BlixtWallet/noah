@@ -2,13 +2,17 @@ use crate::{
     AppState,
     db::{
         backup_repo::BackupRepository, heartbeat_repo::HeartbeatRepository,
-        push_token_repo::PushTokenRepository,
+        job_status_repo::JobStatusRepository, push_token_repo::PushTokenRepository,
     },
     notification_coordinator::{NotificationCoordinator, NotificationRequest},
     types::{BackupTriggerNotification, HeartbeatNotification, NotificationData},
 };
 use expo_push_notification_client::Priority;
 use tokio_cron_scheduler::{Job, JobScheduler};
+
+const STALE_PENDING_JOB_TIMEOUT_MINUTES: i64 = 60;
+const STALE_PENDING_JOB_SWEEP_SCHEDULE: &str = "every 10 minutes";
+const STALE_PENDING_JOB_ERROR_MESSAGE: &str = "Timed out after 1 hour waiting for client response";
 
 pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()> {
     let backup_repo = BackupRepository::new(&app_state.db_pool);
@@ -128,6 +132,26 @@ async fn redis_keepalive(app_state: AppState) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub async fn timeout_stale_pending_job_reports(app_state: AppState) -> anyhow::Result<()> {
+    let affected = JobStatusRepository::mark_stale_pending_as_timeout(
+        &app_state.db_pool,
+        STALE_PENDING_JOB_TIMEOUT_MINUTES,
+        STALE_PENDING_JOB_ERROR_MESSAGE,
+    )
+    .await?;
+
+    if affected > 0 {
+        tracing::info!(
+            job = "job_status_pending_timeout",
+            updated_count = affected,
+            timeout_minutes = STALE_PENDING_JOB_TIMEOUT_MINUTES,
+            "marked stale pending job reports as timeout"
+        );
+    }
+
+    Ok(())
+}
+
 pub async fn cron_scheduler(
     app_state: AppState,
     backup_cron: String,
@@ -136,7 +160,15 @@ pub async fn cron_scheduler(
 ) -> anyhow::Result<JobScheduler> {
     let sched = JobScheduler::new().await?;
 
-    tracing::info!(service = "cron", backup_schedule = %backup_cron, heartbeat_schedule = %heartbeat_cron, deregister_schedule = %deregister_cron, "scheduler initialized");
+    tracing::info!(
+        service = "cron",
+        backup_schedule = %backup_cron,
+        heartbeat_schedule = %heartbeat_cron,
+        deregister_schedule = %deregister_cron,
+        stale_pending_job_cleanup_schedule = %STALE_PENDING_JOB_SWEEP_SCHEDULE,
+        stale_pending_job_timeout_minutes = STALE_PENDING_JOB_TIMEOUT_MINUTES,
+        "scheduler initialized"
+    );
 
     let backup_app_state = app_state.clone();
     let backup_job = Job::new_async(&backup_cron, move |_, _| {
@@ -172,6 +204,19 @@ pub async fn cron_scheduler(
         })
     })?;
     sched.add(inactive_check_job).await?;
+
+    // Mark stale pending job reports as timeout
+    let stale_pending_job_cleanup_state = app_state.clone();
+    let stale_pending_job_cleanup =
+        Job::new_async(STALE_PENDING_JOB_SWEEP_SCHEDULE, move |_, _| {
+            let app_state = stale_pending_job_cleanup_state.clone();
+            Box::pin(async move {
+                if let Err(e) = timeout_stale_pending_job_reports(app_state).await {
+                    tracing::error!(job = "job_status_pending_timeout", error = %e, "job failed");
+                }
+            })
+        })?;
+    sched.add(stale_pending_job_cleanup).await?;
 
     // Redis keepalive to prevent Upstash idle connection timeout
     let keepalive_app_state = app_state.clone();

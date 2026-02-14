@@ -290,7 +290,6 @@ async fn reset_database(pool: &PgPool) -> sqlx::Result<()> {
         r#"
         TRUNCATE TABLE
             heartbeat_notifications,
-            notification_tracking,
             job_status_reports,
             devices,
             backup_metadata,

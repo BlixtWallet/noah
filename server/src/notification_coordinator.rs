@@ -1,6 +1,11 @@
 use crate::{
-    AppState, db::notification_tracking_repo::NotificationTrackingRepository,
-    push::send_push_notification_with_unique_k1, types::NotificationData,
+    AppState,
+    db::{
+        job_status_repo::JobStatusRepository,
+        notification_tracking_repo::NotificationTrackingRepository,
+    },
+    push::{PushDispatchReceipt, send_push_notification_with_unique_k1},
+    types::{NotificationData, ReportStatus, ReportType},
 };
 use anyhow::Result;
 use chrono::Utc;
@@ -66,16 +71,23 @@ impl NotificationCoordinator {
         }
 
         // Send the notification
-        send_push_notification_with_unique_k1(
+        let dispatches = send_push_notification_with_unique_k1(
             self.app_state.clone(),
             request.data.clone(),
             Some(pubkey.to_string()),
         )
         .await?;
 
-        // Record that we sent it
-        tracking_repo
-            .record_notification_sent(pubkey, &request.data)
+        if dispatches.is_empty() {
+            debug!(
+                "No push tokens found for {} notification to {}",
+                request.data.notification_type(),
+                pubkey
+            );
+            return Ok(());
+        }
+
+        self.record_pending_job_reports(&request.data, &dispatches)
             .await?;
 
         info!(
@@ -132,20 +144,30 @@ impl NotificationCoordinator {
 
             if should_send {
                 // Send the notification
-                if let Err(e) = send_push_notification_with_unique_k1(
+                let dispatches = match send_push_notification_with_unique_k1(
                     self.app_state.clone(),
                     request.data.clone(),
                     Some(pubkey.clone()),
                 )
                 .await
                 {
-                    warn!("Failed to send notification to {}: {}", pubkey, e);
+                    Ok(dispatches) => dispatches,
+                    Err(e) => {
+                        warn!("Failed to send notification to {}: {}", pubkey, e);
+                        continue;
+                    }
+                };
+
+                if dispatches.is_empty() {
+                    debug!(
+                        "No push tokens found for {} notification to {}",
+                        request.data.notification_type(),
+                        pubkey
+                    );
                     continue;
                 }
 
-                // Record that we sent it
-                tracking_repo
-                    .record_notification_sent(&pubkey, &request.data)
+                self.record_pending_job_reports(&request.data, &dispatches)
                     .await?;
 
                 sent_count += 1;
@@ -192,6 +214,49 @@ impl NotificationCoordinator {
         }
 
         Ok(can_send)
+    }
+
+    fn report_type_for_notification(notification_data: &NotificationData) -> Option<ReportType> {
+        match notification_data {
+            NotificationData::Maintenance(_) => Some(ReportType::Maintenance),
+            NotificationData::BackupTrigger(_) => Some(ReportType::Backup),
+            NotificationData::LightningInvoiceRequest(_) | NotificationData::Heartbeat(_) => None,
+        }
+    }
+
+    async fn record_pending_job_reports(
+        &self,
+        notification_data: &NotificationData,
+        dispatches: &[PushDispatchReceipt],
+    ) -> Result<()> {
+        let Some(report_type) = Self::report_type_for_notification(notification_data) else {
+            return Ok(());
+        };
+
+        for dispatch in dispatches {
+            if dispatch.notification_k1.is_empty() {
+                warn!(
+                    "Missing notification k1 for dispatched {} notification to {}",
+                    notification_data.notification_type(),
+                    dispatch.pubkey
+                );
+                continue;
+            }
+
+            let mut tx = self.app_state.db_pool.begin().await?;
+            JobStatusRepository::create_with_k1_and_prune(
+                &mut tx,
+                &dispatch.pubkey,
+                &dispatch.notification_k1,
+                &report_type,
+                &ReportStatus::Pending,
+                None,
+            )
+            .await?;
+            tx.commit().await?;
+        }
+
+        Ok(())
     }
 
     /// Get all users from the database

@@ -189,7 +189,7 @@ export const getUploadUrl = (payload: GetUploadUrlPayload) =>
   post<GetUploadUrlPayload, UploadUrlResponse>("/backup/upload_url", payload);
 
 export const completeUpload = (payload: CompleteUploadPayload) =>
-  post("/backup/complete_upload", payload);
+  post<CompleteUploadPayload, DefaultSuccessPayload>("/backup/complete_upload", payload);
 
 export const listBackups = () => post<object, BackupInfo[]>("/backup/list", {});
 
@@ -218,20 +218,25 @@ export const getLightningAddressSuggestions = (payload: LightningAddressSuggesti
 export const registerPushToken = (payload: RegisterPushToken) =>
   post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);
 
-export const reportJobStatus = (payload: ReportJobStatusPayload & { k1?: string }) =>
-  post<ReportJobStatusPayload & { k1?: string }, DefaultSuccessPayload>(
+type ReportCompletionStatus = Extract<ReportJobStatusPayload["status"], "success" | "failure">;
+type ReportJobCompletionPayload = Omit<ReportJobStatusPayload, "status"> & {
+  status: ReportCompletionStatus;
+};
+
+export const reportJobStatus = (payload: ReportJobCompletionPayload & { k1: string }) =>
+  post<ReportJobCompletionPayload & { k1: string }, DefaultSuccessPayload>(
     "/report_job_status",
     payload,
   );
 
-export const submitInvoice = (payload: SubmitInvoicePayload & { k1?: string }) =>
-  post<SubmitInvoicePayload & { k1?: string }, DefaultSuccessPayload>(
+export const submitInvoice = (payload: SubmitInvoicePayload & { k1: string }) =>
+  post<SubmitInvoicePayload & { k1: string }, DefaultSuccessPayload>(
     "/lnurlp/submit_invoice",
     payload,
   );
 
-export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1?: string }) =>
-  post<HeartbeatResponsePayload & { k1?: string }, DefaultSuccessPayload>(
+export const heartbeatResponse = (payload: HeartbeatResponsePayload & { k1: string }) =>
+  post<HeartbeatResponsePayload & { k1: string }, DefaultSuccessPayload>(
     "/heartbeat_response",
     payload,
   );

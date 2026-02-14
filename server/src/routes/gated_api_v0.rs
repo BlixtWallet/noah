@@ -9,7 +9,7 @@ use crate::s3_client::S3BackupClient;
 use crate::types::{
     BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
     DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, HeartbeatResponsePayload,
-    ReportJobStatusPayload, SubmitInvoicePayload, UserInfoResponse,
+    ReportJobStatusPayload, ReportStatus, SubmitInvoicePayload, UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -260,22 +260,40 @@ pub async fn report_job_status(
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    if !matches!(
+        payload.status,
+        ReportStatus::Success | ReportStatus::Failure
+    ) {
+        return Err(ApiError::InvalidArgument(
+            "report_job_status only accepts success or failure; pending/timeout are server-managed"
+                .to_string(),
+        ));
+    }
+
     if let Some(Extension(event)) = event {
         event.add_context("report_type", format!("{:?}", payload.report_type));
         event.add_context("job_status", format!("{:?}", payload.status));
         event.add_context("has_error", payload.error_message.is_some());
+        event.add_context("notification_k1", &auth_payload.k1);
     }
 
     let mut tx = app_state.db_pool.begin().await?;
 
-    JobStatusRepository::create_and_prune(
+    let updated = JobStatusRepository::update_by_k1(
         &mut tx,
         &auth_payload.key,
+        &auth_payload.k1,
         &payload.report_type,
         &payload.status,
         payload.error_message,
     )
     .await?;
+
+    if !updated {
+        return Err(ApiError::NotFound(
+            "Pending job status report not found for this k1".to_string(),
+        ));
+    }
 
     tx.commit().await?;
 
