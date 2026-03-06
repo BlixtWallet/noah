@@ -15,9 +15,14 @@ txindex_check_interval = "30s"
 # The interval at which the SyncManager polls for new blocks
 sync_manager_block_poll_interval = "100ms"
 
-forfeit_watcher_min_balance = "1 btc"
+# The minimum balance to maintain for the forfeit watcher, if running
+watchman_min_balance = "1 btc"
+
 transaction_rebroadcast_interval = "1m"
 otel_deployment_name = "my_regtest"
+# The maximum number of items we return to mailbox queries
+read_mailbox_max_items = 100
+
 
 ##########
 # ROUNDS #
@@ -47,12 +52,6 @@ round_forfeit_nonces_timeout = "30s"
 
 # The feerate we set for offboard transactions
 offboard_feerate = "7sat/vb"
-
-# The number of bytes we charge fixed for each offboard
-#
-# This is multiplied with the offboard feerate.
-# A single 2-in-2-out taproot keyspend tx is 846 or 212 vb.
-offboard_fixed_fee_vb = 212
 
 # The time after which we drop offboard sessions and release locked VTXOs
 offboard_session_timeout = "30s"
@@ -105,18 +104,68 @@ track_all_max_delay = "60s"
 
 ln_receive_anti_dos_required = false
 
-################
-# VTXO SWEEPER #
-################
-
-[vtxo_sweeper]
+#############
+# LIGHTNING #
+#############
+[watchman]
 enabled = true
-# Fallback feerate to use for sweep txs
-sweep_tx_fallback_feerate = "2500sat/kwu"
-# Interval to check if sweeps can be made
-round_sweep_interval = "1h"
-# Minimum total sweep value to merit a sweep tx
-sweep_threshold = 1000000
+process_interval = "60s"
+progress_grace_period = 2
+claim_chunksize = 20
+incremental_relay_fee = "100 sat/kvb"
+min_cpfp_amount = "10000 sat"
+
+########
+# FEES #
+########
+
+# Board fees
+[fees.board]
+min_fee_sat = 330 # Can be dust
+base_fee_sat = 100
+ppm = 1000 # 0.1%
+
+# Offboard fees with expiry-based PPM
+[fees.offboard]
+base_fee_sat = 200
+# The number of bytes we charge fixed for each offboard
+#
+# This is multiplied with the offboard feerate.
+# A single 2-in-2-out taproot keyspend tx is 846 or 212 vb.
+fixed_additional_vb = 212
+ppm_expiry_table = [
+  { expiry_blocks_threshold = 0, ppm = 0 }, # exp <= 96: 0 ppm
+  { expiry_blocks_threshold = 97, ppm = 1000 }, # 96 < exp <= 198: 1,000 ppm (0.1%)
+  { expiry_blocks_threshold = 199, ppm = 4000 }, # 198 < exp <= 2160: 4,000 ppm (0.4%)
+  { expiry_blocks_threshold = 2161, ppm = 8000 }, # 2160 < exp: 8,000 ppm (0.8%)
+]
+
+# Refresh fees with expiry-based PPM
+[fees.refresh]
+base_fee_sat = 150
+ppm_expiry_table = [
+  { expiry_blocks_threshold = 0, ppm = 0 }, # exp <= 96: 0 ppm
+  { expiry_blocks_threshold = 97, ppm = 1000 }, # 96 < exp <= 198: 1,000 ppm (0.1%)
+  { expiry_blocks_threshold = 199, ppm = 4000 }, # 198 < exp <= 2160: 4,000 ppm (0.4%)
+  { expiry_blocks_threshold = 2161, ppm = 8000 }, # 2160 < exp: 8,000 ppm (0.8%)
+]
+
+# Lightning receive fees
+[fees.lightning_receive]
+base_fee_sat = 100
+ppm = 2000 # 0.2%
+
+# Lightning send fees with expiry-based PPM
+[fees.lightning_send]
+min_fee_sat = 10
+base_fee_sat = 75
+ppm_expiry_table = [
+  { expiry_blocks_threshold = 0, ppm = 0 }, # exp <= 96: 0 ppm
+  { expiry_blocks_threshold = 97, ppm = 1000 }, # 96 < exp <= 198: 1,000 ppm (0.1%)
+  { expiry_blocks_threshold = 199, ppm = 4000 }, # 198 < exp <= 2160: 4,000 ppm (0.4%)
+  { expiry_blocks_threshold = 2161, ppm = 8000 }, # 2160 < exp: 8,000 ppm (0.8%)
+]
+
 
 [bitcoind]
 url = "bitcoind:18443"
@@ -148,13 +197,6 @@ hold_invoice.uri = "https://cln:9988"
 hold_invoice.server_cert_path = "/data/cln/regtest/hold/ca.pem"
 hold_invoice.client_cert_path = "/data/cln/regtest/hold/client.pem"
 hold_invoice.client_key_path = "/data/cln/regtest/hold/client-key.pem"
-
-[forfeit_watcher]
-enabled = true
-# Fallback feerate to use for forfeit claims
-claim_fallback_feerate = "6250sat/kwu"
-# Interval to check of forfeited exits have been broadcast
-wake_interval = "1m"
 
 [vtxopool]
 # The target set of VTXOs to maintain in the pool
