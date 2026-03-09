@@ -9,6 +9,7 @@ on:
       - "fly/**"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "Dockerfile"
       - ".github/workflows/**"
       - "!**/*.md"
 
