@@ -1,5 +1,10 @@
+# Keep builder and runtime on the same Debian release so the compiled
+# binaries do not require a newer glibc than the runtime image provides.
+ARG RUST_VERSION=1.91.1
+ARG DEBIAN_RELEASE=bookworm
+
 # Stage 1: Install cargo-chef
-FROM rust:1.91.1 AS chef
+FROM rust:${RUST_VERSION}-${DEBIAN_RELEASE} AS chef
 RUN cargo install cargo-chef
 WORKDIR /app
 
@@ -29,7 +34,7 @@ WORKDIR /app/server
 RUN cargo build --release
 
 # Stage 5: Runtime image
-FROM debian:bookworm-slim AS runtime
+FROM debian:${DEBIAN_RELEASE}-slim AS runtime
 RUN apt-get update && apt-get install -y ca-certificates curl pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/server /usr/local/bin/
