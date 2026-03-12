@@ -10,9 +10,6 @@ on:
         type: boolean
         default: false
     outputs:
-      artifact_name:
-        description: "The name of the uploaded artifact"
-        value: ${{ jobs.android_build.outputs.artifact_name }}
       apk_filename:
         description: "The filename of the APK"
         value: ${{ jobs.android_build.outputs.apk_filename }}
@@ -80,7 +77,6 @@ jobs:
     needs: [changes, lint]
     if: needs.changes.outputs.client_changed == 'true'
     outputs:
-      artifact_name: ${{ steps.rename_apk.outputs.artifact_name }}
       apk_filename: ${{ steps.rename_apk.outputs.apk_filename }}
       aab_filename: ${{ steps.aab_meta.outputs.aab_filename }}
       run_id: ${{ github.run_id }}
@@ -128,18 +124,14 @@ jobs:
           rm -f client/android/app/release.keystore
           rm -f client/android/local.properties
 
-      - name: 📝 Rename APK with timestamp
+      - name: 📝 Rename APK for publication
         id: rename_apk
         run: |
           apk_path="client/android/app/build/outputs/apk/signet/release/app-signet-release.apk"
-          timestamp=$(date +'%Y-%m-%d-%H-%M')
-          new_apk_name="noah-android-apk-${timestamp}"
-          apk_filename="${new_apk_name}.apk"
-          new_apk_path="client/android/app/build/outputs/apk/signet/release/${apk_filename}"
+          new_apk_path="client/android/app/build/outputs/apk/signet/release/noah.apk"
           mv "${apk_path}" "${new_apk_path}"
           echo "new_path=${new_apk_path}" >> $GITHUB_OUTPUT
-          echo "artifact_name=${new_apk_name}" >> $GITHUB_OUTPUT
-          echo "apk_filename=${apk_filename}" >> $GITHUB_OUTPUT
+          echo "apk_filename=noah.apk" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: 📝 Prepare AAB outputs
