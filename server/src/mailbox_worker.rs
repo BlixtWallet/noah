@@ -12,7 +12,12 @@ use server_rpc::{
     mailbox::MailboxServiceClient,
     protos::mailbox_server::{MailboxMessage, MailboxRequest, mailbox_message::Message},
 };
-use tokio::{sync::Semaphore, task::JoinSet, time::sleep};
+use tokio::{
+    sync::Semaphore,
+    task::JoinSet,
+    time::{Instant, interval_at, sleep},
+};
+use uuid::Uuid;
 
 use crate::{
     AppState,
@@ -28,6 +33,8 @@ pub struct MailboxWorkerConfig {
     pub batch_size: i64,
     pub base_retry_delay: Duration,
     pub max_retry_delay: Duration,
+    pub claim_ttl: Duration,
+    pub claim_renew_interval: Duration,
 }
 
 impl Default for MailboxWorkerConfig {
@@ -38,8 +45,17 @@ impl Default for MailboxWorkerConfig {
             batch_size: 100,
             base_retry_delay: Duration::from_secs(5),
             max_retry_delay: Duration::from_secs(300),
+            claim_ttl: Duration::from_secs(30),
+            claim_renew_interval: Duration::from_secs(5),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct MailboxSessionContext {
+    pub worker_id: String,
+    pub claim_ttl: Duration,
+    pub claim_renew_interval: Duration,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -56,6 +72,7 @@ pub trait MailboxTransport: Send + Sync {
         &self,
         app_state: AppState,
         mailbox: ActiveMailboxAuthorization,
+        session: MailboxSessionContext,
     ) -> Result<MailboxSessionOutcome>;
 }
 
@@ -64,6 +81,7 @@ pub struct MailboxWorker<T> {
     transport: Arc<T>,
     config: MailboxWorkerConfig,
     semaphore: Arc<Semaphore>,
+    worker_id: String,
 }
 
 impl<T> MailboxWorker<T>
@@ -77,6 +95,7 @@ where
             transport,
             config,
             semaphore,
+            worker_id: Uuid::new_v4().to_string(),
         }
     }
 
@@ -138,7 +157,11 @@ where
 
         let repo = MailboxAuthorizationRepository::new(&self.app_state.db_pool);
         let fetch_limit = cmp::max(self.config.batch_size, available_slots as i64);
-        let runnable = repo.list_runnable(Utc::now(), fetch_limit).await?;
+        let now = Utc::now();
+        let lease_expires_at = now + chrono::TimeDelta::from_std(self.config.claim_ttl)?;
+        let runnable = repo
+            .claim_runnable(now, &self.worker_id, lease_expires_at, fetch_limit)
+            .await?;
 
         let mut scheduled = 0usize;
 
@@ -155,11 +178,13 @@ where
             let app_state = self.app_state.clone();
             let transport = self.transport.clone();
             let config = self.config.clone();
+            let worker_id = self.worker_id.clone();
 
             active_pubkeys.insert(pubkey.clone());
             join_set.spawn(async move {
                 let _permit = permit;
-                let result = process_mailbox_session(app_state, transport, config, mailbox).await;
+                let result =
+                    process_mailbox_session(app_state, transport, config, worker_id, mailbox).await;
                 (pubkey, result)
             });
             scheduled += 1;
@@ -183,16 +208,28 @@ async fn process_mailbox_session<T>(
     app_state: AppState,
     transport: Arc<T>,
     config: MailboxWorkerConfig,
+    worker_id: String,
     mailbox: ActiveMailboxAuthorization,
 ) -> Result<()>
 where
     T: MailboxTransport + 'static,
 {
     let repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
-    repo.mark_connected(&mailbox.pubkey).await?;
+    let is_connected = repo
+        .mark_connected(&mailbox.pubkey, mailbox.auth_version, &worker_id)
+        .await?;
+    if !is_connected {
+        return Ok(());
+    }
+
+    let session = MailboxSessionContext {
+        worker_id: worker_id.clone(),
+        claim_ttl: config.claim_ttl,
+        claim_renew_interval: config.claim_renew_interval,
+    };
 
     let outcome = match transport
-        .run_session(app_state.clone(), mailbox.clone())
+        .run_session(app_state.clone(), mailbox.clone(), session)
         .await
     {
         Ok(outcome) => outcome,
@@ -203,20 +240,32 @@ where
 
     match outcome {
         MailboxSessionOutcome::Completed => {
-            repo.clear_error(&mailbox.pubkey).await?;
+            repo.clear_error(&mailbox.pubkey, mailbox.auth_version, &worker_id)
+                .await?;
         }
         MailboxSessionOutcome::Retryable { reason } => {
             let retry_at =
                 Utc::now() + compute_retry_delay(&repo, &mailbox.pubkey, &config).await?;
-            repo.mark_retry(&mailbox.pubkey, retry_at, &reason).await?;
+            repo.mark_retry(
+                &mailbox.pubkey,
+                retry_at,
+                &reason,
+                mailbox.auth_version,
+                &worker_id,
+            )
+            .await?;
         }
         MailboxSessionOutcome::InvalidAuth { reason } => {
-            repo.mark_invalid(&mailbox.pubkey, &reason).await?;
+            repo.mark_invalid(&mailbox.pubkey, &reason, mailbox.auth_version, &worker_id)
+                .await?;
         }
         MailboxSessionOutcome::Expired { reason } => {
-            repo.mark_expired(&mailbox.pubkey, &reason).await?;
+            repo.mark_expired(&mailbox.pubkey, &reason, mailbox.auth_version, &worker_id)
+                .await?;
         }
     }
+
+    repo.release_claim(&mailbox.pubkey, &worker_id).await?;
 
     Ok(())
 }
@@ -244,6 +293,7 @@ impl MailboxTransport for MailboxTransportUnavailable {
         &self,
         _app_state: AppState,
         _mailbox: ActiveMailboxAuthorization,
+        _session: MailboxSessionContext,
     ) -> Result<MailboxSessionOutcome> {
         Ok(MailboxSessionOutcome::Retryable {
             reason: "mailbox transport not implemented".to_string(),
@@ -259,6 +309,7 @@ impl MailboxTransport for Beta8MailboxTransport {
         &self,
         app_state: AppState,
         mailbox: ActiveMailboxAuthorization,
+        session: MailboxSessionContext,
     ) -> Result<MailboxSessionOutcome> {
         let now = Utc::now().timestamp();
         if mailbox.authorization_expires_at <= now {
@@ -280,8 +331,16 @@ impl MailboxTransport for Beta8MailboxTransport {
             MailboxServiceClient::connect(app_state.config.ark_server_url.clone()).await?;
 
         let mut checkpoint = mailbox.last_checkpoint as u64;
+        let mut claim_renewal = interval_at(
+            Instant::now() + session.claim_renew_interval,
+            session.claim_renew_interval,
+        );
 
         loop {
+            if !renew_mailbox_claim(&app_state, &mailbox, &session).await? {
+                return Ok(MailboxSessionOutcome::Completed);
+            }
+
             let read_response = client
                 .read_mailbox(MailboxRequest {
                     unblinded_id: unblinded_id.clone(),
@@ -301,11 +360,10 @@ impl MailboxTransport for Beta8MailboxTransport {
             }
 
             for message in messages {
-                process_mailbox_message(&app_state, &mailbox.pubkey, &message).await?;
+                if !process_mailbox_message(&app_state, &mailbox, &session, &message).await? {
+                    return Ok(MailboxSessionOutcome::Completed);
+                }
                 checkpoint = message.checkpoint;
-                MailboxAuthorizationRepository::new(&app_state.db_pool)
-                    .update_checkpoint(&mailbox.pubkey, checkpoint as i64)
-                    .await?;
             }
         }
 
@@ -322,22 +380,31 @@ impl MailboxTransport for Beta8MailboxTransport {
             Err(status) => return Ok(map_tonic_status(status)),
         };
 
-        while let Some(next) = stream.next().await {
-            let message = match next {
-                Ok(message) => message,
-                Err(status) => return Ok(map_tonic_status(status)),
-            };
+        loop {
+            tokio::select! {
+                _ = claim_renewal.tick() => {
+                    if !renew_mailbox_claim(&app_state, &mailbox, &session).await? {
+                        return Ok(MailboxSessionOutcome::Completed);
+                    }
+                }
+                next = stream.next() => {
+                    let Some(next) = next else {
+                        return Ok(MailboxSessionOutcome::Retryable {
+                            reason: "mailbox stream ended".to_string(),
+                        });
+                    };
 
-            process_mailbox_message(&app_state, &mailbox.pubkey, &message).await?;
-            checkpoint = message.checkpoint;
-            MailboxAuthorizationRepository::new(&app_state.db_pool)
-                .update_checkpoint(&mailbox.pubkey, checkpoint as i64)
-                .await?;
+                    let message = match next {
+                        Ok(message) => message,
+                        Err(status) => return Ok(map_tonic_status(status)),
+                    };
+
+                    if !process_mailbox_message(&app_state, &mailbox, &session, &message).await? {
+                        return Ok(MailboxSessionOutcome::Completed);
+                    }
+                }
+            }
         }
-
-        Ok(MailboxSessionOutcome::Retryable {
-            reason: "mailbox stream ended".to_string(),
-        })
     }
 }
 
@@ -350,6 +417,18 @@ fn map_tonic_status(status: Status) -> MailboxSessionOutcome {
         Code::Unauthenticated | Code::PermissionDenied => MailboxSessionOutcome::InvalidAuth {
             reason: status.message().to_string(),
         },
+        Code::InvalidArgument => {
+            let message = status.message().to_ascii_lowercase();
+            if message.contains("expire") {
+                MailboxSessionOutcome::Expired {
+                    reason: status.message().to_string(),
+                }
+            } else {
+                MailboxSessionOutcome::InvalidAuth {
+                    reason: status.message().to_string(),
+                }
+            }
+        }
         Code::FailedPrecondition => MailboxSessionOutcome::Expired {
             reason: status.message().to_string(),
         },
@@ -361,9 +440,17 @@ fn map_tonic_status(status: Status) -> MailboxSessionOutcome {
 
 async fn process_mailbox_message(
     app_state: &AppState,
-    pubkey: &str,
+    mailbox: &ActiveMailboxAuthorization,
+    session: &MailboxSessionContext,
     message: &MailboxMessage,
-) -> Result<(), ApiError> {
+) -> Result<bool, ApiError> {
+    if !renew_mailbox_claim(app_state, mailbox, session)
+        .await
+        .map_err(ApiError::from)?
+    {
+        return Ok(false);
+    }
+
     match &message.message {
         Some(Message::Arkoor(arkoor)) if !arkoor.vtxos.is_empty() => {
             let data = PushNotificationData {
@@ -374,12 +461,39 @@ async fn process_mailbox_message(
                 content_available: false,
             };
 
-            send_push_notification(app_state.clone(), data, Some(pubkey.to_string())).await?;
+            send_push_notification(app_state.clone(), data, Some(mailbox.pubkey.to_string()))
+                .await?;
         }
         _ => {}
     }
 
-    Ok(())
+    let repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    repo.update_checkpoint(
+        &mailbox.pubkey,
+        message.checkpoint as i64,
+        mailbox.auth_version,
+        &session.worker_id,
+    )
+    .await
+    .map_err(ApiError::from)
+}
+
+async fn renew_mailbox_claim(
+    app_state: &AppState,
+    mailbox: &ActiveMailboxAuthorization,
+    session: &MailboxSessionContext,
+) -> Result<bool> {
+    let now = Utc::now();
+    let lease_expires_at = now + chrono::TimeDelta::from_std(session.claim_ttl)?;
+    let repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    repo.renew_claim(
+        &mailbox.pubkey,
+        mailbox.auth_version,
+        &session.worker_id,
+        now,
+        lease_expires_at,
+    )
+    .await
 }
 
 #[cfg(test)]
@@ -411,5 +525,27 @@ mod tests {
         assert_eq!(delay_for(1), chrono::TimeDelta::seconds(10));
         assert_eq!(delay_for(2), chrono::TimeDelta::seconds(20));
         assert_eq!(delay_for(10), chrono::TimeDelta::seconds(300));
+    }
+
+    #[test]
+    fn invalid_argument_with_expired_message_maps_to_expired() {
+        let status = Status::new(Code::InvalidArgument, "authorization expired");
+        assert_eq!(
+            map_tonic_status(status),
+            MailboxSessionOutcome::Expired {
+                reason: "authorization expired".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_argument_without_expired_message_maps_to_invalid_auth() {
+        let status = Status::new(Code::InvalidArgument, "mailbox authorization mismatch");
+        assert_eq!(
+            map_tonic_status(status),
+            MailboxSessionOutcome::InvalidAuth {
+                reason: "mailbox authorization mismatch".to_string(),
+            }
+        );
     }
 }

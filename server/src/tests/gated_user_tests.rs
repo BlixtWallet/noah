@@ -153,7 +153,7 @@ async fn test_deregister_user() {
     mailbox_repo
         .upsert(
             &user.pubkey().to_string(),
-            "mailbox-123",
+            "deadbeef",
             "deadbeef",
             1_900_000_000_i64,
         )

@@ -92,6 +92,12 @@ pub async fn authorize_mailbox(
         ));
     }
 
+    if hex::decode(&payload.mailbox_id).is_err() {
+        return Err(ApiError::InvalidArgument(
+            "Mailbox ID must be valid hex".to_string(),
+        ));
+    }
+
     if hex::decode(&payload.encoded).is_err() {
         return Err(ApiError::InvalidArgument(
             "Mailbox authorization must be valid hex".to_string(),

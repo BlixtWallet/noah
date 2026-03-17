@@ -8,6 +8,7 @@ pub struct ActiveMailboxAuthorization {
     pub mailbox_id: String,
     pub authorization_hex: String,
     pub authorization_expires_at: i64,
+    pub auth_version: i64,
     pub last_checkpoint: i64,
 }
 
@@ -41,20 +42,26 @@ impl<'a> MailboxAuthorizationRepository<'a> {
                 authorization_hex,
                 authorization_expires_at,
                 enabled,
+                auth_version,
                 status,
                 failure_count,
                 last_error,
+                lease_owner,
+                lease_expires_at,
                 next_retry_at
             )
-            VALUES ($1, $2, $3, $4, TRUE, 'active', 0, NULL, NULL)
+            VALUES ($1, $2, $3, $4, TRUE, 1, 'active', 0, NULL, NULL, NULL, NULL)
             ON CONFLICT (pubkey) DO UPDATE SET
                 mailbox_id = excluded.mailbox_id,
                 authorization_hex = excluded.authorization_hex,
                 authorization_expires_at = excluded.authorization_expires_at,
                 enabled = TRUE,
+                auth_version = mailbox_authorizations.auth_version + 1,
                 status = 'active',
                 failure_count = 0,
                 last_error = NULL,
+                lease_owner = NULL,
+                lease_expires_at = NULL,
                 next_retry_at = NULL,
                 updated_at = now()",
         )
@@ -75,6 +82,7 @@ impl<'a> MailboxAuthorizationRepository<'a> {
                 mailbox_id,
                 authorization_hex,
                 authorization_expires_at,
+                auth_version,
                 last_checkpoint
              FROM mailbox_authorizations
              WHERE pubkey = $1
@@ -96,6 +104,7 @@ impl<'a> MailboxAuthorizationRepository<'a> {
                 mailbox_id,
                 authorization_hex,
                 authorization_expires_at,
+                auth_version,
                 last_checkpoint
              FROM mailbox_authorizations
              WHERE enabled = TRUE
@@ -108,31 +117,47 @@ impl<'a> MailboxAuthorizationRepository<'a> {
         Ok(records)
     }
 
-    pub async fn list_runnable(
+    pub async fn claim_runnable(
         &self,
         now: DateTime<Utc>,
+        worker_id: &str,
+        lease_expires_at: DateTime<Utc>,
         limit: i64,
     ) -> Result<Vec<ActiveMailboxAuthorization>> {
         let records = sqlx::query_as::<_, ActiveMailboxAuthorization>(
-            "SELECT
-                pubkey,
-                mailbox_id,
-                authorization_hex,
-                authorization_expires_at,
-                last_checkpoint
-             FROM mailbox_authorizations
-             WHERE enabled = TRUE
-               AND status = 'active'
-               AND authorization_hex IS NOT NULL
-               AND authorization_expires_at IS NOT NULL
-               AND authorization_expires_at > $1
-               AND (next_retry_at IS NULL OR next_retry_at <= $2)
-             ORDER BY COALESCE(last_connected_at, to_timestamp(0)) ASC, updated_at ASC
-             LIMIT $3",
+            "WITH candidates AS (
+                SELECT pubkey
+                FROM mailbox_authorizations
+                WHERE enabled = TRUE
+                  AND status = 'active'
+                  AND authorization_hex IS NOT NULL
+                  AND authorization_expires_at IS NOT NULL
+                  AND authorization_expires_at > $1
+                  AND (next_retry_at IS NULL OR next_retry_at <= $2)
+                  AND (lease_expires_at IS NULL OR lease_expires_at <= $2 OR lease_owner = $3)
+                ORDER BY COALESCE(last_connected_at, to_timestamp(0)) ASC, updated_at ASC
+                LIMIT $4
+                FOR UPDATE SKIP LOCKED
+             )
+             UPDATE mailbox_authorizations AS mailbox
+             SET lease_owner = $3,
+                 lease_expires_at = $5,
+                 updated_at = now()
+             FROM candidates
+             WHERE mailbox.pubkey = candidates.pubkey
+             RETURNING
+                mailbox.pubkey,
+                mailbox.mailbox_id,
+                mailbox.authorization_hex,
+                mailbox.authorization_expires_at,
+                mailbox.auth_version,
+                mailbox.last_checkpoint",
         )
         .bind(now.timestamp())
         .bind(now)
+        .bind(worker_id)
         .bind(limit)
+        .bind(lease_expires_at)
         .fetch_all(self.pool)
         .await?;
 
@@ -159,33 +184,52 @@ impl<'a> MailboxAuthorizationRepository<'a> {
         Ok(record)
     }
 
-    pub async fn update_checkpoint(&self, pubkey: &str, checkpoint: i64) -> Result<()> {
-        sqlx::query(
+    pub async fn update_checkpoint(
+        &self,
+        pubkey: &str,
+        checkpoint: i64,
+        auth_version: i64,
+        worker_id: &str,
+    ) -> Result<bool> {
+        let result = sqlx::query(
             "UPDATE mailbox_authorizations
              SET last_checkpoint = $2, updated_at = now()
-             WHERE pubkey = $1",
+             WHERE pubkey = $1
+               AND auth_version = $3
+               AND lease_owner = $4",
         )
         .bind(pubkey)
         .bind(checkpoint)
+        .bind(auth_version)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
-        Ok(())
+        Ok(result.rows_affected() > 0)
     }
 
-    pub async fn mark_connected(&self, pubkey: &str) -> Result<()> {
-        sqlx::query(
+    pub async fn mark_connected(
+        &self,
+        pubkey: &str,
+        auth_version: i64,
+        worker_id: &str,
+    ) -> Result<bool> {
+        let result = sqlx::query(
             "UPDATE mailbox_authorizations
              SET last_connected_at = now(),
                  status = 'active',
                  updated_at = now()
-             WHERE pubkey = $1",
+             WHERE pubkey = $1
+               AND auth_version = $2
+               AND lease_owner = $3",
         )
         .bind(pubkey)
+        .bind(auth_version)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
-        Ok(())
+        Ok(result.rows_affected() > 0)
     }
 
     pub async fn current_failure_count(&self, pubkey: &str) -> Result<i32> {
@@ -201,17 +245,28 @@ impl<'a> MailboxAuthorizationRepository<'a> {
         Ok(count)
     }
 
-    pub async fn clear_error(&self, pubkey: &str) -> Result<()> {
+    pub async fn clear_error(
+        &self,
+        pubkey: &str,
+        auth_version: i64,
+        worker_id: &str,
+    ) -> Result<()> {
         sqlx::query(
             "UPDATE mailbox_authorizations
              SET failure_count = 0,
                  last_error = NULL,
+                 lease_owner = NULL,
+                 lease_expires_at = NULL,
                  next_retry_at = NULL,
                  status = 'active',
                  updated_at = now()
-             WHERE pubkey = $1",
+             WHERE pubkey = $1
+               AND auth_version = $2
+               AND lease_owner = $3",
         )
         .bind(pubkey)
+        .bind(auth_version)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
@@ -223,57 +278,121 @@ impl<'a> MailboxAuthorizationRepository<'a> {
         pubkey: &str,
         next_retry_at: DateTime<Utc>,
         last_error: &str,
+        auth_version: i64,
+        worker_id: &str,
     ) -> Result<()> {
         sqlx::query(
             "UPDATE mailbox_authorizations
              SET failure_count = failure_count + 1,
                  last_error = $2,
+                 lease_owner = NULL,
+                 lease_expires_at = NULL,
                  next_retry_at = $3,
                  status = 'active',
                  updated_at = now()
-             WHERE pubkey = $1",
+             WHERE pubkey = $1
+               AND auth_version = $4
+               AND lease_owner = $5",
         )
         .bind(pubkey)
         .bind(last_error)
         .bind(next_retry_at)
+        .bind(auth_version)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
         Ok(())
     }
 
-    pub async fn mark_invalid(&self, pubkey: &str, last_error: &str) -> Result<()> {
+    pub async fn mark_invalid(
+        &self,
+        pubkey: &str,
+        last_error: &str,
+        auth_version: i64,
+        worker_id: &str,
+    ) -> Result<()> {
         sqlx::query(
             "UPDATE mailbox_authorizations
              SET status = 'invalid',
                  last_error = $2,
+                 lease_owner = NULL,
+                 lease_expires_at = NULL,
                  next_retry_at = NULL,
                  updated_at = now()
-             WHERE pubkey = $1",
+             WHERE pubkey = $1
+               AND auth_version = $3
+               AND lease_owner = $4",
         )
         .bind(pubkey)
         .bind(last_error)
+        .bind(auth_version)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
         Ok(())
     }
 
-    pub async fn mark_expired(&self, pubkey: &str, last_error: &str) -> Result<()> {
+    pub async fn mark_expired(
+        &self,
+        pubkey: &str,
+        last_error: &str,
+        auth_version: i64,
+        worker_id: &str,
+    ) -> Result<()> {
         sqlx::query(
             "UPDATE mailbox_authorizations
              SET status = 'expired',
                  last_error = $2,
+                 lease_owner = NULL,
+                 lease_expires_at = NULL,
                  next_retry_at = NULL,
                  updated_at = now()
-             WHERE pubkey = $1",
+             WHERE pubkey = $1
+               AND auth_version = $3
+               AND lease_owner = $4",
         )
         .bind(pubkey)
         .bind(last_error)
+        .bind(auth_version)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
         Ok(())
+    }
+
+    pub async fn renew_claim(
+        &self,
+        pubkey: &str,
+        auth_version: i64,
+        worker_id: &str,
+        now: DateTime<Utc>,
+        lease_expires_at: DateTime<Utc>,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "UPDATE mailbox_authorizations
+             SET lease_expires_at = $5,
+                 updated_at = now()
+             WHERE pubkey = $1
+               AND auth_version = $2
+               AND lease_owner = $3
+               AND enabled = TRUE
+               AND status = 'active'
+               AND authorization_hex IS NOT NULL
+               AND authorization_expires_at IS NOT NULL
+               AND authorization_expires_at > $4",
+        )
+        .bind(pubkey)
+        .bind(auth_version)
+        .bind(worker_id)
+        .bind(now.timestamp())
+        .bind(lease_expires_at)
+        .execute(self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     pub async fn revoke(&self, pubkey: &str) -> Result<()> {
@@ -282,13 +401,33 @@ impl<'a> MailboxAuthorizationRepository<'a> {
              SET enabled = FALSE,
                  authorization_hex = NULL,
                  authorization_expires_at = NULL,
+                 auth_version = auth_version + 1,
                  status = 'revoked',
                  last_error = NULL,
+                 lease_owner = NULL,
+                 lease_expires_at = NULL,
                  next_retry_at = NULL,
                  updated_at = now()
              WHERE pubkey = $1",
         )
         .bind(pubkey)
+        .execute(self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn release_claim(&self, pubkey: &str, worker_id: &str) -> Result<()> {
+        sqlx::query(
+            "UPDATE mailbox_authorizations
+             SET lease_owner = NULL,
+                 lease_expires_at = NULL,
+                 updated_at = now()
+             WHERE pubkey = $1
+               AND lease_owner = $2",
+        )
+        .bind(pubkey)
+        .bind(worker_id)
         .execute(self.pool)
         .await?;
 
