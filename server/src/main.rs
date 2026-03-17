@@ -26,6 +26,7 @@ use crate::{
     config::Config,
     cron::cron_scheduler,
     email_client::EmailClient,
+    mailbox_worker::{Beta8MailboxTransport, MailboxWorker, MailboxWorkerConfig},
     routes::{
         app_middleware,
         gated_api_v0::{
@@ -46,6 +47,7 @@ mod cron;
 pub mod db;
 mod email_client;
 mod errors;
+mod mailbox_worker;
 mod notification_coordinator;
 mod push;
 mod rate_limit;
@@ -200,6 +202,27 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
             tracing::error!("Failed to connect to ark server: {}", e);
         }
     });
+
+    let run_mailbox_worker = std::env::var("RUN_MAILBOX_WORKER")
+        .map(|value| !matches!(value.as_str(), "0" | "false" | "FALSE" | "False"))
+        .unwrap_or(true);
+
+    if run_mailbox_worker {
+        let mailbox_worker_app_state = app_state.clone();
+        tokio::spawn(async move {
+            let worker = MailboxWorker::new(
+                mailbox_worker_app_state,
+                Arc::new(Beta8MailboxTransport),
+                MailboxWorkerConfig::default(),
+            );
+
+            if let Err(e) = worker.run().await {
+                tracing::error!("Mailbox worker exited: {}", e);
+            }
+        });
+    } else {
+        tracing::info!("Mailbox worker disabled via RUN_MAILBOX_WORKER");
+    }
 
     // Middleware that checks the signature and authenticates the user
     let auth_layer =
