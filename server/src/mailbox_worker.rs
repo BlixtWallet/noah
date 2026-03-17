@@ -338,6 +338,8 @@ impl MailboxTransport for Beta8MailboxTransport {
             MailboxServiceClient::connect(app_state.config.ark_server_url.clone()).await?;
 
         let mut checkpoint = mailbox.last_checkpoint as u64;
+        let suppress_catchup_notifications =
+            should_suppress_catchup_notifications(mailbox.last_checkpoint);
         let mut claim_renewal = interval_at(
             Instant::now() + session.claim_renew_interval,
             session.claim_renew_interval,
@@ -367,7 +369,15 @@ impl MailboxTransport for Beta8MailboxTransport {
             }
 
             for message in messages {
-                if !process_mailbox_message(&app_state, &mailbox, &session, &message).await? {
+                if !process_mailbox_message(
+                    &app_state,
+                    &mailbox,
+                    &session,
+                    &message,
+                    !suppress_catchup_notifications,
+                )
+                .await?
+                {
                     return Ok(MailboxSessionOutcome::Completed);
                 }
                 checkpoint = message.checkpoint;
@@ -406,7 +416,7 @@ impl MailboxTransport for Beta8MailboxTransport {
                         Err(status) => return Ok(map_tonic_status(status)),
                     };
 
-                    if !process_mailbox_message(&app_state, &mailbox, &session, &message).await? {
+                    if !process_mailbox_message(&app_state, &mailbox, &session, &message, true).await? {
                         return Ok(MailboxSessionOutcome::Completed);
                     }
                 }
@@ -450,6 +460,7 @@ async fn process_mailbox_message(
     mailbox: &ActiveMailboxAuthorization,
     session: &MailboxSessionContext,
     message: &MailboxMessage,
+    send_notifications: bool,
 ) -> Result<bool, ApiError> {
     if !renew_mailbox_claim(app_state, mailbox, session)
         .await
@@ -459,7 +470,7 @@ async fn process_mailbox_message(
     }
 
     match &message.message {
-        Some(Message::Arkoor(arkoor)) if !arkoor.vtxos.is_empty() => {
+        Some(Message::Arkoor(arkoor)) if send_notifications && !arkoor.vtxos.is_empty() => {
             for raw_vtxo in &arkoor.vtxos {
                 let Some(notification) = build_receive_notification(raw_vtxo)? else {
                     continue;
@@ -487,6 +498,10 @@ async fn process_mailbox_message(
     .map_err(ApiError::from)
 }
 
+fn should_suppress_catchup_notifications(last_checkpoint: i64) -> bool {
+    last_checkpoint == 0
+}
+
 fn build_receive_notification(raw_vtxo: &[u8]) -> Result<Option<PushNotificationData>, ApiError> {
     let mut cursor = std::io::Cursor::new(raw_vtxo);
     let vtxo = Vtxo::<VtxoPolicy>::decode(&mut cursor)
@@ -495,7 +510,7 @@ fn build_receive_notification(raw_vtxo: &[u8]) -> Result<Option<PushNotification
     let amount_sats = vtxo.amount().to_sat();
 
     let body = match vtxo.policy_type() {
-        VtxoPolicyKind::Pubkey => Some(format!("You received {} sats in Ark.", amount_sats)),
+        VtxoPolicyKind::Pubkey => Some(format!("You received {} sats via Ark.", amount_sats)),
         VtxoPolicyKind::ServerHtlcRecv => {
             Some(format!("You received {} sats via Lightning.", amount_sats))
         }
@@ -504,7 +519,7 @@ fn build_receive_notification(raw_vtxo: &[u8]) -> Result<Option<PushNotification
     };
 
     Ok(body.map(|body| PushNotificationData {
-        title: Some("Ark payment received".to_string()),
+        title: Some("Payment received".to_string()),
         body: Some(body),
         data: "{}".to_string(),
         priority: Priority::High,
@@ -534,6 +549,7 @@ async fn renew_mailbox_claim(
 mod tests {
     use super::*;
     use anyhow::anyhow;
+    use ark::test_util::VTXO_VECTORS;
 
     #[test]
     fn retry_delay_grows_and_caps() {
@@ -582,6 +598,53 @@ mod tests {
                 reason: "mailbox authorization mismatch".to_string(),
             }
         );
+    }
+
+    #[test]
+    fn suppresses_notifications_during_initial_sync_only() {
+        assert!(should_suppress_catchup_notifications(0));
+        assert!(!should_suppress_catchup_notifications(1));
+        assert!(!should_suppress_catchup_notifications(42));
+    }
+
+    #[test]
+    fn build_receive_notification_for_pubkey_vtxo() {
+        let raw = VTXO_VECTORS.arkoor2_vtxo.serialize();
+
+        let notification = build_receive_notification(&raw)
+            .expect("pubkey vtxo should decode")
+            .expect("pubkey vtxo should notify");
+
+        assert_eq!(notification.title.as_deref(), Some("Ark payment received"));
+        assert_eq!(
+            notification.body.as_deref(),
+            Some("You received 8000 sats.")
+        );
+    }
+
+    #[test]
+    fn build_receive_notification_for_lightning_receive_vtxo() {
+        let raw = VTXO_VECTORS.round2_vtxo.serialize();
+
+        let notification = build_receive_notification(&raw)
+            .expect("lightning receive vtxo should decode")
+            .expect("lightning receive vtxo should notify");
+
+        assert_eq!(notification.title.as_deref(), Some("Ark payment received"));
+        assert_eq!(
+            notification.body.as_deref(),
+            Some("You received 10000 sats via Lightning.")
+        );
+    }
+
+    #[test]
+    fn build_receive_notification_skips_lightning_send_vtxo() {
+        let raw = VTXO_VECTORS.arkoor_htlc_out_vtxo.serialize();
+
+        let notification =
+            build_receive_notification(&raw).expect("lightning send vtxo should decode");
+
+        assert!(notification.is_none(), "lightning send should not notify");
     }
 
     #[tokio::test]
