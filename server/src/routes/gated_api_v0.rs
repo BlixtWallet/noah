@@ -1,15 +1,17 @@
 use crate::db::backup_repo::BackupRepository;
 use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::db::job_status_repo::JobStatusRepository;
+use crate::db::mailbox_authorization_repo::MailboxAuthorizationRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
 use crate::wide_event::WideEventHandle;
 // use crate::push::{PushNotificationData, send_push_notification};
 use crate::s3_client::S3BackupClient;
 use crate::types::{
-    BackupInfo, BackupSettingsPayload, CompleteUploadPayload, DefaultSuccessPayload,
-    DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload, HeartbeatResponsePayload,
-    ReportJobStatusPayload, ReportStatus, SubmitInvoicePayload, UserInfoResponse,
+    AuthorizeMailboxPayload, BackupInfo, BackupSettingsPayload, CompleteUploadPayload,
+    DefaultSuccessPayload, DeleteBackupPayload, DownloadUrlResponse, GetDownloadUrlPayload,
+    HeartbeatResponsePayload, ReportJobStatusPayload, ReportStatus, SubmitInvoicePayload,
+    UserInfoResponse,
 };
 use crate::{
     AppState,
@@ -20,7 +22,10 @@ use crate::{
     },
 };
 use axum::{Extension, Json, extract::State};
+use chrono::Utc;
 use validator::Validate;
+
+const MAX_MAILBOX_AUTH_TTL_SECS: i64 = 90 * 24 * 60 * 60;
 
 /// Registers a push notification token for a user.
 ///
@@ -59,6 +64,70 @@ pub async fn register_push_token(
     //         tracing::warn!("Failed to send welcome push notification: {}", e);
     //     }
     // });
+
+    Ok(Json(DefaultSuccessPayload { success: true }))
+}
+
+/// Stores or refreshes mailbox authorization for a user.
+pub async fn authorize_mailbox(
+    State(app_state): State<AppState>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
+    event: Option<Extension<WideEventHandle>>,
+    Json(payload): Json<AuthorizeMailboxPayload>,
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    payload
+        .validate()
+        .map_err(|e| ApiError::InvalidArgument(e.to_string()))?;
+
+    let now = Utc::now().timestamp();
+    if payload.expiry <= now {
+        return Err(ApiError::InvalidArgument(
+            "Mailbox authorization expiry must be a future Unix timestamp".to_string(),
+        ));
+    }
+
+    if payload.expiry > now + MAX_MAILBOX_AUTH_TTL_SECS {
+        return Err(ApiError::InvalidArgument(
+            "Mailbox authorization expiry exceeds maximum allowed TTL".to_string(),
+        ));
+    }
+
+    if hex::decode(&payload.encoded).is_err() {
+        return Err(ApiError::InvalidArgument(
+            "Mailbox authorization must be valid hex".to_string(),
+        ));
+    }
+
+    if let Some(Extension(event)) = event {
+        event.add_context("has_mailbox_authorization", true);
+        event.add_context("mailbox_authorization_expiry", payload.expiry);
+    }
+
+    let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    mailbox_repo
+        .upsert(
+            &auth_payload.key,
+            &payload.mailbox_id,
+            &payload.encoded,
+            payload.expiry,
+        )
+        .await?;
+
+    Ok(Json(DefaultSuccessPayload { success: true }))
+}
+
+/// Revokes mailbox authorization for a user.
+pub async fn revoke_mailbox_authorization(
+    State(app_state): State<AppState>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
+    event: Option<Extension<WideEventHandle>>,
+) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
+    if let Some(Extension(event)) = event {
+        event.add_context("mailbox_authorization_revoked", true);
+    }
+
+    let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    mailbox_repo.revoke(&auth_payload.key).await?;
 
     Ok(Json(DefaultSuccessPayload { success: true }))
 }
@@ -328,6 +397,7 @@ pub async fn deregister(
     let mut tx = state.db_pool.begin().await?;
 
     PushTokenRepository::delete_by_pubkey(&mut tx, &pubkey).await?;
+    MailboxAuthorizationRepository::delete_by_pubkey(&mut tx, &pubkey).await?;
     HeartbeatRepository::delete_by_pubkey_tx(&mut tx, &pubkey).await?;
 
     tx.commit().await?;

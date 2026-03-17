@@ -132,6 +132,21 @@ pub struct RegisterPushToken {
     pub push_token: String,
 }
 
+/// Defines the payload for granting mailbox authorization to the server.
+#[derive(Serialize, Deserialize, TS, Validate)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct AuthorizeMailboxPayload {
+    /// Ark mailbox identifier scoped to the loaded wallet.
+    #[validate(length(min = 1))]
+    pub mailbox_id: String,
+    /// Authorization expiry as a Unix timestamp in seconds.
+    #[ts(type = "number")]
+    pub expiry: i64,
+    /// Hex-encoded mailbox authorization.
+    #[validate(length(min = 1))]
+    pub encoded: String,
+}
+
 /// Represents the response for a user's information.
 #[derive(Serialize, Deserialize)]
 pub struct UserInfoResponse {

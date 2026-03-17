@@ -8,6 +8,7 @@ use tower::ServiceExt;
 use crate::db::backup_repo::BackupRepository;
 use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::db::job_status_repo::JobStatusRepository;
+use crate::db::mailbox_authorization_repo::MailboxAuthorizationRepository;
 use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
@@ -148,6 +149,17 @@ async fn test_deregister_user() {
         .await
         .unwrap();
 
+    let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    mailbox_repo
+        .upsert(
+            &user.pubkey().to_string(),
+            "mailbox-123",
+            "deadbeef",
+            1_900_000_000_i64,
+        )
+        .await
+        .unwrap();
+
     // 2. Call deregister endpoint
     let response = app
         .oneshot(
@@ -174,6 +186,15 @@ async fn test_deregister_user() {
         .await
         .unwrap();
     assert!(token.is_none(), "Push token should be deleted");
+
+    let mailbox_auth = mailbox_repo
+        .find_by_pubkey(&user.pubkey().to_string())
+        .await
+        .unwrap();
+    assert!(
+        mailbox_auth.is_none(),
+        "Mailbox authorization should be deleted"
+    );
 
     // 4. Verify data is NOT deleted from other tables
     let user_repo = UserRepository::new(&app_state.db_pool);
