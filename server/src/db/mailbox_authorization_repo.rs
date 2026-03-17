@@ -139,7 +139,7 @@ impl<'a> MailboxAuthorizationRepository<'a> {
                   AND authorization_expires_at IS NOT NULL
                   AND authorization_expires_at > $1
                   AND (next_retry_at IS NULL OR next_retry_at <= $2)
-                  AND (lease_expires_at IS NULL OR lease_expires_at <= $2 OR lease_owner = $3)
+                  AND (lease_expires_at IS NULL OR lease_expires_at <= $2)
                 ORDER BY COALESCE(last_connected_at, to_timestamp(0)) ASC, updated_at ASC
                 LIMIT $4
                 FOR UPDATE SKIP LOCKED

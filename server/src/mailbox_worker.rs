@@ -3,6 +3,7 @@
 use std::{cmp, collections::HashSet, sync::Arc, time::Duration};
 
 use anyhow::Result;
+use ark::{ProtocolEncoding, Vtxo, VtxoPolicy, vtxo::policy::VtxoPolicyKind};
 use async_trait::async_trait;
 use chrono::Utc;
 use expo_push_notification_client::Priority;
@@ -105,8 +106,7 @@ where
 
         loop {
             while let Some(result) = join_set.try_join_next() {
-                self.handle_session_result(result, &mut active_pubkeys)
-                    .await?;
+                Self::handle_session_result(result, &mut active_pubkeys).await?;
             }
 
             let scheduled = self
@@ -122,7 +122,7 @@ where
             tokio::select! {
                 result = join_set.join_next(), if !join_set.is_empty() => {
                     if let Some(result) = result {
-                        self.handle_session_result(result, &mut active_pubkeys).await?;
+                        Self::handle_session_result(result, &mut active_pubkeys).await?;
                     }
                 }
                 _ = sleep(self.config.scan_interval) => {}
@@ -138,8 +138,7 @@ where
             .await?;
 
         while let Some(result) = join_set.join_next().await {
-            self.handle_session_result(result, &mut active_pubkeys)
-                .await?;
+            Self::handle_session_result(result, &mut active_pubkeys).await?;
         }
 
         Ok(scheduled)
@@ -194,13 +193,21 @@ where
     }
 
     async fn handle_session_result(
-        &self,
         result: std::result::Result<(String, Result<()>), tokio::task::JoinError>,
         active_pubkeys: &mut HashSet<String>,
     ) -> Result<()> {
         let (pubkey, session_result) = result?;
         active_pubkeys.remove(&pubkey);
-        session_result
+        if let Err(error) = session_result {
+            tracing::error!(
+                service = "mailbox_worker",
+                pubkey = %pubkey,
+                error = %error,
+                "mailbox session failed"
+            );
+        }
+
+        Ok(())
     }
 }
 
@@ -453,16 +460,18 @@ async fn process_mailbox_message(
 
     match &message.message {
         Some(Message::Arkoor(arkoor)) if !arkoor.vtxos.is_empty() => {
-            let data = PushNotificationData {
-                title: Some("New Ark wallet activity".to_string()),
-                body: Some("Open Noah to review recent Ark activity.".to_string()),
-                data: "{}".to_string(),
-                priority: Priority::High,
-                content_available: false,
-            };
+            for raw_vtxo in &arkoor.vtxos {
+                let Some(notification) = build_receive_notification(raw_vtxo)? else {
+                    continue;
+                };
 
-            send_push_notification(app_state.clone(), data, Some(mailbox.pubkey.to_string()))
+                send_push_notification(
+                    app_state.clone(),
+                    notification,
+                    Some(mailbox.pubkey.to_string()),
+                )
                 .await?;
+            }
         }
         _ => {}
     }
@@ -476,6 +485,31 @@ async fn process_mailbox_message(
     )
     .await
     .map_err(ApiError::from)
+}
+
+fn build_receive_notification(raw_vtxo: &[u8]) -> Result<Option<PushNotificationData>, ApiError> {
+    let mut cursor = std::io::Cursor::new(raw_vtxo);
+    let vtxo = Vtxo::<VtxoPolicy>::decode(&mut cursor)
+        .map_err(|e| ApiError::Anyhow(anyhow::anyhow!("failed to decode mailbox vtxo: {}", e)))?;
+
+    let amount_sats = vtxo.amount().to_sat();
+
+    let body = match vtxo.policy_type() {
+        VtxoPolicyKind::Pubkey => Some(format!("You received {} sats in Ark.", amount_sats)),
+        VtxoPolicyKind::ServerHtlcRecv => {
+            Some(format!("You received {} sats via Lightning.", amount_sats))
+        }
+        VtxoPolicyKind::ServerHtlcSend => None,
+        _ => None,
+    };
+
+    Ok(body.map(|body| PushNotificationData {
+        title: Some("Ark payment received".to_string()),
+        body: Some(body),
+        data: "{}".to_string(),
+        priority: Priority::High,
+        content_available: false,
+    }))
 }
 
 async fn renew_mailbox_claim(
@@ -499,6 +533,7 @@ async fn renew_mailbox_claim(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use anyhow::anyhow;
 
     #[test]
     fn retry_delay_grows_and_caps() {
@@ -546,6 +581,25 @@ mod tests {
             MailboxSessionOutcome::InvalidAuth {
                 reason: "mailbox authorization mismatch".to_string(),
             }
+        );
+    }
+
+    #[tokio::test]
+    async fn handle_session_result_does_not_stop_worker_on_session_error() {
+        let pubkey = "test-pubkey".to_string();
+        let mut active_pubkeys = HashSet::from([pubkey.clone()]);
+        let result = Ok((pubkey.clone(), Err(anyhow!("session failed"))));
+
+        let handled = MailboxWorker::<MailboxTransportUnavailable>::handle_session_result(
+            result,
+            &mut active_pubkeys,
+        )
+        .await;
+
+        assert!(handled.is_ok(), "session errors should not stop the worker");
+        assert!(
+            !active_pubkeys.contains(&pubkey),
+            "failed sessions should still be removed from the active set"
         );
     }
 }

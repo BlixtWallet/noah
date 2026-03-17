@@ -568,8 +568,13 @@ async fn test_revoke_mailbox_authorization() {
 #[tokio::test]
 async fn test_claim_runnable_mailboxes_is_exclusive_per_worker() {
     let (_app, app_state, _guard) = setup_test_app().await;
-    let user = TestUser::new();
-    create_test_user(&app_state, &user, None).await;
+    let user = TestUser::new_with_key(&[0x91; 32]);
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
+        .bind(user.pubkey().to_string())
+        .bind("claim-exclusive@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
 
     use crate::db::mailbox_authorization_repo::MailboxAuthorizationRepository;
     let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
@@ -597,6 +602,72 @@ async fn test_claim_runnable_mailboxes_is_exclusive_per_worker() {
     assert_eq!(first_claim.len(), 1);
     assert_eq!(first_claim[0].pubkey, user.pubkey().to_string());
     assert_eq!(second_claim.len(), 0);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_claim_runnable_skips_rows_already_leased_by_same_worker() {
+    let (_app, app_state, _guard) = setup_test_app().await;
+    let user1 = TestUser::new_with_key(&[0x92; 32]);
+    let user2 = TestUser::new_with_key(&[0x93; 32]);
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
+        .bind(user1.pubkey().to_string())
+        .bind("claim-same-worker-1@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO users (pubkey, lightning_address, ark_address) VALUES ($1, $2, NULL)")
+        .bind(user2.pubkey().to_string())
+        .bind("claim-same-worker-2@localhost")
+        .execute(&app_state.db_pool)
+        .await
+        .unwrap();
+
+    use crate::db::mailbox_authorization_repo::MailboxAuthorizationRepository;
+    let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+
+    mailbox_repo
+        .upsert(
+            &user1.pubkey().to_string(),
+            "deadbeef",
+            "cafebabe",
+            Utc::now().timestamp() + 60,
+        )
+        .await
+        .unwrap();
+    mailbox_repo
+        .upsert(
+            &user2.pubkey().to_string(),
+            "feedface",
+            "cafed00d",
+            Utc::now().timestamp() + 60,
+        )
+        .await
+        .unwrap();
+
+    let now = Utc::now();
+    let lease_until = now + chrono::TimeDelta::seconds(30);
+
+    sqlx::query(
+        "UPDATE mailbox_authorizations
+         SET lease_owner = $2,
+             lease_expires_at = $3
+         WHERE pubkey = $1",
+    )
+    .bind(user1.pubkey().to_string())
+    .bind("worker-a")
+    .bind(lease_until)
+    .execute(&app_state.db_pool)
+    .await
+    .unwrap();
+
+    let claimed = mailbox_repo
+        .claim_runnable(now, "worker-a", lease_until, 2)
+        .await
+        .unwrap();
+
+    assert_eq!(claimed.len(), 1);
+    assert_eq!(claimed[0].pubkey, user2.pubkey().to_string());
 }
 
 #[tracing_test::traced_test]
