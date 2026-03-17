@@ -97,7 +97,7 @@ const LightningAddressScreen = () => {
               <Input
                 value={username}
                 onChangeText={setUsername}
-                className="rounded-2xl border border-border bg-background/90 px-4 py-4 text-lg text-foreground"
+                className="h-16 rounded-2xl border border-border bg-background/90 px-4 text-lg leading-6 text-foreground"
                 placeholder="fiatjaf"
                 autoCapitalize="none"
                 autoCorrect={false}

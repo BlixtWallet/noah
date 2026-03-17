@@ -1,5 +1,5 @@
 PODS:
-  - EXApplication (55.0.8):
+  - EXApplication (55.0.9):
     - ExpoModulesCore
   - EXConstants (55.0.7):
     - ExpoModulesCore
@@ -31,15 +31,15 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-client (55.0.11):
+  - expo-dev-client (55.0.16):
     - EXManifests
     - expo-dev-launcher
     - expo-dev-menu
     - expo-dev-menu-interface
     - EXUpdatesInterface
-  - expo-dev-launcher (55.0.12):
+  - expo-dev-launcher (55.0.17):
     - EXManifests
-    - expo-dev-launcher/Main (= 55.0.12)
+    - expo-dev-launcher/Main (= 55.0.17)
     - expo-dev-menu
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -68,7 +68,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Main (55.0.12):
+  - expo-dev-launcher/Main (55.0.17):
     - EXManifests
     - expo-dev-launcher/Unsafe
     - expo-dev-menu
@@ -99,7 +99,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-launcher/Unsafe (55.0.12):
+  - expo-dev-launcher/Unsafe (55.0.17):
     - EXManifests
     - expo-dev-menu
     - expo-dev-menu-interface
@@ -129,8 +129,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - expo-dev-menu (55.0.11):
-    - expo-dev-menu/Main (= 55.0.11)
+  - expo-dev-menu (55.0.14):
+    - expo-dev-menu/Main (= 55.0.14)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -153,7 +153,7 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - expo-dev-menu-interface (55.0.1)
-  - expo-dev-menu/Main (55.0.11):
+  - expo-dev-menu/Main (55.0.14):
     - EXManifests
     - expo-dev-menu-interface
     - ExpoModulesCore
@@ -193,7 +193,7 @@ PODS:
     - ExpoModulesCore
   - ExpoHaptics (55.0.8):
     - ExpoModulesCore
-  - ExpoImagePicker (55.0.11):
+  - ExpoImagePicker (55.0.12):
     - ExpoModulesCore
   - ExpoKeepAwake (55.0.4):
     - ExpoModulesCore
@@ -231,7 +231,7 @@ PODS:
     - React-Core
     - React-runtimescheduler
     - ReactCommon
-  - ExpoNotifications (55.0.11):
+  - ExpoNotifications (55.0.12):
     - ExpoModulesCore
   - ExpoSQLite (55.0.10):
     - ExpoModulesCore
@@ -3104,14 +3104,14 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  EXApplication: 516af7c59786689fb652d45979494655fcf46534
+  EXApplication: 838dd0a6dc467b7a4267cdf5c997d9ee91a562a7
   EXConstants: a16ad8db13865e97aaecf64bb92e8ad8e8ce1ae8
   EXJSONUtils: 0080c14b673cfa9a6be5e3fe429768ffe3d42dfb
   EXManifests: 22ec6b0abf4e9b54ea22624aa955cf68d6c90590
   Expo: 2332b1dbde7e998db81028b9e342853745f59e0e
-  expo-dev-client: c245ef385b51b0b06a149573037567587790c49f
-  expo-dev-launcher: 59d920d04fb9a750eab9ee12687653311ae928de
-  expo-dev-menu: aef6a602672b4b94217a6048d7fca0477284cc36
+  expo-dev-client: b2e44ea014f85225c42cd5831cc71f0cf2596e0b
+  expo-dev-launcher: b9d91b173e8a2acdbbce5085963682fc3d6ca49c
+  expo-dev-menu: d1a363588c35dad9c27b257794a3f255800b8677
   expo-dev-menu-interface: bf6f816d29b45bec038080790963c635e8d588c2
   ExpoAsset: 4fc5f72f8a74135c522fa61df0bfb869e5b3c3e6
   ExpoClipboard: ea1c19f29543c3f84abcbc500c6f1a62d954fd5c
@@ -3120,13 +3120,13 @@ SPEC CHECKSUMS:
   ExpoFileSystem: 0d267067930a744555ff6ab842fd79d3eeb2c33b
   ExpoFont: 4d2a6dedce012c4793532cb38d561d3da95eaafd
   ExpoHaptics: 8bce973169ae09427d0a10886d222601ada8c128
-  ExpoImagePicker: aeef346668021fce61e3434956e901aaa508f882
+  ExpoImagePicker: 9005f90c3a2959b77655093488ab56650f69f93a
   ExpoKeepAwake: 55711a70fe88a41e793bbe28543c93cb47ff265d
   ExpoLocalAuthentication: ccc92a75fd11b83b1e321074a803ba7dd90bead1
   ExpoLogBox: 35febda08748ff213ea133f51acf976ba8c44b2c
   ExpoModulesCore: 9f7715884df4159d9a8862dc322c5d834aebe921
   ExpoModulesJSI: bd2650f43a2c0d3fb753f33b70fa0972602f51d5
-  ExpoNotifications: 7f0fa4af5e0eea1f9622ddf0276b8cf98e8e3973
+  ExpoNotifications: f38ce09b263075e560f3e5d99c31523d892ba7fe
   ExpoSQLite: c01882b3ce0d20ad2351213dbd081a6e0e1f8837
   ExpoSystemUI: c4c5b9ba9a5a4713c70f3d68c3bcf3221f2198f2
   ExpoTaskManager: 1a197d3c489d5ed7ae824f7d6b98404e3a662ff2
