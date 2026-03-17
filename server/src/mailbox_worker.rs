@@ -615,10 +615,10 @@ mod tests {
             .expect("pubkey vtxo should decode")
             .expect("pubkey vtxo should notify");
 
-        assert_eq!(notification.title.as_deref(), Some("Ark payment received"));
+        assert_eq!(notification.title.as_deref(), Some("Payment received"));
         assert_eq!(
             notification.body.as_deref(),
-            Some("You received 8000 sats.")
+            Some("You received 8000 sats via Ark.")
         );
     }
 
@@ -630,7 +630,7 @@ mod tests {
             .expect("lightning receive vtxo should decode")
             .expect("lightning receive vtxo should notify");
 
-        assert_eq!(notification.title.as_deref(), Some("Ark payment received"));
+        assert_eq!(notification.title.as_deref(), Some("Payment received"));
         assert_eq!(
             notification.body.as_deref(),
             Some("You received 10000 sats via Lightning.")
