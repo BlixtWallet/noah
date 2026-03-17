@@ -2,6 +2,7 @@ import {
   createMnemonic,
   loadWallet as loadWalletNitro,
   createWallet as createWalletNitro,
+  mailboxAuthorization as mailboxAuthorizationNitro,
   onchainBalance as onchainBalanceNitro,
   offchainBalance as offchainBalanceNitro,
   sync as syncNitro,
@@ -45,6 +46,12 @@ import { storeNativeMnemonic } from "noah-tools";
 import { useWalletStore } from "~/store/walletStore";
 
 const log = logger("walletApi");
+
+export interface MailboxAuthorizationResult {
+  mailbox_id: string;
+  expiry: number;
+  encoded: string;
+}
 
 const createWalletFromMnemonic = async (mnemonic: string): Promise<Result<void, Error>> => {
   const isLoadedResult = await ResultAsync.fromPromise(isWalletLoadedNitro(), (e) => e as Error);
@@ -309,6 +316,15 @@ export const getVtxos = async () => {
 export const getExpiringVtxos = async () => {
   return ResultAsync.fromPromise(
     getExpiringVtxosNitro(ACTIVE_WALLET_CONFIG.config?.vtxo_refresh_expiry_threshold || 288),
+    (e) => e as Error,
+  );
+};
+
+export const getMailboxAuthorization = async (
+  authorizationExpiry: number,
+): Promise<Result<MailboxAuthorizationResult, Error>> => {
+  return ResultAsync.fromPromise(
+    mailboxAuthorizationNitro(authorizationExpiry),
     (e) => e as Error,
   );
 };

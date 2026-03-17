@@ -14,6 +14,7 @@ import {
   ApiErrorResponse,
   AuthLoginPayload,
   AuthLoginResponse,
+  AuthorizeMailboxPayload,
   AppVersionCheckPayload,
   AppVersionInfo,
   BackupInfo,
@@ -108,7 +109,12 @@ const postJson = async <T>(
   headers: Record<string, string>,
 ): Promise<Result<T, Error>> => {
   const responseResult = await ResultAsync.fromPromise(
-    nativePost(`${API_URL}/v0${endpoint}`, JSON.stringify(payload), headers, REQUEST_TIMEOUT_SECONDS),
+    nativePost(
+      `${API_URL}/v0${endpoint}`,
+      JSON.stringify(payload),
+      headers,
+      REQUEST_TIMEOUT_SECONDS,
+    ),
     (e) => e as Error,
   );
 
@@ -290,11 +296,7 @@ async function post<T, U>(
     options?.accessToken === undefined &&
     responseResult.isErr() &&
     responseResult.error instanceof ApiError &&
-    [
-      "AUTH_REQUIRED",
-      "INVALID_TOKEN",
-      "TOKEN_EXPIRED",
-    ].includes(responseResult.error.code)
+    ["AUTH_REQUIRED", "INVALID_TOKEN", "TOKEN_EXPIRED"].includes(responseResult.error.code)
   ) {
     await clearStoredAccessToken();
     const refreshedTokenResult = await getAccessToken({ forceRefresh: true });
@@ -344,6 +346,12 @@ export const getLightningAddressSuggestions = (payload: LightningAddressSuggesti
 
 export const registerPushToken = (payload: RegisterPushToken) =>
   post<RegisterPushToken, DefaultSuccessPayload>("/register_push_token", payload);
+
+export const authorizeMailbox = (payload: AuthorizeMailboxPayload) =>
+  post<AuthorizeMailboxPayload, DefaultSuccessPayload>("/mailbox/authorize", payload);
+
+export const revokeMailboxAuthorization = () =>
+  post<object, DefaultSuccessPayload>("/mailbox/revoke", {});
 
 type ReportCompletionStatus = Extract<ReportJobStatusPayload["status"], "success" | "failure">;
 type ReportJobCompletionPayload = Omit<ReportJobStatusPayload, "status"> & {

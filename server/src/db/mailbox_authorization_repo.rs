@@ -55,6 +55,11 @@ impl<'a> MailboxAuthorizationRepository<'a> {
                 mailbox_id = excluded.mailbox_id,
                 authorization_hex = excluded.authorization_hex,
                 authorization_expires_at = excluded.authorization_expires_at,
+                last_checkpoint = CASE
+                    WHEN mailbox_authorizations.mailbox_id IS DISTINCT FROM excluded.mailbox_id
+                        THEN 0
+                    ELSE mailbox_authorizations.last_checkpoint
+                END,
                 enabled = TRUE,
                 auth_version = mailbox_authorizations.auth_version + 1,
                 status = 'active',

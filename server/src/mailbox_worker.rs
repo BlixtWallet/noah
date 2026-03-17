@@ -156,7 +156,7 @@ where
         }
 
         let repo = MailboxAuthorizationRepository::new(&self.app_state.db_pool);
-        let fetch_limit = cmp::max(self.config.batch_size, available_slots as i64);
+        let fetch_limit = cmp::min(self.config.batch_size, available_slots as i64);
         let now = Utc::now();
         let lease_expires_at = now + chrono::TimeDelta::from_std(self.config.claim_ttl)?;
         let runnable = repo

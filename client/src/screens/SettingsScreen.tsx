@@ -31,6 +31,7 @@ import { FeedbackModal } from "~/components/FeedbackModal";
 import { performServerRegistration } from "../lib/server";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { revokeMailboxAuthorization } from "~/lib/api";
 
 type Setting = {
   id:
@@ -95,10 +96,19 @@ const SettingsScreen = () => {
   const { authenticate, checkAvailability, isBiometricsEnabled } = useBiometrics();
   const suspendWalletMutation = useSuspendWallet();
   const [versionTapCount, setVersionTapCount] = useState(0);
-  const { lightningAddress, resetRegistration } = useServerStore();
+  const {
+    lightningAddress,
+    resetRegistration,
+    isMailboxAuthorizationEnabled,
+    setMailboxAuthorizationExpiry,
+    setMailboxAuthorizationEnabled,
+  } = useServerStore();
   const { isAutoBoardingEnabled, setAutoBoardingEnabled } = useTransactionStore();
   const [showResetSuccess, setShowResetSuccess] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
+  const [showMailboxSuccess, setShowMailboxSuccess] = useState(false);
+  const [mailboxError, setMailboxError] = useState<string | null>(null);
+  const [isMailboxTogglePending, setIsMailboxTogglePending] = useState(false);
   const [isBiometricsAvailable, setIsBiometricsAvailable] = useState(false);
   const deleteWalletMutation = useDeleteWallet();
   const { isExporting, showExportSuccess, showExportError, exportError, exportDatabase } =
@@ -148,6 +158,37 @@ const SettingsScreen = () => {
     if (result.isOk()) {
       setBiometricsEnabled(value);
     }
+  };
+
+  const handleMailboxAuthorizationToggle = async (value: boolean) => {
+    if (isMailboxTogglePending) {
+      return;
+    }
+
+    setMailboxError(null);
+    setShowMailboxSuccess(false);
+    setIsMailboxTogglePending(true);
+
+    if (!value) {
+      const result = await revokeMailboxAuthorization();
+      if (result.isErr()) {
+        setMailboxError(result.error.message || "Failed to revoke mailbox authorization");
+        setTimeout(() => {
+          setMailboxError(null);
+        }, 3000);
+        setIsMailboxTogglePending(false);
+        return;
+      }
+
+      setMailboxAuthorizationExpiry(null);
+    }
+
+    setMailboxAuthorizationEnabled(value);
+    setShowMailboxSuccess(true);
+    setTimeout(() => {
+      setShowMailboxSuccess(false);
+    }, 3000);
+    setIsMailboxTogglePending(false);
   };
 
   const handlePress = (item: Setting) => {
@@ -360,6 +401,22 @@ const SettingsScreen = () => {
             <AlertDescription>{resetError}</AlertDescription>
           </Alert>
         )}
+        {showMailboxSuccess && (
+          <Alert icon={CheckCircle} className="mb-4">
+            <AlertTitle>Mailbox Access Updated!</AlertTitle>
+            <AlertDescription>
+              {isMailboxAuthorizationEnabled
+                ? "Mailbox authorization will be granted again shortly."
+                : "Mailbox authorization has been revoked."}
+            </AlertDescription>
+          </Alert>
+        )}
+        {mailboxError && (
+          <Alert icon={AlertTriangle} variant="destructive" className="mb-4">
+            <AlertTitle>Mailbox Update Failed!</AlertTitle>
+            <AlertDescription>{mailboxError}</AlertDescription>
+          </Alert>
+        )}
         {showExportSuccess && (
           <Alert icon={CheckCircle} className="mb-4">
             <AlertTitle>Export Complete!</AlertTitle>
@@ -470,6 +527,22 @@ const SettingsScreen = () => {
                 />
               </View>
             )}
+            <View className="p-4 border-b border-border bg-card rounded-lg mb-2 flex-row justify-between items-center">
+              <View className="flex-1">
+                <Label className="text-foreground text-lg">Mailbox Notifications</Label>
+                <Text className="text-base mt-1 text-muted-foreground">
+                  Allow the Noah server to monitor your Ark mailbox so it can send push
+                  notifications for wallet activity.
+                </Text>
+              </View>
+              <Switch
+                value={isMailboxAuthorizationEnabled}
+                onValueChange={handleMailboxAuthorizationToggle}
+                disabled={isMailboxTogglePending}
+                trackColor={{ false: "#767577", true: "#F7931A" }}
+                thumbColor={isMailboxAuthorizationEnabled ? "#ffffff" : "#f4f3f4"}
+              />
+            </View>
           </View>
         )}
 

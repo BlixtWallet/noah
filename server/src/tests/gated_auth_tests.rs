@@ -598,3 +598,42 @@ async fn test_claim_runnable_mailboxes_is_exclusive_per_worker() {
     assert_eq!(first_claim[0].pubkey, user.pubkey().to_string());
     assert_eq!(second_claim.len(), 0);
 }
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_reauthorize_with_new_mailbox_resets_checkpoint() {
+    let (_app, app_state, _guard) = setup_test_app().await;
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+
+    use crate::db::mailbox_authorization_repo::MailboxAuthorizationRepository;
+    let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    let pubkey = user.pubkey().to_string();
+
+    mailbox_repo
+        .upsert(&pubkey, "deadbeef", "cafebabe", Utc::now().timestamp() + 60)
+        .await
+        .unwrap();
+
+    sqlx::query(
+        "UPDATE mailbox_authorizations
+         SET last_checkpoint = 42,
+             lease_owner = NULL,
+             lease_expires_at = NULL
+         WHERE pubkey = $1",
+    )
+    .bind(&pubkey)
+    .execute(&app_state.db_pool)
+    .await
+    .unwrap();
+
+    mailbox_repo
+        .upsert(&pubkey, "feedface", "cafed00d", Utc::now().timestamp() + 60)
+        .await
+        .unwrap();
+
+    let record = mailbox_repo.find_by_pubkey(&pubkey).await.unwrap().unwrap();
+    assert_eq!(record.mailbox_id, "feedface");
+    assert_eq!(record.last_checkpoint, 0);
+    assert_eq!(record.auth_version, 2);
+}
