@@ -46,7 +46,6 @@ const API_URL = getServerEndpoint();
 const SERVER_AUTH_KEY_INDEX = 0;
 const REQUEST_TIMEOUT_SECONDS = 30;
 
-let inMemoryAccessToken: string | null = null;
 let loginInFlight: Promise<Result<string, Error>> | null = null;
 
 class ApiError extends Error {
@@ -134,7 +133,6 @@ const postJson = async <T>(
 };
 
 const clearStoredAccessToken = async (): Promise<void> => {
-  inMemoryAccessToken = null;
   const resetResult = await resetServerAuthToken();
   if (resetResult.isErr()) {
     log.w("Failed to clear stored server auth token", [resetResult.error]);
@@ -187,7 +185,6 @@ const authenticateWithMnemonic = async (
   const accessToken = loginResult.value.access_token;
 
   if (persistToken) {
-    inMemoryAccessToken = accessToken;
     const storeResult = await setServerAuthToken(accessToken);
     if (storeResult.isErr()) {
       await clearStoredAccessToken();
@@ -210,10 +207,6 @@ const getAccessToken = async (options?: {
     return authenticateWithMnemonic(options.mnemonic, persistToken);
   }
 
-  if (!forceRefresh && inMemoryAccessToken) {
-    return ok(inMemoryAccessToken);
-  }
-
   if (!forceRefresh) {
     const storedTokenResult = await getServerAuthToken();
     if (storedTokenResult.isErr()) {
@@ -221,7 +214,6 @@ const getAccessToken = async (options?: {
     }
 
     if (storedTokenResult.value) {
-      inMemoryAccessToken = storedTokenResult.value;
       return ok(storedTokenResult.value);
     }
   }

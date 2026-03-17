@@ -14,6 +14,7 @@ import { APP_VARIANT } from "~/config";
 import { AUTH_TOKEN_KEYCHAIN_SERVICE, KEYCHAIN_USERNAME } from "~/constants";
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
+let inMemoryServerAuthToken: string | null = null;
 
 export const signMessage = async (
   message: string,
@@ -104,10 +105,15 @@ export const setServerAuthToken = async (token: string): Promise<Result<void, Er
     return err(result.error);
   }
 
+  inMemoryServerAuthToken = token;
   return ok(undefined);
 };
 
 export const getServerAuthToken = async (): Promise<Result<string | null, Error>> => {
+  if (inMemoryServerAuthToken) {
+    return ok(inMemoryServerAuthToken);
+  }
+
   const credentialsResult = await ResultAsync.fromPromise(
     Keychain.getGenericPassword({ service: AUTH_TOKEN_KEYCHAIN_SERVICE }),
     (e) => e as Error,
@@ -120,9 +126,11 @@ export const getServerAuthToken = async (): Promise<Result<string | null, Error>
 
   const credentials = credentialsResult.value;
   if (!credentials || !credentials.password) {
+    inMemoryServerAuthToken = null;
     return ok(null);
   }
 
+  inMemoryServerAuthToken = credentials.password;
   return ok(credentials.password);
 };
 
@@ -137,5 +145,6 @@ export const resetServerAuthToken = async (): Promise<Result<void, Error>> => {
     return err(result.error);
   }
 
+  inMemoryServerAuthToken = null;
   return ok(undefined);
 };
