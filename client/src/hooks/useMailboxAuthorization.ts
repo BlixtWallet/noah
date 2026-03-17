@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { authorizeMailbox } from "~/lib/api";
 import { getMailboxAuthorization, loadWalletIfNeeded } from "~/lib/walletApi";
 import logger from "~/lib/log";
@@ -12,6 +12,7 @@ const MAILBOX_AUTH_TTL_SECS = 89 * 24 * 60 * 60;
 const MAILBOX_AUTH_REFRESH_WINDOW_SECS = 7 * 24 * 60 * 60;
 
 export const useMailboxAuthorization = (isReady: boolean) => {
+  const [refreshTick, setRefreshTick] = useState(0);
   const {
     isRegisteredWithServer,
     mailboxAuthorizationExpiry,
@@ -21,6 +22,11 @@ export const useMailboxAuthorization = (isReady: boolean) => {
 
   useEffect(() => {
     let isCancelled = false;
+    const shouldAbort = () => {
+      const { isMailboxAuthorizationEnabled: isEnabled, isRegisteredWithServer: isRegistered } =
+        useServerStore.getState();
+      return isCancelled || !isEnabled || !isRegistered;
+    };
 
     const registerMailboxAuthorization = async () => {
       if (!isReady || !isRegisteredWithServer || !isMailboxAuthorizationEnabled) {
@@ -40,6 +46,9 @@ export const useMailboxAuthorization = (isReady: boolean) => {
         log.w("Failed to load wallet before granting mailbox authorization", [loadResult.error]);
         return;
       }
+      if (shouldAbort()) {
+        return;
+      }
 
       const requestedExpiry = now + MAILBOX_AUTH_TTL_SECS;
       const mailboxAuthorizationResult = await getMailboxAuthorization(requestedExpiry);
@@ -47,14 +56,16 @@ export const useMailboxAuthorization = (isReady: boolean) => {
         log.w("Failed to generate mailbox authorization", [mailboxAuthorizationResult.error]);
         return;
       }
-
+      if (shouldAbort()) {
+        return;
+      }
       const authorizeResult = await authorizeMailbox(mailboxAuthorizationResult.value);
       if (authorizeResult.isErr()) {
         log.w("Failed to store mailbox authorization on server", [authorizeResult.error]);
         return;
       }
 
-      if (isCancelled) {
+      if (shouldAbort()) {
         return;
       }
 
@@ -74,6 +85,35 @@ export const useMailboxAuthorization = (isReady: boolean) => {
     isRegisteredWithServer,
     isMailboxAuthorizationEnabled,
     mailboxAuthorizationExpiry,
+    refreshTick,
     setMailboxAuthorizationExpiry,
+  ]);
+
+  useEffect(() => {
+    if (
+      !isReady ||
+      !isRegisteredWithServer ||
+      !isMailboxAuthorizationEnabled ||
+      !mailboxAuthorizationExpiry
+    ) {
+      return;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const refreshAt = mailboxAuthorizationExpiry - MAILBOX_AUTH_REFRESH_WINDOW_SECS;
+    const delayMs = Math.max((refreshAt - now) * 1000, 0);
+
+    const timeout = setTimeout(() => {
+      setRefreshTick((tick) => tick + 1);
+    }, delayMs);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [
+    isReady,
+    isRegisteredWithServer,
+    isMailboxAuthorizationEnabled,
+    mailboxAuthorizationExpiry,
   ]);
 };
