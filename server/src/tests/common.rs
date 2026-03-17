@@ -16,9 +16,10 @@ use crate::cache::{
 use crate::config::Config;
 use crate::email_client::EmailClient;
 use crate::routes::gated_api_v0::{
-    complete_upload, delete_backup, deregister, get_download_url, get_upload_url, get_user_info,
-    heartbeat_response, list_backups, register_push_token, report_job_status, report_last_login,
-    submit_invoice, update_backup_settings, update_ln_address,
+    authorize_mailbox, complete_upload, delete_backup, deregister, get_download_url,
+    get_upload_url, get_user_info, heartbeat_response, list_backups, register_push_token,
+    report_job_status, report_last_login, revoke_mailbox_authorization, submit_invoice,
+    update_backup_settings, update_ln_address,
 };
 use crate::routes::public_api_v0::{
     auth_login, check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
@@ -165,6 +166,8 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
     // Gated routes that need auth AND user to exist in database
     let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
+        .route("/mailbox/authorize", post(authorize_mailbox))
+        .route("/mailbox/revoke", post(revoke_mailbox_authorization))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
@@ -308,6 +311,7 @@ async fn reset_database(pool: &PgPool) -> sqlx::Result<()> {
             devices,
             backup_metadata,
             backup_settings,
+            mailbox_authorizations,
             push_tokens,
             users
         RESTART IDENTITY CASCADE

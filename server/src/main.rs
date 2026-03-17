@@ -26,13 +26,14 @@ use crate::{
     config::Config,
     cron::cron_scheduler,
     email_client::EmailClient,
+    mailbox_worker::{Beta8MailboxTransport, MailboxWorker, MailboxWorkerConfig},
     routes::{
         app_middleware,
         gated_api_v0::{
-            complete_upload, delete_backup, deregister, get_download_url, get_upload_url,
-            get_user_info, heartbeat_response, list_backups, register_push_token,
-            report_job_status, report_last_login, submit_invoice, update_backup_settings,
-            update_ln_address,
+            authorize_mailbox, complete_upload, delete_backup, deregister, get_download_url,
+            get_upload_url, get_user_info, heartbeat_response, list_backups, register_push_token,
+            report_job_status, report_last_login, revoke_mailbox_authorization, submit_invoice,
+            update_backup_settings, update_ln_address,
         },
         public_api_v0::{
             auth_login, check_app_version, get_k1, ln_address_suggestions, lnurlp_request,
@@ -46,6 +47,7 @@ mod cron;
 pub mod db;
 mod email_client;
 mod errors;
+mod mailbox_worker;
 mod notification_coordinator;
 mod push;
 mod rate_limit;
@@ -201,6 +203,27 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         }
     });
 
+    let run_mailbox_worker = std::env::var("RUN_MAILBOX_WORKER")
+        .map(|value| !matches!(value.as_str(), "0" | "false" | "FALSE" | "False"))
+        .unwrap_or(true);
+
+    if run_mailbox_worker {
+        let mailbox_worker_app_state = app_state.clone();
+        tokio::spawn(async move {
+            let worker = MailboxWorker::new(
+                mailbox_worker_app_state,
+                Arc::new(Beta8MailboxTransport),
+                MailboxWorkerConfig::default(),
+            );
+
+            if let Err(e) = worker.run().await {
+                tracing::error!("Mailbox worker exited: {}", e);
+            }
+        });
+    } else {
+        tracing::info!("Mailbox worker disabled via RUN_MAILBOX_WORKER");
+    }
+
     // Middleware that checks the signature and authenticates the user
     let auth_layer =
         middleware::from_fn_with_state(app_state.clone(), app_middleware::auth_middleware);
@@ -230,6 +253,8 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     // Fully gated routes - need auth, user to exist, AND email to be verified
     let gated_router = Router::new()
         .route("/register_push_token", post(register_push_token))
+        .route("/mailbox/authorize", post(authorize_mailbox))
+        .route("/mailbox/revoke", post(revoke_mailbox_authorization))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))

@@ -5,7 +5,11 @@ use http_body_util::BodyExt;
 use serde_json::json;
 use tower::ServiceExt;
 
-use crate::db::heartbeat_repo::HeartbeatRepository;
+use crate::db::{
+    heartbeat_repo::HeartbeatRepository,
+    mailbox_authorization_repo::MailboxAuthorizationRepository,
+    push_token_repo::PushTokenRepository,
+};
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
 use crate::types::{DefaultSuccessPayload, HeartbeatStatus};
 
@@ -653,4 +657,62 @@ async fn test_heartbeat_repo_delete_by_pubkey() {
             .await
             .unwrap();
     assert_eq!(count2_after, 1);
+}
+
+#[tracing_test::traced_test]
+#[tokio::test]
+async fn test_check_and_deregister_inactive_users_removes_mailbox_authorization() {
+    let (_, app_state, _guard) = setup_test_app().await;
+
+    let user = TestUser::new();
+    create_test_user(&app_state, &user, None).await;
+    let pubkey = user.pubkey().to_string();
+
+    let push_token_repo = PushTokenRepository::new(&app_state.db_pool);
+    push_token_repo
+        .upsert(&pubkey, "test_push_token")
+        .await
+        .unwrap();
+
+    let mailbox_repo = MailboxAuthorizationRepository::new(&app_state.db_pool);
+    mailbox_repo
+        .upsert(&pubkey, "deadbeef", "cafebabe", 1_900_000_000_i64)
+        .await
+        .unwrap();
+
+    for i in 0..10 {
+        HeartbeatRepository::create_with_status_and_sent_at(
+            &app_state.db_pool,
+            &pubkey,
+            &format!("missed-{}", i),
+            HeartbeatStatus::Pending,
+            Utc::now() - Duration::minutes((20 - i) as i64),
+        )
+        .await
+        .unwrap();
+    }
+
+    crate::cron::check_and_deregister_inactive_users(app_state.clone())
+        .await
+        .unwrap();
+
+    let push_token = push_token_repo.find_by_pubkey(&pubkey).await.unwrap();
+    assert!(push_token.is_none(), "Push token should be deleted");
+
+    let mailbox_auth = mailbox_repo.find_by_pubkey(&pubkey).await.unwrap();
+    assert!(
+        mailbox_auth.is_none(),
+        "Mailbox authorization should be deleted"
+    );
+
+    let heartbeat_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat_notifications WHERE pubkey = $1")
+            .bind(&pubkey)
+            .fetch_one(&app_state.db_pool)
+            .await
+            .unwrap();
+    assert_eq!(
+        heartbeat_count, 0,
+        "Heartbeat notifications should be deleted"
+    );
 }

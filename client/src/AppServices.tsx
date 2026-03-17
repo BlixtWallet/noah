@@ -3,6 +3,7 @@ import uuid from "react-native-uuid";
 import { useSyncManager } from "~/hooks/useSyncManager";
 import { useServerRegistration } from "~/hooks/useServerRegistration";
 import { usePushNotifications } from "~/hooks/usePushNotifications";
+import { useMailboxAuthorization } from "~/hooks/useMailboxAuthorization";
 import { useAutoBackup } from "~/hooks/useAutoBackup";
 import { useTransactionStore } from "~/store/transactionStore";
 import { useBalance } from "~/hooks/useWallet";
@@ -27,6 +28,7 @@ const AppServices = memo(() => {
   // Initialize all app-level services here
   useSyncManager(60_000);
   useServerRegistration(isReady);
+  useMailboxAuthorization(isReady);
   usePushNotifications(isReady);
   useAutoBackup(isReady);
 

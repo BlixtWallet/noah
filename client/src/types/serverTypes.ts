@@ -34,6 +34,23 @@ export type AuthLoginPayload = { key: string, sig: string, k1: string, };
 
 export type AuthLoginResponse = { access_token: string, token_type: string, expires_at: string, expires_in_seconds: number, };
 
+/**
+ * Defines the payload for granting mailbox authorization to the server.
+ */
+export type AuthorizeMailboxPayload = { 
+/**
+ * Ark mailbox identifier scoped to the loaded wallet.
+ */
+mailbox_id: string, 
+/**
+ * Authorization expiry as a Unix timestamp in seconds.
+ */
+expiry: number, 
+/**
+ * Hex-encoded mailbox authorization.
+ */
+encoded: string, };
+
 export type BackupInfo = { backup_version: number, created_at: string, backup_size: number, };
 
 export type BackupSettingsPayload = { backup_enabled: boolean, };

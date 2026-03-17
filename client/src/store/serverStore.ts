@@ -42,6 +42,8 @@ interface ServerState {
   lightningAddress: string | null;
   isBackupEnabled: boolean;
   isEmailVerified: boolean;
+  mailboxAuthorizationExpiry: number | null;
+  isMailboxAuthorizationEnabled: boolean;
   setRegisteredWithServer: (
     isRegistered: boolean,
     lightningAddress: string | null,
@@ -50,6 +52,8 @@ interface ServerState {
   setLightningAddress: (lightningAddress: string) => void;
   setBackupEnabled: (enabled: boolean) => void;
   setEmailVerified: (verified: boolean) => void;
+  setMailboxAuthorizationExpiry: (expiry: number | null) => void;
+  setMailboxAuthorizationEnabled: (enabled: boolean) => void;
   resetRegistration: () => void;
 }
 
@@ -60,17 +64,24 @@ export const useServerStore = create<ServerState>()(
       lightningAddress: null,
       isBackupEnabled: false,
       isEmailVerified: false,
+      mailboxAuthorizationExpiry: null,
+      isMailboxAuthorizationEnabled: true,
       setRegisteredWithServer: (isRegistered, lightningAddress, isBackupEnabled) =>
         set({ isRegisteredWithServer: isRegistered, lightningAddress, isBackupEnabled }),
       setLightningAddress: (lightningAddress) => set({ lightningAddress }),
       setBackupEnabled: (enabled) => set({ isBackupEnabled: enabled }),
       setEmailVerified: (verified) => set({ isEmailVerified: verified }),
+      setMailboxAuthorizationExpiry: (mailboxAuthorizationExpiry) =>
+        set({ mailboxAuthorizationExpiry }),
+      setMailboxAuthorizationEnabled: (isMailboxAuthorizationEnabled) =>
+        set({ isMailboxAuthorizationEnabled }),
       resetRegistration: () =>
         set({
           isRegisteredWithServer: false,
           lightningAddress: null,
           isBackupEnabled: false,
           isEmailVerified: false,
+          mailboxAuthorizationExpiry: null,
         }),
     }),
     {
