@@ -294,6 +294,7 @@ The server uses environment variables for configuration. For local development, 
 
    # This needs to be true in local development
    EMAIL_DEV_MODE=true
+   AUTH_JWT_SECRET=dont_use_this_you_will_get_screwed
    ```
 
 ### Running

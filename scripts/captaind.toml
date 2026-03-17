@@ -29,7 +29,7 @@ read_mailbox_max_items = 100
 ##########
 
 # The interval to start new rounds
-round_interval = "30s"
+round_interval = "180s"
 
 # The time users have to submit payments when a round starts
 round_submit_time = "2s"

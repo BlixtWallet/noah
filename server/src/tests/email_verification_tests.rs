@@ -6,7 +6,6 @@ use tower::ServiceExt;
 
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
 use crate::types::EmailVerificationResponse;
-use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
 #[tokio::test]
@@ -15,11 +14,7 @@ async fn test_send_verification_email_success() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -27,9 +22,10 @@ async fn test_send_verification_email_success() {
                 .method(http::Method::POST)
                 .uri("/email/send_verification")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "email": "test@example.com"
@@ -57,11 +53,7 @@ async fn test_send_verification_email_invalid_email() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -69,9 +61,10 @@ async fn test_send_verification_email_invalid_email() {
                 .method(http::Method::POST)
                 .uri("/email/send_verification")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "email": "invalid-email"
@@ -105,10 +98,7 @@ async fn test_send_verification_email_already_verified() {
     .await
     .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -116,9 +106,10 @@ async fn test_send_verification_email_already_verified() {
                 .method(http::Method::POST)
                 .uri("/email/send_verification")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "email": "another@example.com"
@@ -160,11 +151,7 @@ async fn test_send_verification_email_duplicate_email_allowed() {
     // Create second user who will try to use the same email
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -172,9 +159,10 @@ async fn test_send_verification_email_duplicate_email_allowed() {
                 .method(http::Method::POST)
                 .uri("/email/send_verification")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "email": "taken@example.com"
@@ -202,18 +190,14 @@ async fn test_verify_email_success() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     // Store a verification code directly
     let code = "123456";
     let email = "test@example.com";
     app_state
         .email_verification_store
-        .store(&auth_payload.key, email, code)
+        .store(&user.pubkey().to_string(), email, code)
         .await
         .unwrap();
 
@@ -223,9 +207,10 @@ async fn test_verify_email_success() {
                 .method(http::Method::POST)
                 .uri("/email/verify")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "code": code
@@ -265,16 +250,12 @@ async fn test_verify_email_invalid_code() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     // Store a verification code
     app_state
         .email_verification_store
-        .store(&auth_payload.key, "test@example.com", "123456")
+        .store(&user.pubkey().to_string(), "test@example.com", "123456")
         .await
         .unwrap();
 
@@ -285,9 +266,10 @@ async fn test_verify_email_invalid_code() {
                 .method(http::Method::POST)
                 .uri("/email/verify")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "code": "999999"
@@ -309,11 +291,7 @@ async fn test_verify_email_no_pending_verification() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     // Try to verify without having requested a code
     let response = app
@@ -322,9 +300,10 @@ async fn test_verify_email_no_pending_verification() {
                 .method(http::Method::POST)
                 .uri("/email/verify")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "code": "123456"
@@ -358,10 +337,7 @@ async fn test_verify_email_already_verified() {
     .await
     .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -369,9 +345,10 @@ async fn test_verify_email_already_verified() {
                 .method(http::Method::POST)
                 .uri("/email/verify")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "code": "123456"
@@ -413,17 +390,13 @@ async fn test_verify_email_duplicate_email_allowed() {
     // Create second user
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     // Store verification code for the taken email
     let code = "123456";
     app_state
         .email_verification_store
-        .store(&auth_payload.key, "taken@example.com", code)
+        .store(&user.pubkey().to_string(), "taken@example.com", code)
         .await
         .unwrap();
 
@@ -434,9 +407,10 @@ async fn test_verify_email_duplicate_email_allowed() {
                 .method(http::Method::POST)
                 .uri("/email/verify")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "code": code
@@ -486,10 +460,7 @@ async fn test_register_returns_email_verified_status() {
     .await
     .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -497,9 +468,10 @@ async fn test_register_returns_email_verified_status() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "test@localhost"
@@ -525,12 +497,8 @@ async fn test_register_returns_email_verified_status() {
 async fn test_register_returns_email_not_verified_for_new_user() {
     let (app, app_state, _guard) = setup_test_app().await;
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-
     let user = TestUser::new();
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -538,9 +506,10 @@ async fn test_register_returns_email_not_verified_for_new_user() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "newuser@localhost"
@@ -568,11 +537,7 @@ async fn test_send_verification_unregistered_user() {
 
     let user = TestUser::new();
     // Don't create the user in the database
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -580,9 +545,10 @@ async fn test_send_verification_unregistered_user() {
                 .method(http::Method::POST)
                 .uri("/email/send_verification")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "email": "test@example.com"

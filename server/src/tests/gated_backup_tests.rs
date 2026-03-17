@@ -7,7 +7,6 @@ use tower::ServiceExt;
 use crate::db::backup_repo::BackupRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
 use crate::types::{BackupInfo, DownloadUrlResponse, UploadUrlResponse};
-use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
 #[tokio::test]
@@ -15,11 +14,7 @@ async fn test_get_upload_url() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -27,9 +22,10 @@ async fn test_get_upload_url() {
                 .method(http::Method::POST)
                 .uri("/backup/upload_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_version": 1
@@ -62,11 +58,7 @@ async fn test_complete_upload() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey());
 
@@ -76,9 +68,10 @@ async fn test_complete_upload() {
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "s3_key": s3_key,
@@ -113,11 +106,7 @@ async fn test_complete_upload_upsert() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let s3_key = format!("{}/backup_v1.db", user.pubkey());
 
@@ -129,9 +118,10 @@ async fn test_complete_upload_upsert() {
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "s3_key": s3_key,
@@ -148,20 +138,16 @@ async fn test_complete_upload_upsert() {
     assert_eq!(response.status(), StatusCode::OK);
 
     // Second upload with same version (should update)
-    let k1_2 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_2 = user.auth_payload(&k1_2);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/backup/complete_upload")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_2.key)
-                .header("x-auth-sig", auth_payload_2.sig)
-                .header("x-auth-k1", auth_payload_2.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "s3_key": s3_key,
@@ -194,11 +180,7 @@ async fn test_list_backups_empty() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -206,9 +188,10 @@ async fn test_list_backups_empty() {
                 .method(http::Method::POST)
                 .uri("/backup/list")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -228,6 +211,7 @@ async fn test_list_backups_with_data() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // Insert test backup metadata
     let backup_repo = BackupRepository::new(&app_state.db_pool);
@@ -240,20 +224,16 @@ async fn test_list_backups_with_data() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/backup/list")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -282,6 +262,7 @@ async fn test_get_download_url_specific_version() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // Insert test backup metadata
     let s3_key = format!("{}/backup_v1.db", user.pubkey());
@@ -291,20 +272,16 @@ async fn test_get_download_url_specific_version() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/backup/download_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_version": 1
@@ -334,6 +311,7 @@ async fn test_get_download_url_latest() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // Insert test backup metadata with different timestamps
     let backup_repo = BackupRepository::new(&app_state.db_pool);
@@ -361,20 +339,16 @@ async fn test_get_download_url_latest() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/backup/download_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(serde_json::to_vec(&json!({})).unwrap()))
                 .unwrap(),
         )
@@ -399,11 +373,7 @@ async fn test_get_download_url_not_found() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -411,9 +381,10 @@ async fn test_get_download_url_not_found() {
                 .method(http::Method::POST)
                 .uri("/backup/download_url")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_version": 999
@@ -434,6 +405,7 @@ async fn test_delete_backup() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // Insert test backup metadata
     let s3_key = format!("{}/backup_v1.db", user.pubkey());
@@ -443,20 +415,16 @@ async fn test_delete_backup() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/backup/delete")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_version": 1
@@ -490,11 +458,7 @@ async fn test_delete_backup_not_found() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -502,9 +466,10 @@ async fn test_delete_backup_not_found() {
                 .method(http::Method::POST)
                 .uri("/backup/delete")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_version": 999
@@ -525,11 +490,7 @@ async fn test_update_backup_settings_enable() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -537,9 +498,10 @@ async fn test_update_backup_settings_enable() {
                 .method(http::Method::POST)
                 .uri("/backup/settings")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_enabled": true
@@ -569,6 +531,7 @@ async fn test_update_backup_settings_disable() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // First enable backup
     let backup_repo = BackupRepository::new(&app_state.db_pool);
@@ -577,20 +540,16 @@ async fn test_update_backup_settings_disable() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/backup/settings")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "backup_enabled": false

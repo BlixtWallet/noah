@@ -4,6 +4,7 @@ use axum::{
     middleware,
     routing::{get, post},
 };
+mod auth;
 mod cache;
 mod config;
 mod routes;
@@ -34,8 +35,8 @@ use crate::{
             update_ln_address,
         },
         public_api_v0::{
-            check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
-            send_verification_email, verify_email,
+            auth_login, check_app_version, get_k1, ln_address_suggestions, lnurlp_request,
+            register, send_verification_email, verify_email,
         },
     },
 };
@@ -216,6 +217,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     // Create rate limiters
     let public_rate_limiter = rate_limit::create_public_rate_limiter();
+    let auth_login_rate_limiter = rate_limit::create_public_rate_limiter();
     let suggestions_rate_limiter = rate_limit::create_suggestions_rate_limiter();
     let auth_rate_limiter = rate_limit::create_auth_rate_limiter();
 
@@ -246,7 +248,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
 
     // Routes that need auth but user may not exist (like registration)
     // Apply auth rate limiter to these routes
-    let auth_router = Router::new()
+    let bearer_router = Router::new()
         .route("/register", post(register))
         .merge(email_verification_router)
         .merge(gated_router)
@@ -257,11 +259,15 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     let v0_router = Router::new()
         .route("/getk1", get(get_k1).layer(public_rate_limiter))
         .route(
+            "/auth/login",
+            post(auth_login).layer(auth_login_rate_limiter),
+        )
+        .route(
             "/ln_address_suggestions",
             post(ln_address_suggestions).layer(suggestions_rate_limiter),
         )
         .route("/app_version", post(check_app_version))
-        .merge(auth_router);
+        .merge(bearer_router);
 
     // Public route
     let lnurl_router = Router::new().route("/.well-known/lnurlp/{username}", get(lnurlp_request));

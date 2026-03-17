@@ -10,6 +10,7 @@ function Input({
   ref?: React.RefObject<TextInput>;
 }) {
   const mutedForeground = useCSSVariable("--color-muted-foreground");
+  const isMultiline = props.multiline ?? false;
 
   return (
     <TextInput
@@ -19,6 +20,7 @@ function Input({
         className,
       )}
       placeholderTextColor={mutedForeground as string}
+      textAlignVertical={props.textAlignVertical ?? (isMultiline ? "top" : "center")}
       {...props}
     />
   );

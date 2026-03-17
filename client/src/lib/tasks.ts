@@ -28,7 +28,6 @@ export async function maintenanceTask(): Promise<Result<void, Error>> {
 
 export async function submitInvoiceTask(
   transaction_id: string,
-  k1: string,
   amountMsat: number,
 ): Promise<Result<Bolt11Invoice, Error>> {
   const loadResult = await loadWalletIfNeeded();
@@ -49,7 +48,6 @@ export async function submitInvoiceTask(
   const responseResult = await submitInvoiceApi({
     invoice,
     transaction_id,
-    k1, // Use k1 from notification for auth optimization
   });
 
   if (responseResult.isErr()) {

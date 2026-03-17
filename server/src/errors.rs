@@ -24,6 +24,12 @@ pub enum ApiError {
     Secp256k1(#[from] bitcoin::secp256k1::Error),
     #[error("Invalid Signature")]
     InvalidSignature,
+    #[error("Authentication required")]
+    AuthRequired,
+    #[error("Invalid token")]
+    InvalidToken,
+    #[error("Token expired")]
+    TokenExpired,
     #[error("Not found: {0}")]
     NotFound(String),
     #[error("K1 expired")]
@@ -45,6 +51,9 @@ impl ApiError {
             ApiError::Anyhow(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Secp256k1(_) => StatusCode::BAD_REQUEST,
             ApiError::InvalidSignature => StatusCode::UNAUTHORIZED,
+            ApiError::AuthRequired => StatusCode::UNAUTHORIZED,
+            ApiError::InvalidToken => StatusCode::UNAUTHORIZED,
+            ApiError::TokenExpired => StatusCode::UNAUTHORIZED,
             ApiError::NotFound(_) => StatusCode::NOT_FOUND,
             ApiError::K1Expired => StatusCode::UNAUTHORIZED,
             ApiError::UserNotFound => StatusCode::UNAUTHORIZED,
@@ -61,6 +70,9 @@ impl ApiError {
             ApiError::Anyhow(_) => "SERVER_ERROR",
             ApiError::Secp256k1(_) => "CRYPTO_ERROR",
             ApiError::InvalidSignature => "INVALID_SIGNATURE",
+            ApiError::AuthRequired => "AUTH_REQUIRED",
+            ApiError::InvalidToken => "INVALID_TOKEN",
+            ApiError::TokenExpired => "TOKEN_EXPIRED",
             ApiError::NotFound(_) => "NOT_FOUND",
             ApiError::K1Expired => "K1_EXPIRED",
             ApiError::UserNotFound => "USER_NOT_FOUND",
@@ -73,6 +85,9 @@ impl ApiError {
             ApiError::NotFound(e) => e.to_string(),
             ApiError::ServerErr(e) => e.to_string(),
             ApiError::InvalidSignature => "Invalid signature".to_string(),
+            ApiError::AuthRequired => "Authentication required".to_string(),
+            ApiError::InvalidToken => "Invalid token".to_string(),
+            ApiError::TokenExpired => "Token expired".to_string(),
             ApiError::K1Expired => "K1 expired".to_string(),
             ApiError::UserNotFound => "User not found".to_string(),
             ApiError::SerializeErr(_)

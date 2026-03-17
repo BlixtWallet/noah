@@ -4,8 +4,8 @@ use reqwest::Client;
 use serde::Serialize;
 
 use crate::{
-    AppState, db::push_token_repo::PushTokenRepository, errors::ApiError, types::NotificationData,
-    utils::make_k1,
+    AppState, db::push_token_repo::PushTokenRepository, errors::ApiError,
+    types::NotificationRequestData, utils::make_k1,
 };
 
 /// Determines if a push token is an Expo push token.
@@ -50,7 +50,7 @@ pub async fn send_push_notification(
 
 pub async fn send_push_notification_with_unique_k1(
     app_state: AppState,
-    base_notification_data: NotificationData,
+    base_notification_data: NotificationRequestData,
     pubkey: Option<String>,
 ) -> anyhow::Result<Vec<PushDispatchReceipt>, ApiError> {
     // For notifications that need unique k1 per device, we don't use the batching approach
@@ -90,13 +90,9 @@ pub async fn send_push_notification_with_unique_k1(
             let ntfy_auth = app_state.config.ntfy_auth_token.clone();
             async move {
                 // Create notification data with unique k1 if needed
-                let mut notification_data = base_data_clone;
-                let notification_k1 = if notification_data.needs_unique_k1() {
+                let notification_k1 = if base_data_clone.needs_unique_k1() {
                     match make_k1(&app_state_clone.k1_cache).await {
-                        Ok(unique_k1) => {
-                            notification_data.set_k1(unique_k1.clone());
-                            unique_k1
-                        }
+                        Ok(unique_k1) => Some(unique_k1),
                         Err(e) => {
                             tracing::error!(
                                 "Failed to create unique k1 for push notification: {}",
@@ -106,7 +102,17 @@ pub async fn send_push_notification_with_unique_k1(
                         }
                     }
                 } else {
-                    String::new()
+                    None
+                };
+
+                let notification_data = match base_data_clone
+                    .into_notification_data(notification_k1.clone())
+                {
+                    Ok(notification_data) => notification_data,
+                    Err(e) => {
+                        tracing::error!("Failed to build notification payload: {}", e);
+                        return None;
+                    }
                 };
 
                 let data_string = match serde_json::to_string(&notification_data) {
@@ -164,7 +170,7 @@ pub async fn send_push_notification_with_unique_k1(
 
                 Some(PushDispatchReceipt {
                     pubkey: target.pubkey,
-                    notification_k1,
+                    notification_k1: notification_k1.unwrap_or_default(),
                 })
             }
         })

@@ -209,7 +209,7 @@ const EmailVerificationScreen = () => {
                 <Input
                   value={email}
                   onChangeText={setEmail}
-                  className="rounded-2xl border border-border bg-background/90 px-4 py-4 text-lg text-foreground"
+                  className="h-16 rounded-2xl border border-border bg-background/90 px-4 text-lg leading-6 text-foreground"
                   placeholder="your@email.com"
                   autoCapitalize="none"
                   autoCorrect={false}

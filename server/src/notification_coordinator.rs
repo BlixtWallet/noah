@@ -5,7 +5,7 @@ use crate::{
         notification_tracking_repo::NotificationTrackingRepository,
     },
     push::{PushDispatchReceipt, send_push_notification_with_unique_k1},
-    types::{NotificationData, ReportStatus, ReportType},
+    types::{NotificationRequestData, ReportStatus},
 };
 use anyhow::Result;
 use chrono::Utc;
@@ -15,7 +15,7 @@ use tracing::{debug, info, warn};
 #[derive(Debug, Clone)]
 pub struct NotificationRequest {
     pub priority: Priority,
-    pub data: NotificationData,
+    pub data: NotificationRequestData,
     pub target_pubkey: Option<String>, // None means broadcast to all users
 }
 
@@ -216,20 +216,12 @@ impl NotificationCoordinator {
         Ok(can_send)
     }
 
-    fn report_type_for_notification(notification_data: &NotificationData) -> Option<ReportType> {
-        match notification_data {
-            NotificationData::Maintenance(_) => Some(ReportType::Maintenance),
-            NotificationData::BackupTrigger(_) => Some(ReportType::Backup),
-            NotificationData::LightningInvoiceRequest(_) | NotificationData::Heartbeat(_) => None,
-        }
-    }
-
     async fn record_pending_job_reports(
         &self,
-        notification_data: &NotificationData,
+        notification_data: &NotificationRequestData,
         dispatches: &[PushDispatchReceipt],
     ) -> Result<()> {
-        let Some(report_type) = Self::report_type_for_notification(notification_data) else {
+        let Some(report_type) = notification_data.report_type() else {
             return Ok(());
         };
 

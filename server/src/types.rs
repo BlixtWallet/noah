@@ -38,12 +38,27 @@ fn validate_lightning_address(value: &str) -> Result<(), ValidationError> {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, TS)]
+#[derive(Serialize, Deserialize, Debug, Clone, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
-pub struct AuthPayload {
+pub struct AuthLoginPayload {
     pub key: String,
     pub sig: String,
     pub k1: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct AuthenticatedUser {
+    pub key: String,
+}
+
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
+pub struct AuthLoginResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_at: String,
+    #[ts(type = "number")]
+    pub expires_in_seconds: u64,
 }
 
 /// Represents a structured API error response.
@@ -267,13 +282,12 @@ impl std::str::FromStr for HeartbeatStatus {
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct MaintenanceNotification {
-    pub k1: String,
+    pub notification_k1: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct LightningInvoiceRequestNotification {
-    pub k1: String,
     pub transaction_id: String,
     #[ts(type = "number")]
     pub amount: u64,
@@ -282,14 +296,72 @@ pub struct LightningInvoiceRequestNotification {
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct BackupTriggerNotification {
-    pub k1: String,
+    pub notification_k1: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct HeartbeatNotification {
-    pub k1: String,
     pub notification_id: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum NotificationRequestData {
+    Maintenance,
+    BackupTrigger,
+    Heartbeat(HeartbeatNotification),
+}
+
+impl NotificationRequestData {
+    pub fn notification_type(&self) -> &'static str {
+        match self {
+            NotificationRequestData::Maintenance => "maintenance",
+            NotificationRequestData::BackupTrigger => "backup_trigger",
+            NotificationRequestData::Heartbeat(_) => "heartbeat",
+        }
+    }
+
+    pub fn needs_unique_k1(&self) -> bool {
+        matches!(
+            self,
+            NotificationRequestData::Maintenance | NotificationRequestData::BackupTrigger
+        )
+    }
+
+    pub fn report_type(&self) -> Option<ReportType> {
+        match self {
+            NotificationRequestData::Maintenance => Some(ReportType::Maintenance),
+            NotificationRequestData::BackupTrigger => Some(ReportType::Backup),
+            NotificationRequestData::Heartbeat(_) => None,
+        }
+    }
+
+    pub fn into_notification_data(
+        self,
+        notification_k1: Option<String>,
+    ) -> anyhow::Result<NotificationData> {
+        match self {
+            NotificationRequestData::Maintenance => {
+                let notification_k1 = notification_k1.ok_or_else(|| {
+                    anyhow::anyhow!("maintenance notifications require notification_k1")
+                })?;
+                Ok(NotificationData::Maintenance(MaintenanceNotification {
+                    notification_k1,
+                }))
+            }
+            NotificationRequestData::BackupTrigger => {
+                let notification_k1 = notification_k1.ok_or_else(|| {
+                    anyhow::anyhow!("backup notifications require notification_k1")
+                })?;
+                Ok(NotificationData::BackupTrigger(BackupTriggerNotification {
+                    notification_k1,
+                }))
+            }
+            NotificationRequestData::Heartbeat(notification) => {
+                Ok(NotificationData::Heartbeat(notification))
+            }
+        }
+    }
 }
 
 // Enum wrapper for all notification types
@@ -330,19 +402,16 @@ impl NotificationData {
     pub fn needs_unique_k1(&self) -> bool {
         matches!(
             self,
-            NotificationData::Maintenance(_)
-                | NotificationData::BackupTrigger(_)
-                | NotificationData::Heartbeat(_)
+            NotificationData::Maintenance(_) | NotificationData::BackupTrigger(_)
         )
     }
 
     /// Set the k1 value for notifications that require it
     pub fn set_k1(&mut self, k1: String) {
         match self {
-            NotificationData::Maintenance(n) => n.k1 = k1,
-            NotificationData::BackupTrigger(n) => n.k1 = k1,
-            NotificationData::Heartbeat(n) => n.k1 = k1,
-            NotificationData::LightningInvoiceRequest(n) => n.k1 = k1,
+            NotificationData::Maintenance(n) => n.notification_k1 = k1,
+            NotificationData::BackupTrigger(n) => n.notification_k1 = k1,
+            NotificationData::Heartbeat(_) | NotificationData::LightningInvoiceRequest(_) => {}
         }
     }
 }
@@ -356,6 +425,7 @@ pub struct HeartbeatResponsePayload {
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]
 pub struct ReportJobStatusPayload {
+    pub notification_k1: String,
     pub report_type: ReportType,
     pub status: ReportStatus,
     pub error_message: Option<String>,

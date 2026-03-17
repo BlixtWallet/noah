@@ -25,7 +25,7 @@ export const INCOMING_MOVEMENT_KINDS: MovementKind[] = [
 
 export const MOVEMENT_STATUS_LABELS: Record<MovementStatus, string> = {
   pending: "Pending",
-  finished: "Completed",
+  successful: "Successful",
   failed: "Failed",
   cancelled: "Cancelled",
 };

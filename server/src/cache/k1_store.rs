@@ -46,6 +46,13 @@ impl K1Store {
         Ok(())
     }
 
+    /// Atomically consumes a k1 token so it cannot be reused.
+    pub async fn take(&self, k1: &str) -> anyhow::Result<bool> {
+        let mut conn = self.client.get_connection().await?;
+        let value: Option<i64> = cmd("GETDEL").arg(k1).query_async(&mut conn).await?;
+        Ok(value.is_some())
+    }
+
     /// Inserts an externally created k1 string. Useful for tests.
     pub async fn insert_with_timestamp(&self, k1: &str, timestamp: u64) -> anyhow::Result<()> {
         self.persist(k1, timestamp).await

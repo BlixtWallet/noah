@@ -2,7 +2,7 @@ use crate::db::notification_tracking_repo::NotificationTrackingRepository;
 use crate::db::user_repo::UserRepository;
 use crate::notification_coordinator::{NotificationCoordinator, NotificationRequest};
 use crate::tests::common::{TestUser, setup_test_app};
-use crate::types::{BackupTriggerNotification, MaintenanceNotification, NotificationData};
+use crate::types::NotificationRequestData;
 use chrono::{Duration, Utc};
 use expo_push_notification_client::Priority;
 use uuid::Uuid;
@@ -38,7 +38,7 @@ async fn test_normal_priority_respects_spacing() {
     let coordinator = NotificationCoordinator::new(app_state.clone());
     let request = NotificationRequest {
         priority: Priority::Normal,
-        data: NotificationData::BackupTrigger(BackupTriggerNotification { k1: String::new() }),
+        data: NotificationRequestData::BackupTrigger,
         target_pubkey: Some(pubkey.clone()),
     };
 
@@ -85,7 +85,7 @@ async fn test_critical_priority_bypasses_spacing() {
     let coordinator = NotificationCoordinator::new(app_state.clone());
     let request = NotificationRequest {
         priority: Priority::High,
-        data: NotificationData::Maintenance(MaintenanceNotification { k1: String::new() }),
+        data: NotificationRequestData::Maintenance,
         target_pubkey: Some(pubkey.clone()),
     };
 

@@ -1,4 +1,5 @@
 use std::time::Duration;
+use std::time::SystemTime;
 
 use axum::{
     Extension, Json,
@@ -15,17 +16,18 @@ use validator::Validate;
 
 use crate::{
     AppState,
+    auth::mint_access_token,
     cache::email_verification_store::EmailVerificationStore,
     db::{device_repo::DeviceRepository, user_repo::UserRepository},
     errors::ApiError,
     push::{PushNotificationData, send_push_notification},
     types::{
-        AppVersionCheckPayload, AppVersionInfo, AuthEvent, AuthPayload, EmailVerificationResponse,
-        LightningAddressSuggestionsPayload, LightningAddressSuggestionsResponse,
-        LightningInvoiceRequestNotification, NotificationData, RegisterPayload, RegisterResponse,
-        SendEmailVerificationPayload, VerifyEmailPayload,
+        AppVersionCheckPayload, AppVersionInfo, AuthEvent, AuthLoginPayload, AuthLoginResponse,
+        AuthenticatedUser, EmailVerificationResponse, LightningAddressSuggestionsPayload,
+        LightningAddressSuggestionsResponse, LightningInvoiceRequestNotification, NotificationData,
+        RegisterPayload, RegisterResponse, SendEmailVerificationPayload, VerifyEmailPayload,
     },
-    utils::make_k1,
+    utils::{make_k1, verify_auth},
     wide_event::WideEventHandle,
 };
 
@@ -109,6 +111,62 @@ pub async fn get_k1(State(state): State<AppState>) -> anyhow::Result<Json<GetK1>
     Ok(Json(GetK1 {
         k1,
         tag: "login".to_string(),
+    }))
+}
+
+pub async fn auth_login(
+    State(state): State<AppState>,
+    event: Option<Extension<WideEventHandle>>,
+    Json(payload): Json<AuthLoginPayload>,
+) -> anyhow::Result<Json<AuthLoginResponse>, ApiError> {
+    let k1_consumed = state.k1_cache.take(&payload.k1).await.map_err(|e| {
+        tracing::error!(error = %e, "Auth login failed: Unable to consume k1");
+        ApiError::ServerErr("Failed to validate k1".to_string())
+    })?;
+
+    if !k1_consumed {
+        return Err(ApiError::InvalidArgument("Invalid k1".to_string()));
+    }
+
+    let k1_parts: Vec<&str> = payload.k1.split('_').collect();
+    if k1_parts.len() != 2 {
+        return Err(ApiError::InvalidArgument("Invalid k1 format".to_string()));
+    }
+
+    let timestamp = k1_parts[1]
+        .parse::<u64>()
+        .map_err(|_| ApiError::InvalidArgument("Invalid timestamp in k1".to_string()))?;
+
+    let now = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    if now.saturating_sub(timestamp) > 600 {
+        return Err(ApiError::K1Expired);
+    }
+
+    let is_valid = verify_auth(payload.k1.clone(), payload.sig.clone(), payload.key.clone())
+        .await
+        .map_err(|_| ApiError::InvalidSignature)?;
+
+    if !is_valid {
+        return Err(ApiError::InvalidSignature);
+    }
+
+    let minted = mint_access_token(&state.config, &payload.key)
+        .map_err(|_| ApiError::ServerErr("Failed to create access token".to_string()))?;
+
+    if let Some(Extension(event)) = &event {
+        event.set_user(&payload.key);
+        event.add_context("expires_in_seconds", minted.expires_in_seconds);
+    }
+
+    Ok(Json(AuthLoginResponse {
+        access_token: minted.token,
+        token_type: "Bearer".to_string(),
+        expires_at: minted.expires_at.to_rfc3339(),
+        expires_in_seconds: minted.expires_in_seconds,
     }))
 }
 
@@ -295,17 +353,6 @@ pub async fn lnurlp_request(
         event.add_context("has_ark_address", user.ark_address.is_some());
     }
 
-    // Generate a k1 for authentication optimization (avoids extra network call)
-    let k1 = match make_k1(&state.k1_cache).await {
-        Ok(value) => value,
-        Err(e) => {
-            tracing::error!("Failed to create k1 for LNURL request: {}", e);
-            return Err(ApiError::ServerErr(
-                "Failed to create authentication challenge".to_string(),
-            ));
-        }
-    };
-
     let state_clone = state.clone();
     let transaction_id_clone = transaction_id.clone();
     tokio::spawn(async move {
@@ -314,7 +361,6 @@ pub async fn lnurlp_request(
             body: None,
             data: serde_json::to_string(&NotificationData::LightningInvoiceRequest(
                 LightningInvoiceRequestNotification {
-                    k1, // Include k1 for auth optimization
                     transaction_id: transaction_id_clone,
                     amount,
                 },
@@ -382,7 +428,7 @@ pub async fn lnurlp_request(
 /// the user in the database.
 pub async fn register(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<RegisterPayload>,
 ) -> anyhow::Result<Json<RegisterResponse>, ApiError> {
@@ -524,7 +570,7 @@ pub async fn check_app_version(
 /// Sends an email verification code to the user's email address.
 pub async fn send_verification_email(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<SendEmailVerificationPayload>,
 ) -> anyhow::Result<Json<EmailVerificationResponse>, ApiError> {
@@ -584,7 +630,7 @@ pub async fn send_verification_email(
 /// Verifies the email verification code.
 pub async fn verify_email(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<VerifyEmailPayload>,
 ) -> anyhow::Result<Json<EmailVerificationResponse>, ApiError> {

@@ -5,15 +5,27 @@ import {
   verifyMessage as verifyMessageNitro,
   type KeyPairResult,
 } from "react-native-nitro-ark";
+import { atob } from "react-native-quick-base64";
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 
 const log = logger("crypto");
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "~/config";
-import { KEYCHAIN_USERNAME } from "~/constants";
+import { AUTH_TOKEN_KEYCHAIN_SERVICE, KEYCHAIN_USERNAME } from "~/constants";
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
+let inMemoryServerAuthToken: string | null = null;
+
+const decodeBase64Url = (value: string): Result<string, Error> => {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+
+  return Result.fromThrowable(
+    () => atob(padded),
+    (e) => new Error(`Failed to decode JWT payload: ${(e as Error).message}`),
+  )();
+};
 
 export const signMessage = async (
   message: string,
@@ -89,4 +101,93 @@ export const getMnemonic = async (): Promise<Result<string, Error>> => {
   }
 
   return ok(credentials.password);
+};
+
+export const setServerAuthToken = async (token: string): Promise<Result<void, Error>> => {
+  const result = await ResultAsync.fromPromise(
+    Keychain.setGenericPassword(KEYCHAIN_USERNAME, token, {
+      service: AUTH_TOKEN_KEYCHAIN_SERVICE,
+    }),
+    (e) => e as Error,
+  );
+
+  if (result.isErr()) {
+    log.w("Failed to store server auth token", [result.error]);
+    return err(result.error);
+  }
+
+  inMemoryServerAuthToken = token;
+  return ok(undefined);
+};
+
+export const getServerAuthToken = async (): Promise<Result<string | null, Error>> => {
+  if (inMemoryServerAuthToken) {
+    return ok(inMemoryServerAuthToken);
+  }
+
+  const credentialsResult = await ResultAsync.fromPromise(
+    Keychain.getGenericPassword({ service: AUTH_TOKEN_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+
+  if (credentialsResult.isErr()) {
+    log.w("Failed to read server auth token", [credentialsResult.error]);
+    return err(credentialsResult.error);
+  }
+
+  const credentials = credentialsResult.value;
+  if (!credentials || !credentials.password) {
+    inMemoryServerAuthToken = null;
+    return ok(null);
+  }
+
+  inMemoryServerAuthToken = credentials.password;
+  return ok(credentials.password);
+};
+
+export const resetServerAuthToken = async (): Promise<Result<void, Error>> => {
+  const result = await ResultAsync.fromPromise(
+    Keychain.resetGenericPassword({ service: AUTH_TOKEN_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+
+  if (result.isErr()) {
+    log.w("Failed to clear server auth token", [result.error]);
+    return err(result.error);
+  }
+
+  inMemoryServerAuthToken = null;
+  return ok(undefined);
+};
+
+export const shouldRefreshServerAuthToken = (
+  token: string,
+  refreshWindowSeconds: number,
+  clockSkewSeconds: number,
+): Result<boolean, Error> => {
+  const segments = token.split(".");
+  if (segments.length !== 3) {
+    return err(new Error("JWT must have three segments"));
+  }
+
+  const payloadResult = decodeBase64Url(segments[1]);
+  if (payloadResult.isErr()) {
+    return err(payloadResult.error);
+  }
+
+  const parsedResult = Result.fromThrowable(
+    () => JSON.parse(payloadResult.value) as { exp?: unknown },
+    (e) => new Error(`Failed to parse JWT payload: ${(e as Error).message}`),
+  )();
+  if (parsedResult.isErr()) {
+    return err(parsedResult.error);
+  }
+
+  if (typeof parsedResult.value.exp !== "number" || !Number.isFinite(parsedResult.value.exp)) {
+    return err(new Error("JWT payload is missing a valid exp claim"));
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const secondsRemaining = parsedResult.value.exp - now;
+  return ok(secondsRemaining <= refreshWindowSeconds + clockSkewSeconds);
 };

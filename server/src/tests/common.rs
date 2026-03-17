@@ -8,6 +8,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::app_middleware::{auth_middleware, user_exists_middleware};
+use crate::auth::mint_access_token;
 use crate::cache::{
     email_verification_store::EmailVerificationStore, invoice_store::InvoiceStore,
     k1_store::K1Store, maintenance_store::MaintenanceStore, redis_client::RedisClient,
@@ -20,10 +21,10 @@ use crate::routes::gated_api_v0::{
     submit_invoice, update_backup_settings, update_ln_address,
 };
 use crate::routes::public_api_v0::{
-    check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
+    auth_login, check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
     send_verification_email, verify_email,
 };
-use crate::types::AuthPayload;
+use crate::types::AuthLoginPayload;
 use crate::{AppState, AppStruct};
 
 static TEST_DB_SEMAPHORE: Lazy<Arc<Semaphore>> = Lazy::new(|| Arc::new(Semaphore::new(1)));
@@ -92,18 +93,26 @@ impl TestUser {
             redis_pool_size: 32,
             ses_from_address: "test@noahwallet.com".to_string(),
             email_dev_mode: true,
+            auth_jwt_secret: "test-jwt-secret".to_string(),
+            auth_jwt_ttl_hours: 24,
         }
     }
 
-    pub fn auth_payload(&self, k1: &str) -> AuthPayload {
+    pub fn auth_payload(&self, k1: &str) -> AuthLoginPayload {
         let hash = bitcoin::sign_message::signed_msg_hash(k1);
         let msg = bitcoin::secp256k1::Message::from_digest_slice(&hash[..]).unwrap();
         let sig = self.secp.sign_ecdsa(&msg, &self.keypair.secret_key());
-        AuthPayload {
+        AuthLoginPayload {
             key: self.pubkey().to_string(),
             sig: sig.to_string(),
             k1: k1.to_string(),
         }
+    }
+
+    pub fn access_token(&self, app_state: &AppState) -> String {
+        mint_access_token(&app_state.config, &self.pubkey().to_string())
+            .expect("failed to mint access token")
+            .token
     }
 }
 
@@ -178,7 +187,11 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         .merge(gated_router)
         .layer(auth_layer);
 
-    let app = auth_router.with_state(app_state.clone());
+    let app = Router::new()
+        .route("/getk1", axum::routing::get(get_k1))
+        .route("/auth/login", post(auth_login))
+        .merge(auth_router)
+        .with_state(app_state.clone());
 
     (app, app_state, guard)
 }
@@ -210,6 +223,7 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
 
     let app = Router::new()
         .route("/getk1", axum::routing::get(get_k1))
+        .route("/auth/login", post(auth_login))
         .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/app_version", post(check_app_version))
         .route(

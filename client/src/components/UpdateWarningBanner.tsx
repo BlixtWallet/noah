@@ -14,8 +14,8 @@ export const UpdateWarningBanner: React.FC<UpdateWarningBannerProps> = ({
   const handleUpdate = () => {
     const storeUrl =
       Platform.OS === "ios"
-        ? "https://apps.apple.com/app/your-app-id"
-        : "https://play.google.com/store/apps/details?id=your.package.name";
+        ? "itms-beta://testflight.apple.com/join/E4P44dXF"
+        : "https://play.google.com/store/apps/details?id=com.noahwallet.signet";
 
     Linking.openURL(storeUrl);
   };

@@ -32,7 +32,13 @@ import {
   ACTIVE_WALLET_CONFIG,
   hasGooglePlayServices,
 } from "../constants";
-import { deriveStoreNextKeypair, peakKeyPair, getMnemonic, setMnemonic } from "./crypto";
+import {
+  deriveStoreNextKeypair,
+  peakKeyPair,
+  getMnemonic,
+  resetServerAuthToken,
+  setMnemonic,
+} from "./crypto";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 import { storeNativeMnemonic } from "noah-tools";
@@ -329,14 +335,21 @@ export const walletDataExists = (): boolean => {
  * This handles the iOS reinstall case where keychain persists but app data is gone.
  */
 export const clearStaleKeychain = async (): Promise<Result<void, Error>> => {
-  const resetResult = await ResultAsync.fromPromise(
+  const mnemonicResetResult = await ResultAsync.fromPromise(
     Keychain.resetGenericPassword({ service: MNEMONIC_KEYCHAIN_SERVICE }),
     (e) => e as Error,
   );
-  if (resetResult.isErr()) {
-    log.w("Failed to clear stale keychain", [resetResult.error]);
-    return err(resetResult.error);
+  if (mnemonicResetResult.isErr()) {
+    log.w("Failed to clear stale keychain", [mnemonicResetResult.error]);
+    return err(mnemonicResetResult.error);
   }
+
+  const tokenResetResult = await resetServerAuthToken();
+  if (tokenResetResult.isErr()) {
+    log.w("Failed to clear server auth token", [tokenResetResult.error]);
+    return err(tokenResetResult.error);
+  }
+
   log.i("Cleared stale keychain mnemonic after reinstall detection");
   return ok(undefined);
 };
