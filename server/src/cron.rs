@@ -5,7 +5,7 @@ use crate::{
         job_status_repo::JobStatusRepository, push_token_repo::PushTokenRepository,
     },
     notification_coordinator::{NotificationCoordinator, NotificationRequest},
-    types::{BackupTriggerNotification, HeartbeatNotification, NotificationData},
+    types::{HeartbeatNotification, NotificationRequestData},
 };
 use expo_push_notification_client::Priority;
 use tokio_cron_scheduler::{Job, JobScheduler};
@@ -29,13 +29,9 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
     let coordinator = NotificationCoordinator::new(app_state.clone());
 
     for pubkey in pubkeys {
-        let notification_data = NotificationData::BackupTrigger(BackupTriggerNotification {
-            notification_k1: String::new(), // Will be replaced with unique k1 per device
-        });
-
         let request = NotificationRequest {
             priority: Priority::Normal,
-            data: notification_data,
+            data: NotificationRequestData::BackupTrigger,
             target_pubkey: Some(pubkey.clone()),
         };
 
@@ -62,7 +58,7 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
     for pubkey in active_users {
         let notification_id = heartbeat_repo.create_notification(&pubkey).await?;
 
-        let notification_data = NotificationData::Heartbeat(HeartbeatNotification {
+        let notification_data = NotificationRequestData::Heartbeat(HeartbeatNotification {
             notification_id: notification_id.clone(),
         });
 

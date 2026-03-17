@@ -6,6 +6,7 @@ import {
   getServerAuthToken,
   resetServerAuthToken,
   setServerAuthToken,
+  shouldRefreshServerAuthToken,
 } from "./crypto";
 import { deriveKeypairFromMnemonic, signMesssageWithMnemonic } from "./walletApi";
 import { APP_VARIANT } from "~/config";
@@ -45,6 +46,8 @@ const log = logger("serverApi");
 const API_URL = getServerEndpoint();
 const SERVER_AUTH_KEY_INDEX = 0;
 const REQUEST_TIMEOUT_SECONDS = 30;
+const TOKEN_REFRESH_WINDOW_SECONDS = 3 * 60 * 60;
+const TOKEN_CLOCK_SKEW_SECONDS = 60;
 
 let loginInFlight: Promise<Result<string, Error>> | null = null;
 
@@ -214,7 +217,22 @@ const getAccessToken = async (options?: {
     }
 
     if (storedTokenResult.value) {
-      return ok(storedTokenResult.value);
+      const shouldRefreshResult = shouldRefreshServerAuthToken(
+        storedTokenResult.value,
+        TOKEN_REFRESH_WINDOW_SECONDS,
+        TOKEN_CLOCK_SKEW_SECONDS,
+      );
+      if (shouldRefreshResult.isErr()) {
+        log.w("Stored server auth token is invalid, re-authenticating", [
+          shouldRefreshResult.error,
+        ]);
+        await clearStoredAccessToken();
+      } else if (!shouldRefreshResult.value) {
+        return ok(storedTokenResult.value);
+      } else {
+        log.d("Stored server auth token is near expiry, refreshing before request");
+        await clearStoredAccessToken();
+      }
     }
   }
 

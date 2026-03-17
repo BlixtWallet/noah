@@ -305,6 +305,65 @@ pub struct HeartbeatNotification {
     pub notification_id: String,
 }
 
+#[derive(Debug, Clone)]
+pub enum NotificationRequestData {
+    Maintenance,
+    BackupTrigger,
+    Heartbeat(HeartbeatNotification),
+}
+
+impl NotificationRequestData {
+    pub fn notification_type(&self) -> &'static str {
+        match self {
+            NotificationRequestData::Maintenance => "maintenance",
+            NotificationRequestData::BackupTrigger => "backup_trigger",
+            NotificationRequestData::Heartbeat(_) => "heartbeat",
+        }
+    }
+
+    pub fn needs_unique_k1(&self) -> bool {
+        matches!(
+            self,
+            NotificationRequestData::Maintenance | NotificationRequestData::BackupTrigger
+        )
+    }
+
+    pub fn report_type(&self) -> Option<ReportType> {
+        match self {
+            NotificationRequestData::Maintenance => Some(ReportType::Maintenance),
+            NotificationRequestData::BackupTrigger => Some(ReportType::Backup),
+            NotificationRequestData::Heartbeat(_) => None,
+        }
+    }
+
+    pub fn into_notification_data(
+        self,
+        notification_k1: Option<String>,
+    ) -> anyhow::Result<NotificationData> {
+        match self {
+            NotificationRequestData::Maintenance => {
+                let notification_k1 = notification_k1.ok_or_else(|| {
+                    anyhow::anyhow!("maintenance notifications require notification_k1")
+                })?;
+                Ok(NotificationData::Maintenance(MaintenanceNotification {
+                    notification_k1,
+                }))
+            }
+            NotificationRequestData::BackupTrigger => {
+                let notification_k1 = notification_k1.ok_or_else(|| {
+                    anyhow::anyhow!("backup notifications require notification_k1")
+                })?;
+                Ok(NotificationData::BackupTrigger(BackupTriggerNotification {
+                    notification_k1,
+                }))
+            }
+            NotificationRequestData::Heartbeat(notification) => {
+                Ok(NotificationData::Heartbeat(notification))
+            }
+        }
+    }
+}
+
 // Enum wrapper for all notification types
 #[derive(Debug, Serialize, Deserialize, TS, Clone)]
 #[ts(export, export_to = "../../client/src/types/serverTypes.ts")]

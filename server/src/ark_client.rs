@@ -1,7 +1,7 @@
 use crate::{
     AppState,
     notification_coordinator::{NotificationCoordinator, NotificationRequest},
-    types::{MaintenanceNotification, NotificationData},
+    types::NotificationRequestData,
 };
 
 use bitcoin::hex::DisplayHex;
@@ -225,13 +225,9 @@ fn evaluate_maintenance(
 pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     let coordinator = NotificationCoordinator::new(app_state);
 
-    let notification_data = NotificationData::Maintenance(MaintenanceNotification {
-        notification_k1: String::new(), // Will be replaced with unique k1 per device
-    });
-
     let request = NotificationRequest {
         priority: Priority::High,
-        data: notification_data,
+        data: NotificationRequestData::Maintenance,
         target_pubkey: None, // Broadcast to all users
     };
 
