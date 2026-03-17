@@ -5,6 +5,7 @@ import {
   verifyMessage as verifyMessageNitro,
   type KeyPairResult,
 } from "react-native-nitro-ark";
+import { atob } from "react-native-quick-base64";
 import { Result, ok, err, ResultAsync } from "neverthrow";
 import logger from "~/lib/log";
 
@@ -17,15 +18,11 @@ const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 let inMemoryServerAuthToken: string | null = null;
 
 const decodeBase64Url = (value: string): Result<string, Error> => {
-  if (typeof globalThis.atob !== "function") {
-    return err(new Error("Base64 decoder is unavailable"));
-  }
-
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
 
   return Result.fromThrowable(
-    () => globalThis.atob(padded),
+    () => atob(padded),
     (e) => new Error(`Failed to decode JWT payload: ${(e as Error).message}`),
   )();
 };

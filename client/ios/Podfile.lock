@@ -1783,6 +1783,8 @@ PODS:
     - ReactNativeDependencies
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
+  - react-native-quick-base64 (2.2.2):
+    - React-Core
   - react-native-safe-area-context (5.6.2):
     - hermes-engine
     - RCTRequired
@@ -2792,6 +2794,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-bottom-tabs (from `../../node_modules/react-native-bottom-tabs`)
+  - react-native-quick-base64 (from `../../node_modules/react-native-quick-base64`)
   - react-native-safe-area-context (from `../../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../../node_modules/@react-native-community/slider`)"
   - "react-native-vector-icons (from `../../node_modules/@react-native-vector-icons/get-image`)"
@@ -2998,6 +3001,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-bottom-tabs:
     :path: "../../node_modules/react-native-bottom-tabs"
+  react-native-quick-base64:
+    :path: "../../node_modules/react-native-quick-base64"
   react-native-safe-area-context:
     :path: "../../node_modules/react-native-safe-area-context"
   react-native-slider:
@@ -3175,6 +3180,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 8c4d41ddf7b9bfb06e944e3805f1d7eace7f4aff
   React-microtasksnativemodule: 3b0be17d494b6d101a3efbbc7b18c7d42ef9fe76
   react-native-bottom-tabs: 484fe90c49d4d7d547d15ae78f4de75492a395fa
+  react-native-quick-base64: d87272898345e0fc3c3afb8e5dff335d51214f3e
   react-native-safe-area-context: 53f796cb6c814661bbe99fbdfd0585d07b996cdd
   react-native-slider: a4bbed2fba298dbcd09225b5f4a1e9baf2d04268
   react-native-vector-icons: f068b165e45f94b4e643b01512c363453fbd3b34
