@@ -8,7 +8,6 @@ use tower::ServiceExt;
 use crate::db::heartbeat_repo::HeartbeatRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
 use crate::types::{DefaultSuccessPayload, HeartbeatStatus};
-use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
 #[tokio::test]
@@ -17,6 +16,7 @@ async fn test_heartbeat_response_success() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // Create a heartbeat notification first
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
@@ -25,20 +25,16 @@ async fn test_heartbeat_response_success() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/heartbeat_response")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "notification_id": notification_id
@@ -76,11 +72,7 @@ async fn test_heartbeat_response_invalid_notification_id() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -88,9 +80,10 @@ async fn test_heartbeat_response_invalid_notification_id() {
                 .method(http::Method::POST)
                 .uri("/heartbeat_response")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "notification_id": "non-existent-notification-id"
@@ -112,6 +105,7 @@ async fn test_heartbeat_response_already_responded() {
 
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     // Create a heartbeat notification and mark it as already responded
     let heartbeat_repo = HeartbeatRepository::new(&app_state.db_pool);
@@ -126,20 +120,16 @@ async fn test_heartbeat_response_already_responded() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/heartbeat_response")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "notification_id": notification_id
@@ -156,7 +146,7 @@ async fn test_heartbeat_response_already_responded() {
 
 #[tracing_test::traced_test]
 #[tokio::test]
-async fn test_heartbeat_response_unauthenticated() {
+async fn test_heartbeat_response_invalid_token() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
@@ -169,21 +159,13 @@ async fn test_heartbeat_response_unauthenticated() {
         .await
         .unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let mut auth_payload = user.auth_payload(&k1);
-    auth_payload.sig = "invalid_signature".to_string();
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/heartbeat_response")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(http::header::AUTHORIZATION, "Bearer invalid-token")
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "notification_id": notification_id

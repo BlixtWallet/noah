@@ -7,20 +7,14 @@ import { err, ok, Result, ResultAsync } from "neverthrow";
 import {
   completeUpload,
   getDownloadUrlForRestore,
-  getK1,
   getUploadUrl,
   updateBackupSettings,
 } from "./api";
 import { getMnemonic, setMnemonic } from "./crypto";
-import {
-  deriveKeypairFromMnemonic,
-  signMesssageWithMnemonic,
-  loadWalletIfNeeded,
-} from "./walletApi";
+import { loadWalletIfNeeded } from "./walletApi";
 import { useWalletStore } from "~/store/walletStore";
 import { useBackupStore } from "~/store/backupStore";
 import logger from "~/lib/log";
-import { APP_VARIANT } from "~/config";
 import ky from "ky";
 import { hasGooglePlayServices } from "~/constants";
 import { redactSensitiveErrorMessage } from "~/lib/errorUtils";
@@ -126,35 +120,11 @@ export class BackupService {
 
   async restoreBackup(mnemonic: string, version?: number): Promise<Result<void, Error>> {
     updateProgress("Authenticating...", 10);
-    const k1Result = await getK1();
-    if (k1Result.isErr()) {
-      return err(k1Result.error);
-    }
-    const k1 = k1Result.value;
-    log.d("k1", [k1]);
-
     updateProgress("Verifying credentials...", 25);
-    const signatureResult = await signMesssageWithMnemonic(k1, mnemonic, APP_VARIANT, 0);
-    if (signatureResult.isErr()) {
-      return err(signatureResult.error);
-    }
-    const sig = signatureResult.value;
-    log.d("sig", [sig]);
-
-    updateProgress("Deriving keys...", 40);
-    const keypairResult = await deriveKeypairFromMnemonic(mnemonic, APP_VARIANT, 0);
-    if (keypairResult.isErr()) {
-      return err(keypairResult.error);
-    }
-    const { public_key: key } = keypairResult.value;
-    log.d("key", [key]);
-
     updateProgress("Fetching backup...", 55);
     const downloadUrlResult = await getDownloadUrlForRestore({
       backup_version: version,
-      k1,
-      sig,
-      key,
+      mnemonic,
     });
 
     if (downloadUrlResult.isErr()) {

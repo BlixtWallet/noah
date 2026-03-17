@@ -226,7 +226,7 @@ pub async fn maintenance(app_state: AppState) -> anyhow::Result<()> {
     let coordinator = NotificationCoordinator::new(app_state);
 
     let notification_data = NotificationData::Maintenance(MaintenanceNotification {
-        k1: String::new(), // Will be replaced with unique k1 per device
+        notification_k1: String::new(), // Will be replaced with unique k1 per device
     });
 
     let request = NotificationRequest {

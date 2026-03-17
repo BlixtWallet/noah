@@ -15,7 +15,7 @@ use crate::{
     AppState,
     errors::ApiError,
     types::{
-        AuthPayload, GetUploadUrlPayload, RegisterPushToken, UpdateLnAddressPayload,
+        AuthenticatedUser, GetUploadUrlPayload, RegisterPushToken, UpdateLnAddressPayload,
         UploadUrlResponse,
     },
 };
@@ -28,7 +28,7 @@ use validator::Validate;
 /// the server to send push notifications to the user's device.
 pub async fn register_push_token(
     State(app_state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<RegisterPushToken>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -69,7 +69,7 @@ pub async fn register_push_token(
 /// this endpoint receives it and forwards it to the waiting payer.
 pub async fn submit_invoice(
     State(state): State<AppState>,
-    Extension(_auth_payload): Extension<AuthPayload>,
+    Extension(_auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<SubmitInvoicePayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -94,7 +94,7 @@ pub async fn submit_invoice(
 /// This endpoint returns the user's lightning address.
 pub async fn get_user_info(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
 ) -> anyhow::Result<Json<UserInfoResponse>, ApiError> {
     let user_repo = UserRepository::new(&state.db_pool);
 
@@ -115,7 +115,7 @@ pub async fn get_user_info(
 /// This endpoint allows a user to update their lightning address.
 pub async fn update_ln_address(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     Json(payload): Json<UpdateLnAddressPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     if let Err(e) = payload.validate() {
@@ -142,7 +142,7 @@ pub async fn update_ln_address(
 
 pub async fn get_upload_url(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<GetUploadUrlPayload>,
 ) -> Result<Json<UploadUrlResponse>, ApiError> {
@@ -163,7 +163,7 @@ pub async fn get_upload_url(
 
 pub async fn complete_upload(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<CompleteUploadPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -187,7 +187,7 @@ pub async fn complete_upload(
 
 pub async fn list_backups(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
 ) -> Result<Json<Vec<BackupInfo>>, ApiError> {
     let backup_repo = BackupRepository::new(&state.db_pool);
     let backups = backup_repo.list(&auth_payload.key).await?;
@@ -196,7 +196,7 @@ pub async fn list_backups(
 
 pub async fn get_download_url(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<GetDownloadUrlPayload>,
 ) -> Result<Json<DownloadUrlResponse>, ApiError> {
@@ -229,7 +229,7 @@ pub async fn get_download_url(
 
 pub async fn delete_backup(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<DeleteBackupPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -256,7 +256,7 @@ pub async fn delete_backup(
 
 pub async fn report_job_status(
     State(app_state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<ReportJobStatusPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -274,7 +274,7 @@ pub async fn report_job_status(
         event.add_context("report_type", format!("{:?}", payload.report_type));
         event.add_context("job_status", format!("{:?}", payload.status));
         event.add_context("has_error", payload.error_message.is_some());
-        event.add_context("notification_k1", &auth_payload.k1);
+        event.add_context("notification_k1", &payload.notification_k1);
     }
 
     let mut tx = app_state.db_pool.begin().await?;
@@ -282,7 +282,7 @@ pub async fn report_job_status(
     let updated = JobStatusRepository::update_by_k1(
         &mut tx,
         &auth_payload.key,
-        &auth_payload.k1,
+        &payload.notification_k1,
         &payload.report_type,
         &payload.status,
         payload.error_message,
@@ -302,7 +302,7 @@ pub async fn report_job_status(
 
 pub async fn update_backup_settings(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     Json(payload): Json<BackupSettingsPayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let backup_repo = BackupRepository::new(&state.db_pool);
@@ -315,7 +315,7 @@ pub async fn update_backup_settings(
 
 pub async fn deregister(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     if let Some(Extension(event)) = event {
@@ -337,7 +337,7 @@ pub async fn deregister(
 
 pub async fn heartbeat_response(
     State(state): State<AppState>,
-    Extension(_auth_payload): Extension<AuthPayload>,
+    Extension(_auth_payload): Extension<AuthenticatedUser>,
     event: Option<Extension<WideEventHandle>>,
     Json(payload): Json<HeartbeatResponsePayload>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
@@ -362,7 +362,7 @@ pub async fn heartbeat_response(
 
 pub async fn report_last_login(
     State(state): State<AppState>,
-    Extension(auth_payload): Extension<AuthPayload>,
+    Extension(auth_payload): Extension<AuthenticatedUser>,
 ) -> anyhow::Result<Json<DefaultSuccessPayload>, ApiError> {
     let user_repo = UserRepository::new(&state.db_pool);
     user_repo.update_last_login(&auth_payload.key).await?;

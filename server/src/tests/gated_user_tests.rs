@@ -12,7 +12,6 @@ use crate::db::push_token_repo::PushTokenRepository;
 use crate::db::user_repo::UserRepository;
 use crate::tests::common::{TestUser, create_test_user, setup_test_app};
 use crate::types::UserInfoResponse;
-use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
 #[tokio::test]
@@ -20,6 +19,7 @@ async fn test_get_user_info() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     // Setup: Create user with the repository
     let mut tx = app_state.db_pool.begin().await.unwrap();
@@ -33,20 +33,16 @@ async fn test_get_user_info() {
     .unwrap();
     tx.commit().await.unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/user_info")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -67,6 +63,7 @@ async fn test_update_ln_address() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     // Setup: Create user with the repository
     let mut tx = app_state.db_pool.begin().await.unwrap();
@@ -80,20 +77,16 @@ async fn test_update_ln_address() {
     .unwrap();
     tx.commit().await.unwrap();
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/update_ln_address")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "new@localhost"
@@ -125,6 +118,7 @@ async fn test_update_ln_address() {
 async fn test_deregister_user() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
     // 1. Create user and associated data using repositories
     let mut tx = app_state.db_pool.begin().await.unwrap();
     UserRepository::create(&mut tx, &user.pubkey().to_string(), "test@localhost", None)
@@ -155,20 +149,16 @@ async fn test_deregister_user() {
         .unwrap();
 
     // 2. Call deregister endpoint
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/deregister")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -393,20 +383,18 @@ async fn test_report_job_status_updates_existing_pending_entry() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     use crate::types::{ReportJobStatusPayload, ReportStatus, ReportType};
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let notification_k1 = "maintenance-notification-k1";
 
     sqlx::query(
         "INSERT INTO job_status_reports (pubkey, notification_k1, report_type, status, error_message)
          VALUES ($1, $2, $3, $4, $5)",
     )
     .bind(user.pubkey().to_string())
-    .bind(auth_payload.k1.clone())
+    .bind(notification_k1)
     .bind("Maintenance")
     .bind("Pending")
     .bind(Option::<String>::None)
@@ -420,11 +408,13 @@ async fn test_report_job_status_updates_existing_pending_entry() {
                 .method(http::Method::POST)
                 .uri("/report_job_status")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&ReportJobStatusPayload {
+                        notification_k1: notification_k1.to_string(),
                         report_type: ReportType::Maintenance,
                         status: ReportStatus::Success,
                         error_message: None,
@@ -444,7 +434,7 @@ async fn test_report_job_status_updates_existing_pending_entry() {
          WHERE pubkey = $1 AND notification_k1 = $2",
     )
     .bind(user.pubkey().to_string())
-    .bind(auth_payload.k1.clone())
+    .bind(notification_k1)
     .fetch_one(&app_state.db_pool)
     .await
     .unwrap();
@@ -456,7 +446,7 @@ async fn test_report_job_status_updates_existing_pending_entry() {
          WHERE pubkey = $1 AND notification_k1 = $2",
     )
     .bind(user.pubkey().to_string())
-    .bind(auth_payload.k1)
+    .bind(notification_k1)
     .fetch_one(&app_state.db_pool)
     .await
     .unwrap();
@@ -469,13 +459,9 @@ async fn test_report_job_status_missing_pending_entry_returns_not_found() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
+    let access_token = user.access_token(&app_state);
 
     use crate::types::{ReportJobStatusPayload, ReportStatus, ReportType};
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -483,11 +469,13 @@ async fn test_report_job_status_missing_pending_entry_returns_not_found() {
                 .method(http::Method::POST)
                 .uri("/report_job_status")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&ReportJobStatusPayload {
+                        notification_k1: "missing-pending-k1".to_string(),
                         report_type: ReportType::Maintenance,
                         status: ReportStatus::Failure,
                         error_message: Some("missing pending".to_string()),
@@ -508,11 +496,7 @@ async fn test_report_job_status_rejects_pending_status() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -520,11 +504,13 @@ async fn test_report_job_status_rejects_pending_status() {
                 .method(http::Method::POST)
                 .uri("/report_job_status")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
+                        "notification_k1": "pending-status-k1",
                         "report_type": "maintenance",
                         "status": "pending",
                         "error_message": null
@@ -549,11 +535,7 @@ async fn test_report_job_status_rejects_timeout_status() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await;
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -561,11 +543,13 @@ async fn test_report_job_status_rejects_timeout_status() {
                 .method(http::Method::POST)
                 .uri("/report_job_status")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
+                        "notification_k1": "timeout-status-k1",
                         "report_type": "maintenance",
                         "status": "timeout",
                         "error_message": null
@@ -697,15 +681,11 @@ async fn test_stale_pending_timeout_cleanup_does_not_override_existing_error_mes
 async fn test_register_new_user_with_ark_address() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
     let ark_address = Some(
         "tark1p0qtgclpzqqppvmzrkt3kyyqd4lv3jxex32zagcu0fwfm4dkr8ud58h5ej53u4wcpqqtzhwd8"
             .to_string(),
     );
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -713,9 +693,10 @@ async fn test_register_new_user_with_ark_address() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "newuserark@localhost",
@@ -746,14 +727,10 @@ async fn test_register_existing_user_update_ark_address() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user = TestUser::new();
     create_test_user(&app_state, &user, None).await; // Register without ark_address
+    let access_token = user.access_token(&app_state);
 
     let new_ark_address =
         Some("tark1newarkaddress1234567890abcdefghijklmnopqrstuvwxyza".to_string());
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
 
     let response = app
         .oneshot(
@@ -761,9 +738,10 @@ async fn test_register_existing_user_update_ark_address() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key.clone())
-                .header("x-auth-sig", auth_payload.sig.clone())
-                .header("x-auth-k1", auth_payload.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "existinguserark@localhost", // Can be same or different
@@ -794,16 +772,14 @@ async fn test_register_ark_address_taken() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user1 = TestUser::new();
     let user2 = TestUser::new_with_key(&[0x01; 32]);
+    let access_token_1 = user1.access_token(&app_state);
+    let access_token_2 = user2.access_token(&app_state);
     let taken_ark_address = Some(
         "tark1p0qtgclpzqqppvmzrkt3kyyqd4lv3jxex32zagcu0fwfm4dkr8ud58h5ej53u4wcpqqtzhwd8"
             .to_string(),
     );
 
     // Register user1 with the ark_address
-    let k1_1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_1 = user1.auth_payload(&k1_1);
     let response1 = app
         .clone()
         .oneshot(
@@ -811,9 +787,10 @@ async fn test_register_ark_address_taken() {
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_1.key.clone())
-                .header("x-auth-sig", auth_payload_1.sig.clone())
-                .header("x-auth-k1", auth_payload_1.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token_1),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "user1ark@localhost",
@@ -828,19 +805,16 @@ async fn test_register_ark_address_taken() {
     assert_eq!(response1.status(), StatusCode::OK);
 
     // Try to register user2 with the same ark_address
-    let k1_2 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_2 = user2.auth_payload(&k1_2);
     let response2 = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_2.key.clone())
-                .header("x-auth-sig", auth_payload_2.sig.clone())
-                .header("x-auth-k1", auth_payload_2.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token_2),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "user2ark@localhost",
@@ -864,23 +838,22 @@ async fn test_update_ark_address_taken() {
     let (app, app_state, _guard) = setup_test_app().await;
     let user1 = TestUser::new();
     let user2 = TestUser::new_with_key(&[0x01; 32]);
+    let access_token_1 = user1.access_token(&app_state);
+    let access_token_2 = user2.access_token(&app_state);
     let ark_address1 = Some("tark1user1unique1234567890abcdefghijklmnopqrstuvwxyza".to_string());
     let ark_address2 = Some("tark1user2unique1234567890abcdefghijklmnopqrstuvwxyza".to_string());
 
     // Register user1 with ark_address1
-    let k1_1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_1 = user1.auth_payload(&k1_1);
     app.clone()
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_1.key.clone())
-                .header("x-auth-sig", auth_payload_1.sig.clone())
-                .header("x-auth-k1", auth_payload_1.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token_1),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "user1@localhost",
@@ -894,19 +867,16 @@ async fn test_update_ark_address_taken() {
         .unwrap();
 
     // Register user2 with ark_address2
-    let k1_2 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_2 = user2.auth_payload(&k1_2);
     app.clone()
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/register")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_2.key.clone())
-                .header("x-auth-sig", auth_payload_2.sig.clone())
-                .header("x-auth-k1", auth_payload_2.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token_2),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "user2@localhost",
@@ -920,19 +890,16 @@ async fn test_update_ark_address_taken() {
         .unwrap();
 
     // Try to update user1's ark_address to ark_address2 (which is taken)
-    let k1_3 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_3 = user1.auth_payload(&k1_3); // Use user1's auth
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/register") // Still using /register for update
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_3.key.clone())
-                .header("x-auth-sig", auth_payload_3.sig.clone())
-                .header("x-auth-k1", auth_payload_3.k1.clone())
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token_1),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "ln_address": "user1@localhost", // Can be same or different
@@ -965,6 +932,7 @@ async fn test_report_last_login() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     let mut tx = app_state.db_pool.begin().await.unwrap();
     UserRepository::create(
@@ -985,20 +953,16 @@ async fn test_report_last_login() {
         .unwrap();
     assert!(initial_last_login.is_none());
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/report_last_login")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload.key)
-                .header("x-auth-sig", auth_payload.sig)
-                .header("x-auth-k1", auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -1021,6 +985,7 @@ async fn test_report_last_login_updates_timestamp() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     let mut tx = app_state.db_pool.begin().await.unwrap();
     UserRepository::create(
@@ -1034,11 +999,6 @@ async fn test_report_last_login_updates_timestamp() {
     tx.commit().await.unwrap();
 
     // First login
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .clone()
         .oneshot(
@@ -1046,9 +1006,10 @@ async fn test_report_last_login_updates_timestamp() {
                 .method(http::Method::POST)
                 .uri("/report_last_login")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -1068,20 +1029,16 @@ async fn test_report_last_login_updates_timestamp() {
     tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
 
     // Second login
-    let k1_2 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload_2 = user.auth_payload(&k1_2);
-
     let response2 = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/report_last_login")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", auth_payload_2.key)
-                .header("x-auth-sig", auth_payload_2.sig)
-                .header("x-auth-k1", auth_payload_2.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::empty())
                 .unwrap(),
         )

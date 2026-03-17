@@ -38,7 +38,9 @@ async fn test_normal_priority_respects_spacing() {
     let coordinator = NotificationCoordinator::new(app_state.clone());
     let request = NotificationRequest {
         priority: Priority::Normal,
-        data: NotificationData::BackupTrigger(BackupTriggerNotification { k1: String::new() }),
+        data: NotificationData::BackupTrigger(BackupTriggerNotification {
+            notification_k1: String::new(),
+        }),
         target_pubkey: Some(pubkey.clone()),
     };
 
@@ -85,7 +87,9 @@ async fn test_critical_priority_bypasses_spacing() {
     let coordinator = NotificationCoordinator::new(app_state.clone());
     let request = NotificationRequest {
         priority: Priority::High,
-        data: NotificationData::Maintenance(MaintenanceNotification { k1: String::new() }),
+        data: NotificationData::Maintenance(MaintenanceNotification {
+            notification_k1: String::new(),
+        }),
         target_pubkey: Some(pubkey.clone()),
     };
 

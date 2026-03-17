@@ -36,6 +36,8 @@ pub struct Config {
     pub ntfy_auth_token: String,
     pub ses_from_address: String,
     pub email_dev_mode: bool,
+    pub auth_jwt_secret: String,
+    pub auth_jwt_ttl_hours: u64,
 }
 
 impl Config {
@@ -101,6 +103,11 @@ impl Config {
             email_dev_mode: std::env::var("EMAIL_DEV_MODE")
                 .map(|v| v == "true" || v == "1")
                 .unwrap_or(false),
+            auth_jwt_secret: std::env::var("AUTH_JWT_SECRET").unwrap_or_default(),
+            auth_jwt_ttl_hours: std::env::var("AUTH_JWT_TTL_HOURS")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(72),
         };
 
         config.validate()?;
@@ -123,6 +130,9 @@ impl Config {
         }
         if self.s3_bucket_name.is_empty() {
             anyhow::bail!("S3_BUCKET_NAME is required");
+        }
+        if self.auth_jwt_secret.is_empty() {
+            anyhow::bail!("AUTH_JWT_SECRET is required");
         }
         Ok(())
     }
@@ -180,6 +190,8 @@ impl Config {
         tracing::debug!("Redis Pool Size: {}", self.redis_pool_size);
         tracing::debug!("Ntfy Auth Token: [REDACTED]");
         tracing::debug!("SES From Address: {}", self.ses_from_address);
+        tracing::debug!("JWT Auth Secret: [REDACTED]");
+        tracing::debug!("JWT TTL Hours: {}", self.auth_jwt_ttl_hours);
         tracing::debug!("============================");
     }
 }

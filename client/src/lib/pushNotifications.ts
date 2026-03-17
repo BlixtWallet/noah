@@ -36,7 +36,7 @@ const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND-NOTIFICATION-TASK";
 async function handleTaskCompletion(
   report_type: ReportType,
   result: Result<void, Error>,
-  k1: string,
+  notification_k1: string,
 ) {
   if (result.isErr()) {
     log.w(`Failed to trigger ${report_type} task, reporting failure`);
@@ -44,7 +44,7 @@ async function handleTaskCompletion(
       report_type,
       status: "failure",
       error_message: result.error.message,
-      k1,
+      notification_k1,
     });
 
     if (jobStatusResult.isErr()) {
@@ -57,7 +57,7 @@ async function handleTaskCompletion(
     report_type,
     status: "success",
     error_message: null,
-    k1,
+    notification_k1,
   });
 
   if (jobStatusResult.isErr()) {
@@ -137,7 +137,11 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
             case "maintenance": {
               const result = await maintenanceTask();
               // Also perform a sync after maintenance
-              await handleTaskCompletion("maintenance", result, notificationData.k1);
+              await handleTaskCompletion(
+                "maintenance",
+                result,
+                notificationData.notification_k1,
+              );
 
               // Refresh widget after maintenance
               await updateWidget();
@@ -148,7 +152,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               log.i("Received lightning invoice request", [notificationData]);
               const invoiceResult = await submitInvoiceTask(
                 notificationData.transaction_id,
-                notificationData.k1,
                 notificationData.amount,
               );
 
@@ -180,7 +183,7 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
 
             case "backup_trigger": {
               const result = await triggerBackupTask();
-              await handleTaskCompletion("backup", result, notificationData.k1);
+              await handleTaskCompletion("backup", result, notificationData.notification_k1);
               log.d("Backup task completed");
               break;
             }
@@ -189,7 +192,6 @@ TaskManager.defineTask<Notifications.NotificationTaskPayload>(
               log.i("Received heartbeat notification", [notificationData]);
               const heartbeatResult = await heartbeatResponse({
                 notification_id: notificationData.notification_id,
-                k1: notificationData.k1,
               });
 
               if (heartbeatResult.isErr()) {

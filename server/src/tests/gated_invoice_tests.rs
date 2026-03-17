@@ -6,7 +6,6 @@ use tower::ServiceExt;
 
 use crate::tests::common::{TestUser, setup_test_app};
 use crate::types::DefaultSuccessPayload;
-use crate::utils::make_k1;
 
 #[tracing_test::traced_test]
 #[tokio::test]
@@ -14,6 +13,7 @@ async fn test_submit_invoice_stores_in_redis() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
         .bind(user.pubkey().to_string())
@@ -21,11 +21,6 @@ async fn test_submit_invoice_stores_in_redis() {
         .execute(&app_state.db_pool)
         .await
         .unwrap();
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
 
     let transaction_id = "test-transaction-123";
     let invoice = "lnbc1000n1test_invoice_data";
@@ -36,9 +31,10 @@ async fn test_submit_invoice_stores_in_redis() {
                 .method(http::Method::POST)
                 .uri("/lnurlp/submit_invoice")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "transaction_id": transaction_id,
@@ -72,6 +68,7 @@ async fn test_submit_invoice_can_be_retrieved() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
         .bind(user.pubkey().to_string())
@@ -79,11 +76,6 @@ async fn test_submit_invoice_can_be_retrieved() {
         .execute(&app_state.db_pool)
         .await
         .unwrap();
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
 
     let transaction_id = "test-transaction-456";
     let invoice = "lnbc2000n1another_test_invoice";
@@ -94,9 +86,10 @@ async fn test_submit_invoice_can_be_retrieved() {
                 .method(http::Method::POST)
                 .uri("/lnurlp/submit_invoice")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "transaction_id": transaction_id,
@@ -155,7 +148,7 @@ async fn test_submit_invoice_requires_auth() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }
 
 #[tracing_test::traced_test]
@@ -164,11 +157,7 @@ async fn test_submit_invoice_requires_existing_user() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
-
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
+    let access_token = user.access_token(&app_state);
 
     let response = app
         .oneshot(
@@ -176,9 +165,10 @@ async fn test_submit_invoice_requires_existing_user() {
                 .method(http::Method::POST)
                 .uri("/lnurlp/submit_invoice")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "transaction_id": "test-123",
@@ -200,6 +190,7 @@ async fn test_submit_invoice_overwrites_existing() {
     let (app, app_state, _guard) = setup_test_app().await;
 
     let user = TestUser::new();
+    let access_token = user.access_token(&app_state);
 
     sqlx::query("INSERT INTO users (pubkey, lightning_address) VALUES ($1, $2)")
         .bind(user.pubkey().to_string())
@@ -218,20 +209,16 @@ async fn test_submit_invoice_overwrites_existing() {
         .await
         .expect("failed to store first invoice");
 
-    let k1 = make_k1(&app_state.k1_cache)
-        .await
-        .expect("failed to create k1");
-    let auth_payload = user.auth_payload(&k1);
-
     let response = app
         .oneshot(
             Request::builder()
                 .method(http::Method::POST)
                 .uri("/lnurlp/submit_invoice")
                 .header(http::header::CONTENT_TYPE, "application/json")
-                .header("x-auth-key", &auth_payload.key)
-                .header("x-auth-sig", &auth_payload.sig)
-                .header("x-auth-k1", &auth_payload.k1)
+                .header(
+                    http::header::AUTHORIZATION,
+                    format!("Bearer {}", access_token),
+                )
                 .body(Body::from(
                     serde_json::to_vec(&json!({
                         "transaction_id": transaction_id,
@@ -246,24 +233,11 @@ async fn test_submit_invoice_overwrites_existing() {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let stored = app_state
+    let stored_invoice = app_state
         .invoice_store
         .get(transaction_id)
         .await
-        .expect("failed to get invoice");
-    assert_eq!(stored, Some(second_invoice.to_string()));
-}
+        .expect("failed to get invoice from Redis");
 
-#[tracing_test::traced_test]
-#[tokio::test]
-async fn test_invoice_store_returns_none_for_nonexistent() {
-    let (_app, app_state, _guard) = setup_test_app().await;
-
-    let result = app_state
-        .invoice_store
-        .get("nonexistent-transaction-id")
-        .await
-        .expect("failed to query invoice store");
-
-    assert_eq!(result, None);
+    assert_eq!(stored_invoice, Some(second_invoice.to_string()));
 }

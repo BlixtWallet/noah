@@ -30,13 +30,15 @@ export type AppVersionInfo = { minimum_required_version: string, update_required
  */
 export type AuthEvent = "REGISTERED";
 
-export type AuthPayload = { key: string, sig: string, k1: string, };
+export type AuthLoginPayload = { key: string, sig: string, k1: string, };
+
+export type AuthLoginResponse = { access_token: string, token_type: string, expires_at: string, expires_in_seconds: number, };
 
 export type BackupInfo = { backup_version: number, created_at: string, backup_size: number, };
 
 export type BackupSettingsPayload = { backup_enabled: boolean, };
 
-export type BackupTriggerNotification = { k1: string, };
+export type BackupTriggerNotification = { notification_k1: string, };
 
 export type CompleteUploadPayload = { s3_key: string, backup_version: number, backup_size: number, };
 
@@ -60,7 +62,7 @@ export type GetDownloadUrlPayload = { backup_version: number | null, };
 
 export type GetUploadUrlPayload = { backup_version: number, };
 
-export type HeartbeatNotification = { k1: string, notification_id: string, };
+export type HeartbeatNotification = { notification_id: string, };
 
 export type HeartbeatResponsePayload = { notification_id: string, };
 
@@ -82,9 +84,9 @@ export type LightningAddressSuggestionsResponse = {
  */
 suggestions: Array<string>, };
 
-export type LightningInvoiceRequestNotification = { k1: string, transaction_id: string, amount: number, };
+export type LightningInvoiceRequestNotification = { transaction_id: string, amount: number, };
 
-export type MaintenanceNotification = { k1: string, };
+export type MaintenanceNotification = { notification_k1: string, };
 
 export type NotificationData = { "notification_type": "maintenance" } & MaintenanceNotification | { "notification_type": "lightning_invoice_request" } & LightningInvoiceRequestNotification | { "notification_type": "backup_trigger" } & BackupTriggerNotification | { "notification_type": "heartbeat" } & HeartbeatNotification;
 
@@ -139,7 +141,7 @@ lightning_address: string | null,
  */
 is_email_verified: boolean, };
 
-export type ReportJobStatusPayload = { report_type: ReportType, status: ReportStatus, error_message: string | null, };
+export type ReportJobStatusPayload = { notification_k1: string, report_type: ReportType, status: ReportStatus, error_message: string | null, };
 
 export type ReportStatus = "pending" | "success" | "failure" | "timeout";
 

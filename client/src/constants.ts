@@ -19,6 +19,7 @@ export const AUTO_BACKUP_SUCCESS_BANNER_MS = 5 * 1000; // 5 seconds
 export const AUTO_BACKUP_IN_PROGRESS_TIMEOUT_MS = 30 * 1000; // 30 seconds
 
 export const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
+export const AUTH_TOKEN_KEYCHAIN_SERVICE = `com.noah.auth-token.${APP_VARIANT}`;
 export const KEYCHAIN_USERNAME = "noah";
 
 export const PLATFORM = Platform.OS;

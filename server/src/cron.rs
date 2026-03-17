@@ -30,7 +30,7 @@ pub async fn send_backup_notifications(app_state: AppState) -> anyhow::Result<()
 
     for pubkey in pubkeys {
         let notification_data = NotificationData::BackupTrigger(BackupTriggerNotification {
-            k1: String::new(), // Will be replaced with unique k1 per device
+            notification_k1: String::new(), // Will be replaced with unique k1 per device
         });
 
         let request = NotificationRequest {
@@ -63,7 +63,6 @@ pub async fn send_heartbeat_notifications(app_state: AppState) -> anyhow::Result
         let notification_id = heartbeat_repo.create_notification(&pubkey).await?;
 
         let notification_data = NotificationData::Heartbeat(HeartbeatNotification {
-            k1: String::new(), // Will be replaced with unique k1 per device
             notification_id: notification_id.clone(),
         });
 

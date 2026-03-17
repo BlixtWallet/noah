@@ -11,7 +11,7 @@ import logger from "~/lib/log";
 const log = logger("crypto");
 import * as Keychain from "react-native-keychain";
 import { APP_VARIANT } from "~/config";
-import { KEYCHAIN_USERNAME } from "~/constants";
+import { AUTH_TOKEN_KEYCHAIN_SERVICE, KEYCHAIN_USERNAME } from "~/constants";
 
 const MNEMONIC_KEYCHAIN_SERVICE = `com.noah.mnemonic.${APP_VARIANT}`;
 
@@ -89,4 +89,53 @@ export const getMnemonic = async (): Promise<Result<string, Error>> => {
   }
 
   return ok(credentials.password);
+};
+
+export const setServerAuthToken = async (token: string): Promise<Result<void, Error>> => {
+  const result = await ResultAsync.fromPromise(
+    Keychain.setGenericPassword(KEYCHAIN_USERNAME, token, {
+      service: AUTH_TOKEN_KEYCHAIN_SERVICE,
+    }),
+    (e) => e as Error,
+  );
+
+  if (result.isErr()) {
+    log.w("Failed to store server auth token", [result.error]);
+    return err(result.error);
+  }
+
+  return ok(undefined);
+};
+
+export const getServerAuthToken = async (): Promise<Result<string | null, Error>> => {
+  const credentialsResult = await ResultAsync.fromPromise(
+    Keychain.getGenericPassword({ service: AUTH_TOKEN_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+
+  if (credentialsResult.isErr()) {
+    log.w("Failed to read server auth token", [credentialsResult.error]);
+    return err(credentialsResult.error);
+  }
+
+  const credentials = credentialsResult.value;
+  if (!credentials || !credentials.password) {
+    return ok(null);
+  }
+
+  return ok(credentials.password);
+};
+
+export const resetServerAuthToken = async (): Promise<Result<void, Error>> => {
+  const result = await ResultAsync.fromPromise(
+    Keychain.resetGenericPassword({ service: AUTH_TOKEN_KEYCHAIN_SERVICE }),
+    (e) => e as Error,
+  );
+
+  if (result.isErr()) {
+    log.w("Failed to clear server auth token", [result.error]);
+    return err(result.error);
+  }
+
+  return ok(undefined);
 };

@@ -14,6 +14,21 @@ struct GetK1Response {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+struct AuthLoginPayload {
+    key: String,
+    sig: String,
+    k1: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct AuthLoginResponse {
+    access_token: String,
+    token_type: String,
+    expires_at: String,
+    expires_in_seconds: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 struct AppVersionCheckPayload {
     client_version: String,
 }
@@ -54,6 +69,7 @@ struct UpdateLnAddressPayload {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ReportJobStatusPayload {
+    notification_k1: String,
     report_type: String,
     status: String,
     error_message: Option<String>,
@@ -114,7 +130,7 @@ async fn register_test_user(
     test_user: &TestUser,
     name_prefix: &'static str,
 ) -> Option<String> {
-    let (k1, sig) = get_k1_and_sign(user, test_user, name_prefix).await?;
+    let access_token = login_test_user(user, test_user, name_prefix).await?;
 
     let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
     let ln_address = format!("loadtest{}@localhost", user_num);
@@ -135,9 +151,7 @@ async fn register_test_user(
         .get_request_builder(&GooseMethod::Post, "/v0/register")
         .ok()?
         .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1)
+        .header("Authorization", format!("Bearer {}", access_token))
         .body(serde_json::to_string(&payload).unwrap());
 
     let name = leak_str(format!("{}_register", name_prefix));
@@ -154,6 +168,42 @@ async fn register_test_user(
     }
 }
 
+async fn login_test_user(
+    user: &mut GooseUser,
+    test_user: &TestUser,
+    name_prefix: &'static str,
+) -> Option<String> {
+    let (k1, sig) = get_k1_and_sign(user, test_user, name_prefix).await?;
+
+    let payload = AuthLoginPayload {
+        key: test_user.pubkey(),
+        sig,
+        k1,
+    };
+
+    let request_builder = user
+        .get_request_builder(&GooseMethod::Post, "/v0/auth/login")
+        .ok()?
+        .header("Content-Type", "application/json")
+        .body(serde_json::to_string(&payload).ok()?);
+
+    let name = leak_str(format!("{}_auth_login", name_prefix));
+    let goose_request = GooseRequest::builder()
+        .set_request_builder(request_builder)
+        .name(name)
+        .build();
+
+    let response = user.request(goose_request).await.ok()?;
+
+    match response.response {
+        Ok(r) if r.status().is_success() => {
+            let login_response: AuthLoginResponse = r.json().await.ok()?;
+            Some(login_response.access_token)
+        }
+        _ => None,
+    }
+}
+
 async fn setup_test_user(host: &str) -> anyhow::Result<String> {
     let client = reqwest::Client::new();
     let test_user = TestUser::new_random();
@@ -165,7 +215,18 @@ async fn setup_test_user(host: &str) -> anyhow::Result<String> {
         .json()
         .await?;
 
-    let sig = test_user.sign(&k1_response.k1);
+    let login_response: AuthLoginResponse = client
+        .post(format!("{}/v0/auth/login", host))
+        .header("Content-Type", "application/json")
+        .json(&AuthLoginPayload {
+            key: test_user.pubkey(),
+            sig: test_user.sign(&k1_response.k1),
+            k1: k1_response.k1,
+        })
+        .send()
+        .await?
+        .json()
+        .await?;
 
     let payload = RegisterPayload {
         ln_address: None,
@@ -176,9 +237,10 @@ async fn setup_test_user(host: &str) -> anyhow::Result<String> {
     let response: RegisterResponse = client
         .post(format!("{}/v0/register", host))
         .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1_response.k1)
+        .header(
+            "Authorization",
+            format!("Bearer {}", login_response.access_token),
+        )
         .json(&payload)
         .send()
         .await?
@@ -253,25 +315,22 @@ async fn loadtest_registration_flow(user: &mut GooseUser) -> TransactionResult {
 // Register + get user info (DB write + read)
 async fn loadtest_get_user_info(user: &mut GooseUser) -> TransactionResult {
     let test_user = TestUser::new_random();
+    let access_token = match login_test_user(user, &test_user, "userinfo").await {
+        Some(token) => token,
+        None => return Ok(()),
+    };
 
-    if register_test_user(user, &test_user, "userinfo")
+    if register_test_user(user, &test_user, "userinfo_register")
         .await
         .is_none()
     {
         return Ok(());
     }
 
-    let (k1, sig) = match get_k1_and_sign(user, &test_user, "userinfo_fetch").await {
-        Some(v) => v,
-        None => return Ok(()),
-    };
-
     let request_builder = user
         .get_request_builder(&GooseMethod::Post, "/v0/user_info")?
         .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1)
+        .header("Authorization", format!("Bearer {}", access_token))
         .body("{}");
 
     let goose_request = GooseRequest::builder()
@@ -286,18 +345,17 @@ async fn loadtest_get_user_info(user: &mut GooseUser) -> TransactionResult {
 // Register + register push token (DB write + write)
 async fn loadtest_register_push_token(user: &mut GooseUser) -> TransactionResult {
     let test_user = TestUser::new_random();
+    let access_token = match login_test_user(user, &test_user, "pushtoken").await {
+        Some(token) => token,
+        None => return Ok(()),
+    };
 
-    if register_test_user(user, &test_user, "pushtoken")
+    if register_test_user(user, &test_user, "pushtoken_register")
         .await
         .is_none()
     {
         return Ok(());
     }
-
-    let (k1, sig) = match get_k1_and_sign(user, &test_user, "pushtoken_register").await {
-        Some(v) => v,
-        None => return Ok(()),
-    };
 
     let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
     let payload = RegisterPushTokenPayload {
@@ -307,9 +365,7 @@ async fn loadtest_register_push_token(user: &mut GooseUser) -> TransactionResult
     let request_builder = user
         .get_request_builder(&GooseMethod::Post, "/v0/register_push_token")?
         .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1)
+        .header("Authorization", format!("Bearer {}", access_token))
         .body(serde_json::to_string(&payload).unwrap());
 
     let goose_request = GooseRequest::builder()
@@ -324,18 +380,17 @@ async fn loadtest_register_push_token(user: &mut GooseUser) -> TransactionResult
 // Register + update ln address (DB write + write)
 async fn loadtest_update_ln_address(user: &mut GooseUser) -> TransactionResult {
     let test_user = TestUser::new_random();
+    let access_token = match login_test_user(user, &test_user, "update_ln").await {
+        Some(token) => token,
+        None => return Ok(()),
+    };
 
-    if register_test_user(user, &test_user, "update_ln")
+    if register_test_user(user, &test_user, "update_ln_register")
         .await
         .is_none()
     {
         return Ok(());
     }
-
-    let (k1, sig) = match get_k1_and_sign(user, &test_user, "update_ln_addr").await {
-        Some(v) => v,
-        None => return Ok(()),
-    };
 
     let user_num = USER_COUNTER.fetch_add(1, Ordering::SeqCst);
     let payload = UpdateLnAddressPayload {
@@ -345,9 +400,7 @@ async fn loadtest_update_ln_address(user: &mut GooseUser) -> TransactionResult {
     let request_builder = user
         .get_request_builder(&GooseMethod::Post, "/v0/update_ln_address")?
         .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1)
+        .header("Authorization", format!("Bearer {}", access_token))
         .body(serde_json::to_string(&payload).unwrap());
 
     let goose_request = GooseRequest::builder()
@@ -362,20 +415,20 @@ async fn loadtest_update_ln_address(user: &mut GooseUser) -> TransactionResult {
 // Register + report job status (DB write + write)
 async fn loadtest_report_job_status(user: &mut GooseUser) -> TransactionResult {
     let test_user = TestUser::new_random();
+    let access_token = match login_test_user(user, &test_user, "job_status").await {
+        Some(token) => token,
+        None => return Ok(()),
+    };
 
-    if register_test_user(user, &test_user, "job_status")
+    if register_test_user(user, &test_user, "job_status_register")
         .await
         .is_none()
     {
         return Ok(());
     }
 
-    let (k1, sig) = match get_k1_and_sign(user, &test_user, "job_status_report").await {
-        Some(v) => v,
-        None => return Ok(()),
-    };
-
     let payload = ReportJobStatusPayload {
+        notification_k1: "loadtest-notification-k1".to_string(),
         report_type: "Maintenance".to_string(),
         status: "Success".to_string(),
         error_message: None,
@@ -384,9 +437,7 @@ async fn loadtest_report_job_status(user: &mut GooseUser) -> TransactionResult {
     let request_builder = user
         .get_request_builder(&GooseMethod::Post, "/v0/report_job_status")?
         .header("Content-Type", "application/json")
-        .header("x-auth-key", test_user.pubkey())
-        .header("x-auth-sig", sig)
-        .header("x-auth-k1", k1)
+        .header("Authorization", format!("Bearer {}", access_token))
         .body(serde_json::to_string(&payload).unwrap());
 
     let goose_request = GooseRequest::builder()
