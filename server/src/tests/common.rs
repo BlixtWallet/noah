@@ -17,13 +17,13 @@ use crate::config::Config;
 use crate::email_client::EmailClient;
 use crate::routes::gated_api_v0::{
     authorize_mailbox, complete_upload, delete_backup, deregister, get_download_url,
-    get_upload_url, get_user_info, heartbeat_response, list_backups, register_push_token,
-    report_job_status, report_last_login, revoke_mailbox_authorization, submit_invoice,
-    update_backup_settings, update_ln_address,
+    get_upload_url, get_user_info, heartbeat_response, list_backups, ln_address_suggestions,
+    register_push_token, report_job_status, report_last_login, revoke_mailbox_authorization,
+    submit_invoice, update_backup_settings, update_ln_address,
 };
 use crate::routes::public_api_v0::{
-    auth_login, check_app_version, get_k1, ln_address_suggestions, lnurlp_request, register,
-    send_verification_email, verify_email,
+    auth_login, check_app_version, get_k1, lnurlp_request, register, send_verification_email,
+    verify_email,
 };
 use crate::types::AuthLoginPayload;
 use crate::{AppState, AppStruct};
@@ -169,6 +169,7 @@ pub async fn setup_test_app() -> (Router, AppState, TestDbGuard) {
         .route("/mailbox/authorize", post(authorize_mailbox))
         .route("/mailbox/revoke", post(revoke_mailbox_authorization))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
+        .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
         .route("/deregister", post(deregister))
@@ -227,7 +228,6 @@ pub async fn setup_public_test_app() -> (Router, AppState, TestDbGuard) {
     let app = Router::new()
         .route("/getk1", axum::routing::get(get_k1))
         .route("/auth/login", post(auth_login))
-        .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/app_version", post(check_app_version))
         .route(
             "/.well-known/lnurlp/{username}",

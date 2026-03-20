@@ -31,13 +31,14 @@ use crate::{
         app_middleware,
         gated_api_v0::{
             authorize_mailbox, complete_upload, delete_backup, deregister, get_download_url,
-            get_upload_url, get_user_info, heartbeat_response, list_backups, register_push_token,
-            report_job_status, report_last_login, revoke_mailbox_authorization, submit_invoice,
-            update_backup_settings, update_ln_address,
+            get_upload_url, get_user_info, heartbeat_response, list_backups,
+            ln_address_suggestions, register_push_token, report_job_status, report_last_login,
+            revoke_mailbox_authorization, submit_invoice, update_backup_settings,
+            update_ln_address,
         },
         public_api_v0::{
-            auth_login, check_app_version, get_k1, ln_address_suggestions, lnurlp_request,
-            register, send_verification_email, verify_email,
+            auth_login, check_app_version, get_k1, lnurlp_request, register,
+            send_verification_email, verify_email,
         },
     },
 };
@@ -241,7 +242,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     // Create rate limiters
     let public_rate_limiter = rate_limit::create_public_rate_limiter();
     let auth_login_rate_limiter = rate_limit::create_public_rate_limiter();
-    let suggestions_rate_limiter = rate_limit::create_suggestions_rate_limiter();
     let auth_rate_limiter = rate_limit::create_auth_rate_limiter();
 
     // Email verification routes - need auth and user to exist, but NOT email verification
@@ -256,6 +256,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route("/mailbox/authorize", post(authorize_mailbox))
         .route("/mailbox/revoke", post(revoke_mailbox_authorization))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
+        .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
         .route("/deregister", post(deregister))
@@ -286,10 +287,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route(
             "/auth/login",
             post(auth_login).layer(auth_login_rate_limiter),
-        )
-        .route(
-            "/ln_address_suggestions",
-            post(ln_address_suggestions).layer(suggestions_rate_limiter),
         )
         .route("/app_version", post(check_app_version))
         .merge(bearer_router);
