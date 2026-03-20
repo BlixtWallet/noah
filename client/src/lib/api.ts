@@ -341,7 +341,6 @@ export const getLightningAddressSuggestions = (payload: LightningAddressSuggesti
   post<LightningAddressSuggestionsPayload, LightningAddressSuggestionsResponse>(
     "/ln_address_suggestions",
     payload,
-    { authenticated: false },
   );
 
 export const registerPushToken = (payload: RegisterPushToken) =>
