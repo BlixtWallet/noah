@@ -242,7 +242,6 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
     // Create rate limiters
     let public_rate_limiter = rate_limit::create_public_rate_limiter();
     let auth_login_rate_limiter = rate_limit::create_public_rate_limiter();
-    let suggestions_rate_limiter = rate_limit::create_suggestions_rate_limiter();
     let auth_rate_limiter = rate_limit::create_auth_rate_limiter();
 
     // Email verification routes - need auth and user to exist, but NOT email verification
@@ -257,10 +256,7 @@ async fn start_server(config: Config) -> anyhow::Result<()> {
         .route("/mailbox/authorize", post(authorize_mailbox))
         .route("/mailbox/revoke", post(revoke_mailbox_authorization))
         .route("/lnurlp/submit_invoice", post(submit_invoice))
-        .route(
-            "/ln_address_suggestions",
-            post(ln_address_suggestions).layer(suggestions_rate_limiter),
-        )
+        .route("/ln_address_suggestions", post(ln_address_suggestions))
         .route("/user_info", post(get_user_info))
         .route("/update_ln_address", post(update_ln_address))
         .route("/deregister", post(deregister))
