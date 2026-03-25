@@ -170,10 +170,19 @@ const awaitLightningPayment = async (
   if (result.isErr()) {
     throw result.error;
   }
+  if (result.value.preimage) {
+    return result.value;
+  }
+
   const checkResult = await checkLightningPayment(result.value.payment_hash, true);
   if (checkResult.isErr()) {
     throw checkResult.error;
   }
+  if (!checkResult.value) {
+    log.w("Lightning payment did not return a preimage", [result.value.payment_hash]);
+    throw new Error("Lightning payment did not complete. No preimage was returned.");
+  }
+
   result.value.preimage = checkResult.value;
   return result.value;
 };
