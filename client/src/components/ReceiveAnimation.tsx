@@ -1,64 +1,83 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
-  useSharedValue,
-  useAnimatedProps,
-  withTiming,
-  withSequence,
-  withDelay,
   Easing,
+  useAnimatedProps,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
+import { COLORS } from "~/lib/styleConstants";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const ReceiveAnimation = ({ className }: { className?: string }) => {
-  const circleScale = useSharedValue(0);
+  const coinRadius = useSharedValue(46);
+  const coinOpacity = useSharedValue(0);
+  const innerCoinRadius = useSharedValue(34);
   const checkmarkProgress = useSharedValue(0);
-  const opacity = useSharedValue(0);
 
-  const checkmarkPathLength = 100;
+  const checkmarkPathLength = 74;
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 200 });
-
-    circleScale.value = withSequence(
-      withTiming(0, { duration: 0 }),
-      withTiming(1.15, { duration: 500, easing: Easing.out(Easing.cubic) }),
-      withTiming(1, { duration: 200, easing: Easing.inOut(Easing.ease) }),
+    coinOpacity.value = withTiming(1, { duration: 220 });
+    coinRadius.value = withSequence(
+      withTiming(36, { duration: 0 }),
+      withTiming(50, { duration: 460, easing: Easing.out(Easing.back(1.1)) }),
+      withTiming(46, { duration: 220, easing: Easing.inOut(Easing.quad) }),
+    );
+    innerCoinRadius.value = withSequence(
+      withTiming(26, { duration: 0 }),
+      withTiming(39, { duration: 520, easing: Easing.out(Easing.cubic) }),
+      withTiming(34, { duration: 200, easing: Easing.inOut(Easing.quad) }),
     );
 
     checkmarkProgress.value = withDelay(
-      400,
+      360,
       withTiming(1, {
-        duration: 600,
+        duration: 640,
         easing: Easing.bezier(0.65, 0, 0.35, 1),
       }),
     );
-  }, []);
+  }, [checkmarkProgress, coinOpacity, coinRadius, innerCoinRadius]);
 
-  const circleAnimatedProps = useAnimatedProps(() => ({
-    transform: [{ scale: circleScale.value }],
-    opacity: opacity.value,
+  const coinAnimatedProps = useAnimatedProps(() => ({
+    r: coinRadius.value,
+    opacity: coinOpacity.value,
   }));
 
-  const checkmarkAnimatedProps = useAnimatedProps(() => {
-    const progress = checkmarkProgress.value;
-    return {
-      strokeDashoffset: checkmarkPathLength * (1 - progress),
-      opacity: opacity.value,
-    };
-  });
+  const innerCoinAnimatedProps = useAnimatedProps(() => ({
+    r: innerCoinRadius.value,
+    opacity: coinOpacity.value,
+  }));
+
+  const checkmarkAnimatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: checkmarkPathLength * (1 - checkmarkProgress.value),
+    opacity: checkmarkProgress.value,
+  }));
 
   return (
     <View className={className}>
-      <Svg width="120" height="120" viewBox="0 0 120 120">
-        <AnimatedCircle cx="60" cy="60" r="55" fill="#22c55e" animatedProps={circleAnimatedProps} />
+      <Svg width="160" height="160" viewBox="0 0 160 160">
+        <AnimatedCircle
+          cx="80"
+          cy="80"
+          fill={COLORS.BITCOIN_ORANGE}
+          animatedProps={coinAnimatedProps}
+        />
+        <AnimatedCircle
+          cx="80"
+          cy="80"
+          fill="#D59A43"
+          animatedProps={innerCoinAnimatedProps}
+        />
         <AnimatedPath
-          d="M 35 60 L 52 77 L 85 44"
+          d="M 58 80 L 73 95 L 104 64"
           stroke="white"
-          strokeWidth="8"
+          strokeWidth="9"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
