@@ -5,19 +5,31 @@ import { NoahButton } from "./ui/NoahButton";
 import { Button } from "./ui/button";
 import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
 import { DestinationTypes, ParsedBip321 } from "~/lib/sendUtils";
+import { useThemeColors } from "~/hooks/useTheme";
+import { COLORS } from "~/lib/styleConstants";
+import { Bip321Picker } from "./Bip321Picker";
 
 interface SendConfirmationProps {
   destination: string;
-  amount: number; // in sats
+  amount: number;
   destinationType: DestinationTypes;
   comment?: string;
   btcPrice?: number;
   bip321Data?: ParsedBip321 | null;
   selectedPaymentMethod?: "ark" | "lightning" | "onchain" | "offer";
+  onSelectPaymentMethod?: (type: "ark" | "lightning" | "onchain" | "offer") => void;
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
+
+const truncateValue = (value: string) => {
+  if (value.length <= 32) {
+    return value;
+  }
+
+  return `${value.slice(0, 14)}...${value.slice(-10)}`;
+};
 
 export const SendConfirmation: React.FC<SendConfirmationProps> = ({
   destination,
@@ -27,10 +39,13 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
   btcPrice,
   bip321Data,
   selectedPaymentMethod,
+  onSelectPaymentMethod,
   onConfirm,
   onCancel,
   isLoading = false,
 }) => {
+  const colors = useThemeColors();
+
   const getPaymentMethodLabel = () => {
     if (destinationType === "bip321") {
       switch (selectedPaymentMethod) {
@@ -38,10 +53,11 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
           return "Ark";
         case "lightning":
           return "Lightning";
+        case "offer":
+          return "Offer";
         case "onchain":
-          return "Bitcoin";
         default:
-          return "Bitcoin";
+          return "On-chain";
       }
     }
 
@@ -53,9 +69,11 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
       case "lnurl":
         return "Lightning Address";
       case "onchain":
-        return "Bitcoin";
+        return "On-chain";
+      case "offer":
+        return "Offer";
       default:
-        return "Unknown";
+        return "Bitcoin";
     }
   };
 
@@ -63,9 +81,17 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
     if (destinationType === "bip321" && bip321Data) {
       if (selectedPaymentMethod === "ark" && bip321Data.arkAddress) {
         return bip321Data.arkAddress;
-      } else if (selectedPaymentMethod === "lightning" && bip321Data.lightningInvoice) {
+      }
+
+      if (selectedPaymentMethod === "lightning" && bip321Data.lightningInvoice) {
         return bip321Data.lightningInvoice;
-      } else if (selectedPaymentMethod === "onchain" && bip321Data.onchainAddress) {
+      }
+
+      if (selectedPaymentMethod === "offer" && bip321Data.offer) {
+        return bip321Data.offer;
+      }
+
+      if (selectedPaymentMethod === "onchain" && bip321Data.onchainAddress) {
         return bip321Data.onchainAddress;
       }
     }
@@ -73,74 +99,100 @@ export const SendConfirmation: React.FC<SendConfirmationProps> = ({
     return destination;
   };
 
-  const formatDestination = (dest: string) => {
-    if (dest.length > 20) {
-      return `${dest.slice(0, 10)}...${dest.slice(-10)}`;
-    }
-    return dest;
-  };
-
   const usdAmount = btcPrice ? satsToUsd(amount, btcPrice) : 0;
+  const resolvedDestination = getDestinationDisplay();
 
   return (
-    <View className="space-y-10">
-      <View className="items-center space-y-4 py-2">
-        <Text className="text-2xl font-bold text-foreground py-2">Confirm Payment</Text>
-        <Text className="text-muted-foreground text-center text-base py-1">
-          Review the details before sending
+    <View>
+      <View className="items-center">
+        <Text className="text-center text-3xl font-bold text-foreground">Confirm send</Text>
+        <Text className="mt-3 max-w-[280px] text-center text-base leading-6 text-muted-foreground">
+          Review the route and destination before broadcasting the payment.
         </Text>
       </View>
 
-      <View className="bg-muted/30 rounded-xl p-6 space-y-8">
-        <View className="items-center space-y-3 py-2">
-          <Text className="text-4xl font-bold text-foreground py-2">{formatBip177(amount)}</Text>
-          {btcPrice && (
-            <Text className="text-xl text-muted-foreground py-1">${formatNumber(usdAmount)}</Text>
-          )}
-        </View>
-
-        <View className="border-t border-border pt-8 space-y-6">
-          <View className="flex-row justify-between items-center py-3">
-            <Text className="text-muted-foreground text-base py-1">Payment Method</Text>
-            <Text className="text-foreground font-semibold text-base py-1">
-              {getPaymentMethodLabel()}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between items-start py-3">
-            <Text className="text-muted-foreground text-base py-1">To</Text>
-            <Text className="text-foreground font-semibold text-right flex-1 ml-4 text-base py-1">
-              {formatDestination(getDestinationDisplay())}
-            </Text>
-          </View>
-
-          {comment && (
-            <View className="flex-row justify-between items-start py-3">
-              <Text className="text-muted-foreground text-base py-1">Note</Text>
-              <Text className="text-foreground font-semibold text-right flex-1 ml-4 text-base py-1">
-                {comment}
-              </Text>
-            </View>
-          )}
-        </View>
+      <View className="mt-8 items-center">
+        <Text className="text-center text-4xl font-bold text-foreground">
+          {formatBip177(amount)}
+        </Text>
+        {btcPrice ? (
+          <Text className="mt-3 text-lg font-medium text-muted-foreground">
+            ≈ ${formatNumber(usdAmount)}
+          </Text>
+        ) : null}
       </View>
 
-      <View className="flex-row gap-4 pt-8">
-        <View className="flex-1">
-          <Button onPress={onCancel} variant="outline" disabled={isLoading} className="w-full py-3">
-            <Text>Cancel</Text>
-          </Button>
+      <View
+        className="mt-8 rounded-[24px] border px-5 py-5"
+        style={{
+          borderColor: `${colors.mutedForeground}22`,
+          backgroundColor: `${colors.card}CC`,
+        }}
+      >
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-medium uppercase tracking-[2px] text-muted-foreground">
+            Payment route
+          </Text>
+          {destinationType !== "bip321" ? (
+            <Text className="text-sm font-semibold" style={{ color: COLORS.BITCOIN_ORANGE }}>
+              {getPaymentMethodLabel()}
+            </Text>
+          ) : null}
         </View>
-        <View className="flex-1">
-          <NoahButton
-            onPress={onConfirm}
-            isLoading={isLoading}
-            disabled={isLoading}
-            className="w-full py-4"
-          >
-            Confirm & Send
-          </NoahButton>
-        </View>
+
+        {destinationType === "bip321" && bip321Data && selectedPaymentMethod && onSelectPaymentMethod ? (
+          <Bip321Picker
+            bip321Data={bip321Data}
+            selectedPaymentMethod={selectedPaymentMethod}
+            onSelect={onSelectPaymentMethod}
+            showSectionHeader={false}
+            showSelectedDestination={true}
+          />
+        ) : (
+          <View className="mt-4 h-px bg-border" />
+        )}
+
+        {destinationType !== "bip321" ? (
+          <View className="py-4">
+            <Text className="text-sm font-medium uppercase tracking-[2px] text-muted-foreground">
+              Destination
+            </Text>
+            <Text className="mt-2 text-sm leading-6 text-foreground">
+              {truncateValue(resolvedDestination)}
+            </Text>
+          </View>
+        ) : null}
+
+        {comment ? (
+          <>
+            <View className="h-px bg-border" />
+            <View className="py-4">
+              <Text className="text-sm font-medium uppercase tracking-[2px] text-muted-foreground">
+                Note
+              </Text>
+              <Text className="mt-2 text-sm leading-6 text-foreground">{comment}</Text>
+            </View>
+          </>
+        ) : null}
+      </View>
+
+      <View className="mt-8 flex-row gap-3">
+        <Button
+          onPress={onCancel}
+          variant="outline"
+          disabled={isLoading}
+          className="flex-1 rounded-2xl py-4"
+        >
+          <Text className="font-semibold">Cancel</Text>
+        </Button>
+        <NoahButton
+          onPress={onConfirm}
+          isLoading={isLoading}
+          disabled={isLoading}
+          className="flex-1 rounded-2xl py-4"
+        >
+          Confirm & Send
+        </NoahButton>
       </View>
     </View>
   );

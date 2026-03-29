@@ -1,10 +1,12 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { ParsedBip321 } from "../lib/sendUtils";
 import { ArkIcon } from "~/lib/icons/Ark";
 import { LightningIcon } from "~/lib/icons/Lightning";
 import { OnchainIcon } from "~/lib/icons/Onchain";
-import { cn } from "~/lib/utils";
+import { Text } from "~/components/ui/text";
+import { useThemeColors } from "~/hooks/useTheme";
+import { COLORS } from "~/lib/styleConstants";
 
 type PaymentMethod = "ark" | "lightning" | "onchain" | "offer";
 
@@ -12,83 +14,133 @@ type Bip321PickerProps = {
   bip321Data: ParsedBip321;
   selectedPaymentMethod: PaymentMethod;
   onSelect: (type: PaymentMethod) => void;
+  showSectionHeader?: boolean;
+  showSelectedDestination?: boolean;
 };
 
-const PaymentOption = ({
-  method,
-  icon,
-  label,
-  isSelected,
-  onSelect,
-}: {
+type PaymentOptionConfig = {
   method: PaymentMethod;
-  icon: React.ReactNode;
   label: string;
-  isSelected: boolean;
-  onSelect: (type: PaymentMethod) => void;
-}) => {
-  return (
-    <TouchableOpacity
-      onPress={() => onSelect(method)}
-      className={cn(
-        "flex-row items-center p-4 rounded-lg border",
-        isSelected ? "bg-primary/10 border-primary" : "border-transparent",
-      )}
-    >
-      {icon}
-      <Text
-        className={cn("text-lg ml-4", isSelected ? "text-primary font-bold" : "text-foreground")}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
+  value: string;
+  icon: React.ReactNode;
+};
+
+const truncateValue = (value: string) => {
+  if (value.length <= 32) {
+    return value;
+  }
+
+  return `${value.slice(0, 14)}...${value.slice(-10)}`;
 };
 
 export const Bip321Picker = ({
   bip321Data,
   selectedPaymentMethod,
   onSelect,
+  showSectionHeader = true,
+  showSelectedDestination = true,
 }: Bip321PickerProps) => {
+  const colors = useThemeColors();
+
+  const options = [
+    bip321Data.arkAddress
+      ? {
+          method: "ark" as const,
+          label: "Ark",
+          value: bip321Data.arkAddress,
+          icon: <ArkIcon className="h-4 w-4 text-foreground" />,
+        }
+      : null,
+    bip321Data.lightningInvoice
+      ? {
+          method: "lightning" as const,
+          label: "Lightning",
+          value: bip321Data.lightningInvoice,
+          icon: <LightningIcon className="h-4 w-4 text-foreground" />,
+        }
+      : null,
+    bip321Data.offer
+      ? {
+          method: "offer" as const,
+          label: "Offer",
+          value: bip321Data.offer,
+          icon: <LightningIcon className="h-4 w-4 text-foreground" />,
+        }
+      : null,
+    bip321Data.onchainAddress
+      ? {
+          method: "onchain" as const,
+          label: "On-chain",
+          value: bip321Data.onchainAddress,
+          icon: <OnchainIcon className="h-4 w-4 text-foreground" />,
+        }
+      : null,
+  ].filter(Boolean) as PaymentOptionConfig[];
+
+  const selectedOption = options.find((option) => option.method === selectedPaymentMethod);
+
   return (
-    <View className="p-4 bg-card rounded-lg space-y-2">
-      <Text className="text-lg font-bold text-foreground mb-2">Select Payment Method</Text>
-      {bip321Data.arkAddress && (
-        <PaymentOption
-          method="ark"
-          icon={<ArkIcon className="w-6 h-6 text-primary" />}
-          label="Ark"
-          isSelected={selectedPaymentMethod === "ark"}
-          onSelect={onSelect}
-        />
-      )}
-      {bip321Data.lightningInvoice && (
-        <PaymentOption
-          method="lightning"
-          icon={<LightningIcon className="w-6 h-6 text-primary" />}
-          label="Lightning"
-          isSelected={selectedPaymentMethod === "lightning"}
-          onSelect={onSelect}
-        />
-      )}
-      {bip321Data.offer && (
-        <PaymentOption
-          method="offer"
-          icon={<LightningIcon className="w-6 h-6 text-primary" />}
-          label="Lightning Offer"
-          isSelected={selectedPaymentMethod === "offer"}
-          onSelect={onSelect}
-        />
-      )}
-      {bip321Data.onchainAddress && (
-        <PaymentOption
-          method="onchain"
-          icon={<OnchainIcon className="w-6 h-6 text-primary" />}
-          label="On-chain"
-          isSelected={selectedPaymentMethod === "onchain"}
-          onSelect={onSelect}
-        />
-      )}
+    <View className={showSectionHeader ? "mt-4 border-t border-border/60 pt-4" : "mt-4"}>
+      {showSectionHeader ? (
+        <View className="flex-row items-center justify-between">
+          <Text className="text-sm font-semibold uppercase tracking-[2px] text-muted-foreground">
+            Payment route
+          </Text>
+          <Text className="text-xs font-medium uppercase tracking-[2px] text-muted-foreground">
+            Parsed request
+          </Text>
+        </View>
+      ) : null}
+
+      <View className={`${showSectionHeader ? "mt-4" : ""} flex-row flex-wrap gap-2`}>
+        {options.map((option) => {
+          const isSelected = option.method === selectedPaymentMethod;
+
+          return (
+            <TouchableOpacity
+              key={option.method}
+              onPress={() => onSelect(option.method)}
+              className="rounded-full border px-4 py-2"
+              style={{
+                borderColor: isSelected ? COLORS.BITCOIN_ORANGE : `${colors.mutedForeground}26`,
+                backgroundColor: isSelected ? "rgba(201, 138, 60, 0.14)" : `${colors.card}99`,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center gap-2">
+                {option.icon}
+                <Text
+                  className={`text-sm font-semibold ${
+                    isSelected ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {option.label}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {showSelectedDestination && selectedOption?.value ? (
+        <View
+          className="mt-4 rounded-[20px] border px-4 py-4"
+          style={{
+            borderColor: `${colors.mutedForeground}24`,
+            backgroundColor: `${colors.card}A6`,
+          }}
+        >
+          <Text className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+            Selected destination
+          </Text>
+          <Text className="mt-2 text-base font-semibold text-foreground">
+            {selectedOption.label}
+          </Text>
+          <Text className="mt-2 text-sm leading-6 text-muted-foreground">
+            {truncateValue(selectedOption.value)}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 };
