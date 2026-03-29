@@ -9,7 +9,9 @@ max_arkoor_fanout = 4
 
 max_arkoor_depth = 5
 required_board_confirmations = 1
-round_tx_untrusted_input_confirmations = 2
+# Minimum number of confirmations for a UTXO to be considered trusted.
+min_trusted_confs = 2
+
 rpc_rich_errors = true
 txindex_check_interval = "30s"
 # The interval at which the SyncManager polls for new blocks
@@ -29,7 +31,7 @@ read_mailbox_max_items = 100
 ##########
 
 # The interval to start new rounds
-round_interval = "180s"
+round_interval = "30s"
 
 # The time users have to submit payments when a round starts
 round_submit_time = "2s"
@@ -50,11 +52,18 @@ round_forfeit_nonces_timeout = "30s"
 # OFFBOARDS #
 #############
 
-# The feerate we set for offboard transactions
-offboard_feerate = "7sat/vb"
-
 # The time after which we drop offboard sessions and release locked VTXOs
 offboard_session_timeout = "30s"
+# The time in which a fee rate is considered valid for performing an offboard.
+#
+# This allows us to handle the case where clients don't receive up-to-date fee rates due to
+# caching, so we allow a grace period in which we honor historical fee rates when they
+# request an offboard.
+#
+# Note: Setting this lower than fee_estimator.history_duration will result in the duration
+# being limited by that.
+offboard_acceptable_fee_rate_duration = "15m"
+
 
 #############
 # LIGHTNING #
@@ -166,6 +175,22 @@ ppm_expiry_table = [
   { expiry_blocks_threshold = 2161, ppm = 8000 }, # 2160 < exp: 8,000 ppm (0.8%)
 ]
 
+#################
+# FEE ESTIMATOR #
+#################
+
+[fee_estimator]
+# Interval to update fee estimates from bitcoind
+update_interval = "1m"
+# How long to maintain the fee rate history for
+history_duration = "60m"
+# Fallback feerate for fast confirmation (1 block target)
+fallback_fee_rate_fast = "25sat/vb"
+# Fallback feerate for regular confirmation (3 block target)
+fallback_fee_rate_regular = "10sat/vb"
+# Fallback feerate for slow confirmation (6 block target)
+fallback_fee_rate_slow = "4sat/vb"
+
 
 [bitcoind]
 url = "bitcoind:18443"
@@ -217,17 +242,3 @@ vtxo_max_arkoor_depth = 3
 issue_tx_fallback_feerate = "250sat/kwu"
 # The interval at which to check if an issuance should be made
 issue_interval = "1m"
-
-#################
-# FEE ESTIMATOR #
-#################
-
-[fee_estimator]
-# Interval to update fee estimates from bitcoind
-update_interval = "1m"
-# Fallback feerate for fast confirmation (1 block target)
-fallback_fee_rate_fast = "25sat/vb"
-# Fallback feerate for regular confirmation (3 block target)
-fallback_fee_rate_regular = "10sat/vb"
-# Fallback feerate for slow confirmation (6 block target)
-fallback_fee_rate_slow = "4sat/vb"

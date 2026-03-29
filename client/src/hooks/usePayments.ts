@@ -259,7 +259,15 @@ export function useSend(destinationType: DestinationTypes) {
 
 export function useCheckAndClaimLnReceive() {
   return useMutation({
-    mutationFn: async ({ paymentHash, amountSat }: { paymentHash: string; amountSat: number }) => {
+    mutationFn: async ({
+      paymentHash,
+      amountSat,
+      sessionId,
+    }: {
+      paymentHash: string;
+      amountSat: number;
+      sessionId: number;
+    }) => {
       const maxAttempts = 20;
       const intervalMs = 1000;
 
@@ -267,7 +275,7 @@ export function useCheckAndClaimLnReceive() {
         const result = await tryClaimLightningReceive(paymentHash, false);
 
         if (result.isOk() && result.value && result.value.finished_at) {
-          return { amountSat };
+          return { amountSat, paymentHash, sessionId };
         }
 
         log.d(`Attempt ${i + 1}/${maxAttempts} failed`);
@@ -281,6 +289,7 @@ export function useCheckAndClaimLnReceive() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["balance"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
     onError: (error: Error) => {
       log.w("Failed to claim lightning receive:", [error.message]);

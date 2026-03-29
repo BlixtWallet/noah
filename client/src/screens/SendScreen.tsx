@@ -10,11 +10,11 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Pressable,
+  ScrollView,
 } from "react-native";
 
 import Icon from "@react-native-vector-icons/ionicons";
 import { useIconColor, useThemeColors } from "../hooks/useTheme";
-import { Bip321Picker } from "../components/Bip321Picker";
 import * as Clipboard from "expo-clipboard";
 import { formatNumber, satsToUsd, formatBip177 } from "~/lib/utils";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
@@ -24,12 +24,18 @@ import { Text } from "~/components/ui/text";
 import { BottomSheet } from "~/components/ui/BottomSheet";
 import { SendConfirmation } from "~/components/SendConfirmation";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
+import { COLORS } from "~/lib/styleConstants";
+import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 
 const SendScreen = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const iconColor = useIconColor();
   const colors = useThemeColors();
+  const bottomTabBarHeight = useBottomTabBarHeight();
+  const destinationInputRef = React.useRef<TextInput>(null);
+  const [currencyPrefixWidth, setCurrencyPrefixWidth] = React.useState(0);
+  const [amountDisplayWidth, setAmountDisplayWidth] = React.useState(120);
   const {
     destination,
     setDestination,
@@ -66,11 +72,19 @@ const SendScreen = () => {
     showSuccess,
     handleCloseSuccess,
   } = useSendScreen();
+  const displayAmount = amount === "" ? (currency === "USD" ? "0.00" : "0") : amount;
 
   const handlePaste = async () => {
     const text = await Clipboard.getStringAsync();
     setDestination(text);
   };
+
+  const focusDestinationInput = React.useCallback(() => {
+    setIsDestinationFocused(true);
+    requestAnimationFrame(() => {
+      destinationInputRef.current?.focus();
+    });
+  }, [setIsDestinationFocused]);
 
   // Close scanner when navigating away from the screen
   React.useEffect(() => {
@@ -84,10 +98,10 @@ const SendScreen = () => {
   }
 
   return (
-    <NoahSafeAreaView className="flex-1 bg-background p-4">
+    <NoahSafeAreaView className="flex-1 bg-background">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
         <View className="flex-1">
-          <View className="flex-row items-center p-4">
+          <View className="flex-row items-center px-5 pt-4 pb-3">
             <Pressable onPress={() => navigation.goBack()} className="mr-4">
               <Icon name="arrow-back-outline" size={24} color={iconColor} />
             </Pressable>
@@ -98,86 +112,150 @@ const SendScreen = () => {
               </Pressable>
             </View>
           </View>
-          <View className="flex-1">
-            <View className="flex-row items-center justify-between mb-4 mx-4">
-              <Text className="text-muted-foreground text-base font-medium">Amount to send</Text>
-              <CurrencyToggle onPress={toggleCurrency} disabled={!!parsedAmount} />
-            </View>
+          <ScrollView
+            className="flex-1"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: Math.max(bottomTabBarHeight, 20) + 112,
+            }}
+          >
+            <View className="px-5 pb-8">
+              <View className="pt-2">
+                <Text className="text-[11px] font-semibold uppercase tracking-[3px] text-muted-foreground">
+                  Send Bitcoin
+                </Text>
+                <Text className="mt-2 max-w-[320px] text-base leading-6 text-muted-foreground">
+                  Paste a destination, choose the payment rail when needed, and confirm before
+                  sending.
+                </Text>
+              </View>
 
-            <View className="mx-4">
-              <View className="bg-card/50 rounded-xl border-2 border-border px-4 py-4 mb-3">
-                <View className="flex-row items-center justify-center">
-                  {currency === "USD" && (
-                    <Text className="text-foreground text-2xl font-bold mr-2">$</Text>
-                  )}
-                  <TextInput
-                    className="text-foreground text-3xl font-bold text-center min-w-[50px]"
-                    placeholder={currency === "USD" ? "0.00" : "0"}
-                    placeholderTextColor={colors.mutedForeground}
-                    keyboardType="numeric"
-                    value={amount}
-                    onChangeText={setAmount}
-                    editable={isAmountEditable}
-                    style={!isAmountEditable ? { color: "gray" } : {}}
-                    autoFocus={false}
-                    maxLength={12}
-                  />
-                  {currency === "SATS" && (
-                    <Text className="text-foreground text-2xl font-bold ml-1">₿</Text>
-                  )}
+              <View className="mt-5">
+                <View className="flex-row items-start justify-end gap-4">
+                  <View className="flex-1" />
+                  <CurrencyToggle onPress={toggleCurrency} disabled={!!parsedAmount} />
+                </View>
+
+                <View className="mt-3 items-center">
+                  <View className="h-[64px] justify-center">
+                    <View className="relative self-center">
+                      <View className="flex-row items-center justify-center">
+                        <Text
+                          className="mr-3 text-[46px] font-bold leading-[52px] text-foreground"
+                          onLayout={(event) => {
+                            setCurrencyPrefixWidth(event.nativeEvent.layout.width);
+                          }}
+                        >
+                          {currency === "USD" ? "$" : "₿"}
+                        </Text>
+                        <Text
+                          className={`text-[46px] font-bold leading-[52px] ${
+                            isAmountEditable ? "text-foreground" : "text-foreground/70"
+                          }`}
+                          onLayout={(event) => {
+                            const nextWidth = Math.max(
+                              120,
+                              event.nativeEvent.layout.width + 8,
+                            );
+                            if (Math.abs(nextWidth - amountDisplayWidth) > 1) {
+                              setAmountDisplayWidth(nextWidth);
+                            }
+                          }}
+                        >
+                          {displayAmount}
+                        </Text>
+                      </View>
+
+                      <TextInput
+                        className="absolute top-0 text-left text-[40px] font-bold leading-[44px] text-transparent"
+                        placeholder=""
+                        keyboardType="numeric"
+                        value={amount}
+                        onChangeText={setAmount}
+                        editable={isAmountEditable}
+                        autoFocus={false}
+                        maxLength={12}
+                        selectionColor={colors.foreground}
+                        style={{
+                          left: currencyPrefixWidth + 12,
+                          width: amountDisplayWidth,
+                          height: 56,
+                        }}
+                      />
+                    </View>
+                  </View>
+
+                  <Text className="mt-3 text-lg font-medium text-muted-foreground">
+                    {parsedAmount
+                      ? `≈ $${
+                          btcPrice ? formatNumber(satsToUsd(parsedAmount, btcPrice)) : "0.00"
+                        }`
+                      : currency === "SATS"
+                        ? `≈ $${
+                            btcPrice && amountSat && !isNaN(amountSat)
+                              ? formatNumber(satsToUsd(amountSat, btcPrice))
+                              : "0.00"
+                          }`
+                        : `≈ ${!isNaN(amountSat) && amount ? formatBip177(amountSat) : formatBip177(0)}`}
+                  </Text>
                 </View>
               </View>
 
-              <View className="flex-row items-center justify-center">
-                <Text className="text-muted-foreground text-lg">
-                  {parsedAmount
-                    ? `${formatBip177(parsedAmount)} ($${
-                        btcPrice ? formatNumber(satsToUsd(parsedAmount, btcPrice)) : "0.00"
-                      })`
-                    : currency === "SATS"
-                      ? `≈ $${
-                          btcPrice && amountSat && !isNaN(amountSat)
-                            ? formatNumber(satsToUsd(amountSat, btcPrice))
-                            : "0.00"
-                        }`
-                      : `≈ ${!isNaN(amountSat) && amount ? formatBip177(amountSat) : formatBip177(0)}`}
+              <View className="mt-7 border-t border-border/60 pt-5">
+                <Text className="text-sm font-semibold uppercase tracking-[2px] text-muted-foreground">
+                  Destination
                 </Text>
-              </View>
-            </View>
 
-            {bip321Data ? (
-              <Bip321Picker
-                bip321Data={bip321Data}
-                selectedPaymentMethod={selectedPaymentMethod}
-                onSelect={setSelectedPaymentMethod}
-              />
-            ) : (
-              <View className="mt-8 ml-4 mr-4">
-                <View className="flex-row items-center border border-border bg-card p-4 rounded-lg">
-                  <TextInput
-                    className="flex-1 text-foreground"
-                    placeholder="Address, invoice, or lightning address"
-                    placeholderTextColor={colors.mutedForeground}
-                    autoCorrect={false}
-                    autoCapitalize="none"
-                    value={destination}
-                    onChangeText={setDestination}
-                    onFocus={() => setIsDestinationFocused(true)}
-                    onBlur={() => setIsDestinationFocused(false)}
-                  />
-                  <TouchableOpacity onPress={handlePaste} className="p-2">
-                    <Text className="text-foreground font-semibold">Paste</Text>
-                  </TouchableOpacity>
+                <View
+                  className="mt-4 rounded-[24px] border px-4 py-3"
+                  style={{
+                    borderColor: isDestinationFocused
+                      ? COLORS.BITCOIN_ORANGE
+                      : `${colors.mutedForeground}26`,
+                    backgroundColor: `${colors.card}CC`,
+                  }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Icon name="paper-plane-outline" size={16} color={iconColor} />
+                    {destination && !isDestinationFocused ? (
+                      <Pressable className="flex-1" onPress={focusDestinationInput}>
+                        <Text
+                          className="text-base text-foreground"
+                          numberOfLines={1}
+                          ellipsizeMode="middle"
+                        >
+                          {destination}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <TextInput
+                        ref={destinationInputRef}
+                        className="flex-1 text-base text-foreground"
+                        placeholder="Address, invoice, or lightning address"
+                        placeholderTextColor={colors.mutedForeground}
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        value={destination}
+                        onChangeText={setDestination}
+                        onFocus={() => setIsDestinationFocused(true)}
+                        onBlur={() => setIsDestinationFocused(false)}
+                        style={{ minWidth: 0, flexShrink: 1 }}
+                      />
+                    )}
+                    <TouchableOpacity onPress={handlePaste} className="rounded-full px-2 py-2">
+                      <Text className="text-sm font-semibold text-primary">Paste</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {isDestinationFocused && lightningAddressSuggestions.length > 0 && (
-                  <View className="border border-border bg-card rounded-lg mt-2 overflow-hidden">
+                  <View className="mt-3 overflow-hidden rounded-[20px] border border-border/70 bg-card/80">
                     {lightningAddressSuggestions.map((suggestion, index) => (
                       <Pressable
                         key={suggestion}
                         className={`px-4 py-3 ${
                           index < lightningAddressSuggestions.length - 1
-                            ? "border-b border-border"
+                            ? "border-b border-border/60"
                             : ""
                         }`}
                         onPressIn={() => handleSelectLightningAddressSuggestion(suggestion)}
@@ -187,33 +265,39 @@ const SendScreen = () => {
                     ))}
                   </View>
                 )}
+                {!bip321Data ? (
+                  <View className="mt-4 rounded-[20px] border border-border/60 bg-card/70 px-4 py-3">
+                    <TextInput
+                      className="text-base text-foreground"
+                      placeholder="Add a note (optional)"
+                      placeholderTextColor={colors.mutedForeground}
+                      value={comment}
+                      onChangeText={setComment}
+                    />
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </ScrollView>
 
-                <TextInput
-                  className="border border-border bg-card p-4 rounded-lg text-foreground mt-4"
-                  placeholder="Add a note (optional)"
-                  placeholderTextColor={colors.mutedForeground}
-                  value={comment}
-                  onChangeText={setComment}
-                />
-              </View>
-            )}
-            <View className="flex-row items-center justify-between mt-9 mr-4 ml-4 gap-4">
+          <View
+            className="border-t border-border/50 bg-background px-5 pt-4"
+            style={{ paddingBottom: Math.max(bottomTabBarHeight, 20) + 8 }}
+          >
+            <View className="flex-row items-center gap-3">
               {destination ? (
-                <View className="flex-1">
-                  <Button onPress={handleClear} variant="outline">
-                    <Text>Clear</Text>
-                  </Button>
-                </View>
+                <Button onPress={handleClear} variant="outline" className="flex-1 rounded-2xl">
+                  <Text className="font-semibold">Clear</Text>
+                </Button>
               ) : null}
-              <View className="flex-1">
-                <NoahButton
-                  onPress={handleSend}
-                  disabled={!destination || isSending}
-                  isLoading={isSending}
-                >
-                  Send
-                </NoahButton>
-              </View>
+              <NoahButton
+                onPress={handleSend}
+                disabled={!destination || isSending}
+                isLoading={isSending}
+                className="flex-1 rounded-2xl py-4"
+              >
+                Send
+              </NoahButton>
             </View>
           </View>
         </View>
@@ -228,6 +312,7 @@ const SendScreen = () => {
           btcPrice={btcPrice}
           bip321Data={bip321Data}
           selectedPaymentMethod={selectedPaymentMethod}
+          onSelectPaymentMethod={setSelectedPaymentMethod}
           onConfirm={handleConfirmSend}
           onCancel={handleCancelConfirmation}
           isLoading={isSending}

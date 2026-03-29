@@ -1,13 +1,15 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import Animated, {
-  useSharedValue,
+  Easing,
   useAnimatedProps,
-  withTiming,
+  useSharedValue,
   withDelay,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
-import { Text } from "~/components/ui/text";
+import { COLORS } from "~/lib/styleConstants";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -19,54 +21,80 @@ const SuccessAnimation = ({
   onAnimationEnd?: () => void;
   className?: string;
 }) => {
-  const circleRadius = 50;
-  const checkmarkPathLength = 60; // Approximate length of the checkmark path
-
-  const scale = useSharedValue(0);
-  const strokeOffset = useSharedValue(checkmarkPathLength);
-
-  const animatedCircleProps = useAnimatedProps(() => ({
-    transform: [{ scale: scale.get() }],
-  }));
-
-  const animatedPathProps = useAnimatedProps(() => ({
-    strokeDashoffset: strokeOffset.get(),
-  }));
+  const coinRadius = useSharedValue(46);
+  const coinOpacity = useSharedValue(0);
+  const innerCoinRadius = useSharedValue(34);
+  const checkmarkProgress = useSharedValue(0);
+  const checkmarkPathLength = 74;
 
   useEffect(() => {
-    scale.set(withTiming(1, { duration: 300 }));
-    strokeOffset.set(withDelay(200, withTiming(0, { duration: 400 })));
+    coinOpacity.value = withTiming(1, { duration: 220 });
+    coinRadius.value = withSequence(
+      withTiming(36, { duration: 0 }),
+      withTiming(50, { duration: 460, easing: Easing.out(Easing.back(1.1)) }),
+      withTiming(46, { duration: 220, easing: Easing.inOut(Easing.quad) }),
+    );
+    innerCoinRadius.value = withSequence(
+      withTiming(26, { duration: 0 }),
+      withTiming(39, { duration: 520, easing: Easing.out(Easing.cubic) }),
+      withTiming(34, { duration: 200, easing: Easing.inOut(Easing.quad) }),
+    );
+    checkmarkProgress.value = withDelay(
+      360,
+      withTiming(1, {
+        duration: 640,
+        easing: Easing.bezier(0.65, 0, 0.35, 1),
+      }),
+    );
 
     if (onAnimationEnd) {
-      const timer = setTimeout(onAnimationEnd, 2000); // Wait for animation to finish
+      const timer = setTimeout(onAnimationEnd, 1400);
       return () => clearTimeout(timer);
     }
-  }, [onAnimationEnd, scale, strokeOffset]);
+  }, [checkmarkProgress, coinOpacity, coinRadius, innerCoinRadius, onAnimationEnd]);
+
+  const coinAnimatedProps = useAnimatedProps(() => ({
+    r: coinRadius.value,
+    opacity: coinOpacity.value,
+  }));
+
+  const innerCoinAnimatedProps = useAnimatedProps(() => ({
+    r: innerCoinRadius.value,
+    opacity: coinOpacity.value,
+  }));
+
+  const checkmarkAnimatedProps = useAnimatedProps(() => ({
+    strokeDashoffset: checkmarkPathLength * (1 - checkmarkProgress.value),
+    opacity: checkmarkProgress.value,
+  }));
 
   return (
     <View className={`items-center justify-center ${className ?? ""}`}>
-      <Svg width="120" height="120" viewBox="0 0 120 120">
+      <Svg width="160" height="160" viewBox="0 0 160 160">
         <AnimatedCircle
-          cx="60"
-          cy="60"
-          r={circleRadius}
-          fill="#22c55e" // green-500 from tailwind
-          animatedProps={animatedCircleProps}
-          originX="60"
-          originY="60"
+          cx="80"
+          cy="80"
+          fill={COLORS.BITCOIN_ORANGE}
+          animatedProps={coinAnimatedProps}
+        />
+        <AnimatedCircle
+          cx="80"
+          cy="80"
+          fill="#D59A43"
+          animatedProps={innerCoinAnimatedProps}
         />
         <AnimatedPath
-          d="M40 60 L55 75 L80 45"
+          d="M 58 80 L 73 95 L 104 64"
           stroke="white"
-          strokeWidth="8"
+          strokeWidth="9"
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
           strokeDasharray={checkmarkPathLength}
-          animatedProps={animatedPathProps}
+          strokeDashoffset={checkmarkPathLength}
+          animatedProps={checkmarkAnimatedProps}
         />
       </Svg>
-      <Text className="text-2xl font-bold text-green-500 mt-4">Success!</Text>
     </View>
   );
 };

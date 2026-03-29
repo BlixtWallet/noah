@@ -6,52 +6,58 @@ import type { MovementKind } from "~/types/movement";
 import { INCOMING_MOVEMENT_KINDS } from "~/types/movement";
 import { getHistoricalBtcToUsdRate } from "~/hooks/useMarketData";
 import logger from "~/lib/log";
+import {
+  BARK_SUBSYSTEM,
+  type BarkSubsystemId,
+  getMovementSubsystemId,
+  getMovementSubsystemKind,
+  getMovementSubsystemName,
+} from "~/lib/barkMovement";
 
 const log = logger("useTransactions");
 
-const SUBSYSTEM_KIND_TO_MOVEMENT_KIND: Record<string, MovementKind> = {
-  "bark.board:board": "onboard",
-  "bark.arkoor:receive": "arkoor-receive",
-  "bark.round:offboard": "offboard",
-  "bark.round:send_onchain": "offboard",
-  "bark.exit:start": "exit",
-  "bark.lightning_receive:receive": "lightning-receive",
+const SUBSYSTEM_KIND_TO_MOVEMENT_KIND: Partial<Record<BarkSubsystemId, MovementKind>> = {
+  [`${BARK_SUBSYSTEM.BOARD.name}:${BARK_SUBSYSTEM.BOARD.kind}`]: "onboard",
+  [`${BARK_SUBSYSTEM.ARKOOR_RECEIVE.name}:${BARK_SUBSYSTEM.ARKOOR_RECEIVE.kind}`]:
+    "arkoor-receive",
+  [`${BARK_SUBSYSTEM.ROUND_OFFBOARD.name}:${BARK_SUBSYSTEM.ROUND_OFFBOARD.kind}`]: "offboard",
+  [`${BARK_SUBSYSTEM.ROUND_SEND_ONCHAIN.name}:${BARK_SUBSYSTEM.ROUND_SEND_ONCHAIN.kind}`]:
+    "offboard",
+  [`${BARK_SUBSYSTEM.EXIT_START.name}:${BARK_SUBSYSTEM.EXIT_START.kind}`]: "exit",
+  [`${BARK_SUBSYSTEM.LIGHTNING_RECEIVE.name}:${BARK_SUBSYSTEM.LIGHTNING_RECEIVE.kind}`]:
+    "lightning-receive",
 };
 
-const OUTGOING_SUBSYSTEM_KEYS = new Set([
-  "bark.round:offboard",
-  "bark.round:send_onchain",
-  "bark.arkoor:send",
-  "bark.lightning_send:send",
-  "bark.exit:start",
+const OUTGOING_SUBSYSTEM_KEYS = new Set<BarkSubsystemId>([
+  `${BARK_SUBSYSTEM.ROUND_OFFBOARD.name}:${BARK_SUBSYSTEM.ROUND_OFFBOARD.kind}`,
+  `${BARK_SUBSYSTEM.ROUND_SEND_ONCHAIN.name}:${BARK_SUBSYSTEM.ROUND_SEND_ONCHAIN.kind}`,
+  `${BARK_SUBSYSTEM.ARKOOR_SEND.name}:${BARK_SUBSYSTEM.ARKOOR_SEND.kind}`,
+  `${BARK_SUBSYSTEM.LIGHTNING_SEND.name}:${BARK_SUBSYSTEM.LIGHTNING_SEND.kind}`,
+  `${BARK_SUBSYSTEM.EXIT_START.name}:${BARK_SUBSYSTEM.EXIT_START.kind}`,
 ]);
 
 const INCOMING_MOVEMENT_KIND_SET = new Set<MovementKind>(INCOMING_MOVEMENT_KINDS);
 
 const determineMovementKind = (movement: BarkMovement): MovementKind | undefined => {
-  const subsystemName = movement.subsystem?.name?.toLowerCase();
-  const subsystemKind = movement.subsystem?.kind?.toLowerCase();
-
-  if (!subsystemName || !subsystemKind) {
+  const subsystemId = getMovementSubsystemId(movement);
+  if (!subsystemId) {
     return undefined;
   }
 
-  return SUBSYSTEM_KIND_TO_MOVEMENT_KIND[`${subsystemName}:${subsystemKind}`];
+  return SUBSYSTEM_KIND_TO_MOVEMENT_KIND[subsystemId];
 };
 
 const isOutgoingMovement = (movement: BarkMovement): boolean => {
-  const subsystemName = movement.subsystem?.name?.toLowerCase();
-  const subsystemKind = movement.subsystem?.kind?.toLowerCase();
+  const subsystemId = getMovementSubsystemId(movement);
 
-  if (!subsystemName || !subsystemKind) {
+  if (!subsystemId) {
     if (movement.effective_balance_sat !== undefined && movement.effective_balance_sat < 0) {
       return true;
     }
     return false;
   }
 
-  const key = `${subsystemName}:${subsystemKind}`;
-  if (OUTGOING_SUBSYSTEM_KEYS.has(key)) {
+  if (OUTGOING_SUBSYSTEM_KEYS.has(subsystemId)) {
     return true;
   }
 
@@ -121,14 +127,20 @@ const determineTransactionType = (
     return "Arkoor";
   }
 
-  const subsystemName = movement.subsystem?.name?.toLowerCase();
-  const subsystemKind = movement.subsystem?.kind?.toLowerCase();
+  const subsystemName = getMovementSubsystemName(movement);
+  const subsystemKind = getMovementSubsystemKind(movement);
 
-  if (subsystemName === "bark.lightning_send" || subsystemKind === "send") {
+  if (
+    subsystemName === BARK_SUBSYSTEM.LIGHTNING_SEND.name &&
+    subsystemKind === BARK_SUBSYSTEM.LIGHTNING_SEND.kind
+  ) {
     return "Bolt11";
   }
 
-  if (subsystemName === "bark.arkoor" && subsystemKind === "send") {
+  if (
+    subsystemName === BARK_SUBSYSTEM.ARKOOR_SEND.name &&
+    subsystemKind === BARK_SUBSYSTEM.ARKOOR_SEND.kind
+  ) {
     return "Arkoor";
   }
 
@@ -136,7 +148,7 @@ const determineTransactionType = (
     movementKind === "offboard" ||
     movementKind === "onboard" ||
     movementKind === "exit" ||
-    subsystemKind === "send_onchain"
+    subsystemKind === BARK_SUBSYSTEM.ROUND_SEND_ONCHAIN.kind
   ) {
     return "Onchain";
   }
@@ -183,8 +195,8 @@ const transformMovementToTransaction = async (movement: BarkMovement): Promise<T
     movementId: movement.id,
     movementStatus: movement.status as MovementStatus,
     movementKind,
-    subsystemName: movement.subsystem?.name,
-    subsystemKind: movement.subsystem?.kind,
+    subsystemName: getMovementSubsystemName(movement),
+    subsystemKind: getMovementSubsystemKind(movement),
     metadataJson: movement.metadata_json,
     intendedBalanceSat: movement.intended_balance_sat,
     effectiveBalanceSat: movement.effective_balance_sat,
