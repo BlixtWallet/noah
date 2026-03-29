@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Pressable,
@@ -21,7 +21,7 @@ import {
 import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
 import { NoahSafeAreaView } from "~/components/NoahSafeAreaView";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
@@ -30,8 +30,25 @@ import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
+import {
+  subscribeArkoorAddressMovements,
+  type BarkNotificationEvent,
+  type BarkNotificationSubscription,
+} from "~/lib/paymentsApi";
+import { isArkReceiveMovement } from "~/lib/barkMovement";
+import logger from "~/lib/log";
+import type { Bolt11Invoice } from "react-native-nitro-ark";
+import { queryClient } from "~/queryClient";
 
 const minAmount = 1;
+const log = logger("ReceiveScreen");
+
+type ActiveReceiveSession = {
+  sessionId: number;
+  amountSat: number;
+  paymentHash?: string;
+  arkAddress?: string;
+};
 
 const truncateAddress = (addr: string) => {
   if (addr.length <= 40) {
@@ -83,54 +100,163 @@ const ReceiveScreen = () => {
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
   const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
+  const [generatedAmountSat, setGeneratedAmountSat] = useState<number | null>(null);
+  const [arkAddress, setArkAddress] = useState<string | undefined>(undefined);
+  const [generatedOnchainAddress, setGeneratedOnchainAddress] = useState<string | undefined>(
+    undefined,
+  );
+  const [lightningInvoice, setLightningInvoice] = useState<Bolt11Invoice | undefined>(undefined);
   const { showAlert } = useAlert();
+  const receiveSessionIdRef = useRef(0);
+  const activeReceiveSessionRef = useRef<ActiveReceiveSession | null>(null);
+  const arkSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
+  const isCompletingReceiveRef = useRef(false);
 
   const {
-    mutate: generateOffchainAddress,
-    data: vtxoPubkey,
+    mutateAsync: generateOffchainAddress,
     isPending: isGeneratingVtxo,
     reset: resetOffchainAddress,
   } = useGenerateOffchainAddress();
 
   const {
-    mutate: generateOnchainAddress,
-    data: onchainAddress,
+    mutateAsync: generateOnchainAddress,
     isPending: isGeneratingOnchain,
     reset: resetOnchainAddress,
   } = useGenerateOnchainAddress();
 
   const {
-    mutate: generateLightningInvoice,
-    data: lightningInvoice,
+    mutateAsync: generateLightningInvoice,
     isPending: isGeneratingLightning,
     reset: resetLightningInvoice,
   } = useGenerateLightningInvoice();
 
   const {
-    mutate: checkAndClaimLnReceive,
-    isSuccess: isReceiveSuccess,
-    data: receiveData,
+    mutateAsync: checkAndClaimLnReceive,
+    reset: resetLnReceiveCheck,
   } = useCheckAndClaimLnReceive();
 
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
 
+  const stopArkSubscription = useCallback(() => {
+    const subscription = arkSubscriptionRef.current;
+
+    if (!subscription) {
+      return;
+    }
+
+    arkSubscriptionRef.current = null;
+
+    try {
+      if (subscription.isActive()) {
+        subscription.stop();
+      }
+    } catch (error) {
+      log.w("Failed to stop Ark receive subscription", [
+        error instanceof Error ? error.message : String(error),
+      ]);
+    }
+  }, []);
+
+  const clearGeneratedReceiveData = useCallback(
+    ({ resetAmount }: { resetAmount: boolean }) => {
+      setBip321Uri(undefined);
+      setGeneratedAmountSat(null);
+      setArkAddress(undefined);
+      setGeneratedOnchainAddress(undefined);
+      setLightningInvoice(undefined);
+      if (resetAmount) {
+        setAmount("");
+      }
+      resetOffchainAddress();
+      resetOnchainAddress();
+      resetLightningInvoice();
+    },
+    [resetLightningInvoice, resetOffchainAddress, resetOnchainAddress, setAmount],
+  );
+
+  const cancelReceiveSession = useCallback(
+    ({ resetAmount }: { resetAmount: boolean }) => {
+      receiveSessionIdRef.current += 1;
+      activeReceiveSessionRef.current = null;
+      isCompletingReceiveRef.current = false;
+      stopArkSubscription();
+      resetLnReceiveCheck();
+      clearGeneratedReceiveData({ resetAmount });
+    },
+    [clearGeneratedReceiveData, resetLnReceiveCheck, stopArkSubscription],
+  );
+
+  const handleReceiveComplete = useCallback(
+    (receivedAmountSat: number) => {
+      if (!activeReceiveSessionRef.current || isCompletingReceiveRef.current) {
+        return;
+      }
+
+      isCompletingReceiveRef.current = true;
+      cancelReceiveSession({ resetAmount: true });
+      void queryClient.invalidateQueries({ queryKey: ["balance"] });
+      void queryClient.invalidateQueries({ queryKey: ["transactions"] });
+
+      navigation.navigate("Home", {
+        screen: "ReceiveSuccess",
+        params: { amountSat: receivedAmountSat },
+      });
+    },
+    [cancelReceiveSession, navigation],
+  );
+
+  const handleArkoorReceiveEvent = useCallback(
+    (event: BarkNotificationEvent, sessionId: number) => {
+      if (event.kind === "channelLagging") {
+        return;
+      }
+
+      const activeSession = activeReceiveSessionRef.current;
+      if (!activeSession || activeSession.sessionId !== sessionId) {
+        return;
+      }
+
+      const movement = event.movement;
+      if (!movement || movement.status !== "successful" || !isArkReceiveMovement(movement)) {
+        return;
+      }
+
+      const matchingReceivedOn =
+        movement.received_on?.filter(
+          (destination) => destination.destination === activeSession.arkAddress,
+        ) ?? [];
+
+      if (matchingReceivedOn.length === 0) {
+        return;
+      }
+
+      const receivedAmountSat = matchingReceivedOn.reduce(
+        (sum, destination) => sum + destination.amount_sat,
+        0,
+      );
+
+      handleReceiveComplete(receivedAmountSat > 0 ? receivedAmountSat : activeSession.amountSat);
+    },
+    [handleReceiveComplete],
+  );
+
   useEffect(() => {
     let uri = "";
 
-    if (vtxoPubkey && lightningInvoice?.payment_request) {
+    if (arkAddress && lightningInvoice?.payment_request && generatedAmountSat !== null) {
       // Use empty path for unified QR codes with multiple payment methods
       uri = `bitcoin:`;
       const params = [];
 
       // Amount should come first per BIP-321 convention
-      if (amountSat >= minAmount) {
-        const amountInBtc = satsToBtc(amountSat);
+      if (generatedAmountSat >= minAmount) {
+        const amountInBtc = satsToBtc(generatedAmountSat);
         params.push(`amount=${amountInBtc}`);
       }
 
       // Add payment methods - use uppercase for QR code efficiency
-      if (vtxoPubkey) {
-        params.push(`ark=${vtxoPubkey.toUpperCase()}`);
+      if (arkAddress) {
+        params.push(`ark=${arkAddress.toUpperCase()}`);
       }
       if (lightningInvoice?.payment_request) {
         params.push(`lightning=${lightningInvoice.payment_request.toUpperCase()}`);
@@ -142,23 +268,69 @@ const ReceiveScreen = () => {
 
       setBip321Uri(uri);
     }
-  }, [vtxoPubkey, lightningInvoice, amountSat]);
+  }, [arkAddress, generatedAmountSat, lightningInvoice]);
 
   useEffect(() => {
-    if (lightningInvoice && amountSat) {
-      checkAndClaimLnReceive({ paymentHash: lightningInvoice.payment_hash, amountSat });
+    if (!lightningInvoice?.payment_hash) {
+      return;
     }
-  }, [lightningInvoice, amountSat, checkAndClaimLnReceive]);
 
-  useEffect(() => {
-    if (isReceiveSuccess && receiveData) {
-      handleClear();
-      navigation.navigate("Home", {
-        screen: "ReceiveSuccess",
-        params: { amountSat: receiveData.amountSat },
+    const activeSession = activeReceiveSessionRef.current;
+    if (!activeSession || activeSession.paymentHash === lightningInvoice.payment_hash) {
+      return;
+    }
+
+    activeSession.paymentHash = lightningInvoice.payment_hash;
+
+    void checkAndClaimLnReceive({
+      paymentHash: lightningInvoice.payment_hash,
+      amountSat: activeSession.amountSat,
+      sessionId: activeSession.sessionId,
+    })
+      .then((receiveData) => {
+        if (activeReceiveSessionRef.current?.sessionId !== receiveData.sessionId) {
+          return;
+        }
+
+        handleReceiveComplete(receiveData.amountSat);
+      })
+      .catch(() => {
+        // The mutation already logs failures; stale sessions are ignored here.
       });
+  }, [checkAndClaimLnReceive, handleReceiveComplete, lightningInvoice?.payment_hash]);
+
+  useEffect(() => {
+    if (!arkAddress) {
+      return;
     }
-  }, [isReceiveSuccess, receiveData, navigation]);
+
+    const activeSession = activeReceiveSessionRef.current;
+    if (!activeSession || activeSession.arkAddress === arkAddress) {
+      return;
+    }
+
+    activeSession.arkAddress = arkAddress;
+    stopArkSubscription();
+
+    const subscriptionResult = subscribeArkoorAddressMovements(arkAddress, (event) => {
+      handleArkoorReceiveEvent(event, activeSession.sessionId);
+    });
+
+    if (subscriptionResult.isErr()) {
+      log.w("Failed to subscribe to Ark receive updates", [subscriptionResult.error.message]);
+      return;
+    }
+
+    arkSubscriptionRef.current = subscriptionResult.value;
+  }, [arkAddress, handleArkoorReceiveEvent, stopArkSubscription]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        cancelReceiveSession({ resetAmount: false });
+      };
+    }, [cancelReceiveSession]),
+  );
 
   const handleGenerate = () => {
     Keyboard.dismiss();
@@ -179,17 +351,40 @@ const ReceiveScreen = () => {
       return;
     }
 
-    generateOnchainAddress();
-    generateOffchainAddress();
-    generateLightningInvoice(amountSat);
+    cancelReceiveSession({ resetAmount: false });
+    setGeneratedAmountSat(amountSat);
+    activeReceiveSessionRef.current = {
+      sessionId: receiveSessionIdRef.current,
+      amountSat,
+    };
+
+    const sessionId = receiveSessionIdRef.current;
+
+    void Promise.all([
+      generateOnchainAddress(),
+      generateOffchainAddress(),
+      generateLightningInvoice(amountSat),
+    ])
+      .then(([nextOnchainAddress, nextArkAddress, nextLightningInvoice]) => {
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        setGeneratedOnchainAddress(nextOnchainAddress);
+        setArkAddress(nextArkAddress);
+        setLightningInvoice(nextLightningInvoice);
+      })
+      .catch(() => {
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        cancelReceiveSession({ resetAmount: false });
+      });
   };
 
   const handleClear = () => {
-    setBip321Uri(undefined);
-    setAmount("");
-    resetOffchainAddress();
-    resetOnchainAddress();
-    resetLightningInvoice();
+    cancelReceiveSession({ resetAmount: true });
   };
 
   const handleCopyToClipboard = (value: string, type: string) => {
@@ -290,20 +485,20 @@ const ReceiveScreen = () => {
                 </View>
 
                 <View className="mt-2">
-                  {onchainAddress && (
+                  {generatedOnchainAddress && (
                     <CopyableDetail
                       label="On-chain"
-                      value={onchainAddress}
-                      onCopy={() => handleCopyToClipboard(onchainAddress, "onchain")}
+                      value={generatedOnchainAddress}
+                      onCopy={() => handleCopyToClipboard(generatedOnchainAddress, "onchain")}
                       isCopied={isCopied("onchain")}
                     />
                   )}
 
-                  {vtxoPubkey && (
+                  {arkAddress && (
                     <CopyableDetail
                       label="Ark"
-                      value={vtxoPubkey}
-                      onCopy={() => handleCopyToClipboard(vtxoPubkey, "ark")}
+                      value={arkAddress}
+                      onCopy={() => handleCopyToClipboard(arkAddress, "ark")}
                       isCopied={isCopied("ark")}
                     />
                   )}

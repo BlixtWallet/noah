@@ -37,7 +37,7 @@ export const ReceiveSuccess: React.FC<ReceiveSuccessProps> = ({
             <Text className="text-green-500 text-xl font-bold mb-3">Success!</Text>
             <Text className="text-2xl font-bold text-foreground mb-4">Payment Received!</Text>
             <Text className="text-muted-foreground text-center text-base">
-              Lightning payment received successfully
+              Payment received successfully
             </Text>
           </View>
 

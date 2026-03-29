@@ -1,4 +1,5 @@
 import type { MovementStatus } from "react-native-nitro-ark";
+import type { BarkSubsystemKind, BarkSubsystemName } from "~/lib/barkMovement";
 
 export type PaymentTypes = "Bolt11" | "Bolt12" | "Lnurl" | "Arkoor" | "Onchain";
 import type { MovementKind } from "./movement";
@@ -17,8 +18,8 @@ export type Transaction = {
   movementId?: number;
   movementStatus?: MovementStatus;
   movementKind?: MovementKind;
-  subsystemName?: string;
-  subsystemKind?: string;
+  subsystemName?: BarkSubsystemName;
+  subsystemKind?: BarkSubsystemKind;
   metadataJson?: string;
   intendedBalanceSat?: number;
   effectiveBalanceSat?: number;

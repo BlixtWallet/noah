@@ -3,6 +3,7 @@ import {
   boardAll as boardAllNitro,
   syncPendingBoards as syncPendingBoardsNitro,
   offboardAll as offboardAllNitro,
+  subscribeArkoorAddressMovements as subscribeArkoorAddressMovementsNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   payLightningAddress as payLightningAddressNitro,
   payLightningOffer as payLightningOfferNitro,
@@ -18,16 +19,23 @@ import {
   history as historyNitro,
   tryClaimAllLightningReceives as tryClaimAllLightningReceivesNitro,
   tryClaimLightningReceive as tryClaimLightningReceiveNitro,
-  peakAddress as peakAddressNitro,
+  peekAddress as peekAddressNitro,
   NewAddressResult,
   BarkMovement,
+  BarkNotificationEvent,
   Bolt11Invoice,
   BoardResult,
   LightningReceive,
 } from "react-native-nitro-ark";
-import { Result, ResultAsync } from "neverthrow";
+import { err, ok, Result, ResultAsync } from "neverthrow";
 
 export type { ArkoorPaymentResult, OnchainPaymentResult, LightningSendResult };
+export type { BarkNotificationEvent };
+
+export type BarkNotificationSubscription = {
+  stop(): void;
+  isActive(): boolean;
+};
 
 export type PaymentResult = ArkoorPaymentResult | OnchainPaymentResult | LightningSendResult;
 
@@ -43,7 +51,7 @@ export const newAddress = async (): Promise<Result<NewAddressResult, Error>> => 
 
 export const peakAddress = async (index: number): Promise<Result<NewAddressResult, Error>> => {
   return ResultAsync.fromPromise(
-    peakAddressNitro(index),
+    peekAddressNitro(index),
     (error) =>
       new Error(
         `Failed to generate peak address: ${error instanceof Error ? error.message : String(error)}`,
@@ -199,6 +207,23 @@ export const history = async (): Promise<Result<BarkMovement[], Error>> => {
 
     return e;
   });
+};
+
+export const subscribeArkoorAddressMovements = (
+  address: string,
+  onEvent: (event: BarkNotificationEvent) => void,
+): Result<BarkNotificationSubscription, Error> => {
+  try {
+    return ok(subscribeArkoorAddressMovementsNitro(address, onEvent));
+  } catch (error) {
+    return err(
+      new Error(
+        `Failed to subscribe to Ark address movements: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ),
+    );
+  }
 };
 
 export const tryClaimLightningReceive = async (

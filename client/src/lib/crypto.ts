@@ -1,6 +1,6 @@
 import {
   signMessage as signMessageNitro,
-  peakKeyPair as peakKeyPairNitro,
+  peekKeyPair as peekKeyPairNitro,
   deriveStoreNextKeypair as deriveStoreNextKeypairNitro,
   verifyMessage as verifyMessageNitro,
   type KeyPairResult,
@@ -35,7 +35,7 @@ export const signMessage = async (
 };
 
 export const peakKeyPair = async (index: number): Promise<Result<KeyPairResult, Error>> => {
-  return ResultAsync.fromPromise(peakKeyPairNitro(index), (e) => e as Error);
+  return ResultAsync.fromPromise(peekKeyPairNitro(index), (e) => e as Error);
 };
 
 export const deriveStoreNextKeypair = async (): Promise<Result<KeyPairResult, Error>> => {
