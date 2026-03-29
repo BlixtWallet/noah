@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, ScrollView, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useSharedValue,
@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
+import { useBottomTabBarHeight } from "react-native-bottom-tabs";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -26,9 +27,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   backdropOpacity = 0.5,
 }) => {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const bottomTabBarHeight = useBottomTabBarHeight();
   const height = useSharedValue(0);
   const progress = useDerivedValue(() => withTiming(isOpen ? 0 : 1, { duration }));
   const [shouldRender, setShouldRender] = React.useState(isOpen);
+
+  const bottomInset = Math.max(bottomTabBarHeight + 12, insets.bottom + 12);
+  const topInset = Math.max(insets.top + 20, 28);
+  const maxSheetHeight = Math.max(windowHeight - topInset - bottomInset, 320);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -86,18 +93,26 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         style={[
           {
             position: "absolute",
-            bottom: Math.max(insets.bottom + 60, 120),
-            minHeight: 550,
+            bottom: bottomInset,
+            maxHeight: maxSheetHeight,
             left: 0,
             right: 0,
             zIndex: 2,
           },
           sheetStyle,
         ]}
-        className="bg-card border-t border-border rounded-t-3xl p-8 pb-12"
+        className="overflow-hidden rounded-[32px] border border-border bg-card px-6 pt-5"
       >
-        <View className="w-12 h-1 bg-muted-foreground/30 rounded-full self-center mb-8" />
-        {children}
+        <View className="mb-4 h-1 w-12 self-center rounded-full bg-muted-foreground/30" />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          contentContainerStyle={{
+            paddingBottom: Math.max(insets.bottom, 12) + 20,
+          }}
+        >
+          {children}
+        </ScrollView>
       </Animated.View>
     </>
   );
