@@ -26,6 +26,7 @@ import { SendConfirmation } from "~/components/SendConfirmation";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
 import { COLORS } from "~/lib/styleConstants";
 import { useBottomTabBarHeight } from "react-native-bottom-tabs";
+import { BlinkingCaret } from "~/components/BlinkingCaret";
 
 const SendScreen = () => {
   const navigation = useNavigation();
@@ -34,8 +35,8 @@ const SendScreen = () => {
   const colors = useThemeColors();
   const bottomTabBarHeight = useBottomTabBarHeight();
   const destinationInputRef = React.useRef<TextInput>(null);
-  const [currencyPrefixWidth, setCurrencyPrefixWidth] = React.useState(0);
-  const [amountDisplayWidth, setAmountDisplayWidth] = React.useState(120);
+  const amountInputRef = React.useRef<TextInput>(null);
+  const [isAmountFocused, setIsAmountFocused] = React.useState(false);
   const {
     destination,
     setDestination,
@@ -85,6 +86,25 @@ const SendScreen = () => {
       destinationInputRef.current?.focus();
     });
   }, [setIsDestinationFocused]);
+
+  const focusAmountInput = React.useCallback(() => {
+    if (!isAmountEditable) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      amountInputRef.current?.focus();
+    });
+  }, [isAmountEditable]);
+
+  React.useEffect(() => {
+    if (isAmountEditable) {
+      return;
+    }
+
+    amountInputRef.current?.blur();
+    setIsAmountFocused(false);
+  }, [isAmountEditable]);
 
   // Close scanner when navigating away from the screen
   React.useEffect(() => {
@@ -138,51 +158,47 @@ const SendScreen = () => {
 
                 <View className="mt-3 items-center">
                   <View className="h-[64px] justify-center">
-                    <View className="relative self-center">
-                      <View className="flex-row items-center justify-center">
-                        <Text
-                          className="mr-3 text-[46px] font-bold leading-[52px] text-foreground"
-                          onLayout={(event) => {
-                            setCurrencyPrefixWidth(event.nativeEvent.layout.width);
-                          }}
-                        >
-                          {currency === "USD" ? "$" : "₿"}
-                        </Text>
-                        <Text
-                          className={`text-[46px] font-bold leading-[52px] ${
-                            isAmountEditable ? "text-foreground" : "text-foreground/70"
-                          }`}
-                          onLayout={(event) => {
-                            const nextWidth = Math.max(
-                              120,
-                              event.nativeEvent.layout.width + 8,
-                            );
-                            if (Math.abs(nextWidth - amountDisplayWidth) > 1) {
-                              setAmountDisplayWidth(nextWidth);
-                            }
-                          }}
-                        >
-                          {displayAmount}
-                        </Text>
-                      </View>
-
-                      <TextInput
-                        className="absolute top-0 text-left text-[40px] font-bold leading-[44px] text-transparent"
-                        placeholder=""
-                        keyboardType="numeric"
-                        value={amount}
-                        onChangeText={setAmount}
-                        editable={isAmountEditable}
-                        autoFocus={false}
-                        maxLength={12}
-                        selectionColor={colors.foreground}
-                        style={{
-                          left: currencyPrefixWidth + 12,
-                          width: amountDisplayWidth,
-                          height: 56,
-                        }}
-                      />
+                    <View className="self-center">
+                      <Pressable onPress={focusAmountInput} disabled={!isAmountEditable}>
+                        <View className="flex-row items-center justify-center">
+                          <Text className="mr-3 text-[46px] font-bold leading-[52px] text-foreground">
+                            {currency === "USD" ? "$" : "₿"}
+                          </Text>
+                          <Text
+                            className={`text-[46px] font-bold leading-[52px] ${
+                              isAmountEditable ? "text-foreground" : "text-foreground/70"
+                            }`}
+                          >
+                            {displayAmount}
+                          </Text>
+                          <BlinkingCaret
+                            color={COLORS.BITCOIN_ORANGE}
+                            height={40}
+                            visible={isAmountFocused && isAmountEditable}
+                          />
+                        </View>
+                      </Pressable>
                     </View>
+
+                    <TextInput
+                      ref={amountInputRef}
+                      placeholder=""
+                      keyboardType="numeric"
+                      value={amount}
+                      onChangeText={setAmount}
+                      editable={isAmountEditable}
+                      autoFocus={false}
+                      onFocus={() => setIsAmountFocused(true)}
+                      onBlur={() => setIsAmountFocused(false)}
+                      maxLength={12}
+                      selectionColor={colors.foreground}
+                      style={{
+                        position: "absolute",
+                        opacity: 0,
+                        width: 1,
+                        height: 1,
+                      }}
+                    />
                   </View>
 
                   <Text className="mt-3 text-lg font-medium text-muted-foreground">

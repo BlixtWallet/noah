@@ -105,6 +105,9 @@ invoice_check_max_delay = "10m"
 # FIXME
 invoice_poll_interval = "30s"
 
+# Interval at which the settler polls for cross-process HTLC settlements
+htlc_settlement_poll_interval = "60s"
+
 # Base delay for TrackAll stream reconnection backoff
 track_all_base_delay = "1s"
 

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { validateBitcoinAddress } from "bip-321";
 import { history } from "~/lib/paymentsApi";
 import type { Transaction, PaymentTypes } from "~/types/transaction";
 import type { BarkMovement, MovementStatus } from "react-native-nitro-ark";
@@ -114,6 +115,16 @@ const getUniqueMovementId = (movement: BarkMovement, isOutgoing: boolean): strin
   return vtxoId ?? `movement-${movement.id}`;
 };
 
+const hasBitcoinAddressDestination = (movement: BarkMovement, isOutgoing: boolean): boolean => {
+  const destinations = isOutgoing ? movement.sent_to : movement.received_on;
+
+  if (!destinations || destinations.length === 0) {
+    return false;
+  }
+
+  return destinations.some((destination) => validateBitcoinAddress(destination.destination).valid);
+};
+
 const determineTransactionType = (
   movement: BarkMovement,
   movementKind: MovementKind | undefined,
@@ -121,6 +132,12 @@ const determineTransactionType = (
 ): PaymentTypes => {
   if (movementKind === "lightning-receive") {
     return "Bolt11";
+  }
+
+  // Offboarding can currently surface as an Ark movement even when funds are headed to a
+  // Bitcoin address. Prefer the user-facing Onchain label in that case.
+  if (hasBitcoinAddressDestination(movement, isOutgoing)) {
+    return "Onchain";
   }
 
   if (movementKind === "arkoor-receive") {

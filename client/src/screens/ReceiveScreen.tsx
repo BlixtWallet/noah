@@ -40,6 +40,7 @@ import { isArkReceiveMovement } from "~/lib/barkMovement";
 import logger from "~/lib/log";
 import type { Bolt11Invoice } from "react-native-nitro-ark";
 import { queryClient } from "~/queryClient";
+import { BlinkingCaret } from "~/components/BlinkingCaret";
 
 const minAmount = 1;
 const log = logger("ReceiveScreen");
@@ -51,11 +52,54 @@ type ActiveReceiveSession = {
   arkAddress?: string;
 };
 
+type ReceiveRailGeneration = {
+  arkAddress?: string;
+  lightningInvoice?: Bolt11Invoice;
+  onchainAddress?: string;
+};
+
 const truncateAddress = (addr: string) => {
   if (addr.length <= 40) {
     return addr;
   }
   return `${addr.slice(0, 15)}...${addr.slice(-15)}`;
+};
+
+const buildReceiveRequestUri = ({
+  amountSat,
+  arkAddress,
+  lightningInvoice,
+  onchainAddress,
+}: ReceiveRailGeneration & { amountSat: number | null }) => {
+  if (amountSat === null) {
+    return undefined;
+  }
+
+  const params: string[] = [];
+
+  if (amountSat >= minAmount) {
+    params.push(`amount=${satsToBtc(amountSat)}`);
+  }
+
+  if (arkAddress) {
+    params.push(`ark=${arkAddress.toUpperCase()}`);
+  }
+
+  if (lightningInvoice?.payment_request) {
+    params.push(`lightning=${lightningInvoice.payment_request.toUpperCase()}`);
+  }
+
+  if (!onchainAddress && params.length === 0) {
+    return undefined;
+  }
+
+  let uri = `bitcoin:${onchainAddress ?? ""}`;
+
+  if (params.length > 0) {
+    uri += `?${params.join("&")}`;
+  }
+
+  return uri;
 };
 
 const PaymentRail = ({
@@ -121,6 +165,7 @@ const ReceiveScreen = () => {
   const activeReceiveSessionRef = useRef<ActiveReceiveSession | null>(null);
   const arkSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
   const isCompletingReceiveRef = useRef(false);
+  const amountInputRef = useRef<TextInput>(null);
 
   const {
     mutateAsync: generateOffchainAddress,
@@ -148,9 +193,8 @@ const ReceiveScreen = () => {
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
   const isGenerated = Boolean(bip321Uri);
   const isAmountLocked = isLoading || isGenerated;
-  const [currencyPrefixWidth, setCurrencyPrefixWidth] = useState(0);
-  const [amountDisplayWidth, setAmountDisplayWidth] = useState(120);
   const displayAmount = amount === "" ? (currency === "USD" ? "0.00" : "0") : amount;
+  const [isAmountFocused, setIsAmountFocused] = useState(false);
 
   const stopArkSubscription = useCallback(() => {
     const subscription = arkSubscriptionRef.current;
@@ -256,34 +300,15 @@ const ReceiveScreen = () => {
   );
 
   useEffect(() => {
-    let uri = "";
-
-    if (arkAddress && lightningInvoice?.payment_request && generatedAmountSat !== null) {
-      // Use empty path for unified QR codes with multiple payment methods
-      uri = `bitcoin:`;
-      const params = [];
-
-      // Amount should come first per BIP-321 convention
-      if (generatedAmountSat >= minAmount) {
-        const amountInBtc = satsToBtc(generatedAmountSat);
-        params.push(`amount=${amountInBtc}`);
-      }
-
-      // Add payment methods - use uppercase for QR code efficiency
-      if (arkAddress) {
-        params.push(`ark=${arkAddress.toUpperCase()}`);
-      }
-      if (lightningInvoice?.payment_request) {
-        params.push(`lightning=${lightningInvoice.payment_request.toUpperCase()}`);
-      }
-
-      if (params.length > 0) {
-        uri += `?${params.join("&")}`;
-      }
-
-      setBip321Uri(uri);
-    }
-  }, [arkAddress, generatedAmountSat, lightningInvoice]);
+    setBip321Uri(
+      buildReceiveRequestUri({
+        amountSat: generatedAmountSat,
+        arkAddress,
+        lightningInvoice,
+        onchainAddress: generatedOnchainAddress,
+      }),
+    );
+  }, [arkAddress, generatedAmountSat, generatedOnchainAddress, lightningInvoice]);
 
   useEffect(() => {
     if (!lightningInvoice?.payment_hash) {
@@ -375,26 +400,50 @@ const ReceiveScreen = () => {
 
     const sessionId = receiveSessionIdRef.current;
 
-    void Promise.all([
+    void Promise.allSettled([
       generateOnchainAddress(),
       generateOffchainAddress(),
       generateLightningInvoice(amountSat),
     ])
-      .then(([nextOnchainAddress, nextArkAddress, nextLightningInvoice]) => {
+      .then(([nextOnchainAddressResult, nextArkAddressResult, nextLightningInvoiceResult]) => {
         if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        if (nextOnchainAddressResult.status === "rejected") {
+          log.w("Receive rail generation failed", ["onchain", nextOnchainAddressResult.reason]);
+        }
+
+        if (nextArkAddressResult.status === "rejected") {
+          log.w("Receive rail generation failed", ["ark", nextArkAddressResult.reason]);
+        }
+
+        if (nextLightningInvoiceResult.status === "rejected") {
+          log.w("Receive rail generation failed", [
+            "lightning",
+            nextLightningInvoiceResult.reason,
+          ]);
+        }
+
+        const nextOnchainAddress =
+          nextOnchainAddressResult.status === "fulfilled"
+            ? nextOnchainAddressResult.value
+            : undefined;
+        const nextArkAddress =
+          nextArkAddressResult.status === "fulfilled" ? nextArkAddressResult.value : undefined;
+        const nextLightningInvoice =
+          nextLightningInvoiceResult.status === "fulfilled"
+            ? nextLightningInvoiceResult.value
+            : undefined;
+
+        if (!nextOnchainAddress && !nextArkAddress && !nextLightningInvoice) {
+          cancelReceiveSession({ resetAmount: false });
           return;
         }
 
         setGeneratedOnchainAddress(nextOnchainAddress);
         setArkAddress(nextArkAddress);
         setLightningInvoice(nextLightningInvoice);
-      })
-      .catch(() => {
-        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
-          return;
-        }
-
-        cancelReceiveSession({ resetAmount: false });
       });
   };
 
@@ -405,6 +454,25 @@ const ReceiveScreen = () => {
   const handleCopyToClipboard = (value: string, type: string) => {
     copyWithState(value, type);
   };
+
+  const focusAmountInput = useCallback(() => {
+    if (isAmountLocked) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      amountInputRef.current?.focus();
+    });
+  }, [isAmountLocked]);
+
+  useEffect(() => {
+    if (!isAmountLocked) {
+      return;
+    }
+
+    amountInputRef.current?.blur();
+    setIsAmountFocused(false);
+  }, [isAmountLocked]);
 
   return (
     <NoahSafeAreaView className="flex-1 bg-background">
@@ -427,7 +495,7 @@ const ReceiveScreen = () => {
                 Receive Bitcoin
               </Text>
               <Text className="mt-2 max-w-[320px] text-base leading-6 text-muted-foreground">
-                Generate a unified payment request with Ark, Lightning, and on-chain fallback.
+                Generate a payment request with Ark, Lightning, and on-chain rails when available.
               </Text>
             </Animated.View>
 
@@ -448,46 +516,43 @@ const ReceiveScreen = () => {
 
               <View className="mt-4 items-center">
                 <View className="mt-2 h-[64px] justify-center">
-                  <View className="relative self-center">
-                    <View className="flex-row items-center justify-center">
-                      <Text
-                        className="mr-3 text-[46px] font-bold leading-[52px] text-foreground"
-                        onLayout={(event) => {
-                          setCurrencyPrefixWidth(event.nativeEvent.layout.width);
-                        }}
-                      >
-                        {currency === "USD" ? "$" : "₿"}
-                      </Text>
-                      <Text
-                        className="text-[46px] font-bold leading-[52px] text-foreground"
-                        onLayout={(event) => {
-                          const nextWidth = Math.max(120, event.nativeEvent.layout.width + 8);
-                          if (Math.abs(nextWidth - amountDisplayWidth) > 1) {
-                            setAmountDisplayWidth(nextWidth);
-                          }
-                        }}
-                      >
-                        {displayAmount}
-                      </Text>
-                    </View>
-
-                    <TextInput
-                      className="absolute top-0 text-left text-[40px] font-bold leading-[44px] text-transparent"
-                      placeholder=""
-                      keyboardType="numeric"
-                      value={amount}
-                      onChangeText={setAmount}
-                      autoFocus={false}
-                      editable={!isAmountLocked}
-                      maxLength={12}
-                      selectionColor={COLORS.BITCOIN_ORANGE}
-                      style={{
-                        left: currencyPrefixWidth + 12,
-                        width: amountDisplayWidth,
-                        height: 56,
-                      }}
-                    />
+                  <View className="self-center">
+                    <Pressable onPress={focusAmountInput} disabled={isAmountLocked}>
+                      <View className="flex-row items-center justify-center">
+                        <Text className="mr-3 text-[46px] font-bold leading-[52px] text-foreground">
+                          {currency === "USD" ? "$" : "₿"}
+                        </Text>
+                        <Text className="text-[46px] font-bold leading-[52px] text-foreground">
+                          {displayAmount}
+                        </Text>
+                        <BlinkingCaret
+                          color={COLORS.BITCOIN_ORANGE}
+                          height={40}
+                          visible={isAmountFocused && !isAmountLocked}
+                        />
+                      </View>
+                    </Pressable>
                   </View>
+
+                  <TextInput
+                    ref={amountInputRef}
+                    placeholder=""
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={setAmount}
+                    autoFocus={false}
+                    editable={!isAmountLocked}
+                    onFocus={() => setIsAmountFocused(true)}
+                    onBlur={() => setIsAmountFocused(false)}
+                    maxLength={12}
+                    selectionColor={COLORS.BITCOIN_ORANGE}
+                    style={{
+                      position: "absolute",
+                      opacity: 0,
+                      width: 1,
+                      height: 1,
+                    }}
+                  />
                 </View>
 
                 <Text className="mt-3 text-lg font-medium text-muted-foreground">
@@ -526,12 +591,11 @@ const ReceiveScreen = () => {
                     className="mt-5"
                   >
                     <Text className="text-sm font-semibold text-primary">
-                      {isCopied("bip321") ? "Unified request copied" : "Tap to copy unified request"}
+                      {isCopied("bip321") ? "Request copied" : "Tap to copy request"}
                     </Text>
                   </Pressable>
                   <Text className="mt-3 max-w-[270px] text-center text-sm leading-6 text-muted-foreground">
-                    One QR works across Ark, Lightning, and on-chain fallback without changing the
-                    request.
+                    This QR includes every receive rail that generated successfully.
                   </Text>
                 </Animated.View>
               ) : null}
@@ -557,7 +621,7 @@ const ReceiveScreen = () => {
                 {arkAddress && (
                   <>
                     <PaymentRail
-                      icon="sparkles-outline"
+                      icon="boat-outline"
                       label="Ark"
                       value={arkAddress}
                       onCopy={() => handleCopyToClipboard(arkAddress, "ark")}

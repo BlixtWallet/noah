@@ -275,8 +275,8 @@ checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "ark-lib"
-version = "0.1.0-beta.8"
-source = "git+https://gitlab.com/ark-bitcoin/bark?tag=server-0.1.0-beta.8#2f0b8ded26c2576e2b0d0e5a9424d50c0dcc0264"
+version = "0.1.0"
+source = "git+https://gitlab.com/ark-bitcoin/bark?tag=server-0.1.0#0dea54d1dd2898fed801f98723adccdec94782c7"
 dependencies = [
  "async-trait",
  "bark-bitcoin-ext",
@@ -907,8 +907,8 @@ dependencies = [
 
 [[package]]
 name = "bark-bitcoin-ext"
-version = "0.1.0-beta.8"
-source = "git+https://gitlab.com/ark-bitcoin/bark?tag=server-0.1.0-beta.8#2f0b8ded26c2576e2b0d0e5a9424d50c0dcc0264"
+version = "0.1.0"
+source = "git+https://gitlab.com/ark-bitcoin/bark?tag=server-0.1.0#0dea54d1dd2898fed801f98723adccdec94782c7"
 dependencies = [
  "bitcoin",
  "lazy_static",
@@ -919,8 +919,8 @@ dependencies = [
 
 [[package]]
 name = "bark-server-rpc"
-version = "0.1.0-beta.8"
-source = "git+https://gitlab.com/ark-bitcoin/bark?tag=server-0.1.0-beta.8#2f0b8ded26c2576e2b0d0e5a9424d50c0dcc0264"
+version = "0.1.0"
+source = "git+https://gitlab.com/ark-bitcoin/bark?tag=server-0.1.0#0dea54d1dd2898fed801f98723adccdec94782c7"
 dependencies = [
  "ark-lib",
  "bitcoin",
@@ -5665,7 +5665,6 @@ dependencies = [
  "axum",
  "base64",
  "bytes",
- "flate2",
  "h2 0.4.13",
  "http 1.4.0",
  "http-body 1.0.1",
@@ -5675,6 +5674,7 @@ dependencies = [
  "hyper-util",
  "percent-encoding",
  "pin-project",
+ "rustls-native-certs",
  "socket2 0.6.3",
  "sync_wrapper",
  "tokio",
@@ -5684,7 +5684,6 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
- "webpki-roots",
 ]
 
 [[package]]
@@ -6334,15 +6333,6 @@ name = "webpki-root-certs"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "804f18a4ac2676ffb4e8b5b5fa9ae38af06df08162314f96a68d2a363e21a8ca"
-dependencies = [
- "rustls-pki-types",
-]
-
-[[package]]
-name = "webpki-roots"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22cfaf3c063993ff62e73cb4311efde4db1efb31ab78a3e5c457939ad5cc0bed"
 dependencies = [
  "rustls-pki-types",
 ]

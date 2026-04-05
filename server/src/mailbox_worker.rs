@@ -3,12 +3,12 @@
 use std::{cmp, collections::HashSet, sync::Arc, time::Duration};
 
 use anyhow::Result;
-use ark::{ProtocolEncoding, Vtxo, VtxoPolicy, vtxo::policy::VtxoPolicyKind};
+use ark::{ProtocolEncoding, Vtxo, vtxo::Full, vtxo::policy::VtxoPolicyKind};
 use async_trait::async_trait;
 use chrono::Utc;
 use expo_push_notification_client::Priority;
 use futures_util::StreamExt;
-use server_rpc::tonic::{Code, Status};
+use server_rpc::tonic::{Code, Status, transport::Endpoint};
 use server_rpc::{
     mailbox::MailboxServiceClient,
     protos::mailbox_server::{MailboxMessage, MailboxRequest, mailbox_message::Message},
@@ -334,8 +334,11 @@ impl MailboxTransport for Beta8MailboxTransport {
             Err(reason) => return Ok(MailboxSessionOutcome::InvalidAuth { reason }),
         };
 
-        let mut client =
-            MailboxServiceClient::connect(app_state.config.ark_server_url.clone()).await?;
+        let mut client = MailboxServiceClient::new(
+            Endpoint::from_shared(app_state.config.ark_server_url.clone())?
+                .connect()
+                .await?,
+        );
 
         let mut checkpoint = mailbox.last_checkpoint as u64;
         let suppress_catchup_notifications =
@@ -504,7 +507,7 @@ fn should_suppress_catchup_notifications(last_checkpoint: i64) -> bool {
 
 fn build_receive_notification(raw_vtxo: &[u8]) -> Result<Option<PushNotificationData>, ApiError> {
     let mut cursor = std::io::Cursor::new(raw_vtxo);
-    let vtxo = Vtxo::<VtxoPolicy>::decode(&mut cursor)
+    let vtxo: Vtxo<Full> = Vtxo::decode(&mut cursor)
         .map_err(|e| ApiError::Anyhow(anyhow::anyhow!("failed to decode mailbox vtxo: {}", e)))?;
 
     let amount_sats = vtxo.amount().to_sat();
