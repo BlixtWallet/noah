@@ -9,6 +9,7 @@ use expo_push_notification_client::Priority;
 use server_rpc::{
     ArkServiceClient,
     protos::{Empty, HandshakeRequest},
+    tonic::transport::Endpoint,
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time::timeout;
@@ -59,13 +60,17 @@ async fn establish_connection_and_process(
     const TIMEOUT_DURATION: Duration = Duration::from_secs(5);
 
     // Connect with timeout
-    let mut client = timeout(
+    let channel = timeout(
         TIMEOUT_DURATION,
-        ArkServiceClient::connect(ark_server_url.to_string()),
+        Endpoint::from_shared(ark_server_url.to_string())
+            .map_err(|e| anyhow::anyhow!("Invalid endpoint: {}", e))?
+            .connect(),
     )
     .await
     .map_err(|_| anyhow::anyhow!("Connection timed out after {}s", TIMEOUT_DURATION.as_secs()))?
     .map_err(|e| anyhow::anyhow!("Failed to connect: {}", e))?;
+
+    let mut client = ArkServiceClient::new(channel);
 
     tracing::info!(
         service = "ark_client",
