@@ -52,7 +52,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ghcr.io/blixtwallet/noah-server:latest-${{ matrix.arch }}
+            ghcr.io/smolcars/noah-server:latest-${{ matrix.arch }}
             ${{ secrets.DOCKERHUB_USERNAME }}/noah-server:latest-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
@@ -76,9 +76,9 @@ jobs:
 
       - name: 🎯 Create and push multi-arch manifest
         run: |
-          docker buildx imagetools create -t ghcr.io/blixtwallet/noah-server:latest \
-            ghcr.io/blixtwallet/noah-server:latest-amd64 \
-            ghcr.io/blixtwallet/noah-server:latest-arm64
+          docker buildx imagetools create -t ghcr.io/smolcars/noah-server:latest \
+            ghcr.io/smolcars/noah-server:latest-amd64 \
+            ghcr.io/smolcars/noah-server:latest-arm64
 
           docker buildx imagetools create -t ${{ secrets.DOCKERHUB_USERNAME }}/noah-server:latest \
             ${{ secrets.DOCKERHUB_USERNAME }}/noah-server:latest-amd64 \
