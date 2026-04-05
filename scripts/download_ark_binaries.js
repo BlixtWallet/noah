@@ -10,10 +10,12 @@ const projectRoot = process.cwd();
 const nitroArkPath = [
   path.resolve(projectRoot, "node_modules", "react-native-nitro-ark"),
   path.resolve(projectRoot, "client", "node_modules", "react-native-nitro-ark"),
-].find(p => fs.existsSync(p));
+].find((p) => fs.existsSync(p));
 
 if (!nitroArkPath) {
-  throw new Error("react-native-nitro-ark not found in node_modules or client/node_modules");
+  throw new Error(
+    "react-native-nitro-ark not found in node_modules or client/node_modules",
+  );
 }
 
 // Define other constants conditionally. The script already handles the case where nitroArkPath is null.
@@ -22,9 +24,9 @@ const nitroPackageJson = require(path.join(nitroArkPath, "package.json"));
 const NITRO_ARK_VERSION = `v${nitroPackageJson.version}`;
 
 // --- Configuration ---
-const XC_FRAMEWORK_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
-const XC_FRAMEWORK_CXX_BRIDGE_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/ArkCxxBridge.xcframework.zip`;
-const JNI_LIBS_ZIP_URL = `https://github.com/BlixtWallet/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
+const XC_FRAMEWORK_URL = `https://github.com/smolcars/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/Ark.xcframework.zip`;
+const XC_FRAMEWORK_CXX_BRIDGE_URL = `https://github.com/smolcars/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/ArkCxxBridge.xcframework.zip`;
+const JNI_LIBS_ZIP_URL = `https://github.com/smolcars/react-native-nitro-ark/releases/download/${NITRO_ARK_VERSION}/jniLibs.zip`;
 
 const tempDir = path.resolve(projectRoot, "temp_ark_downloads");
 

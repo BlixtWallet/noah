@@ -63,7 +63,7 @@ This project uses [Nix](https://nixos.org/) to provide a reproducible developmen
 1.  **Clone the Repository**
 
     ```bash
-    git clone https://github.com/BlixtWallet/noah.git
+    git clone https://github.com/smolcars/noah.git
     cd noah
     ```
 
@@ -100,7 +100,7 @@ Once your environment is set up, follow these steps:
 1.  **Clone the Repository**
 
     ```bash
-    git clone https://github.com/BlixtWallet/noah.git
+    git clone https://github.com/smolcars/noah.git
     cd noah
     ```
 
