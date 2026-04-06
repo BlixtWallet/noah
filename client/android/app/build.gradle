@@ -123,6 +123,7 @@ android {
         }
         mainnet {
             dimension 'version'
+            applicationId "com.noahwallet.mainnet"
             resValue "string", "app_name", "Noah"
             buildConfigField "String", "APP_VARIANT", '"mainnet"'
         }

@@ -90,7 +90,7 @@ const config: { expo: ExpoConfig } = {
           "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",
         backgroundColor: "#000000",
       },
-      package: "com.noahwallet",
+      package: "com.noahwallet.mainnet",
       splash: {
         image: "./assets/All_Files/splash_screens/splash_screen_android.png",
         resizeMode: "contain",

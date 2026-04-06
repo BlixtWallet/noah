@@ -16,6 +16,7 @@ import {
   maintenanceWithOnchainDelegated,
 } from "~/lib/walletApi";
 import { offboardAllArk } from "~/lib/paymentsApi";
+import { registerForPushNotificationsAsync } from "~/lib/pushNotifications";
 import { useAlert } from "~/contexts/AlertProvider";
 import logger from "~/lib/log";
 import { NoahButton } from "~/components/ui/NoahButton";
@@ -32,6 +33,7 @@ import {
 const log = logger("DebugScreen");
 
 type DebugAction =
+  | "getPushToken"
   | "maintenance"
   | "maintenanceRefresh"
   | "maintenanceDelegated"
@@ -47,6 +49,11 @@ interface ActionOption {
 }
 
 const DEBUG_ACTIONS: ActionOption[] = [
+  {
+    id: "getPushToken",
+    title: "Get Push Token",
+    description: "Fetch the current Expo push token or UnifiedPush endpoint",
+  },
   {
     id: "maintenance",
     title: "Maintenance",
@@ -93,6 +100,35 @@ const DebugScreen = () => {
 
   const executeAction = async (action: DebugAction, input: string): Promise<ActionResult> => {
     switch (action) {
+      case "getPushToken": {
+        log.d("Fetching push token");
+        const result = await registerForPushNotificationsAsync();
+        if (result.isErr()) {
+          return { success: false, error: result.error.message };
+        }
+
+        const payload = result.value;
+        switch (payload.kind) {
+          case "success":
+            return {
+              success: true,
+              message: `Push type: ${payload.pushType}\n\n${payload.pushToken}`,
+            };
+          case "permission_denied":
+            return {
+              success: false,
+              error: `Push permission not granted (${payload.permissionStatus})`,
+            };
+          case "device_not_supported":
+            return {
+              success: false,
+              error: "Push tokens are only available on a physical device",
+            };
+        }
+
+        const exhaustiveCheck: never = payload;
+        throw new Error(`Unsupported push registration result: ${String(exhaustiveCheck)}`);
+      }
       case "maintenance": {
         log.d("Executing maintenance");
         const result = await maintanance();

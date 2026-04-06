@@ -28,9 +28,9 @@
     "roundTxRequiredConfirmations": 1
   },
   "mainnet": {
-    "ark": "http://192.168.4.252:3535",
+    "ark": "https://ark.second.tech",
     "server": "https://noahwallet.io",
-    "esplora": "https://mempool.space/api",
+    "esplora": "https://mempool.second.tech/api",
     "bitcoind": null,
     "bitcoindCookie": null,
     "bitcoindUser": null,

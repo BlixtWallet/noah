@@ -112,11 +112,11 @@ jobs:
         run: ./scripts/create_local_properties.sh
 
       - name: 🔨 Build signet Android app (APK)
-        run: nix develop .# --command bash -c "bun client build:android:ci"
+        run: nix develop .# --command bash -c "bun client build:android:signet:ci:apk"
 
       - name: 📦 Build signet Android app (AAB)
         if: ${{ inputs.build_aab }}
-        run: nix develop .# --command bash -c "cd client/android && ./gradlew bundleSignetRelease -PreactNativeArchitectures=arm64-v8a"
+        run: nix develop .# --command bash -c "bun client build:android:signet:ci:aab"
 
       - name: 🧹 Clean up keystore & local.properties
         if: ${{ always() }}
