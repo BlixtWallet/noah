@@ -6,13 +6,8 @@ use crate::{
 
 use bitcoin::hex::DisplayHex;
 use expo_push_notification_client::Priority;
-use server_rpc::{
-    ArkServiceClient,
-    protos::{Empty, HandshakeRequest},
-    tonic::transport::Endpoint,
-};
+use server_rpc::{ServerConnection, protos::Empty};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tokio::time::timeout;
 
 const POLL_INTERVAL: Duration = Duration::from_secs(30);
 
@@ -36,7 +31,12 @@ pub async fn connect_to_ark_server(
                 retry_delay = INITIAL_RETRY_DELAY;
             }
             Err(e) => {
-                tracing::warn!(service = "ark_client", event = "connection_failed", error = %e, "failed to connect");
+                tracing::warn!(
+                    service = "ark_client",
+                    event = "connection_failed",
+                    error = %format!("{e:#}"),
+                    "failed to connect"
+                );
             }
         }
 
@@ -57,32 +57,17 @@ async fn establish_connection_and_process(
     app_state: &AppState,
     ark_server_url: &str,
 ) -> anyhow::Result<()> {
-    const TIMEOUT_DURATION: Duration = Duration::from_secs(5);
-
-    // Connect with timeout
-    let channel = timeout(
-        TIMEOUT_DURATION,
-        Endpoint::from_shared(ark_server_url.to_string())
-            .map_err(|e| anyhow::anyhow!("Invalid endpoint: {}", e))?
-            .connect(),
-    )
-    .await
-    .map_err(|_| anyhow::anyhow!("Connection timed out after {}s", TIMEOUT_DURATION.as_secs()))?
-    .map_err(|e| anyhow::anyhow!("Failed to connect: {}", e))?;
-
-    let mut client = ArkServiceClient::new(channel);
+    let network = app_state.config.network()?;
+    let connection = ServerConnection::connect(ark_server_url, network)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to connect: {e:#}"))?;
+    let mut client = connection.client;
 
     tracing::info!(
         service = "ark_client",
         event = "connected",
         "connected to ark server"
     );
-
-    let response = client
-        .handshake(HandshakeRequest { bark_version: None })
-        .await?;
-
-    tracing::debug!(service = "ark_client", event = "handshake", response = ?response, "handshake complete");
 
     let info = client.get_ark_info(Empty {}).await?.into_inner();
 

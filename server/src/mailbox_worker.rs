@@ -8,10 +8,11 @@ use async_trait::async_trait;
 use chrono::Utc;
 use expo_push_notification_client::Priority;
 use futures_util::StreamExt;
-use server_rpc::tonic::{Code, Status, transport::Endpoint};
 use server_rpc::{
+    ServerConnection,
     mailbox::MailboxServiceClient,
     protos::mailbox_server::{MailboxMessage, MailboxRequest, mailbox_message::Message},
+    tonic::{Code, Status},
 };
 use tokio::{
     sync::Semaphore,
@@ -334,11 +335,11 @@ impl MailboxTransport for Beta8MailboxTransport {
             Err(reason) => return Ok(MailboxSessionOutcome::InvalidAuth { reason }),
         };
 
-        let mut client = MailboxServiceClient::new(
-            Endpoint::from_shared(app_state.config.ark_server_url.clone())?
-                .connect()
-                .await?,
-        );
+        let network = app_state.config.network()?;
+        let mut client: MailboxServiceClient<_> =
+            ServerConnection::connect(&app_state.config.ark_server_url, network)
+                .await?
+                .mailbox_client;
 
         let mut checkpoint = mailbox.last_checkpoint as u64;
         let suppress_catchup_notifications =
