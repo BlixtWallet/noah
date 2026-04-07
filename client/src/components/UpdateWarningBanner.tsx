@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Pressable, Platform, Linking } from "react-native";
 import { ChevronRight } from "lucide-react-native";
+import { APP_VARIANT } from "~/config";
 
 interface UpdateWarningBannerProps {
   currentVersion: string;
@@ -12,10 +13,20 @@ export const UpdateWarningBanner: React.FC<UpdateWarningBannerProps> = ({
   minimumVersion,
 }) => {
   const handleUpdate = () => {
-    const storeUrl =
-      Platform.OS === "ios"
-        ? "itms-beta://testflight.apple.com/join/E4P44dXF"
-        : "https://play.google.com/store/apps/details?id=com.noahwallet.signet";
+    if (APP_VARIANT === "mainnet") {
+      // Mainnet private distribution stays outside the repo; do not hardcode the
+      // private TestFlight channel or any equivalent mainnet release URL here.
+      return;
+    }
+
+    const iosSignetUrl =
+      process.env.EXPO_PUBLIC_SIGNET_TESTFLIGHT_URL ??
+      "itms-beta://testflight.apple.com/join/E4P44dXF";
+    const androidSignetUrl =
+      process.env.EXPO_PUBLIC_SIGNET_PLAY_STORE_URL ??
+      "https://play.google.com/store/apps/details?id=com.noahwallet.signet";
+
+    const storeUrl = Platform.OS === "ios" ? iosSignetUrl : androidSignetUrl;
 
     Linking.openURL(storeUrl);
   };

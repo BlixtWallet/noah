@@ -20,16 +20,25 @@ import org.unifiedpush.android.connector.UnifiedPush
 class NoahTools : HybridNoahToolsSpec() {
 
     private fun resolveWidgetComponent(context: Context, appGroup: String): ComponentName? {
-        val providerClassName = when (appGroup) {
-            "com.noahwallet.regtest" -> "com.noahwallet.widgets.NoahWidgetRegtestProvider"
-            "com.noahwallet.signet" -> "com.noahwallet.widgets.NoahWidgetSignetProvider"
-            "com.noahwallet.mainnet" -> "com.noahwallet.widgets.NoahWidgetMainnetProvider"
+        val providerSimpleName = when (appGroup) {
+            "com.noahwallet.regtest" -> "NoahWidgetRegtestProvider"
+            "com.noahwallet.signet" -> "NoahWidgetSignetProvider"
+            "com.noahwallet.mainnet" -> "NoahWidgetMainnetProvider"
             else -> null
         }
 
-        if (providerClassName == null) {
+        if (providerSimpleName == null) {
             return null
         }
+
+        val providerClassName = listOf(
+            "com.noahwallet.mainnet.widgets.$providerSimpleName",
+            "com.noahwallet.widgets.$providerSimpleName",
+        ).firstOrNull { className ->
+            runCatching {
+                Class.forName(className, false, context.classLoader)
+            }.isSuccess
+        } ?: return null
 
         // Build an explicit component to ensure the broadcast reaches the widget provider even
         // when the app process is not running.

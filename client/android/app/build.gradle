@@ -109,20 +109,21 @@ android {
     productFlavors {
         signet {
             dimension 'version'
-            applicationIdSuffix ".signet"
+            applicationId 'com.noahwallet.signet'
             versionNameSuffix "-signet"
             resValue "string", "app_name", "Noah (Signet)"
             buildConfigField "String", "APP_VARIANT", '"signet"'
         }
         regtest {
             dimension 'version'
-            applicationIdSuffix ".regtest"
+            applicationId 'com.noahwallet.regtest'
             versionNameSuffix "-regtest"
             resValue "string", "app_name", "Noah (Regtest)"
             buildConfigField "String", "APP_VARIANT", '"regtest"'
         }
         mainnet {
             dimension 'version'
+            applicationId 'com.noahwallet.mainnet'
             resValue "string", "app_name", "Noah"
             buildConfigField "String", "APP_VARIANT", '"mainnet"'
         }

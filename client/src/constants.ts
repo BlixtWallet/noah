@@ -121,17 +121,13 @@ export const REGTEST_CONFIG: WalletCreationOptions = {
   },
 };
 
-// In a real app, you would have a separate production configuration.
 export const PRODUCTION_CONFIG: WalletCreationOptions = {
   regtest: false,
   signet: false,
   bitcoin: true,
   config: {
-    // This is a public esplora instance, you might want to run your own.
-    esplora: "https://mempool.space/api",
-    // This ASP is likely for a local regtest setup,
-    // you will need a production ASP for mainnet.
-    ark: "http://192.168.4.252:3535",
+    esplora: "https://mempool.second.tech/api",
+    ark: "https://ark.second.tech",
     vtxo_refresh_expiry_threshold: 288,
     fallback_fee_rate: 10000,
     htlc_recv_claim_delta: 18,
@@ -169,7 +165,7 @@ export const mempoolHistoricalPriceEndpoint =
 export const getBlockheightEndpoint = () => {
   switch (APP_VARIANT) {
     case "mainnet":
-      return "https://mempool.noderunner.wtf/api/blocks/tip/height";
+      return "https://mempool.second.tech/api/blocks/tip/height";
     case "signet":
       return "https://mempool.space/signet/api/blocks/tip/height";
     case "regtest":

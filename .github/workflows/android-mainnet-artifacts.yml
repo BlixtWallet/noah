@@ -1,0 +1,126 @@
+name: Android Mainnet Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: "Git ref to build"
+        required: true
+        default: "master"
+        type: string
+
+jobs:
+  android-mainnet-build:
+    name: Build Android Mainnet Artifacts
+    runs-on: self-hosted
+    steps:
+      - name: 🔒 Validate trusted git ref
+        id: validate_ref
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git_ref="${{ inputs.git_ref }}"
+          repo_url="${{ github.server_url }}/${{ github.repository }}.git"
+          auth_repo_url="${repo_url/https:\/\//https:\/\/x-access-token:${GITHUB_TOKEN}@}"
+
+          if [[ "$git_ref" == "master" ]] || [[ "$git_ref" == "refs/heads/master" ]]; then
+            echo "checkout_ref=refs/heads/master" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$git_ref" =~ ^v[0-9].* ]]; then
+            git_ref="refs/tags/$git_ref"
+          fi
+
+          if [[ "$git_ref" =~ ^refs/tags/v[0-9].* ]]; then
+            if git ls-remote --exit-code --refs --tags "$auth_repo_url" "$git_ref" >/dev/null; then
+              echo "checkout_ref=$git_ref" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Tag '$git_ref' does not exist on origin."
+            exit 1
+          fi
+
+          echo "Ref '$git_ref' is not allowed for the self-hosted mainnet artifact workflow."
+          echo "Use master or a real v* tag."
+          exit 1
+
+      - name: 🏗 Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.validate_ref.outputs.checkout_ref }}
+
+      - name: 🧾 Resolve artifact metadata
+        id: git_meta
+        shell: bash
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: 📦 Install dependencies
+        run: nix develop .# --command bash -c "bun install --frozen-lockfile"
+
+      - name: 🔧 Create sentry.properties
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: ./scripts/create_sentry_properties.sh
+
+      - name: 🔐 Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > client/android/app/release.keystore
+
+      - name: 🔧 Create local.properties for release signing
+        env:
+          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./scripts/create_local_properties.sh
+
+      - name: 🔨 Build mainnet Android app (APK)
+        run: nix develop .# --command bash -c "bun client build:android:mainnet:ci:apk"
+
+      - name: 📦 Build mainnet Android app (AAB)
+        run: nix develop .# --command bash -c "bun client build:android:mainnet:ci:aab"
+
+      - name: 📝 Rename Android artifacts
+        id: rename_outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk_path="client/android/app/build/outputs/apk/mainnet/release/app-mainnet-release.apk"
+          aab_path="client/android/app/build/outputs/bundle/mainnetRelease/app-mainnet-release.aab"
+          apk_filename="noah-mainnet-${{ steps.git_meta.outputs.short_sha }}.apk"
+          aab_filename="noah-mainnet-${{ steps.git_meta.outputs.short_sha }}.aab"
+          apk_target="client/android/app/build/outputs/apk/mainnet/release/${apk_filename}"
+          aab_target="client/android/app/build/outputs/bundle/mainnetRelease/${aab_filename}"
+          mv "$apk_path" "$apk_target"
+          mv "$aab_path" "$aab_target"
+          echo "apk_path=${apk_target}" >> "$GITHUB_OUTPUT"
+          echo "aab_path=${aab_target}" >> "$GITHUB_OUTPUT"
+          echo "apk_filename=${apk_filename}" >> "$GITHUB_OUTPUT"
+          echo "aab_filename=${aab_filename}" >> "$GITHUB_OUTPUT"
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: 📤 Upload Android APK to S3
+        run: aws s3 cp ${{ steps.rename_outputs.outputs.apk_path }} s3://${{ secrets.AWS_S3_BUCKET }}/private-mainnet/android/${{ github.run_id }}/${{ steps.rename_outputs.outputs.apk_filename }}
+
+      - name: 📤 Upload Android AAB to S3
+        run: aws s3 cp ${{ steps.rename_outputs.outputs.aab_path }} s3://${{ secrets.AWS_S3_BUCKET }}/private-mainnet/android/${{ github.run_id }}/${{ steps.rename_outputs.outputs.aab_filename }}
+
+      - name: 🧹 Clean up signing files
+        if: ${{ always() }}
+        run: |
+          rm -f client/android/app/release.keystore
+          rm -f client/android/local.properties
+          rm -f client/android/sentry.properties
+          rm -f client/ios/sentry.properties

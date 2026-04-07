@@ -68,12 +68,13 @@ const config: { expo: ExpoConfig } = {
         },
       ],
       "expo-notifications",
+      "./plugins/withNoahAndroidPrebuildFix.js",
       "./plugins/withNoahIosPrebuildFix.js",
     ],
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.noahwallet.mainnet",
-      scheme: "Noah-Signet",
+      scheme: "com.noahwallet.mainnet",
       infoPlist: {
         UIBackgroundModes: ["remote-notification", "fetch"],
       },
