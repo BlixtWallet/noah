@@ -68,12 +68,13 @@ const config: { expo: ExpoConfig } = {
         },
       ],
       "expo-notifications",
+      "./plugins/withNoahAndroidPrebuildFix.js",
       "./plugins/withNoahIosPrebuildFix.js",
     ],
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.noahwallet.mainnet",
-      scheme: "Noah-Signet",
+      scheme: "com.noahwallet.mainnet",
       infoPlist: {
         UIBackgroundModes: ["remote-notification", "fetch"],
       },
@@ -90,7 +91,7 @@ const config: { expo: ExpoConfig } = {
           "./assets/All_Files/android/Android_Adaptive/android_adaptive_foreground.png",
         backgroundColor: "#000000",
       },
-      package: "com.noahwallet.mainnet",
+      package: "com.noahwallet",
       splash: {
         image: "./assets/All_Files/splash_screens/splash_screen_android.png",
         resizeMode: "contain",

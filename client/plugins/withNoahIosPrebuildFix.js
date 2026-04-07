@@ -2,11 +2,89 @@ const { withInfoPlist, withXcodeProject, withDangerousMod } = require("@expo/con
 const fs = require("fs");
 const path = require("path");
 
+// Expo prebuild does not preserve this repo's iOS setup on its own. This plugin
+// keeps the native project aligned with app config by:
+// - restoring placeholder-driven Info.plist values and Xcode build settings
+// - preserving mainnet naming/icon/url-scheme behavior across targets
+// - repairing the Sentry build phases for the hoisted workspace layout and
+//   limiting debug-symbol upload to archive-only builds
 const MAINNET_BUNDLE_ID = "com.noahwallet.mainnet";
 const APP_SCHEME_PLACEHOLDER = "$(APP_SCHEME)";
+const MARKETING_VERSION_PLACEHOLDER = "$(MARKETING_VERSION)";
+const CURRENT_PROJECT_VERSION_PLACEHOLDER = "$(CURRENT_PROJECT_VERSION)";
 const PRODUCT_NAME_PLACEHOLDER = "$(PRODUCT_NAME)";
 const TARGET_NAME_PLACEHOLDER = '"$(TARGET_NAME)"';
 const ICON_NAME = "noah";
+const SENTRY_BUNDLE_SCRIPT = `if [[ -f "$PODS_ROOT/../.xcode.env" ]]; then
+  source "$PODS_ROOT/../.xcode.env"
+fi
+if [[ -f "$PODS_ROOT/../.xcode.env.local" ]]; then
+  source "$PODS_ROOT/../.xcode.env.local"
+fi
+
+# The project root by default is one level up from the ios directory
+export PROJECT_ROOT="$PROJECT_DIR"/..
+
+if [[ "$CONFIGURATION" = *Debug* ]]; then
+  export SKIP_BUNDLING=1
+fi
+if [[ -z "$ENTRY_FILE" ]]; then
+  # Set the entry JS file using the bundler's entry resolution.
+  export ENTRY_FILE="$("$NODE_BINARY" -e "require('expo/scripts/resolveAppEntry')" "$PROJECT_ROOT" ios absolute | tail -n 1)"
+fi
+
+if [[ -z "$CLI_PATH" ]]; then
+  # Use Expo CLI
+  export CLI_PATH="$("$NODE_BINARY" --print "require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })")"
+fi
+if [[ -z "$BUNDLE_COMMAND" ]]; then
+  # Default Expo CLI command for bundling
+  export BUNDLE_COMMAND="export:embed"
+fi
+
+# Source .xcode.env.updates if it exists to allow
+# SKIP_BUNDLING to be unset if needed
+if [[ -f "$PODS_ROOT/../.xcode.env.updates" ]]; then
+  source "$PODS_ROOT/../.xcode.env.updates"
+fi
+# Source local changes to allow overrides
+# if needed
+if [[ -f "$PODS_ROOT/../.xcode.env.local" ]]; then
+  source "$PODS_ROOT/../.xcode.env.local"
+fi
+
+/bin/sh \`"$NODE_BINARY" --print "require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode.sh'"\` \`"$NODE_BINARY" --print "require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'"\`
+
+`;
+const SENTRY_DEBUG_FILES_SCRIPT = `if [[ -f "$PODS_ROOT/../.xcode.env" ]]; then
+  source "$PODS_ROOT/../.xcode.env"
+fi
+if [[ -f "$PODS_ROOT/../.xcode.env.local" ]]; then
+  source "$PODS_ROOT/../.xcode.env.local"
+fi
+
+if [[ "$CONFIGURATION" = *Debug* ]]; then
+  echo "Skipping Sentry debug files upload for Debug configuration"
+  exit 0
+fi
+
+if [[ "$PLATFORM_NAME" == *simulator* ]]; then
+  echo "Skipping Sentry debug files upload for simulator builds"
+  exit 0
+fi
+
+if [[ -z "$ARCHIVE_PATH" ]]; then
+  echo "Skipping Sentry debug files upload outside archive builds"
+  exit 0
+fi
+
+if [[ -z "$NODE_BINARY" ]]; then
+  export NODE_BINARY=$(command -v node)
+fi
+
+/bin/sh \`"$NODE_BINARY" --print "require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'"\`
+
+`;
 
 function isRecord(value) {
   return typeof value === "object" && value !== null;
@@ -29,6 +107,11 @@ function getBuildSettings(configEntry) {
 function enforceDisplayNamePlaceholders(infoPlist) {
   infoPlist.CFBundleDisplayName = PRODUCT_NAME_PLACEHOLDER;
   infoPlist.CFBundleName = PRODUCT_NAME_PLACEHOLDER;
+}
+
+function enforceVersionPlaceholders(infoPlist) {
+  infoPlist.CFBundleShortVersionString = MARKETING_VERSION_PLACEHOLDER;
+  infoPlist.CFBundleVersion = CURRENT_PROJECT_VERSION_PLACEHOLDER;
 }
 
 function sanitizeUrlSchemes(infoPlist, { iosScheme }) {
@@ -82,6 +165,49 @@ function fixAppIconName(project) {
     if (!buildSettings) continue;
     if (buildSettings.ASSETCATALOG_COMPILER_APPICON_NAME !== undefined) {
       buildSettings.ASSETCATALOG_COMPILER_APPICON_NAME = ICON_NAME;
+    }
+  }
+}
+
+function syncVersionBuildSettings(project, { version, buildNumber }) {
+  if (!version || !buildNumber) return;
+
+  const section = project.pbxXCBuildConfigurationSection();
+  for (const [, entry] of Object.entries(section)) {
+    const buildSettings = getBuildSettings(entry);
+    if (!buildSettings) continue;
+
+    if (buildSettings.MARKETING_VERSION !== undefined) {
+      buildSettings.MARKETING_VERSION = version;
+    }
+
+    if (buildSettings.CURRENT_PROJECT_VERSION !== undefined) {
+      buildSettings.CURRENT_PROJECT_VERSION = buildNumber;
+    }
+  }
+}
+
+function fixSentryBuildPhaseScripts(project) {
+  const section = project.hash.project.objects.PBXShellScriptBuildPhase;
+  if (!isRecord(section)) return;
+
+  for (const [, entry] of Object.entries(section)) {
+    if (!isRecord(entry)) continue;
+
+    const name = stripQuotes(entry.name);
+    const shellScript = stripQuotes(entry.shellScript);
+
+    if (
+      name === "Bundle React Native code and images" &&
+      typeof shellScript === "string" &&
+      (shellScript.includes("@sentry/react-native") || shellScript.includes("sentry-xcode.sh"))
+    ) {
+      entry.shellScript = JSON.stringify(SENTRY_BUNDLE_SCRIPT);
+      continue;
+    }
+
+    if (name === "Upload Debug Symbols to Sentry") {
+      entry.shellScript = JSON.stringify(SENTRY_DEBUG_FILES_SCRIPT);
     }
   }
 }
@@ -216,11 +342,14 @@ function ensureAppiconset(iosDir) {
 
 function withNoahIosPrebuildFix(config) {
   const appName = config.name;
-  const iosScheme = config.ios?.scheme;
+  const iosScheme = Array.isArray(config.ios?.scheme) ? config.ios.scheme[0] : config.ios?.scheme;
+  const appVersion = config.version;
+  const iosBuildNumber = config.ios?.buildNumber;
 
   config = withInfoPlist(config, (modConfig) => {
     const infoPlist = modConfig.modResults;
     enforceDisplayNamePlaceholders(infoPlist);
+    enforceVersionPlaceholders(infoPlist);
     sanitizeUrlSchemes(infoPlist, { iosScheme });
     return modConfig;
   });
@@ -229,6 +358,11 @@ function withNoahIosPrebuildFix(config) {
     const project = modConfig.modResults;
     fixMainnetProductName(project, { appName });
     fixAppIconName(project);
+    syncVersionBuildSettings(project, {
+      version: appVersion,
+      buildNumber: iosBuildNumber,
+    });
+    fixSentryBuildPhaseScripts(project);
     addIconToAllTargets(project);
     return modConfig;
   });
