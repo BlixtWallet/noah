@@ -110,15 +110,9 @@ where
                 Self::handle_session_result(result, &mut active_pubkeys).await?;
             }
 
-            let scheduled = self
+            let _ = self
                 .schedule_runnable_sessions(&mut join_set, &mut active_pubkeys)
                 .await?;
-            tracing::debug!(
-                service = "mailbox_worker",
-                scheduled = scheduled,
-                active_sessions = active_pubkeys.len(),
-                "mailbox worker iteration complete"
-            );
 
             tokio::select! {
                 result = join_set.join_next(), if !join_set.is_empty() => {
