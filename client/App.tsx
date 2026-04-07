@@ -12,9 +12,9 @@ import { Uniwind } from "uniwind";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "~/queryClient";
 import { APP_VARIANT } from "~/config";
-const isDebugModeOrRegtest = __DEV__ || APP_VARIANT === "regtest";
+const isSentryDisabled = __DEV__ || APP_VARIANT === "regtest" || APP_VARIANT === "signet";
 
-if (!isDebugModeOrRegtest) {
+if (!isSentryDisabled) {
   Sentry.init({
     dsn: "https://ac229acf494dda7d1d84eebcc14f7769@o4509731937648640.ingest.us.sentry.io/4509731938435072",
     sendDefaultPii: true,
@@ -54,4 +54,4 @@ const App = () => {
   return <AppContent />;
 };
 
-export default isDebugModeOrRegtest ? App : Sentry.wrap(App);
+export default isSentryDisabled ? App : Sentry.wrap(App);
