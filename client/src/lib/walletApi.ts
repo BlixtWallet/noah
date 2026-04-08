@@ -16,10 +16,12 @@ import {
   maintenanceDelegated as maintenanceDelegatedNitro,
   maintenanceWithOnchainDelegated as maintenanceWithOnchainDelegatedNitro,
   refreshServer as refreshServerNitro,
+  getArkInfo as getArkInfoNitro,
   signMesssageWithMnemonic as signMessageWithMnemonicNitro,
   deriveKeypairFromMnemonic as deriveKeypairFromMnemonicNitro,
   vtxos as vtxosNitro,
   getExpiringVtxos as getExpiringVtxosNitro,
+  type BarkArkInfo,
   type OnchainBalanceResult,
   type OffchainBalanceResult,
   KeyPairResult,
@@ -271,6 +273,10 @@ export const maintenanceWithOnchainDelegated = async (): Promise<Result<void, Er
 
 export const refreshServer = async (): Promise<Result<void, Error>> => {
   return ResultAsync.fromPromise(refreshServerNitro(), (e) => e as Error);
+};
+
+export const getArkInfo = async (): Promise<Result<BarkArkInfo, Error>> => {
+  return ResultAsync.fromPromise(getArkInfoNitro(), (e) => e as Error);
 };
 
 export const deleteWallet = async (): Promise<Result<void, Error>> => {

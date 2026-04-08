@@ -10,6 +10,7 @@ import { Text } from "~/components/ui/text";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import {
+  getArkInfo,
   refreshServer,
   maintanance,
   maintenanceRefresh,
@@ -34,6 +35,7 @@ import {
 const log = logger("DebugScreen");
 
 type DebugAction =
+  | "getArkInfo"
   | "getPushToken"
   | "refreshServer"
   | "maintenance"
@@ -51,6 +53,11 @@ interface ActionOption {
 }
 
 const DEBUG_ACTIONS: ActionOption[] = [
+  {
+    id: "getArkInfo",
+    title: "Get Ark Info",
+    description: "Fetch the current Ark server info as JSON",
+  },
   {
     id: "getPushToken",
     title: "Get Push Token",
@@ -109,6 +116,14 @@ const DebugScreen = () => {
 
   const executeAction = async (action: DebugAction, input: string): Promise<ActionResult> => {
     switch (action) {
+      case "getArkInfo": {
+        log.d("Fetching Ark info");
+        const result = await getArkInfo();
+        if (result.isErr()) {
+          return { success: false, error: result.error.message };
+        }
+        return { success: true, message: JSON.stringify(result.value, null, 2) };
+      }
       case "getPushToken": {
         log.d("Fetching push token");
         const result = await registerForPushNotificationsAsync();
