@@ -10,6 +10,7 @@ import { Text } from "~/components/ui/text";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import {
+  refreshServer,
   maintanance,
   maintenanceRefresh,
   maintenanceDelegated,
@@ -34,6 +35,7 @@ const log = logger("DebugScreen");
 
 type DebugAction =
   | "getPushToken"
+  | "refreshServer"
   | "maintenance"
   | "maintenanceRefresh"
   | "maintenanceDelegated"
@@ -53,6 +55,11 @@ const DEBUG_ACTIONS: ActionOption[] = [
     id: "getPushToken",
     title: "Get Push Token",
     description: "Fetch the current Expo push token or UnifiedPush endpoint",
+  },
+  {
+    id: "refreshServer",
+    title: "Refresh Server",
+    description: "Refresh server registration and sync the latest server state",
   },
   {
     id: "maintenance",
@@ -90,7 +97,9 @@ const DebugScreen = () => {
   const [selectedOption, setSelectedOption] = useState<Option | undefined>(undefined);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [resultMessage, setResultMessage] = useState<string | null>(null);
+  const [resultState, setResultState] = useState<
+    { kind: "success" | "error"; message: string } | null
+  >(null);
   const [copied, setCopied] = useState(false);
 
   const selectedAction = selectedOption?.value as DebugAction | undefined;
@@ -128,6 +137,14 @@ const DebugScreen = () => {
 
         const exhaustiveCheck: never = payload;
         throw new Error(`Unsupported push registration result: ${String(exhaustiveCheck)}`);
+      }
+      case "refreshServer": {
+        log.d("Executing refresh server");
+        const result = await refreshServer();
+        if (result.isErr()) {
+          return { success: false, error: result.error.message };
+        }
+        return { success: true, message: "Server refresh completed successfully" };
       }
       case "maintenance": {
         log.d("Executing maintenance");
@@ -191,33 +208,34 @@ const DebugScreen = () => {
     }
 
     setIsLoading(true);
-    setResultMessage(null);
+    setResultState(null);
 
     const result = await executeAction(selectedAction, inputValue);
 
     setIsLoading(false);
 
     if (result.success) {
-      setResultMessage(result.message);
+      setResultState({ kind: "success", message: result.message });
       if (selectedAction === "offboardAll") {
         setInputValue("");
       }
     } else {
       log.e("Debug action failed:", [result.error]);
+      setResultState({ kind: "error", message: result.error });
       showAlert({ title: "Action Failed", description: result.error });
     }
   };
 
   const handleSelectChange = (option: Option | undefined) => {
     setSelectedOption(option);
-    setResultMessage(null);
+    setResultState(null);
     setInputValue("");
     setCopied(false);
   };
 
   const handleCopyResult = async () => {
-    if (resultMessage) {
-      await copyToClipboard(resultMessage, {
+    if (resultState?.message) {
+      await copyToClipboard(resultState.message, {
         onCopy: () => {
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
@@ -275,12 +293,24 @@ const DebugScreen = () => {
           </View>
         )}
 
-        {resultMessage && (
+        {resultState && (
           <Pressable
             onLongPress={handleCopyResult}
-            className="mb-6 p-4 bg-green-100 dark:bg-green-900/30 rounded-lg border border-green-300 dark:border-green-700"
+            className={`mb-6 rounded-lg border p-4 ${
+              resultState.kind === "success"
+                ? "border-green-300 bg-green-100 dark:border-green-700 dark:bg-green-900/30"
+                : "border-red-300 bg-red-100 dark:border-red-700 dark:bg-red-900/30"
+            }`}
           >
-            <Text className="text-green-700 dark:text-green-400">{resultMessage}</Text>
+            <Text
+              className={
+                resultState.kind === "success"
+                  ? "text-green-700 dark:text-green-400"
+                  : "text-red-700 dark:text-red-400"
+              }
+            >
+              {resultState.message}
+            </Text>
             <Text className="text-muted-foreground text-md mt-2">
               {copied ? "Copied!" : "Long press to copy"}
             </Text>
