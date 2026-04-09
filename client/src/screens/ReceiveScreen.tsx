@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Pressable,
@@ -6,6 +6,7 @@ import {
   Keyboard,
   TextInput,
   ScrollView,
+  InteractionManager,
 } from "react-native";
 import { Text } from "../components/ui/text";
 import { useAlert } from "~/contexts/AlertProvider";
@@ -24,7 +25,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import Animated, { FadeInDown, FadeInUp, LinearTransition, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 import { useIconColor, useThemeColors } from "../hooks/useTheme";
 import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
@@ -56,6 +57,10 @@ type ReceiveRailGeneration = {
   arkAddress?: string;
   lightningInvoice?: Bolt11Invoice;
   onchainAddress?: string;
+};
+
+type GeneratedReceiveRequest = ReceiveRailGeneration & {
+  amountSat: number;
 };
 
 const truncateAddress = (addr: string) => {
@@ -150,13 +155,7 @@ const ReceiveScreen = () => {
   const colors = useThemeColors();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
-  const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
-  const [generatedAmountSat, setGeneratedAmountSat] = useState<number | null>(null);
-  const [arkAddress, setArkAddress] = useState<string | undefined>(undefined);
-  const [generatedOnchainAddress, setGeneratedOnchainAddress] = useState<string | undefined>(
-    undefined,
-  );
-  const [lightningInvoice, setLightningInvoice] = useState<Bolt11Invoice | undefined>(undefined);
+  const [generatedRequest, setGeneratedRequest] = useState<GeneratedReceiveRequest | null>(null);
   const { showAlert } = useAlert();
   const receiveSessionIdRef = useRef(0);
   const activeReceiveSessionRef = useRef<ActiveReceiveSession | null>(null);
@@ -168,82 +167,90 @@ const ReceiveScreen = () => {
   const {
     mutateAsync: generateOffchainAddress,
     isPending: isGeneratingVtxo,
-    reset: resetOffchainAddress,
   } = useGenerateOffchainAddress();
 
   const {
     mutateAsync: generateOnchainAddress,
     isPending: isGeneratingOnchain,
-    reset: resetOnchainAddress,
   } = useGenerateOnchainAddress();
 
   const {
     mutateAsync: generateLightningInvoice,
     isPending: isGeneratingLightning,
-    reset: resetLightningInvoice,
   } = useGenerateLightningInvoice();
 
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
+  const generatedAmountSat = generatedRequest?.amountSat ?? null;
+  const arkAddress = generatedRequest?.arkAddress;
+  const generatedOnchainAddress = generatedRequest?.onchainAddress;
+  const lightningInvoice = generatedRequest?.lightningInvoice;
+  const bip321Uri = useMemo(
+    () =>
+      buildReceiveRequestUri({
+        amountSat: generatedAmountSat,
+        arkAddress,
+        lightningInvoice,
+        onchainAddress: generatedOnchainAddress,
+      }),
+    [arkAddress, generatedAmountSat, generatedOnchainAddress, lightningInvoice],
+  );
   const isGenerated = Boolean(bip321Uri);
+  const isClearDisabled = isLoading || (!isGenerated && amount === "");
   const isAmountLocked = isLoading || isGenerated;
   const displayAmount = amount === "" ? (currency === "USD" ? "0.00" : "0") : amount;
   const [isAmountFocused, setIsAmountFocused] = useState(false);
 
-  const stopArkSubscription = useCallback(() => {
+  const stopSubscription = useCallback(
+    (subscription: BarkNotificationSubscription | null, label: string) => {
+      if (!subscription) {
+        return;
+      }
+
+      try {
+        subscription.stop();
+      } catch (error) {
+        log.w(`Failed to stop ${label} receive subscription`, [
+          error instanceof Error ? error.message : String(error),
+        ]);
+      }
+    },
+    [],
+  );
+
+  const releaseArkSubscription = useCallback(() => {
     const subscription = arkSubscriptionRef.current;
-
-    if (!subscription) {
-      return;
-    }
-
     arkSubscriptionRef.current = null;
 
-    try {
-      if (subscription.isActive()) {
-        subscription.stop();
-      }
-    } catch (error) {
-      log.w("Failed to stop Ark receive subscription", [
-        error instanceof Error ? error.message : String(error),
-      ]);
+    if (!subscription) {
+      return;
     }
-  }, []);
 
-  const stopLightningSubscription = useCallback(() => {
+    InteractionManager.runAfterInteractions(() => {
+      stopSubscription(subscription, "Ark");
+    });
+  }, [stopSubscription]);
+
+  const releaseLightningSubscription = useCallback(() => {
     const subscription = lightningSubscriptionRef.current;
+    lightningSubscriptionRef.current = null;
 
     if (!subscription) {
       return;
     }
 
-    lightningSubscriptionRef.current = null;
-
-    try {
-      if (subscription.isActive()) {
-        subscription.stop();
-      }
-    } catch (error) {
-      log.w("Failed to stop Lightning receive subscription", [
-        error instanceof Error ? error.message : String(error),
-      ]);
-    }
-  }, []);
+    InteractionManager.runAfterInteractions(() => {
+      stopSubscription(subscription, "Lightning");
+    });
+  }, [stopSubscription]);
 
   const clearGeneratedReceiveData = useCallback(
     ({ resetAmount }: { resetAmount: boolean }) => {
-      setBip321Uri(undefined);
-      setGeneratedAmountSat(null);
-      setArkAddress(undefined);
-      setGeneratedOnchainAddress(undefined);
-      setLightningInvoice(undefined);
+      setGeneratedRequest(null);
       if (resetAmount) {
         setAmount("");
       }
-      resetOffchainAddress();
-      resetOnchainAddress();
-      resetLightningInvoice();
     },
-    [resetLightningInvoice, resetOffchainAddress, resetOnchainAddress, setAmount],
+    [setAmount],
   );
 
   const cancelReceiveSession = useCallback(
@@ -251,11 +258,11 @@ const ReceiveScreen = () => {
       receiveSessionIdRef.current += 1;
       activeReceiveSessionRef.current = null;
       isCompletingReceiveRef.current = false;
-      stopArkSubscription();
-      stopLightningSubscription();
       clearGeneratedReceiveData({ resetAmount });
+      releaseArkSubscription();
+      releaseLightningSubscription();
     },
-    [clearGeneratedReceiveData, stopArkSubscription, stopLightningSubscription],
+    [clearGeneratedReceiveData, releaseArkSubscription, releaseLightningSubscription],
   );
 
   const handleReceiveComplete = useCallback(
@@ -334,17 +341,6 @@ const ReceiveScreen = () => {
   );
 
   useEffect(() => {
-    setBip321Uri(
-      buildReceiveRequestUri({
-        amountSat: generatedAmountSat,
-        arkAddress,
-        lightningInvoice,
-        onchainAddress: generatedOnchainAddress,
-      }),
-    );
-  }, [arkAddress, generatedAmountSat, generatedOnchainAddress, lightningInvoice]);
-
-  useEffect(() => {
     if (!lightningInvoice?.payment_hash) {
       return;
     }
@@ -355,7 +351,7 @@ const ReceiveScreen = () => {
     }
 
     activeSession.paymentHash = lightningInvoice.payment_hash;
-    stopLightningSubscription();
+    releaseLightningSubscription();
 
     const subscriptionResult = subscribeLightningPaymentMovements(
       lightningInvoice.payment_hash,
@@ -370,7 +366,11 @@ const ReceiveScreen = () => {
     }
 
     lightningSubscriptionRef.current = subscriptionResult.value;
-  }, [handleLightningReceiveEvent, lightningInvoice?.payment_hash, stopLightningSubscription]);
+  }, [
+    handleLightningReceiveEvent,
+    lightningInvoice?.payment_hash,
+    releaseLightningSubscription,
+  ]);
 
   useEffect(() => {
     if (!arkAddress) {
@@ -383,7 +383,7 @@ const ReceiveScreen = () => {
     }
 
     activeSession.arkAddress = arkAddress;
-    stopArkSubscription();
+    releaseArkSubscription();
 
     const subscriptionResult = subscribeArkoorAddressMovements(arkAddress, (event) => {
       handleArkoorReceiveEvent(event, activeSession.sessionId);
@@ -395,7 +395,7 @@ const ReceiveScreen = () => {
     }
 
     arkSubscriptionRef.current = subscriptionResult.value;
-  }, [arkAddress, handleArkoorReceiveEvent, stopArkSubscription]);
+  }, [arkAddress, handleArkoorReceiveEvent, releaseArkSubscription]);
 
   useFocusEffect(
     useCallback(() => {
@@ -425,7 +425,7 @@ const ReceiveScreen = () => {
     }
 
     cancelReceiveSession({ resetAmount: false });
-    setGeneratedAmountSat(amountSat);
+    setGeneratedRequest({ amountSat });
     activeReceiveSessionRef.current = {
       sessionId: receiveSessionIdRef.current,
       amountSat,
@@ -470,9 +470,12 @@ const ReceiveScreen = () => {
         return;
       }
 
-      setGeneratedOnchainAddress(nextOnchainAddress);
-      setArkAddress(nextArkAddress);
-      setLightningInvoice(nextLightningInvoice);
+      setGeneratedRequest({
+        amountSat,
+        onchainAddress: nextOnchainAddress,
+        arkAddress: nextArkAddress,
+        lightningInvoice: nextLightningInvoice,
+      });
     });
   };
 
@@ -528,10 +531,7 @@ const ReceiveScreen = () => {
               </Text>
             </Animated.View>
 
-            <Animated.View
-              layout={LinearTransition.springify().damping(18).stiffness(180)}
-              className="mt-4"
-            >
+            <Animated.View className="mt-4">
               <View className="flex-row items-start justify-end gap-4">
                 <View className="flex-1">
                   {isGenerated ? (
@@ -687,20 +687,20 @@ const ReceiveScreen = () => {
               </Animated.View>
             )}
 
-            <Animated.View
-              layout={LinearTransition.springify().damping(18).stiffness(180)}
-              className="mt-5 flex-row items-center gap-3"
-            >
-              {isGenerated ? (
-                <Button onPress={handleClear} variant="outline" className="flex-1 rounded-2xl">
-                  <Text className="font-semibold">Clear</Text>
-                </Button>
-              ) : null}
+            <Animated.View className="mt-5 flex-row items-center gap-3">
+              <Button
+                onPress={handleClear}
+                disabled={isClearDisabled}
+                variant="outline"
+                className="h-14 w-[120px] rounded-2xl"
+              >
+                <Text className="font-semibold">Clear</Text>
+              </Button>
               <NoahButton
                 onPress={handleGenerate}
                 isLoading={isLoading}
                 disabled={isLoading || amount === "" || amountSat < minAmount}
-                className="flex-1 rounded-2xl py-4"
+                className="h-14 flex-1 rounded-2xl"
               >
                 {isGenerated ? "New request" : "Generate request"}
               </NoahButton>
