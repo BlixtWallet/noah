@@ -40,15 +40,18 @@ export type BarkSubsystemName = BarkSubsystem["name"];
 export type BarkSubsystemKind = BarkSubsystem["kind"];
 export type BarkSubsystemId = `${BarkSubsystemName}:${BarkSubsystemKind}`;
 
-type BarkMovementWithTypedSubsystem<Name extends BarkSubsystemName, Kind extends BarkSubsystemKind> =
-  BarkMovement & {
-    subsystem: BarkMovement["subsystem"] & {
-      name: Name;
-      kind: Kind;
-    };
+type BarkMovementWithTypedSubsystem<
+  Name extends BarkSubsystemName,
+  Kind extends BarkSubsystemKind,
+> = BarkMovement & {
+  subsystem: BarkMovement["subsystem"] & {
+    name: Name;
+    kind: Kind;
   };
+};
 
-const toSubsystemId = (subsystem: BarkSubsystem): BarkSubsystemId => `${subsystem.name}:${subsystem.kind}`;
+const toSubsystemId = (subsystem: BarkSubsystem): BarkSubsystemId =>
+  `${subsystem.name}:${subsystem.kind}`;
 
 const KNOWN_BARK_SUBSYSTEM_IDS = new Set<BarkSubsystemId>(
   Object.values(BARK_SUBSYSTEM).map(toSubsystemId),
@@ -99,4 +102,17 @@ export const isArkReceiveMovement = (
   }
 
   return getMovementSubsystemId(movement) === toSubsystemId(BARK_SUBSYSTEM.ARKOOR_RECEIVE);
+};
+
+export const isLightningReceiveMovement = (
+  movement: BarkMovement | undefined,
+): movement is BarkMovementWithTypedSubsystem<
+  typeof BARK_SUBSYSTEM.LIGHTNING_RECEIVE.name,
+  typeof BARK_SUBSYSTEM.LIGHTNING_RECEIVE.kind
+> => {
+  if (!movement) {
+    return false;
+  }
+
+  return getMovementSubsystemId(movement) === toSubsystemId(BARK_SUBSYSTEM.LIGHTNING_RECEIVE);
 };
