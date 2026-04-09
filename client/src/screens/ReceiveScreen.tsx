@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Pressable,
@@ -16,7 +16,6 @@ import {
   useGenerateLightningInvoice,
   useGenerateOnchainAddress,
   useGenerateOffchainAddress,
-  useCheckAndClaimLnReceive,
 } from "../hooks/usePayments";
 import { useCopyToClipboard } from "../lib/clipboardUtils";
 import QRCode from "react-native-qrcode-svg";
@@ -25,7 +24,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import Animated, { FadeInDown, FadeInUp, LinearTransition, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 import { useIconColor, useThemeColors } from "../hooks/useTheme";
 import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
@@ -33,16 +32,18 @@ import { COLORS } from "~/lib/styleConstants";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
 import {
   subscribeArkoorAddressMovements,
+  subscribeLightningPaymentMovements,
   type BarkNotificationEvent,
   type BarkNotificationSubscription,
 } from "~/lib/paymentsApi";
-import { isArkReceiveMovement } from "~/lib/barkMovement";
+import { isArkReceiveMovement, isLightningReceiveMovement } from "~/lib/barkMovement";
 import logger from "~/lib/log";
 import type { Bolt11Invoice } from "react-native-nitro-ark";
 import { queryClient } from "~/queryClient";
 import { BlinkingCaret } from "~/components/BlinkingCaret";
 
 const minAmount = 1;
+const SUBSCRIPTION_RETRY_DELAY_MS = 1000;
 const log = logger("ReceiveScreen");
 
 type ActiveReceiveSession = {
@@ -56,6 +57,43 @@ type ReceiveRailGeneration = {
   arkAddress?: string;
   lightningInvoice?: Bolt11Invoice;
   onchainAddress?: string;
+};
+
+type GeneratedReceiveRequest = ReceiveRailGeneration & {
+  amountSat: number;
+};
+
+type IdleDeadlineLike = {
+  readonly didTimeout: boolean;
+  timeRemaining: () => number;
+};
+
+type IdleCallbackLike = (deadline: IdleDeadlineLike) => void;
+
+type IdleTaskHandle =
+  | { kind: "idle"; id: number }
+  | { kind: "timeout"; id: ReturnType<typeof setTimeout> };
+
+const scheduleIdleTask = (callback: IdleCallbackLike): IdleTaskHandle => {
+  const requestIdleCallback = (
+    globalThis as typeof globalThis & {
+      requestIdleCallback?: (cb: IdleCallbackLike) => number;
+    }
+  ).requestIdleCallback;
+
+  if (requestIdleCallback) {
+    return { kind: "idle", id: requestIdleCallback(callback) };
+  }
+
+  return {
+    kind: "timeout",
+    id: setTimeout(() => {
+      callback({
+        didTimeout: false,
+        timeRemaining: () => 0,
+      });
+    }, 0),
+  };
 };
 
 const truncateAddress = (addr: string) => {
@@ -117,10 +155,7 @@ const PaymentRail = ({
 }) => {
   const iconColor = useIconColor();
   return (
-    <Pressable
-      onPress={onCopy}
-      className="flex-row items-center gap-4 py-4"
-    >
+    <Pressable onPress={onCopy} className="flex-row items-center gap-4 py-4">
       <View
         className="h-11 w-11 items-center justify-center rounded-full border border-border"
         style={{ backgroundColor: "rgba(201, 138, 60, 0.10)" }}
@@ -153,84 +188,162 @@ const ReceiveScreen = () => {
   const colors = useThemeColors();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
-  const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
-  const [generatedAmountSat, setGeneratedAmountSat] = useState<number | null>(null);
-  const [arkAddress, setArkAddress] = useState<string | undefined>(undefined);
-  const [generatedOnchainAddress, setGeneratedOnchainAddress] = useState<string | undefined>(
-    undefined,
-  );
-  const [lightningInvoice, setLightningInvoice] = useState<Bolt11Invoice | undefined>(undefined);
+  const [generatedRequest, setGeneratedRequest] = useState<GeneratedReceiveRequest | null>(null);
   const { showAlert } = useAlert();
   const receiveSessionIdRef = useRef(0);
   const activeReceiveSessionRef = useRef<ActiveReceiveSession | null>(null);
   const arkSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
+  const lightningSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
+  const arkSubscriptionRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lightningSubscriptionRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCompletingReceiveRef = useRef(false);
   const amountInputRef = useRef<TextInput>(null);
+  const [arkSubscriptionRetryTick, setArkSubscriptionRetryTick] = useState(0);
+  const [lightningSubscriptionRetryTick, setLightningSubscriptionRetryTick] = useState(0);
 
   const {
     mutateAsync: generateOffchainAddress,
     isPending: isGeneratingVtxo,
-    reset: resetOffchainAddress,
   } = useGenerateOffchainAddress();
 
   const {
     mutateAsync: generateOnchainAddress,
     isPending: isGeneratingOnchain,
-    reset: resetOnchainAddress,
   } = useGenerateOnchainAddress();
 
   const {
     mutateAsync: generateLightningInvoice,
     isPending: isGeneratingLightning,
-    reset: resetLightningInvoice,
   } = useGenerateLightningInvoice();
 
-  const {
-    mutateAsync: checkAndClaimLnReceive,
-    reset: resetLnReceiveCheck,
-  } = useCheckAndClaimLnReceive();
-
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
+  const generatedAmountSat = generatedRequest?.amountSat ?? null;
+  const arkAddress = generatedRequest?.arkAddress;
+  const generatedOnchainAddress = generatedRequest?.onchainAddress;
+  const lightningInvoice = generatedRequest?.lightningInvoice;
+  const bip321Uri = useMemo(
+    () =>
+      buildReceiveRequestUri({
+        amountSat: generatedAmountSat,
+        arkAddress,
+        lightningInvoice,
+        onchainAddress: generatedOnchainAddress,
+      }),
+    [arkAddress, generatedAmountSat, generatedOnchainAddress, lightningInvoice],
+  );
   const isGenerated = Boolean(bip321Uri);
+  const isClearDisabled = isLoading || (!isGenerated && amount === "");
   const isAmountLocked = isLoading || isGenerated;
   const displayAmount = amount === "" ? (currency === "USD" ? "0.00" : "0") : amount;
   const [isAmountFocused, setIsAmountFocused] = useState(false);
 
-  const stopArkSubscription = useCallback(() => {
+  const stopSubscription = useCallback(
+    (subscription: BarkNotificationSubscription | null, label: string) => {
+      if (!subscription) {
+        return;
+      }
+
+      try {
+        subscription.stop();
+      } catch (error) {
+        log.w(`Failed to stop ${label} receive subscription`, [
+          error instanceof Error ? error.message : String(error),
+        ]);
+      }
+    },
+    [],
+  );
+
+  const releaseArkSubscription = useCallback(() => {
     const subscription = arkSubscriptionRef.current;
+    arkSubscriptionRef.current = null;
 
     if (!subscription) {
       return;
     }
 
-    arkSubscriptionRef.current = null;
+    scheduleIdleTask(() => {
+      stopSubscription(subscription, "Ark");
+    });
+  }, [stopSubscription]);
 
-    try {
-      if (subscription.isActive()) {
-        subscription.stop();
-      }
-    } catch (error) {
-      log.w("Failed to stop Ark receive subscription", [
-        error instanceof Error ? error.message : String(error),
-      ]);
+  const releaseLightningSubscription = useCallback(() => {
+    const subscription = lightningSubscriptionRef.current;
+    lightningSubscriptionRef.current = null;
+
+    if (!subscription) {
+      return;
     }
+
+    scheduleIdleTask(() => {
+      stopSubscription(subscription, "Lightning");
+    });
+  }, [stopSubscription]);
+
+  const clearArkSubscriptionRetry = useCallback(() => {
+    if (!arkSubscriptionRetryTimeoutRef.current) {
+      return;
+    }
+
+    clearTimeout(arkSubscriptionRetryTimeoutRef.current);
+    arkSubscriptionRetryTimeoutRef.current = null;
   }, []);
+
+  const clearLightningSubscriptionRetry = useCallback(() => {
+    if (!lightningSubscriptionRetryTimeoutRef.current) {
+      return;
+    }
+
+    clearTimeout(lightningSubscriptionRetryTimeoutRef.current);
+    lightningSubscriptionRetryTimeoutRef.current = null;
+  }, []);
+
+  const scheduleArkSubscriptionRetry = useCallback(
+    (sessionId: number) => {
+      if (arkSubscriptionRetryTimeoutRef.current) {
+        return;
+      }
+
+      arkSubscriptionRetryTimeoutRef.current = setTimeout(() => {
+        arkSubscriptionRetryTimeoutRef.current = null;
+
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        setArkSubscriptionRetryTick((tick) => tick + 1);
+      }, SUBSCRIPTION_RETRY_DELAY_MS);
+    },
+    [],
+  );
+
+  const scheduleLightningSubscriptionRetry = useCallback(
+    (sessionId: number) => {
+      if (lightningSubscriptionRetryTimeoutRef.current) {
+        return;
+      }
+
+      lightningSubscriptionRetryTimeoutRef.current = setTimeout(() => {
+        lightningSubscriptionRetryTimeoutRef.current = null;
+
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        setLightningSubscriptionRetryTick((tick) => tick + 1);
+      }, SUBSCRIPTION_RETRY_DELAY_MS);
+    },
+    [],
+  );
 
   const clearGeneratedReceiveData = useCallback(
     ({ resetAmount }: { resetAmount: boolean }) => {
-      setBip321Uri(undefined);
-      setGeneratedAmountSat(null);
-      setArkAddress(undefined);
-      setGeneratedOnchainAddress(undefined);
-      setLightningInvoice(undefined);
+      setGeneratedRequest(null);
       if (resetAmount) {
         setAmount("");
       }
-      resetOffchainAddress();
-      resetOnchainAddress();
-      resetLightningInvoice();
     },
-    [resetLightningInvoice, resetOffchainAddress, resetOnchainAddress, setAmount],
+    [setAmount],
   );
 
   const cancelReceiveSession = useCallback(
@@ -238,11 +351,19 @@ const ReceiveScreen = () => {
       receiveSessionIdRef.current += 1;
       activeReceiveSessionRef.current = null;
       isCompletingReceiveRef.current = false;
-      stopArkSubscription();
-      resetLnReceiveCheck();
+      clearArkSubscriptionRetry();
+      clearLightningSubscriptionRetry();
       clearGeneratedReceiveData({ resetAmount });
+      releaseArkSubscription();
+      releaseLightningSubscription();
     },
-    [clearGeneratedReceiveData, resetLnReceiveCheck, stopArkSubscription],
+    [
+      clearArkSubscriptionRetry,
+      clearGeneratedReceiveData,
+      clearLightningSubscriptionRetry,
+      releaseArkSubscription,
+      releaseLightningSubscription,
+    ],
   );
 
   const handleReceiveComplete = useCallback(
@@ -299,16 +420,26 @@ const ReceiveScreen = () => {
     [handleReceiveComplete],
   );
 
-  useEffect(() => {
-    setBip321Uri(
-      buildReceiveRequestUri({
-        amountSat: generatedAmountSat,
-        arkAddress,
-        lightningInvoice,
-        onchainAddress: generatedOnchainAddress,
-      }),
-    );
-  }, [arkAddress, generatedAmountSat, generatedOnchainAddress, lightningInvoice]);
+  const handleLightningReceiveEvent = useCallback(
+    (event: BarkNotificationEvent, sessionId: number) => {
+      if (event.kind === "channelLagging") {
+        return;
+      }
+
+      const activeSession = activeReceiveSessionRef.current;
+      if (!activeSession || activeSession.sessionId !== sessionId) {
+        return;
+      }
+
+      const movement = event.movement;
+      if (!movement || movement.status !== "successful" || !isLightningReceiveMovement(movement)) {
+        return;
+      }
+
+      handleReceiveComplete(activeSession.amountSat);
+    },
+    [handleReceiveComplete],
+  );
 
   useEffect(() => {
     if (!lightningInvoice?.payment_hash) {
@@ -320,24 +451,32 @@ const ReceiveScreen = () => {
       return;
     }
 
+    releaseLightningSubscription();
+
+    const subscriptionResult = subscribeLightningPaymentMovements(
+      lightningInvoice.payment_hash,
+      (event) => {
+        handleLightningReceiveEvent(event, activeSession.sessionId);
+      },
+    );
+
+    if (subscriptionResult.isErr()) {
+      log.w("Failed to subscribe to Lightning receive updates", [subscriptionResult.error.message]);
+      scheduleLightningSubscriptionRetry(activeSession.sessionId);
+      return;
+    }
+
+    clearLightningSubscriptionRetry();
     activeSession.paymentHash = lightningInvoice.payment_hash;
-
-    void checkAndClaimLnReceive({
-      paymentHash: lightningInvoice.payment_hash,
-      amountSat: activeSession.amountSat,
-      sessionId: activeSession.sessionId,
-    })
-      .then((receiveData) => {
-        if (activeReceiveSessionRef.current?.sessionId !== receiveData.sessionId) {
-          return;
-        }
-
-        handleReceiveComplete(receiveData.amountSat);
-      })
-      .catch(() => {
-        // The mutation already logs failures; stale sessions are ignored here.
-      });
-  }, [checkAndClaimLnReceive, handleReceiveComplete, lightningInvoice?.payment_hash]);
+    lightningSubscriptionRef.current = subscriptionResult.value;
+  }, [
+    clearLightningSubscriptionRetry,
+    handleLightningReceiveEvent,
+    lightningInvoice?.payment_hash,
+    releaseLightningSubscription,
+    lightningSubscriptionRetryTick,
+    scheduleLightningSubscriptionRetry,
+  ]);
 
   useEffect(() => {
     if (!arkAddress) {
@@ -349,8 +488,7 @@ const ReceiveScreen = () => {
       return;
     }
 
-    activeSession.arkAddress = arkAddress;
-    stopArkSubscription();
+    releaseArkSubscription();
 
     const subscriptionResult = subscribeArkoorAddressMovements(arkAddress, (event) => {
       handleArkoorReceiveEvent(event, activeSession.sessionId);
@@ -358,11 +496,21 @@ const ReceiveScreen = () => {
 
     if (subscriptionResult.isErr()) {
       log.w("Failed to subscribe to Ark receive updates", [subscriptionResult.error.message]);
+      scheduleArkSubscriptionRetry(activeSession.sessionId);
       return;
     }
 
+    clearArkSubscriptionRetry();
+    activeSession.arkAddress = arkAddress;
     arkSubscriptionRef.current = subscriptionResult.value;
-  }, [arkAddress, handleArkoorReceiveEvent, stopArkSubscription]);
+  }, [
+    arkAddress,
+    arkSubscriptionRetryTick,
+    clearArkSubscriptionRetry,
+    handleArkoorReceiveEvent,
+    releaseArkSubscription,
+    scheduleArkSubscriptionRetry,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -392,7 +540,7 @@ const ReceiveScreen = () => {
     }
 
     cancelReceiveSession({ resetAmount: false });
-    setGeneratedAmountSat(amountSat);
+    setGeneratedRequest({ amountSat });
     activeReceiveSessionRef.current = {
       sessionId: receiveSessionIdRef.current,
       amountSat,
@@ -404,47 +552,46 @@ const ReceiveScreen = () => {
       generateOnchainAddress(),
       generateOffchainAddress(),
       generateLightningInvoice(amountSat),
-    ])
-      .then(([nextOnchainAddressResult, nextArkAddressResult, nextLightningInvoiceResult]) => {
-        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
-          return;
-        }
+    ]).then(([nextOnchainAddressResult, nextArkAddressResult, nextLightningInvoiceResult]) => {
+      if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+        return;
+      }
 
-        if (nextOnchainAddressResult.status === "rejected") {
-          log.w("Receive rail generation failed", ["onchain", nextOnchainAddressResult.reason]);
-        }
+      if (nextOnchainAddressResult.status === "rejected") {
+        log.w("Receive rail generation failed", ["onchain", nextOnchainAddressResult.reason]);
+      }
 
-        if (nextArkAddressResult.status === "rejected") {
-          log.w("Receive rail generation failed", ["ark", nextArkAddressResult.reason]);
-        }
+      if (nextArkAddressResult.status === "rejected") {
+        log.w("Receive rail generation failed", ["ark", nextArkAddressResult.reason]);
+      }
 
-        if (nextLightningInvoiceResult.status === "rejected") {
-          log.w("Receive rail generation failed", [
-            "lightning",
-            nextLightningInvoiceResult.reason,
-          ]);
-        }
+      if (nextLightningInvoiceResult.status === "rejected") {
+        log.w("Receive rail generation failed", ["lightning", nextLightningInvoiceResult.reason]);
+      }
 
-        const nextOnchainAddress =
-          nextOnchainAddressResult.status === "fulfilled"
-            ? nextOnchainAddressResult.value
-            : undefined;
-        const nextArkAddress =
-          nextArkAddressResult.status === "fulfilled" ? nextArkAddressResult.value : undefined;
-        const nextLightningInvoice =
-          nextLightningInvoiceResult.status === "fulfilled"
-            ? nextLightningInvoiceResult.value
-            : undefined;
+      const nextOnchainAddress =
+        nextOnchainAddressResult.status === "fulfilled"
+          ? nextOnchainAddressResult.value
+          : undefined;
+      const nextArkAddress =
+        nextArkAddressResult.status === "fulfilled" ? nextArkAddressResult.value : undefined;
+      const nextLightningInvoice =
+        nextLightningInvoiceResult.status === "fulfilled"
+          ? nextLightningInvoiceResult.value
+          : undefined;
 
-        if (!nextOnchainAddress && !nextArkAddress && !nextLightningInvoice) {
-          cancelReceiveSession({ resetAmount: false });
-          return;
-        }
+      if (!nextOnchainAddress && !nextArkAddress && !nextLightningInvoice) {
+        cancelReceiveSession({ resetAmount: false });
+        return;
+      }
 
-        setGeneratedOnchainAddress(nextOnchainAddress);
-        setArkAddress(nextArkAddress);
-        setLightningInvoice(nextLightningInvoice);
+      setGeneratedRequest({
+        amountSat,
+        onchainAddress: nextOnchainAddress,
+        arkAddress: nextArkAddress,
+        lightningInvoice: nextLightningInvoice,
       });
+    });
   };
 
   const handleClear = () => {
@@ -499,10 +646,7 @@ const ReceiveScreen = () => {
               </Text>
             </Animated.View>
 
-            <Animated.View
-              layout={LinearTransition.springify().damping(18).stiffness(180)}
-              className="mt-4"
-            >
+            <Animated.View className="mt-4">
               <View className="flex-row items-start justify-end gap-4">
                 <View className="flex-1">
                   {isGenerated ? (
@@ -658,20 +802,20 @@ const ReceiveScreen = () => {
               </Animated.View>
             )}
 
-            <Animated.View
-              layout={LinearTransition.springify().damping(18).stiffness(180)}
-              className="mt-5 flex-row items-center gap-3"
-            >
-              {isGenerated ? (
-                <Button onPress={handleClear} variant="outline" className="flex-1 rounded-2xl">
-                  <Text className="font-semibold">Clear</Text>
-                </Button>
-              ) : null}
+            <Animated.View className="mt-5 flex-row items-center gap-3">
+              <Button
+                onPress={handleClear}
+                disabled={isClearDisabled}
+                variant="outline"
+                className="h-14 w-[120px] rounded-2xl"
+              >
+                <Text className="font-semibold">Clear</Text>
+              </Button>
               <NoahButton
                 onPress={handleGenerate}
                 isLoading={isLoading}
                 disabled={isLoading || amount === "" || amountSat < minAmount}
-                className="flex-1 rounded-2xl py-4"
+                className="h-14 flex-1 rounded-2xl"
               >
                 {isGenerated ? "New request" : "Generate request"}
               </NoahButton>

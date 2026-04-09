@@ -4,6 +4,7 @@ import {
   syncPendingBoards as syncPendingBoardsNitro,
   offboardAll as offboardAllNitro,
   subscribeArkoorAddressMovements as subscribeArkoorAddressMovementsNitro,
+  subscribeLightningPaymentMovements as subscribeLightningPaymentMovementsNitro,
   sendArkoorPayment as sendArkoorPaymentNitro,
   payLightningAddress as payLightningAddressNitro,
   payLightningOffer as payLightningOfferNitro,
@@ -219,6 +220,23 @@ export const subscribeArkoorAddressMovements = (
     return err(
       new Error(
         `Failed to subscribe to Ark address movements: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ),
+    );
+  }
+};
+
+export const subscribeLightningPaymentMovements = (
+  paymentHash: string,
+  onEvent: (event: BarkNotificationEvent) => void,
+): Result<BarkNotificationSubscription, Error> => {
+  try {
+    return ok(subscribeLightningPaymentMovementsNitro(paymentHash, onEvent));
+  } catch (error) {
+    return err(
+      new Error(
+        `Failed to subscribe to lightning payment movements: ${
           error instanceof Error ? error.message : String(error)
         }`,
       ),
