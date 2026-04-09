@@ -6,7 +6,6 @@ import {
   Keyboard,
   TextInput,
   ScrollView,
-  InteractionManager,
 } from "react-native";
 import { Text } from "../components/ui/text";
 import { useAlert } from "~/contexts/AlertProvider";
@@ -44,6 +43,7 @@ import { queryClient } from "~/queryClient";
 import { BlinkingCaret } from "~/components/BlinkingCaret";
 
 const minAmount = 1;
+const SUBSCRIPTION_RETRY_DELAY_MS = 1000;
 const log = logger("ReceiveScreen");
 
 type ActiveReceiveSession = {
@@ -61,6 +61,39 @@ type ReceiveRailGeneration = {
 
 type GeneratedReceiveRequest = ReceiveRailGeneration & {
   amountSat: number;
+};
+
+type IdleDeadlineLike = {
+  readonly didTimeout: boolean;
+  timeRemaining: () => number;
+};
+
+type IdleCallbackLike = (deadline: IdleDeadlineLike) => void;
+
+type IdleTaskHandle =
+  | { kind: "idle"; id: number }
+  | { kind: "timeout"; id: ReturnType<typeof setTimeout> };
+
+const scheduleIdleTask = (callback: IdleCallbackLike): IdleTaskHandle => {
+  const requestIdleCallback = (
+    globalThis as typeof globalThis & {
+      requestIdleCallback?: (cb: IdleCallbackLike) => number;
+    }
+  ).requestIdleCallback;
+
+  if (requestIdleCallback) {
+    return { kind: "idle", id: requestIdleCallback(callback) };
+  }
+
+  return {
+    kind: "timeout",
+    id: setTimeout(() => {
+      callback({
+        didTimeout: false,
+        timeRemaining: () => 0,
+      });
+    }, 0),
+  };
 };
 
 const truncateAddress = (addr: string) => {
@@ -161,8 +194,12 @@ const ReceiveScreen = () => {
   const activeReceiveSessionRef = useRef<ActiveReceiveSession | null>(null);
   const arkSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
   const lightningSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
+  const arkSubscriptionRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lightningSubscriptionRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCompletingReceiveRef = useRef(false);
   const amountInputRef = useRef<TextInput>(null);
+  const [arkSubscriptionRetryTick, setArkSubscriptionRetryTick] = useState(0);
+  const [lightningSubscriptionRetryTick, setLightningSubscriptionRetryTick] = useState(0);
 
   const {
     mutateAsync: generateOffchainAddress,
@@ -225,7 +262,7 @@ const ReceiveScreen = () => {
       return;
     }
 
-    InteractionManager.runAfterInteractions(() => {
+    scheduleIdleTask(() => {
       stopSubscription(subscription, "Ark");
     });
   }, [stopSubscription]);
@@ -238,10 +275,66 @@ const ReceiveScreen = () => {
       return;
     }
 
-    InteractionManager.runAfterInteractions(() => {
+    scheduleIdleTask(() => {
       stopSubscription(subscription, "Lightning");
     });
   }, [stopSubscription]);
+
+  const clearArkSubscriptionRetry = useCallback(() => {
+    if (!arkSubscriptionRetryTimeoutRef.current) {
+      return;
+    }
+
+    clearTimeout(arkSubscriptionRetryTimeoutRef.current);
+    arkSubscriptionRetryTimeoutRef.current = null;
+  }, []);
+
+  const clearLightningSubscriptionRetry = useCallback(() => {
+    if (!lightningSubscriptionRetryTimeoutRef.current) {
+      return;
+    }
+
+    clearTimeout(lightningSubscriptionRetryTimeoutRef.current);
+    lightningSubscriptionRetryTimeoutRef.current = null;
+  }, []);
+
+  const scheduleArkSubscriptionRetry = useCallback(
+    (sessionId: number) => {
+      if (arkSubscriptionRetryTimeoutRef.current) {
+        return;
+      }
+
+      arkSubscriptionRetryTimeoutRef.current = setTimeout(() => {
+        arkSubscriptionRetryTimeoutRef.current = null;
+
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        setArkSubscriptionRetryTick((tick) => tick + 1);
+      }, SUBSCRIPTION_RETRY_DELAY_MS);
+    },
+    [],
+  );
+
+  const scheduleLightningSubscriptionRetry = useCallback(
+    (sessionId: number) => {
+      if (lightningSubscriptionRetryTimeoutRef.current) {
+        return;
+      }
+
+      lightningSubscriptionRetryTimeoutRef.current = setTimeout(() => {
+        lightningSubscriptionRetryTimeoutRef.current = null;
+
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
+
+        setLightningSubscriptionRetryTick((tick) => tick + 1);
+      }, SUBSCRIPTION_RETRY_DELAY_MS);
+    },
+    [],
+  );
 
   const clearGeneratedReceiveData = useCallback(
     ({ resetAmount }: { resetAmount: boolean }) => {
@@ -258,11 +351,19 @@ const ReceiveScreen = () => {
       receiveSessionIdRef.current += 1;
       activeReceiveSessionRef.current = null;
       isCompletingReceiveRef.current = false;
+      clearArkSubscriptionRetry();
+      clearLightningSubscriptionRetry();
       clearGeneratedReceiveData({ resetAmount });
       releaseArkSubscription();
       releaseLightningSubscription();
     },
-    [clearGeneratedReceiveData, releaseArkSubscription, releaseLightningSubscription],
+    [
+      clearArkSubscriptionRetry,
+      clearGeneratedReceiveData,
+      clearLightningSubscriptionRetry,
+      releaseArkSubscription,
+      releaseLightningSubscription,
+    ],
   );
 
   const handleReceiveComplete = useCallback(
@@ -350,7 +451,6 @@ const ReceiveScreen = () => {
       return;
     }
 
-    activeSession.paymentHash = lightningInvoice.payment_hash;
     releaseLightningSubscription();
 
     const subscriptionResult = subscribeLightningPaymentMovements(
@@ -362,14 +462,20 @@ const ReceiveScreen = () => {
 
     if (subscriptionResult.isErr()) {
       log.w("Failed to subscribe to Lightning receive updates", [subscriptionResult.error.message]);
+      scheduleLightningSubscriptionRetry(activeSession.sessionId);
       return;
     }
 
+    clearLightningSubscriptionRetry();
+    activeSession.paymentHash = lightningInvoice.payment_hash;
     lightningSubscriptionRef.current = subscriptionResult.value;
   }, [
+    clearLightningSubscriptionRetry,
     handleLightningReceiveEvent,
     lightningInvoice?.payment_hash,
     releaseLightningSubscription,
+    lightningSubscriptionRetryTick,
+    scheduleLightningSubscriptionRetry,
   ]);
 
   useEffect(() => {
@@ -382,7 +488,6 @@ const ReceiveScreen = () => {
       return;
     }
 
-    activeSession.arkAddress = arkAddress;
     releaseArkSubscription();
 
     const subscriptionResult = subscribeArkoorAddressMovements(arkAddress, (event) => {
@@ -391,11 +496,21 @@ const ReceiveScreen = () => {
 
     if (subscriptionResult.isErr()) {
       log.w("Failed to subscribe to Ark receive updates", [subscriptionResult.error.message]);
+      scheduleArkSubscriptionRetry(activeSession.sessionId);
       return;
     }
 
+    clearArkSubscriptionRetry();
+    activeSession.arkAddress = arkAddress;
     arkSubscriptionRef.current = subscriptionResult.value;
-  }, [arkAddress, handleArkoorReceiveEvent, releaseArkSubscription]);
+  }, [
+    arkAddress,
+    arkSubscriptionRetryTick,
+    clearArkSubscriptionRetry,
+    handleArkoorReceiveEvent,
+    releaseArkSubscription,
+    scheduleArkSubscriptionRetry,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
