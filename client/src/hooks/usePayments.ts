@@ -27,6 +27,13 @@ import { getLnurlDomain } from "~/constants";
 
 const log = logger("usePayments");
 
+class ReceiveClaimCancelledError extends Error {
+  constructor() {
+    super("Lightning receive claim cancelled");
+    this.name = "ReceiveClaimCancelledError";
+  }
+}
+
 interface LnurlpDefaultResponse {
   callback: string;
   maxSendable: number;
@@ -263,16 +270,26 @@ export function useCheckAndClaimLnReceive() {
       paymentHash,
       amountSat,
       sessionId,
+      shouldCancel,
     }: {
       paymentHash: string;
       amountSat: number;
       sessionId: number;
+      shouldCancel?: () => boolean;
     }) => {
       const maxAttempts = 20;
       const intervalMs = 1000;
 
       for (let i = 0; i < maxAttempts; i++) {
+        if (shouldCancel?.()) {
+          throw new ReceiveClaimCancelledError();
+        }
+
         const result = await tryClaimLightningReceive(paymentHash, false);
+
+        if (shouldCancel?.()) {
+          throw new ReceiveClaimCancelledError();
+        }
 
         if (result.isOk() && result.value && result.value.finished_at) {
           return { amountSat, paymentHash, sessionId };
@@ -292,6 +309,10 @@ export function useCheckAndClaimLnReceive() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
     onError: (error: Error) => {
+      if (error instanceof ReceiveClaimCancelledError) {
+        return;
+      }
+
       log.w("Failed to claim lightning receive:", [error.message]);
     },
   });

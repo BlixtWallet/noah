@@ -302,7 +302,11 @@ const SendScreen = () => {
           >
             <View className="flex-row items-center gap-3">
               {destination ? (
-                <Button onPress={handleClear} variant="outline" className="flex-1 rounded-2xl">
+                <Button
+                  onPress={handleClear}
+                  variant="outline"
+                  className="h-14 w-[144px] rounded-2xl"
+                >
                   <Text className="font-semibold">Clear</Text>
                 </Button>
               ) : null}
@@ -310,7 +314,7 @@ const SendScreen = () => {
                 onPress={handleSend}
                 disabled={!destination || isSending}
                 isLoading={isSending}
-                className="flex-1 rounded-2xl py-4"
+                className="h-14 min-w-0 flex-1 rounded-2xl"
               >
                 Send
               </NoahButton>

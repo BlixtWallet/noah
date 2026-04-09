@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Pressable,
@@ -25,16 +25,14 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TabParamList } from "~/Navigators";
 import Icon from "@react-native-vector-icons/ionicons";
-import Animated, { FadeInDown, FadeInUp, LinearTransition, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, ZoomIn } from "react-native-reanimated";
 import { useIconColor, useThemeColors } from "../hooks/useTheme";
 import { satsToBtc, formatNumber, formatBip177 } from "~/lib/utils";
 import { useReceiveScreen } from "../hooks/useReceiveScreen";
 import { COLORS } from "~/lib/styleConstants";
 import { CurrencyToggle } from "~/components/CurrencyToggle";
 import {
-  subscribeArkoorAddressMovements,
-  type BarkNotificationEvent,
-  type BarkNotificationSubscription,
+  history,
 } from "~/lib/paymentsApi";
 import { isArkReceiveMovement } from "~/lib/barkMovement";
 import logger from "~/lib/log";
@@ -43,6 +41,7 @@ import { queryClient } from "~/queryClient";
 import { BlinkingCaret } from "~/components/BlinkingCaret";
 
 const minAmount = 1;
+const ARK_RECEIVE_POLL_INTERVAL_MS = 1500;
 const log = logger("ReceiveScreen");
 
 type ActiveReceiveSession = {
@@ -53,6 +52,7 @@ type ActiveReceiveSession = {
 };
 
 type ReceiveRailGeneration = {
+  amountSat: number;
   arkAddress?: string;
   lightningInvoice?: Bolt11Invoice;
   onchainAddress?: string;
@@ -70,7 +70,7 @@ const buildReceiveRequestUri = ({
   arkAddress,
   lightningInvoice,
   onchainAddress,
-}: ReceiveRailGeneration & { amountSat: number | null }) => {
+}: Omit<ReceiveRailGeneration, "amountSat"> & { amountSat: number | null }) => {
   if (amountSat === null) {
     return undefined;
   }
@@ -153,17 +153,12 @@ const ReceiveScreen = () => {
   const colors = useThemeColors();
   const { amount, setAmount, currency, toggleCurrency, amountSat, btcPrice } = useReceiveScreen();
   const { copyWithState, isCopied } = useCopyToClipboard();
-  const [bip321Uri, setBip321Uri] = useState<string | undefined>(undefined);
-  const [generatedAmountSat, setGeneratedAmountSat] = useState<number | null>(null);
-  const [arkAddress, setArkAddress] = useState<string | undefined>(undefined);
-  const [generatedOnchainAddress, setGeneratedOnchainAddress] = useState<string | undefined>(
-    undefined,
+  const [generatedReceiveData, setGeneratedReceiveData] = useState<ReceiveRailGeneration | null>(
+    null,
   );
-  const [lightningInvoice, setLightningInvoice] = useState<Bolt11Invoice | undefined>(undefined);
   const { showAlert } = useAlert();
   const receiveSessionIdRef = useRef(0);
   const activeReceiveSessionRef = useRef<ActiveReceiveSession | null>(null);
-  const arkSubscriptionRef = useRef<BarkNotificationSubscription | null>(null);
   const isCompletingReceiveRef = useRef(false);
   const amountInputRef = useRef<TextInput>(null);
 
@@ -190,42 +185,33 @@ const ReceiveScreen = () => {
     reset: resetLnReceiveCheck,
   } = useCheckAndClaimLnReceive();
 
+  const bip321Uri = useMemo(
+    () =>
+      buildReceiveRequestUri({
+        amountSat: generatedReceiveData?.amountSat ?? null,
+        arkAddress: generatedReceiveData?.arkAddress,
+        lightningInvoice: generatedReceiveData?.lightningInvoice,
+        onchainAddress: generatedReceiveData?.onchainAddress,
+      }),
+    [generatedReceiveData],
+  );
+  const arkAddress = generatedReceiveData?.arkAddress;
+  const lightningInvoice = generatedReceiveData?.lightningInvoice;
+  const generatedOnchainAddress = generatedReceiveData?.onchainAddress;
   const isLoading = isGeneratingVtxo || isGeneratingOnchain || isGeneratingLightning;
   const isGenerated = Boolean(bip321Uri);
   const isAmountLocked = isLoading || isGenerated;
   const displayAmount = amount === "" ? (currency === "USD" ? "0.00" : "0") : amount;
   const [isAmountFocused, setIsAmountFocused] = useState(false);
 
-  const stopArkSubscription = useCallback(() => {
-    const subscription = arkSubscriptionRef.current;
-
-    if (!subscription) {
-      return;
-    }
-
-    arkSubscriptionRef.current = null;
-
-    try {
-      if (subscription.isActive()) {
-        subscription.stop();
-      }
-    } catch (error) {
-      log.w("Failed to stop Ark receive subscription", [
-        error instanceof Error ? error.message : String(error),
-      ]);
-    }
-  }, []);
-
   const clearGeneratedReceiveData = useCallback(
     ({ resetAmount }: { resetAmount: boolean }) => {
-      setBip321Uri(undefined);
-      setGeneratedAmountSat(null);
-      setArkAddress(undefined);
-      setGeneratedOnchainAddress(undefined);
-      setLightningInvoice(undefined);
-      if (resetAmount) {
-        setAmount("");
-      }
+      startTransition(() => {
+        setGeneratedReceiveData(null);
+        if (resetAmount) {
+          setAmount("");
+        }
+      });
       resetOffchainAddress();
       resetOnchainAddress();
       resetLightningInvoice();
@@ -238,11 +224,10 @@ const ReceiveScreen = () => {
       receiveSessionIdRef.current += 1;
       activeReceiveSessionRef.current = null;
       isCompletingReceiveRef.current = false;
-      stopArkSubscription();
       resetLnReceiveCheck();
       clearGeneratedReceiveData({ resetAmount });
     },
-    [clearGeneratedReceiveData, resetLnReceiveCheck, stopArkSubscription],
+    [clearGeneratedReceiveData, resetLnReceiveCheck],
   );
 
   const handleReceiveComplete = useCallback(
@@ -264,30 +249,36 @@ const ReceiveScreen = () => {
     [cancelReceiveSession, navigation],
   );
 
-  const handleArkoorReceiveEvent = useCallback(
-    (event: BarkNotificationEvent, sessionId: number) => {
-      if (event.kind === "channelLagging") {
-        return;
-      }
-
+  const checkArkReceiveHistory = useCallback(
+    async (sessionId: number, address: string) => {
       const activeSession = activeReceiveSessionRef.current;
       if (!activeSession || activeSession.sessionId !== sessionId) {
-        return;
+        return false;
       }
 
-      const movement = event.movement;
-      if (!movement || movement.status !== "successful" || !isArkReceiveMovement(movement)) {
-        return;
+      const movementsResult = await history();
+      if (movementsResult.isErr()) {
+        log.w("Failed to poll Ark receive history", [movementsResult.error.message]);
+        return false;
+      }
+
+      const matchingMovement = movementsResult.value.find((movement) => {
+        if (movement.status !== "successful" || !isArkReceiveMovement(movement)) {
+          return false;
+        }
+
+        return (
+          movement.received_on?.some((destination) => destination.destination === address) ?? false
+        );
+      });
+
+      if (!matchingMovement) {
+        return false;
       }
 
       const matchingReceivedOn =
-        movement.received_on?.filter(
-          (destination) => destination.destination === activeSession.arkAddress,
-        ) ?? [];
-
-      if (matchingReceivedOn.length === 0) {
-        return;
-      }
+        matchingMovement.received_on?.filter((destination) => destination.destination === address) ??
+        [];
 
       const receivedAmountSat = matchingReceivedOn.reduce(
         (sum, destination) => sum + destination.amount_sat,
@@ -295,20 +286,10 @@ const ReceiveScreen = () => {
       );
 
       handleReceiveComplete(receivedAmountSat > 0 ? receivedAmountSat : activeSession.amountSat);
+      return true;
     },
     [handleReceiveComplete],
   );
-
-  useEffect(() => {
-    setBip321Uri(
-      buildReceiveRequestUri({
-        amountSat: generatedAmountSat,
-        arkAddress,
-        lightningInvoice,
-        onchainAddress: generatedOnchainAddress,
-      }),
-    );
-  }, [arkAddress, generatedAmountSat, generatedOnchainAddress, lightningInvoice]);
 
   useEffect(() => {
     if (!lightningInvoice?.payment_hash) {
@@ -321,11 +302,13 @@ const ReceiveScreen = () => {
     }
 
     activeSession.paymentHash = lightningInvoice.payment_hash;
+    const sessionId = activeSession.sessionId;
 
     void checkAndClaimLnReceive({
       paymentHash: lightningInvoice.payment_hash,
       amountSat: activeSession.amountSat,
-      sessionId: activeSession.sessionId,
+      sessionId,
+      shouldCancel: () => activeReceiveSessionRef.current?.sessionId !== sessionId,
     })
       .then((receiveData) => {
         if (activeReceiveSessionRef.current?.sessionId !== receiveData.sessionId) {
@@ -345,24 +328,35 @@ const ReceiveScreen = () => {
     }
 
     const activeSession = activeReceiveSessionRef.current;
-    if (!activeSession || activeSession.arkAddress === arkAddress) {
+    if (!activeSession) {
       return;
     }
 
     activeSession.arkAddress = arkAddress;
-    stopArkSubscription();
+    let cancelled = false;
+    const sessionId = activeSession.sessionId;
 
-    const subscriptionResult = subscribeArkoorAddressMovements(arkAddress, (event) => {
-      handleArkoorReceiveEvent(event, activeSession.sessionId);
-    });
+    const poll = async () => {
+      while (!cancelled) {
+        if (activeReceiveSessionRef.current?.sessionId !== sessionId) {
+          return;
+        }
 
-    if (subscriptionResult.isErr()) {
-      log.w("Failed to subscribe to Ark receive updates", [subscriptionResult.error.message]);
-      return;
-    }
+        const didReceive = await checkArkReceiveHistory(sessionId, arkAddress);
+        if (didReceive || cancelled) {
+          return;
+        }
 
-    arkSubscriptionRef.current = subscriptionResult.value;
-  }, [arkAddress, handleArkoorReceiveEvent, stopArkSubscription]);
+        await new Promise((resolve) => setTimeout(resolve, ARK_RECEIVE_POLL_INTERVAL_MS));
+      }
+    };
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [arkAddress, checkArkReceiveHistory]);
 
   useFocusEffect(
     useCallback(() => {
@@ -392,7 +386,6 @@ const ReceiveScreen = () => {
     }
 
     cancelReceiveSession({ resetAmount: false });
-    setGeneratedAmountSat(amountSat);
     activeReceiveSessionRef.current = {
       sessionId: receiveSessionIdRef.current,
       amountSat,
@@ -441,9 +434,14 @@ const ReceiveScreen = () => {
           return;
         }
 
-        setGeneratedOnchainAddress(nextOnchainAddress);
-        setArkAddress(nextArkAddress);
-        setLightningInvoice(nextLightningInvoice);
+        startTransition(() => {
+          setGeneratedReceiveData({
+            amountSat,
+            onchainAddress: nextOnchainAddress,
+            arkAddress: nextArkAddress,
+            lightningInvoice: nextLightningInvoice,
+          });
+        });
       });
   };
 
@@ -499,10 +497,7 @@ const ReceiveScreen = () => {
               </Text>
             </Animated.View>
 
-            <Animated.View
-              layout={LinearTransition.springify().damping(18).stiffness(180)}
-              className="mt-4"
-            >
+            <Animated.View className="mt-4">
               <View className="flex-row items-start justify-end gap-4">
                 <View className="flex-1">
                   {isGenerated ? (
@@ -658,20 +653,20 @@ const ReceiveScreen = () => {
               </Animated.View>
             )}
 
-            <Animated.View
-              layout={LinearTransition.springify().damping(18).stiffness(180)}
-              className="mt-5 flex-row items-center gap-3"
-            >
-              {isGenerated ? (
-                <Button onPress={handleClear} variant="outline" className="flex-1 rounded-2xl">
-                  <Text className="font-semibold">Clear</Text>
-                </Button>
-              ) : null}
+            <Animated.View className="mt-5 flex-row items-center gap-3">
+              <Button
+                onPress={handleClear}
+                variant="outline"
+                disabled={!isGenerated && amount === ""}
+                className="h-14 w-[144px] rounded-2xl"
+              >
+                <Text className="font-semibold">Clear</Text>
+              </Button>
               <NoahButton
                 onPress={handleGenerate}
                 isLoading={isLoading}
                 disabled={isLoading || amount === "" || amountSat < minAmount}
-                className="flex-1 rounded-2xl py-4"
+                className="h-14 min-w-0 flex-1 rounded-2xl"
               >
                 {isGenerated ? "New request" : "Generate request"}
               </NoahButton>
