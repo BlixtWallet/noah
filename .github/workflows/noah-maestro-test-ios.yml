@@ -31,17 +31,11 @@ jobs:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔐 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: 📥 Download iOS app artifact
+        uses: actions/download-artifact@v8
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
-
-      - name: 📥 Download iOS app from S3
-        run: |
-          mkdir -p ios-release-build
-          aws s3 cp s3://${{ secrets.AWS_S3_BUCKET }}/ci-artifacts/${{ github.run_id }}/ios-release.zip ios-release-build/ios-release.zip
+          name: ${{ needs.build-release-ios.outputs.artifact_name }}
+          path: ios-release-build
 
       - name: 🗜️ Decompress iOS app
         run: |
@@ -146,7 +140,7 @@ jobs:
 
       - name: 📤 Store debug output if failed
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: maestro-debug-output-ios
           path: client/maestro-debug-output/**/*
