@@ -104,18 +104,21 @@ jobs:
           echo "apk_filename=${apk_filename}" >> "$GITHUB_OUTPUT"
           echo "aab_filename=${aab_filename}" >> "$GITHUB_OUTPUT"
 
-      - name: 🔐 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: 📤 Upload Android APK artifact
+        uses: actions/upload-artifact@v7
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          name: ${{ steps.rename_outputs.outputs.apk_filename }}
+          path: ${{ steps.rename_outputs.outputs.apk_path }}
+          if-no-files-found: error
+          overwrite: true
 
-      - name: 📤 Upload Android APK to S3
-        run: aws s3 cp ${{ steps.rename_outputs.outputs.apk_path }} s3://${{ secrets.AWS_S3_BUCKET }}/private-mainnet/android/${{ github.run_id }}/${{ steps.rename_outputs.outputs.apk_filename }}
-
-      - name: 📤 Upload Android AAB to S3
-        run: aws s3 cp ${{ steps.rename_outputs.outputs.aab_path }} s3://${{ secrets.AWS_S3_BUCKET }}/private-mainnet/android/${{ github.run_id }}/${{ steps.rename_outputs.outputs.aab_filename }}
+      - name: 📤 Upload Android AAB artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.rename_outputs.outputs.aab_filename }}
+          path: ${{ steps.rename_outputs.outputs.aab_path }}
+          if-no-files-found: error
+          overwrite: true
 
       - name: 🧹 Clean up signing files
         if: ${{ always() }}
